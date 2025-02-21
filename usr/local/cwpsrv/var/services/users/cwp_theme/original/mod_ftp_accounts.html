@@ -1,0 +1,491 @@
+<style media="screen">
+  .ftp_accounts_wrapper{
+    margin-top:2rem;
+  }
+  .ftp_accounts_wrapper .mail-contracted{
+    top: -8.9rem;
+  }
+  .dataTables_wrapper{
+    padding-bottom:0px;
+  }
+  #ftp_form{
+    display:none;
+  }
+  .ibox-footer{
+    font-size: 100%;
+  }
+  .pass_form_div{
+    display:flex;
+    flex-wrap:wrap;
+  }
+  #pass_container, #pass_container_ch{
+    width: 47%;
+    margin-right: 1rem;
+  }
+  .progress{
+    margin-bottom: 0px;
+    margin-top: 5px;
+  }
+  #ftp_details, #ftp_form_pass{
+    display:none;
+  }
+  #ftp_conf_wrapper{
+    display: flex;
+    align-items: center;
+  }
+  .error-field{
+    color: #ff0000;
+    margin-top: 5px;
+    font-size: 12px;
+    display: block;
+    margin-bottom: -10px;
+  }
+  .password-generator-copied{
+    margin-bottom: 0px;
+    display: none;
+    padding: 5px;
+    margin-top: 5px;
+  }
+  .action_ftp{
+    text-align:center;
+  }
+  .action_ftp .btn-primary{
+    margin-right:5px;
+  }
+  .deleting_tr{
+    background-color: #f5f5f566;
+    color: #e7eaec;
+  }
+  .select-client{
+    display:flex;
+    flex-wrap:wrap:
+  }
+  .select-client-div{
+    width:75%;
+  }
+  .select-client-btn{
+    width:25%;
+  }
+  #autoconfigfile{
+    display:none;
+  }
+  .directory-selector-btn{
+    display:flex;
+  }
+  #dir_explorer_domain .modal-body{
+    max-height:70vh;
+    min-height:40vh;
+    overflow:auto;
+  }
+  #dir_explorer_domain .dir-item:nth-child(even){
+    background-color:#f3f3f3;
+  }
+  #dir_explorer_domain .dir-item:hover{
+    background-color:#cccccc;
+    cursor:pointer;
+    color: #333;
+  }
+  #dir_explorer_domain .dir-item{
+    padding: 5px;
+  }
+  .dir-item .fa{
+    margin-right:5px;
+  }
+  .current-path-div{
+    padding-bottom:10px;
+    padding-top:10px;
+  }
+  #dir_list{
+    padding-bottom: 10px;
+  }
+  #dirsel{
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 25rem;
+    /* border: 1px solid #999; */
+    direction: rtl;
+    text-align: left;
+    line-height: 1.5rem;
+    padding: 0px;
+    display: inline-block;
+    margin-bottom: 0px;
+  }
+  .dir-sel-btn .fa{
+    font-size: 2rem;
+    margin-right: 5px;
+  }
+  .dir-sel-btn{
+    display: flex;
+    align-items: center;
+  }
+</style>
+<div class="modal" id="dir_explorer_domain" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" style="width:500px;">
+    <div class="modal-content animated fadeIn">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+            <span aria-hidden="true">&times;</span><span class="sr-only">{{langene.MDCLOSE}}</span>
+        </button>
+        <h4>{{langmod.FTPDIRSEL}}</h4>
+      </div>
+      <div class="modal-body" style="padding:0px">
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" disabled class="btn btn-success btn-block disabled" id="sel_path_btn" onclick="selCurrentPath()">
+          <i class="fa fa-thumb-tack" aria-hidden="true"></i> {{langmod.FTPCHOOSEDIR}}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row  border-bottom white-bg dashboard-header">
+    {% if mod.fsl == 1 %}
+    {% set stflalert ='block' %}
+    {% else %}
+    {% set stflalert ='none' %}
+    {% endif %}
+    <div class="row  alert alert-warning col-lg-12" style="margin-left: 5px; padding-right: 5px;display:{{stflalert}}" id="alertfl">
+        <strong>{{langene.GALARTFILEBLOCK}}</strong>
+    </div>
+    <div class="col-lg-10">
+        <h2>{{langmod.TITLEFTP}} ({{users}})</h2>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="?">Home</a></li>
+            <li class="breadcrumb-item active"><strong>{{langmod.TITLEFTP}}</strong></li>
+        </ol>
+    </div>
+</div>
+{% if mod.ftp_pack >= 0 %}
+  {% set ftpbar=100/mod.ftp_pack * mod.ftp_accounts %}
+  {% set ftp_package = mod.ftp_pack %}
+{% else %}
+  {% set ftpbar=0 %}
+  {% set ftp_package = '&infin;' %}
+{% endif %}
+
+<div class="row ftp_accounts_wrapper">
+    <div class="col-lg-9">
+        <div class="row" id="ftp_list_wrapper">
+          <div class="col-lg-9">
+            <div class="mail-contracted">
+              <div class="ibox-content" id="indftp">
+                  <ul class="stat-list">
+                      <li>
+                        <h2 class="no-margins" style="vertical-align: inherit;" id="tlftpind">{{langene.PGFTP}} <span id="ftpused">{{mod.ftp_accounts}}</span> / {{ftp_package|raw}}</h2>
+                        <small style="vertical-align: inherit;">{{langmod.FTPLABEL4}} / {{langmod.FTPLABEL5}}</small>
+                        <div class="stat-percent" id="ftp_percent">{{ftpbar|round}}%</div>
+                        <div class="progress progress-mini">
+                            {% if ftpbar >=26 and ftpbar <=50 %}
+                                {% set classbar = 'progress-bar progress-bar-success' %}
+                            {% elseif ftpbar >=51 and ftpbar <=75 %}
+                                {% set classbar = 'progress-bar progress-bar-warning' %}
+                            {% elseif ftpbar >75 %}
+                                {% set classbar = 'progress-bar progress-bar-danger' %}
+                            {% else %}
+                                {% set classbar = 'progress-bar' %}
+                            {% endif %}
+                            <div style="width: {{ftpbar|round(1, 'floor')}}%;" class="{{classbar}}" id="barftpind"></div>
+                        </div>
+                      </li>
+                  </ul>
+              </div>
+            </div>
+            <div class="ibox">
+              <div class="ibox-title">
+                  <div class="">
+                    {% if (mod.ftp_accounts < mod.ftp_pack) or (mod.ftp_pack == -1) %}
+                      {% set swver =''%}
+                    {% else %}
+                      {% set swver ='disabled'%}
+                    {% endif %}
+                    <h4>{{langmod.FTPLABEL1}}
+                      <button type="button" id="add_new_ftpbtn" onclick="displaynewForm()" class="btn btn-success btn-xs mr5 mb10 pull-right {{swver}}" {{swver}}><i class="fa fa-plus"></i> {{langmod.ADDFTPACCOUNT}}</button>
+                    </h4>
+                  </div>
+              </div>
+              <div class="ibox-content" id="table_ftp_container" style="padding-bottom: 0px;">
+                <!-- <table class="table table-striped table-bordered table-hover">
+                  <thead>
+                    <tr role="row">
+                      <th class="per5">#</th>
+                      <th class="sorting_asc" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-label="Browser: activate to sort column ascending">{{langmod.FTPDOMAINS}}</th>
+                      <th class="sorting_asc" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-label="Platform(s): activate to sort column ascending">{{langmod.FTPUSER}}</th>
+                      <th class="sorting" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-label="Engine version: activate to sort column ascending">{{langmod.PATH}}</th>
+                      <th class="sorting" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-label="CSS grade: activate to sort column ascending">{{langmod.ACTION}}</th>
+                    </tr>
+                  </thead>
+                  <tbody id="contftp">
+                    <tr>
+                      <td>
+                        <a href="#"><i class="fa fa-info-circle" onclick="return settingmanual('{{users}}','{{mod.ftp_domain}}')"></i> </a>
+                      </td>
+                      <td class="sorting_1">{{mod.ftp_domain}}</td>
+                      <td class="sorting_1">{{users}}</td>
+                      <td>/home/{{users}}/</td>
+                      <td>default</td>
+                    </tr>
+                    {% for ftp in mod.ftp_account %}
+                      <tr class="gradeA even" role="row">
+                        <td><a href="#"><i class="fa fa-info-circle" onclick="return settingmanual('{{ftp.domain}}','{{mod.ftp_domain}}')"></i> </a></td>
+                        <td class="sorting_1">{{mod.ftp_domain}}</td>
+                        <td class="center">{{ftp.domain}}</td>
+                        <td class="center">{{ftp.path}}</td>
+                        <td class="text-center">
+                          <button type="button" class="btn btn-primary btn-xs mr5 mb10" onclick="return changepassftp('{{ftp.domain}}')">{{langmod.FTPCHNAGEPASS}}</button>
+                          <button type="button" class="btn btn-danger btn-xs mr5 mb10" onclick="return ftpdelete(0,'{{ftp.domain}}','{{mod.ftp_domain}}',0)">{{langmod.FTPDELETEONLY}}</button>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table> -->
+                <div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-3">
+            <div class="ibox">
+                <div class="ibox-title">
+                  <h4>
+                      {{langmod.FTPMANUALSETTING}}
+                  </h4>
+                </div>
+                <div class="ibox-content" id="ftp_conf_wrapper">
+                  <div id="ftp_details">
+                    <p><b>FTP {{langmod.FTPUSER}}:</b> <samp id="userftp"></samp></p>
+                    <p><b>FTP {{langmod.FTPDOMAINS}}:</b> <samp id="serverftp"></samp> / (IP: {{mod.ftp_server}})</p>
+                    <p><b>FTP {{langmod.FTPSERVPORT}}:</b> 21</p>
+
+                  </div>
+                  <div id="ftp_details_info">
+                    <p align="center">{{langmod.FTPIMGCONF}} <a href=""><i class="fa fa-info-circle"></i></a>  {{langmod.FTPIMGCONF2}}</p>
+                  </div>
+                </div>
+            </div>
+            <div class="ibox" id="autoconfigfile">
+                <div class="ibox-title" style="padding:15px;">
+                    <h4>
+                        {{langmod.FTPCONFIGCLIENT}} <span id="config_file_account"></span>
+                    </h4>
+                </div>
+                <div class="ibox-content">
+                    <!-- <div class="row">
+                        <div class="col-sm-4">
+                            <p align="center"><a href="https://filezilla-project.org/" target="_blank"><img src="https://forum.filezilla-project.org/styles/AllanStyle-SUBSILVER/theme/images/fzlogo.png" width="50" height="50" border="0"></a></p>
+                            <p align="center" style="margin-bottom: -2px"><a id="aftpfilezilla" href="?module=ftp_accounts&acc=xmlfilezilla&client=filezilla"><i class="icomoon-icon-download"></i> {{langmod.FTPLABELFTP}}</a></p>
+                        </div>
+                        <div class="col-sm-4">
+                            <p align="center"><a href="https://panic.com/transmit/" target="_blank"><img src="https://panic.com/images/icon-transmit.png" width="55" height="50" border="0"></a></p>
+                            <p align="center"  style="margin-bottom: -2px"><a id="aftptransmit" href="?module=ftp_accounts&acc=xmlfilezilla&client=transmit"><i class="icomoon-icon-download"></i> {{langmod.FTPLABELFTP}}</a></p>
+                        </div>
+                        <div class="col-sm-4">
+                            <p align="center"><a href="https://cyberduck.io/" target="_blank"><img src="https://media.cyberduck.io/img/cyberduck-icon-384.png" width="50" height="50" border="0"></a></p>
+                            <p align="center" style="margin-bottom: -2px"><a id="aftpcyberduck" href="?module=ftp_accounts&acc=xmlfilezilla&client=cyberduck"><i class="icomoon-icon-download"></i> {{langmod.FTPLABELFTP}}</a></p>
+                        </div>
+                    </div> -->
+                    <div class="">
+                      <div class="select-client">
+                        <div class="select-client-div">
+                          <select class="form-control" id="client_ftp_conf">
+                            <option value="">Select client</option>
+                            <option value="transmit">Transmit (Panic)</option>
+                            <option value="filezilla">FileZilla</option>
+                            <option value="cyberduck">Cyber Duck</option>
+                          </select>
+                        </div>
+                        <span class="select-client-btn">
+                          <button type="button" onclick="downloadConfFile()" class="btn btn-primary">
+                            <i class="fa fa-download"></i>
+                          </button>
+                        </span>
+                      </div>
+                    </div>
+                </div>
+            </div>
+          </div>
+        </div>
+        <div class="row" id="ftp_form">
+          <div class="col-md-12">
+            <div class="ibox">
+              <div class="ibox-title">
+                  <h4 id="form_title">
+                      {{langmod.ADDNEWFTP}}
+                      <div class="pull-right">
+                        <button type="button" class="btn btn-w-m btn-sm btn-success btn-save-ftp btn-action-cwp" onclick="sendFTPForm('.btn-action-cwp')"><i class="fa fa-floppy-o" aria-hidden="true"></i>
+                          <span class="btn-cwp-tag">{{langmod.BTNSAVE}}</span>
+                        </button>
+                        <button type="button" class="btn btn-w-m btn-sm btn-warning btn-cancel-ftp btn-action-cwp" onclick="cancelForm(this)"><i class="fa fa-ban" aria-hidden="true"></i> {{langmod.BTNCANCEL}}</button>
+                      </div>
+                  </h4>
+              </div>
+              <div class="ibox-content" id="new_ftp_form">
+                <div class="form-group row">
+                    <div class="col-sm-3"><b>{{langmod.LOGINFTP}}:</b></div>
+                    <div class="col-sm-3"><input type="text" class="form-control reqfield" data-required="true" data-nospace="true" data-minlength="3" id="loginftp"></div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-sm-3" style="padding-top: 3px"><b>{{langmod.DIRECTORY}}:</b></div>
+                    <div class="col-sm-5 directory-selector-btn">
+                      <span class="btn btn-white dir-sel-btn" data-toggle="tooltip" data-placement="bottom" title="{{langmod.DOMCHOOBPAT}}" onclick="showExplorer()">
+                        <i class="fa fa-home" aria-hidden="true"></i>
+                        <div id="dirsel">/public_html/</div>
+                      </span>
+                      <input type="text" class="form-control" data-required="true" id="directoryftp" value="">
+                    </div>
+                </div>
+                <div class="form-group row" style="margin-bottom: 5px;">
+                    <div class="col-sm-3"><b>{{langmod.PASSFTP}}</b></div>
+                    <div class="col-sm-6 pass_form_div">
+                      <div id="pass_container">
+                        <input type="text" class="form-control reqfield" id="ftppass1" data-errorplace="#confpass" data-required="true" data-equalto="#ftppass2" value="">
+                      </div>
+                    <!-- <div class="col-sm-2">{{langmod.FTPRANDON}} <a href="#" onclick="return changerrandom('ftppass1')" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{langmod.ICONRANDOM}}"><i class="fa fa-cog"></i></a></div> -->
+                      <div>
+                      <span class="btn btn-default" title="Generate random password" onclick="generateNewPass('userp', this)"><i class="fa fa-key" aria-hidden="true"></i></span>
+                      <div class="btn-group dropdown" id="show_options_button">
+                        <button type="button" class="btn btn-default" onclick="openPGOPT()">{{langmod.FTPENCRYTED}}<span class="caret" style="margin-left:10px"></span></button>
+                        <div class="general-password-generator-options mysql_generator" id="pgopt_container" style="display: none;z-index: 20;box-shadow: 3px 7px 10px -6px #777;">
+                          <!-- <span class="general-password-generator-options-title"><b>Options</b></span>
+                          <span class="general-password-generator-options-close" onclick="closePGOPT()" style="cursor:pointer">s<i class="fa fa-window-close"></i></span> -->
+                            <ul class="right animated fadeIn">
+                              <li>
+                                <select class="form-control" id="lengthpass" title="Length" style="margin-bottom: 5px;">
+                                  <option value="7"> {{langmod.FTPLENGTH}}  7</option>
+                                  <option value="8"> {{langmod.FTPLENGTH}}  8</option>
+                                  <option value="9"> {{langmod.FTPLENGTH}}  9</option>
+                                  <option value="10"> {{langmod.FTPLENGTH}} 10</option>
+                                  <option value="11"> {{langmod.FTPLENGTH}} 11</option>
+                                  <option value="12" selected=""> {{langmod.FTPLENGTH}} 12</option>
+                                  <option value="13"> {{langmod.FTPLENGTH}} 13</option>
+                                  <option value="14"> {{langmod.FTPLENGTH}} 14</option>
+                                  <option value="15"> {{langmod.FTPLENGTH}} 15</option>
+                                </select>
+                              </li>
+                              <li>
+                                <select class="form-control" id="typepass" title="Type">
+                                  <option value="alf">{{langmod.FTPTYPE}} {{langmod.FTPALF}}</option>
+                                  <option value="num" selected="">{{langmod.FTPTYPE}} {{langmod.FTPALFNUM}}</option>
+                                  <option value="def">{{langmod.FTPTYPE}} {{langmod.FTPALFNUMSIG}}</option>
+                                </select>
+                              </li>
+                            </ul>
+                          </div>
+                      </div>
+                    </div>
+                    </div>
+                </div>
+
+                <div class="form-group row" style="margin-bottom: 0px;">
+                    <div class="col-sm-3"><b>{{langmod.PASS2FTP}}</b></div>
+                    <div class="col-sm-3" id="confpass">
+                      <input type="text" class="form-control" id="ftppass2">
+                      <div class="alert alert-info password-generator-copied" style="display:none;margin-bottom: 0px;">
+                          {{langmod.FTPPASSCOPIED}}
+                      </div>
+                    </div>
+                    <div class="col-sm-5"><input id="domain" value="{{mod.ftp_domain}}" type="hidden"></div>
+                </div>
+              </div>
+              <div class="ibox-footer">
+                <div class="text-right">
+                  <button type="button" class="btn btn-w-m btn-sm btn-success btn-save-ftp btn-action-cwp" onclick="sendFTPForm('.btn-action-cwp')"><i class="fa fa-floppy-o" aria-hidden="true"></i>
+                    <span class="btn-cwp-tag">{{langmod.BTNSAVE}}</span>
+                  </button>
+                  <button type="button" class="btn btn-w-m btn-sm btn-warning btn-cancel-ftp btn-action-cwp" onclick="cancelForm(this)"><i class="fa fa-ban" aria-hidden="true"></i> {{langmod.BTNCANCEL}}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row" id="ftp_form_pass">
+          <div class="col-md-12">
+            <div class="ibox">
+              <div class="ibox-title">
+                  <h4 id="form_title">
+                      <span id="ch_title"></span>
+                      <div class="pull-right">
+                        <button type="button" class="btn btn-w-m btn-sm btn-success btn-save-ftp btn-action-cwp" onclick="sendFTPPass('.btn-action-cwp')"><i class="fa fa-floppy-o" aria-hidden="true"></i>
+                          <span class="btn-cwp-tag">{{langmod.BTNSAVE}}</span>
+                        </button>
+                        <button type="button" class="btn btn-w-m btn-sm btn-warning btn-cancel-ftp btn-action-cwp" onclick="cancelChPass(this)"><i class="fa fa-ban" aria-hidden="true"></i> {{langmod.BTNCANCEL}}</button>
+                      </div>
+                  </h4>
+              </div>
+              <div class="ibox-content">
+                <div class="form-group row">
+                    <div class="col-sm-2"><b>{{langmod.LOGINFTP}}:</b></div>
+                    <div class="col-sm-3" id="user_chpass"></div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-sm-2"><b>{{langmod.FTPDOMAINS}}:</b></div>
+                    <div class="col-sm-3" id="domain_chpass"></div>
+                </div>
+                <div class="form-group row" style="margin-bottom: 5px;">
+                    <div class="col-sm-2"><b>{{langmod.NEWPASSFTP}}:</b></div>
+                    <div class="col-sm-6 pass_form_div">
+                      <div id="pass_container_ch">
+                        <input type="text" class="form-control reqfield" id="ftppass1_ch" data-errorplace="#confpass_ch" data-required="true" data-equalto="#ftppass2_ch" value="">
+                        <div class="pwstrength_viewport_progress2"></div>
+                      </div>
+                    <!-- <div class="col-sm-2">{{langmod.FTPRANDON}} <a href="#" onclick="return changerrandom('ftppass1')" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{langmod.ICONRANDOM}}"><i class="fa fa-cog"></i></a></div> -->
+                      <div>
+                      <span class="btn btn-default" title="Generate random password" onclick="generateNewPass('userch', this)"><i class="fa fa-key" aria-hidden="true"></i></span>
+                      <div class="btn-group dropdown" id="show_options_button">
+                        <button type="button" class="btn btn-default" onclick="openPGOPT('#pgopt_container_change')">{{langmod.FTPENCRYTED}}<span class="caret" style="margin-left:10px"></span></button>
+                        <div class="general-password-generator-options mysql_generator" id="pgopt_container_change" style="display: none;z-index: 20;box-shadow: 3px 7px 10px -6px #777;">
+                          <!-- <span class="general-password-generator-options-title"><b>Options</b></span>
+                          <span class="general-password-generator-options-close" onclick="closePGOPT()" style="cursor:pointer">s<i class="fa fa-window-close"></i></span> -->
+                            <ul class="right animated fadeIn">
+                              <li>
+                                <select class="form-control" id="lengthpass2" title="Length" style="margin-bottom: 5px;">
+                                  <option value="7"> {{langmod.FTPLENGTH}}  7</option>
+                                  <option value="8"> {{langmod.FTPLENGTH}}  8</option>
+                                  <option value="9"> {{langmod.FTPLENGTH}}  9</option>
+                                  <option value="10"> {{langmod.FTPLENGTH}} 10</option>
+                                  <option value="11"> {{langmod.FTPLENGTH}} 11</option>
+                                  <option value="12" selected=""> {{langmod.FTPLENGTH}} 12</option>
+                                  <option value="13"> {{langmod.FTPLENGTH}} 13</option>
+                                  <option value="14"> {{langmod.FTPLENGTH}} 14</option>
+                                  <option value="15"> {{langmod.FTPLENGTH}} 15</option>
+                                </select>
+                              </li>
+                              <li>
+                                <select class="form-control" id="typepass2" title="Type">
+                                  <option value="alf">{{langmod.FTPTYPE}} {{langmod.FTPALF}}</option>
+                                  <option value="num" selected="">{{langmod.FTPTYPE}} {{langmod.FTPALFNUM}}</option>
+                                  <option value="def">{{langmod.FTPTYPE}} {{langmod.FTPALFNUMSIG}}</option>
+                                </select>
+                              </li>
+                            </ul>
+                          </div>
+                      </div>
+                    </div>
+                    </div>
+                </div>
+
+                <div class="form-group row" style="margin-bottom: 0px;">
+                    <div class="col-sm-2"><b>{{langmod.PASS2FTP}}</b></div>
+                    <div class="col-sm-3" id="confpass_ch">
+                      <input type="text" class="form-control" id="ftppass2_ch">
+                      <div class="alert alert-info password-generator-copied" style="display:none;margin-bottom: 0px;">
+                          {{langmod.FTPPASSCOPIED}}
+                      </div>
+                    </div>
+                </div>
+              </div>
+              <div class="ibox-footer">
+                <div class="text-right">
+                  <button type="button" class="btn btn-w-m btn-sm btn-success btn-save-ftp btn-action-cwp" onclick="sendFTPPass('.btn-action-cwp')"><i class="fa fa-floppy-o" aria-hidden="true"></i>
+                    <span class="btn-cwp-tag">{{langmod.BTNSAVE}}</span>
+                  </button>
+                  <button type="button" class="btn btn-w-m btn-sm btn-warning btn-cancel-ftp btn-action-cwp" onclick="cancelChPass(this)"><i class="fa fa-ban" aria-hidden="true"></i> {{langmod.BTNCANCEL}}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+    </div>
+    {% include 'sidebar.html' %}
+  </div>
+  {% include 'footer.html' %}

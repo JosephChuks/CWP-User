@@ -1,0 +1,49 @@
+<style>
+    .siteprobuilder_wrap {
+        display: flex;
+        flex-direction: column;
+        margin-top: 50px;
+        justify-content: center;
+        align-content: center;
+        align-items: center;
+    }
+    .siteprobuilder_container {
+        max-width: 50%;
+        max-height: 50%;
+        min-width: 40vw;
+        background: #d4d4d5;
+        padding: 15px;
+        border-radius: 5px;
+    }
+</style>
+
+<div class="siteprobuilder_wrap">
+    <div class="siteprobuilder_container">
+        {% if not mod.siteprobuilder_configured %}
+			<h3>{{langmod.IS_NOT_CONFIGURED}}</h3>
+        {% elseif mod.siteprobuilder_domains %}
+            <form>
+                <input type="hidden" name="module" value="{{mod.module}}">
+                <h3>{{langmod.SELECT_DOMAIN}}</h3>
+                <div class="form-group">
+                    <label for="domain" class="control-label">{{langmod.LABEL_FOR_DOMAINS}}</label>
+                    <select id="domain" class="form-control" name="domain">
+                        {% for domain in mod.siteprobuilder_domains %}
+                            <option value="{{domain.domain}}">{{domain.domain}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+				{% if mod.siteprobuilder_error %}
+					<div>
+						<p>{{mod.siteprobuilder_error}}</p>
+					</div>
+				{% endif %}
+                <div class="form-group" style="text-align: right;">
+                    <button type="submit" class="btn btn-primary">{{langmod.SUBMIT_BTN}}</button>
+                </div>
+            </form>
+		{% else %}
+			<h3>{{langmod.DOMAINS_NOT_FOUND}}</h3>
+		{% endif %}
+    </div>
+</div>

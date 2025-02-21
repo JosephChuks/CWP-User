@@ -1,0 +1,469 @@
+
+console.log();
+let uchip = null;
+let domain_list = JSON.parse('{{mod.domains|json_encode|raw}}');
+let domain_table = null;
+let subs_qty = {{mod.sub_domain_accounts}};
+$(document).ready(function() {
+  {% if mod.isie == 1 %}
+    uchip = new $.Uchip();
+  {% else %}
+    uchip = new Uchip();
+  {% endif %}
+  table_domain(domain_list);
+  $('[data-toggle="tooltip"]').tooltip()
+  $('#newdomain').keyup(function(ev) {
+    let newpath = $(this).val();
+    $('#pathdomain').val(newpath);
+  });
+  $('#ssl_checkbox').change(function(){
+    if($(this).is(':checked')){
+      $('#san_selector').slideDown('fast');
+      $('#alert_info').fadeIn();
+    }else{
+      $('#san_selector').slideUp('fast');
+      $('#alert_info').fadeOut();
+    }
+  });
+});
+function sendNewDomain(new_domain_data){
+
+}
+function validateDomainSSL(data){
+  uchip.call('module=domains&acc=validdomains', {
+    data: data,
+    callback: function(response){
+
+    }
+  });
+}
+function saveNewDomain(){
+  let newdomain = $('#newdomain').val();
+  if(uchip.validator('#newdomain')){
+    let directory = $('#dirsel').text();
+    directory = directory.charAt(directory.length-1) == '/' ? directory : directory + '/';
+    let pathdomain = directory + $('#pathdomain').val();
+    if(pathdomain == '/'){
+      $('#pathdomain').addClass('error');
+      noti_bubble('{{langmod.DOMINVALIDPATH}}','{{langmod.DERROR}}','error',false,false,'3000',true);
+      return false;
+    }
+    let autossl = 0;
+    let sans_selected = [];
+    if($('#ssl_checkbox').is(':checked')){
+      autossl = 1;
+      let sans = $('.san-checkbox:checked');
+      if({{mod.sub_domain_pack}} > -1){
+        if((sans.length > {{mod.sub_domain_pack}} - subs_qty) && subs_qty > 0){
+          noti_bubble('{{langmod.DOMSUBLIMIT}}'+sans.length+' >>{{mod.sub_domain_pack}} '+subs_qty,'{{langmod.DERROR}}','error',false,false,'3000',true);
+          return;
+        }
+      }
+
+      sans.each(function(){
+        sans_selected.push($(this).val());
+      });
+    }
+    uchip.handleButton('.btn-save-domain','fa-floppy-o');
+    uchip.handleButton('.btn-cancel-domain','fa-ban');
+    let new_domain_data = 'newdomain=' + $('#newdomain').val() + '&pathdomain=' + pathdomain + '&autossl=' + autossl + '&sans_selected=' + sans_selected.join(',');
+    // if(autossl == 0){
+    uchip.call('module=domains&acc=newdomain', {
+      data: new_domain_data,
+      callback: function(response){
+        if(response.result != 'success'){
+          let message = '';
+          if(response.code == 1){
+            message = '{{langmod.DOMINVALIDDOM}}';
+          }else if(response.code == 2){
+            message = '{{langmod.DOMINVALIDPATH}}';
+          }else if(response.code == 409){
+            message = '{{langmod.DOMINVLIMITEX}}';
+          }else{
+            message = response.code;
+          }
+          noti_bubble(message,'{{langmod.DERROR}}','error',false,false,'3000',true);
+        }else{
+          if(autossl == 1){
+            if(response.ssl_status.type == 'created' && response.ssl_status.san_excluded.length == 0){
+              noti_bubble('{{langmod.DOMSSLSUCCESS}}','{{langmod.DSUCCT}}','success',false,false,'3000',true);
+            }else if(response.ssl_status.type == 'created' && response.ssl_status.san_excluded.length > 0){
+              noti_bubble('{{langmod.DOMSSLSUCCESS}}<br>' +
+                          '{{langmod.DOMREDIRWARNING}}<br>' +
+                          response.ssl_status.san_excluded.join(', '),'{{langmod.DSUCCT}}','warning',false,false,'6500',true);
+            }else{
+              noti_bubble('{{langmod.DDOMAINEXIT}}<br>' + '{{langmod.DOMREDIRWARNING2}}','{{langmod.DSUCCT}}','warning',false,false,'6500',true);
+            }
+          }else {
+            noti_bubble('{{langmod.DDOMAINEXIT}}','{{langmod.DSUCCT}}','success',false,false,'3000',true);
+          }
+          table_domain(response.list);
+          calculateQuota();
+          cancelNewForm();
+        }
+        uchip.handleButton('.btn-save-domain','fa-floppy-o', true);
+        uchip.handleButton('.btn-cancel-domain','fa-ban', true);
+      }
+    });
+    // }
+  }
+}
+function showExplorerEdit(path,domain){
+  $('#dir_explorer_domainEdit .modal-body').html('<div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>');
+  $('#dir_explorer_domainEdit').modal('show');
+  callDirListEdit(path,domain);
+}
+function showExplorer(){
+  $('#dir_explorer_domain .modal-body').html('<div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>');
+  $('#dir_explorer_domain').modal('show');
+  callDirList($('#dirsel').text());
+}
+function changepath(domain,path){
+  showExplorerEdit(path.replace('/home/{{users}}',''),domain);
+  return false;
+}
+function callDirListEdit(directory,domain){
+  uchip.handleButton('#sel_path_btnEdit', 'fa-thumb-tack');
+  $('#dir_explorer_domainEdit .modal-body').html('<div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>');
+  uchip.call('module=domains&acc=dirlist', {
+    data: 'basedir=' + directory,
+    callback: function(response){
+      directory = directory.charAt(directory.length-1) == '/' ? directory : directory + '/';
+      renderDirSelectorEdit(directory, response,domain);
+      uchip.handleButton('#sel_path_btnEdit', 'fa-thumb-tack', true);
+    }
+  });
+}
+function selCurrentPath(){
+  let curpath = $('#current_path_dirsel').val();
+  $('.dir-sel-btn').attr('data-original-title',curpath);
+  $('#dirsel').text(curpath);
+  $('#dir_explorer_domain').modal('hide');
+}
+function selCurrentPathEdit(){
+  let curpath = $('#current_path_dirselEdit').val();
+  $('.dir-sel-btn').attr('data-original-title',curpath);
+  uchip.call('module=domains&acc=changepath', {
+    data: 'path=' + curpath+'&domain='+$('#dir_explorer_domainEdit #domain').val()+'&type=domain',
+    callback: function(response){
+      noti_bubble('{{langmod.DDOMAINEXIT}}','{{langmod.DSUCCT}}','success',false,false,'3000',true);
+      table_domain(response.list);
+      $('#dir_explorer_domainEdit').modal('hide');
+
+    }
+  });
+  uchip.call('module=fix_acc_perm&acc=accFixIssues', {
+    data: 'fix_permissions=1&internalError=0&removeHandler=0',
+    callback: function(response){
+        return false;
+    }
+  });
+}
+function callDirList(directory){
+  uchip.handleButton('#sel_path_btn', 'fa-thumb-tack');
+  $('#dir_explorer_domain .modal-body').html('<div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>');
+  uchip.call('module=domains&acc=dirlist', {
+    data: 'basedir=' + directory,
+    callback: function(response){
+      directory = directory.charAt(directory.length-1) == '/' ? directory : directory + '/';
+      renderDirSelector(directory, response);
+      uchip.handleButton('#sel_path_btn', 'fa-thumb-tack', true);
+    }
+  });
+}
+function renderDirSelector(base, dirs){
+  let dirs_html = '';
+  dirs.forEach((dir) => {
+    dirs_html += '<div class="dir-item" data-dir="' + dir + '"><div class="row">' +
+                    '<div class="col-md-12">' +
+                      '<i class="fa fa-folder-o" aria-hidden="true"></i>' +
+                      dir +
+                    '</div>' +
+                  '</div></div>';
+  });
+  let html = '<div id="dir_list" class="container-fluid" style="display:none">' +
+                '<div class="row">' +
+                  '<div class="col-md-12 current-path-div">' +
+                    '<label class="form-label">Cuerent path</label>' +
+                    '<input type="text" id="current_path_dirsel" class="form-control" value="' + base + '" readonly>' +
+                  '</div>' +
+                '</div>' +
+                dirs_html +
+              '</div>';
+  $('#dir_explorer_domain .modal-body').html(html);
+  $('.dir-item').mouseover(function() {
+    $(this).find('.fa').removeClass('fa-folder-o').addClass('fa-folder-open-o');
+  })
+  .mouseout(function() {
+    $(this).find('.fa').removeClass('fa-folder-open-o').addClass('fa-folder-o');
+  }).click(function(){
+    let curpath = $('#current_path_dirsel').val();
+    let dir = $(this).data('dir');
+    if(dir == '..'){
+      let pieces = curpath.split('/');
+      pieces.pop();
+      pieces.pop();
+      dir = pieces.join('/')
+    }else{
+      dir = curpath + dir;
+    }
+    callDirList(dir);
+  });
+  $('#dir_list').slideDown('fast');
+}
+function renderDirSelectorEdit(base, dirs,domain){
+  $("#dir_explorer_domainEdit #domain").val(domain);
+  let dirs_html = '';
+  dirs.forEach((dir) => {
+    dirs_html += '<div class="dir-item" data-dir="' + dir + '"><div class="row">' +
+            '<div class="col-md-12">' +
+            '<i class="fa fa-folder-o" aria-hidden="true"></i>' +
+            dir +
+            '</div>' +
+            '</div></div>';
+  });
+  let html = '<div id="dir_listEdit" class="container-fluid" style="display:none">' +
+          '<div class="row">' +
+          '<div class="col-md-12 current-path-div">' +
+          '<label class="form-label">Cuerent path</label>' +
+          '<input type="text" id="current_path_dirselEdit" class="form-control" value="' + base + '" readonly>' +
+          '</div>' +
+          '</div>' +
+          dirs_html +
+          '</div>';
+  $('#dir_explorer_domainEdit .modal-body').html(html);
+  $('.dir-item').mouseover(function() {
+    $(this).find('.fa').removeClass('fa-folder-o').addClass('fa-folder-open-o');
+  })
+          .mouseout(function() {
+            $(this).find('.fa').removeClass('fa-folder-open-o').addClass('fa-folder-o');
+          }).click(function(){
+    let curpath = $('#current_path_dirselEdit').val();
+    let dir = $(this).data('dir');
+    if(dir == '..'){
+      let pieces = curpath.split('/');
+      pieces.pop();
+      pieces.pop();
+      dir = pieces.join('/')
+    }else{
+      dir = curpath + dir;
+    }
+    callDirListEdit(dir,domain);
+  });
+  $('#dir_listEdit').slideDown('fast');
+}
+function table_domain(list){
+  domain_list = list;
+  if(domain_list.length > 0){
+    let html_content = '';
+    let index = 0;
+    domain_list.forEach(function(domain){
+      let ssl_stats = '<i class="fa fa-unlock text-center" title="{{langmod.DOMNONSSL}}" data-toggle="tooltip" data-placement="top" aria-hidden="true" style="color: #ed5565; font-size: 1.5em;"></i>';
+      if (domain.ssl != 0){
+        ssl_stats = '<a href="?module=letsencrypt" title="{{langmod.DOMHAVESSL}}" data-toggle="tooltip" data-placement="top" aria-hidden="true"><i class="fa fa-lock text-center" style="color: #1ab394; font-size: 1.5em;" ></i></a>';
+      }
+      let subdomains = '<i class="fa fa-ban text-warning subdomain-icon" title="{{langmod.DOMNONESUBS}}" data-toggle="tooltip" data-placement="top" aria-hidden="true"></i>';
+      if(domain.sub > 0){
+        subdomains = '<i class="fa fa-check-circle subdomain-icon" data-toggle="tooltip" title="' + domain.sub  + (domain.sub > 1 ? ' {{langmod.DOMSUBPLU}}' : ' {{langmod.DOMSUBSSING}}') + ' created" data-placement="top" aria-hidden="true"></i>';
+      }
+      let bandwidth_container = '';
+      if({{mod.pack_bandwidth}} > -1){
+        let barcolor = uchip.getBarColor(domain.porbanw);
+        bandwidth_container = '<div class="progress" style="height: 10px;background-color: #CBCACF;">' +
+                                '<div style="width:' + domain.porbanw + '%" class="' + barcolor + '"></div>' +
+                              '</div>' + uchip.humanFileSize(domain.banw * 1024 * 2014) + ' / ' + uchip.humanFileSize({{mod.pack_bandwidth}} * 1024 * 1024);
+      }else{
+        bandwidth_container = '<div class="progress" style="height: 10px;background-color: #CBCACF;">' +
+                                '<div style="width:0%" class="progress-bar"></div>' +
+                              '</div>' + uchip.humanFileSize(domain.banw * 1024 * 2014) + ' / <span class="infinite-bandwidth">&infin;</span> MB';
+      }
+      let sublist = domain.sub_list.map(function(sub){ return sub.sub + '.' + sub.domain}).join(',');
+
+      html_content += '<tr id="trdomain_' + index + '" class="gradeA odd" role="row">' +
+                        '<td class="td-table-domain">' + domain.domain + ' <a href="http://' + domain.domain + '" target="_blank"><i class="icomoon-icon-play-3"></i></a></td>' +
+                        '<td align="center" class="td-table-domain">{{users}}</td>' +
+                        '<td class="td-table-domain">' + domain.path + '  <a href="#" onclick="return changepath(\'' + domain.domain + '\',\'' + domain.path + '\')"><i class="fa fa-edit text-center" style="color: #1ab394; font-size: 1.5em;"></i></a></td>' +
+                        '<td align="center" class="domain_bw">' +
+                          bandwidth_container +
+                        '</td>' +
+                        '<td align="center" class="td-table-domain-icon"><a href="?module=subdomains">' + subdomains + '</a></td>' +
+                        '<td align="center" class="td-table-domain-icon">' + ssl_stats + '</td>' +
+                        '<td align="center" class="td-table-domain-btn">' +
+                          '<button type="button" data-sublist="' + sublist + '" id="btn_del_' + index + '" title="{{langmod.DBTNDELETE}}" class="btn btn-danger btn-xs mr5 mb10" onclick="return domaindelete(0,\'' + domain.domain + '\',' + index + ')">' +
+                            '<i class="fa fa-trash"></i>' +
+                          '</button>' +
+                        '</td>' +
+                      '</tr>';
+      index++;
+    });
+    let table_html = '<table class="table domain_table table-striped table-bordered table-hover">' +
+                        '<thead>' +
+                          '<tr role="row">' +
+                            '<th>{{langmod.DDOMAIN}}</th>' +
+                            '<th>{{langmod.DUSER}}</th>' +
+                            '<th>{{langmod.DPATH}}</th>' +
+                            '<th>{{langmod.DONLABEL11}}</th>' +
+                            '<th>{{langmod.DSUB}}</th>' +
+                            '<th>{{langmod.DONLABEL9}}</th>' +
+                            '<th>{{langmod.DACTION}}</th>' +
+                          '</tr>' +
+                        '</thead>' +
+                        '<tbody id="contenttr">' +
+                          html_content +
+                        '</tbody>' +
+                      '</table>';
+    $('#table_domains_wrapper').html(table_html);
+    $('.domain_table').DataTable().destroy();
+    domain_table = $('.domain_table').DataTable();
+    $('[data-toggle="tooltip"]').tooltip()
+  }else{
+    $('#table_domains_wrapper').html('<div class="empty_list"><h4 class="text-success">{{langmod.DOMNOTCREATED}}</h4></div>');
+  }
+}
+function showNewDomainForm(){
+  uchip.slideToggle('#new_form_wrapper','#list_wrapper');
+}
+function cancelNewForm(){
+  uchip.slideToggle('#list_wrapper','#new_form_wrapper', function(){
+    $('#newdomain').val('');
+    $('#dirsel').text('/');
+    $('#pathdomain').val('');
+    $('#ssl_checkbox').prop('checked', false);
+    $('.san-checkbox').prop('checked', false);
+    $('.dir-sel-btn').attr('data-original-title','{{langmod.DOMCHOOBPAT}}');
+    $('#san_selector').hide();
+  });
+}
+function calculateQuota(){
+  let plan = {{mod.domain_pack}};
+  $('#domains_used').text(domain_list.length);
+  if(plan >= 0){
+    if(domain_list.length == plan){
+      $('#btn_add_domain').addClass('disabled');
+      $('#btn_add_domain').prop('disabled', true)
+    }else{
+      $('#btn_add_domain').removeClass('disabled');
+      $('#btn_add_domain').prop('disabled', false)
+    }
+    let percent = ((domain_list.length * 100) / plan).toFixed(0);
+    $('.stat-percent').text(percent + '%');
+    let barcolor = uchip.getBarColor(percent);
+    $('#bardomindpor').removeClass();
+    $('#bardomindpor').addClass(barcolor);
+    $('#bardomindpor').width(percent + '%');
+  }
+}
+function domaindelete(st,domain, index){
+  let sublist = $('#btn_del_' + index).data('sublist');
+  if(sublist != ''){
+    sublist = sublist.split(',');
+  }
+  if(st == 0){
+    // if(){
+    //
+    // }
+    let strheader = '<button type="button" class="close" data-dismiss="modal">'+
+                      '<span aria-hidden="true">×</span><span class="sr-only">{{ langmod.DOMLABEL3 }}</span>' +
+                    '</button>' +
+                    '<h4 class="modal-title text-center" style="font-size:2rem;">{{ langmod.DOMLABEL6 }}</h4>';
+    let strbody = '<p>{{langmod.DOMDELW1}} <br>' +
+                    '<strong id="descron">' + domain + '</strong>';
+    if(sublist != ''){
+      strbody += '<br><br>{{langmod.DOMDELW2}} ' + (sublist.length > 1 ? '{{langmod.DOMDELSUBPLU}}' : '{{langmod.DOMDELSUBSING}}') + ':<br>' + sublist.map(function(sub){ return '<b>' + sub + '</b>'}).join('<br>') + '<br>{{langmod.DOMDELSUBW}}<br>';
+    }
+    strbody += '<br>{{langmod.DOMDELCONF}}</p>';
+    let strfooter = '<button type="button" class="btn btn-white" data-dismiss="modal">{{ langmod.DCANDELDOMAIN }}</button>' +
+                    '<button type="button" class="btn btn-primary" id="btnyesdel" onclick="return domaindelete(1,\''+domain+'\', ' + index + ')">{{langmod.DYES}}</button>';
+    $("#deletemodaldomain .modal-footer").html(strfooter);
+    $("#deletemodaldomain .modal-body").html(strbody);
+    $("#deletemodaldomain .modal-header").html(strheader);
+    $("#deletemodaldomain").modal('toggle');
+  }else{
+    $("#deletemodaldomain").modal('hide');
+    uchip.handleButton('#btn_del_' + index,'fa-trash');
+    let tr = $('#trdomain_' + index);
+    tr.addClass('deleting_tr');
+    uchip.call('module=domains&acc=domaindelete', {
+      data: 'domain=' + domain,
+      callback: function(response){
+        if(response.result == 'success'){
+          noti_bubble('{{langmod.DSUCCT}}','{{langmod.DDELDOMAINALERT}}','success',false,false,'3000',true);
+          tr.slideUp('fast', function(){
+            domain_table.row(this).remove().draw();
+          });
+          domain_list.splice(index, 1);
+          calculateQuota();
+          subs_qty -= sublist.length;
+        }else{
+          let message = '';
+          if(response.code == 1){
+            message = '{{langmod.DDELDOMAINALERTSUB}}';
+          }else{
+            message = '{{langmod.DOMERROUNKNOW}}';
+          }
+          tr.removeClass('deleting_tr');
+          uchip.handleButton('#btn_del_' + index,'fa-trash', true);
+          noti_bubble(message,'Error','error',false,false,'3000',true);
+        }
+      }
+    });
+  }
+}
+function btn_save_domain(){
+    btnporcess('off','btn_save_domain','{{ langmod.DONLABEL10 }}');
+    if($("#newdomain").val()=='' || $("#pathdomain").val()==''){
+        noti_bubble('{{langmod.DDATEALL}}','{{langmod.DERROR}}','error',false,false,'3000',true);
+        btnporcess('on','btn_save_domain','{{ langmod.DBNTADD }}');
+        return false;
+    }else{
+        if ($('#autossl').prop('checked')){ var autossl=1; } else{ var autossl=0; }
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=domains&acc=btn_save_domain",
+            data: "newdomain="+$("#newdomain").val()+"&pathdomain="+$("#pathdomain").val()+"&autossl="+autossl,
+            complete: function(datos){
+                //alert(datos.responseText);
+                if(datos.responseText!='OK'){
+                    noti_bubble(datos.responseText,'{{langmod.DERROR}}','error',false,false,'3000',true);
+                    btnporcess('on','btn_save_domain','{{ langmod.DBNTADD }}');
+                }else{
+                    $("#newdomain").val('');
+                    $("#pathdomain").val('/public_html/');
+                    domainrefres();
+                    refrespanelnew('domains');
+                    noti_bubble('{{langmod.DDOMAINEXIT}}','{{langmod.DSUCCT}}','success',false,false,'3000',true);
+                    btnporcess('on','btn_save_domain','{{ langmod.DBNTADD }}');
+                    canceladd();
+                }
+                return false;
+            }
+        });
+    }
+}
+function btnadddomain(){
+    var headervar='<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{ langmod.DOMLABLE3 }}</span></button><h4 class="modal-title">{{ langmod.DBNTADD }}</h4>';
+    var bodyvar='<div class="row"><div class="col-sm-3"><b>{{ langmod.DDOMAIN }}:</b></div><div class="col-sm-5"><input type="text" class="form-control" style="padding:3px 0px;" id="newdomain" onkeyup="return newdomainkeyup()"></div></div><div class="row" style="padding-top: 5px"><div class="col-sm-3" style="padding-top: 3px"><b>{{ langmod.DPATH }}:</b> /home/{{ users }}</div><div class="col-sm-5"><input type="text" class="form-control" style="padding:3px 0px;" id="pathdomain" value="/public_html/"></div></div><div class="row" style="padding-top: 5px"><div class="col-sm-3" style="padding-top: 3px"><b>{{ langmod.DONLABEL8 }}</b></div><div class="col-sm-5"><input type="checkbox" class="form-controla" style="padding:3px 0px;" id="autossl"></div></div><p class="text-center"  style="padding-top: 15px"><b>{{ langmod.DONLABEL7 }}</b></p>';
+    var btnvar='<button type="button" class="btn btn-white" data-dismiss="modal">{{ langmod.DCANDELDOMAIN }}</button> <button type="button" class="btn btn-primary" onclick="return btn_save_domain()" id="btn_save_domain">{{ langmod.DBNTADD }}</button>';
+    $("#addmodal .modal-header").html(headervar);
+    $("#addmodal .modal-body").html(bodyvar);
+    $("#addmodal .modal-footer").html(btnvar);
+    $("#addmodal").modal('toggle');
+}
+function domainrefres(){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=domains&acc=domainrefres",
+        complete: function(datos){
+            $('.dataTables-example').DataTable().destroy();
+            $("#contenttr").html(datos.responseText);
+            $('.dataTables-example').DataTable();
+            return false;
+        }
+    });
+}
+function canceladd(){
+    $("#addmodal").modal('hide');
+}
+

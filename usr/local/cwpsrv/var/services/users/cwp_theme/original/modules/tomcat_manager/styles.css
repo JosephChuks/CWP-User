@@ -1,0 +1,384 @@
+.tomcat-manager-wrapper{
+    margin-top:2rem;
+}
+.tomcat-apps-actions{
+    display: flex;
+}
+.tomcat-apps-actions .fa{
+    margin: 0px;
+}
+.tomcat-apps-actions .btn{ 
+    margin-right: 5px;
+}
+.tomcat-manager-apps-list .ibox-title{
+    display: flex;
+    justify-content: space-between;
+    padding: 15px;
+    align-items: center;
+}
+.tomcat-manager-apps-list .ibox-title h4{
+    margin: 0px;
+}
+#tomcat_app_quick_actions_container,
+#tomcat_loader_window,
+#tomcat_form_window{
+    display: none;
+}
+.row-app-form{
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.row-app-form label{
+    margin: 0px;
+}
+.row-app-form small{
+    margin: 0px;
+    /* color: lemonchiffon; */
+    display: block;
+    color: #777777;
+    font-size: 1.2rem;
+}
+.required-asterisk{
+    color: #d14844 !important;
+    display: inline-block !important;
+    position: relative;
+    top: 2px;
+}
+.tomcat-app-path-selector{
+    display: flex;
+}
+.dir-sel-btn {
+    display: flex;
+    align-items: center;
+    color: inherit;
+    background: white;
+    border: 1px solid #e7eaec;
+    height: 3.2rem;
+    width: auto;
+}
+#modal_file_explorer .modal-body{
+    height: 60vh;
+    overflow: auto;
+    padding: 15px 5px;
+}
+#modal_file_explorer .modal-body{
+    max-height:70vh;
+    min-height:40vh;
+    overflow:auto;
+}
+#modal_file_explorer .dir-item:nth-child(even){
+    background-color:#f3f3f3;
+}
+#modal_file_explorer .dir-item:hover{
+    background-color:#cccccc;
+    cursor:pointer;
+    color: #333;
+}
+#modal_file_explorer .dir-item{
+    padding: 5px;
+}
+.dir-item .fa{
+    margin-right:5px;
+}
+.directory-selector-btn{
+    display:flex;
+}
+.dir-sel-btn .fa{
+    font-size: 2rem;
+    margin-right: 5px;
+}
+.dir-sel-btn{
+    display: flex;
+    align-items: center;
+}
+#dirsel-container{
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    /* border: 1px solid #999; */
+    direction: rtl;
+    text-align: left;
+    line-height: 1.5rem;
+    padding: 0px;
+    display: inline-block;
+    margin-bottom: 0px;
+}
+#dir_list{
+    padding-bottom: 10px;
+    padding-left: 10px;
+    font-size: 1.5rem;
+}
+#tomcat_form_window .panel-collapse{
+    padding: 20px 20px 5px;
+}
+.select2-container{
+    width:100% !important;
+}
+.select2-selection{
+    height: 34px !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid #ddd !important;
+    border-radius: 0px !important;
+}
+.select2-selection__rendered{
+    color:#999999 !important;
+}
+.select2-selection__arrow{
+    position:relative !important;
+}
+.tomcat-empty-env-vars{
+    display: flex;
+    height: 5vh;
+    align-items: center;
+    justify-content: center;
+}
+.env-vars-btn-container{
+    display: flex;
+    padding: 0px 2.5rem;
+}
+.env-vars-btn-container .btn-danger{
+    margin-right: 5px;
+}
+#_filled_envars_tomcat_form{
+    display: none;
+}
+#modal_file_explorer .modal-body{
+    height: 60vh;
+    overflow: auto;
+    padding: 15px 5px;
+}
+#modal_file_explorer .modal-body{
+    max-height:70vh;
+    min-height:40vh;
+    overflow:auto;
+}
+#modal_file_explorer .dir-item:nth-child(even){
+    background-color:#f3f3f3;
+}
+#modal_file_explorer .dir-item:hover{
+    background-color:#cccccc;
+    cursor:pointer;
+    color: #333;
+}
+#modal_file_explorer .dir-item{
+    padding: 5px;
+}
+.dir-item .fa{
+    margin-right:5px;
+}
+.directory-selector-btn{
+    display:flex;
+}
+.dir-sel-btn .fa{
+    font-size: 2rem;
+    margin-right: 5px;
+}
+.dir-sel-btn{
+    display: flex;
+    align-items: center;
+}
+.tomcat-footer{
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 10px;
+    padding-top: 5px;
+    border-top: 1px solid #e6e6e6;
+}
+#dirsel-container{
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    /* border: 1px solid #999; */
+    direction: rtl;
+    text-align: left;
+    line-height: 1.5rem;
+    padding: 0px;
+    display: inline-block;
+    margin-bottom: 0px;
+}
+#dir_list{
+    padding-bottom: 10px;
+}
+.modal-body{
+    font-size: 1.8rem;
+}
+.modal-body h5{
+    font-size: 1.4rem;
+}
+.modal-header h5{
+    font-size: 1.6rem;
+}
+#tomcat_loader_window .table_cron_loader{ 
+    background-color: #fff;
+    height: 40rem;
+    flex-direction: column;
+}
+#tomcat_loader_window h4{ 
+    font-size: 1.8rem;
+    margin-top: 2rem;
+}
+#_tomcat_accordion_apps{
+    margin-bottom: 0px;
+}
+#_tomcat_accordion_apps .panel-default:not(:first-child){
+    margin-top: 20px;
+}
+#modal_tomcat_app_log .modal-body{
+    padding: 0px;
+}
+#modal_tomcat_app_log .action-loader{
+    flex-direction: column;
+}
+.action-loader{
+    height: 40vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.action-loader .fa{
+    color: #3399cc;
+    font-size: 4rem;
+}
+#_npm_install_log_container_log,
+#tomcat_app_log_container{
+    height: 40vh;
+    overflow: auto;
+    background-color: #333;
+    color: #fff;
+    padding: 5px;
+    font-size: 1.2rem;
+}
+#tomcat_app_log_container p,
+#_npm_install_log_container_log p{
+    margin-bottom: 0px;
+}
+#tomcat_app_log_container p:focus,
+#_npm_install_log_container_log p:focus{
+    outline: none;
+}
+.tomcat-app-loger-controls{
+    display: flex;
+    align-items: center;
+    margin-bottom: 0px;
+    border-bottom: 1px solid #e8e8e8;
+    padding: 0px 20px 5px;
+}
+.tomcat-app-loger-controls select{
+    width: 70px;
+    margin: auto 1rem;
+}
+.tomcat-app-loger-controls .btn{
+    margin-left: 1rem;
+}
+.text-running{
+    color: #1ab394;
+}
+.dataTables_wrapper{
+    padding-bottom: 0px;
+}
+#tomcat_app_quick_actions_container{
+    display: none;
+    margin-bottom: 10px;
+}
+#tomcat_app_quick_actions_container.is-running .btn-success,
+#tomcat_app_quick_actions_container .btn-danger,
+#tomcat_app_quick_actions_container .btn-default{
+    display: none;
+}
+#tomcat_app_quick_actions_container.is-running .btn-danger,
+#tomcat_app_quick_actions_container.is-running .btn-default{
+    display: initial;
+}
+#tomcat_app_quick_actions_container .btn{
+    margin-right: 10px;
+}
+#tomcat_app_quick_actions_container .fa{
+    margin-right: 5px;
+}
+.ibox-content{
+    padding: 15px;
+}
+.error-field,
+.error-span {
+    font-size: 13px;
+    color: #FF0000;
+    font-weight: 500;
+    border: 1px solid;
+}
+#modal_file_explorer .action-loader{
+    flex-direction: column;
+}
+.tomcat-not-available{
+    min-height: 20rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+.tomcat-not-available .fa{
+    font-size: 5rem;
+}
+.tomcat-not-available h4{
+    font-size: 2rem;
+}
+.mail-contracted{
+    min-width: 20vw;
+    top:-7.9rem;
+    width: auto;
+}
+.deleting_tr{
+    background-color: #f5f5f566;
+    color: #e7eaec;
+}
+.tomcat-empty-list-version{
+    height: 20vh;
+    display: flex;
+    flex-flow: column;
+    justify-content: center;
+    align-items: center;
+}
+.tomcat-empty-list-version h4{
+    font-size: 2.5rem;
+}
+.hide-deploy-type{
+    display: none;
+}
+.file-path-selector{
+    border: 1px solid #c4c4c4;
+    padding: 8px;
+    border-radius: 2px;
+    cursor: pointer;
+}
+.file-selector.active-file{
+    background-color: #cccccc !important;
+    color: #333;
+}
+.file-path-selector span{
+    border-left: 1px solid #777777;
+    padding-left: 5px;
+}
+#modal_file_explorer .modal-body{
+    height: 45vh !important;
+}
+#modal_file_explorer .action-loader{
+    flex-flow: column;
+}
+#dir_list{
+    font-size:1.3rem !important;
+}
+.idle-sessions-container-modal{
+    display: flex;
+    align-items: center;
+    font-size: 1.5rem;
+    margin-top: 1rem;
+}
+.idle-sessions-container-modal input{
+    width:100px !important;
+    margin: 0px 10px !important;
+}

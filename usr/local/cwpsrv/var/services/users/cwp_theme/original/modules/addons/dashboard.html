@@ -1,0 +1,37 @@
+{% if app != 'installed' %}
+<div id="tab_scripts" class="tab-pane fade in active">
+    {% else %}
+    <div id="tab_scripts" class="tab-pane fade">
+        {% endif %}
+    <div class="col-md-12 text-center"> <br><br>
+        <a onclick="toogleCategory('all')"><span class="label label-success">ALL</span></a>
+        {% for fscript in mod.category %}
+        <a onclick="toogleCategory('{{fscript}}')"><span class="label label-success">{{fscript}}</span></a>
+        {% endfor %}
+        <br>
+    </div>
+
+    <div class="row" style="padding-top: 15px">
+        {% for fscript in mod.scripts %}
+        {% set featuredScript = "addons_#{fscript.code}" %}
+        {% if (featuredScript in rmenu ) or (swmenu==1) %}
+        <div class="col-md-3 all {{ fscript.category }}" style="width:30%;min-height:140px;padding:15px;box-shadow: 2px 3px 11px #c4c3c3;margin: 15px 10px;border-radius: 10px;border:1px solid #dddddd">
+            <div class="row">
+            <div class="col-md-3 text-center">
+                <img style="max-width: 50px" src="{{ fscript.logo }}" />
+            </div>
+                <div class="col-md-9" style="min-height:125px;">
+                    <b style="color:#f48513;font-size: 16px">{{ fscript.name }}</b>
+                    <p style="font-size: 13px">{{fscript.description}}</p>
+
+                    </div>
+                <div class="col-md-12" style="min-height:20px;">
+                <p><span class="btn-primary btn-xs btn pull-right" onclick="addonsshowTab('tab_sw{{ fscript.code }}','{{ fscript.code }}_form')"> <i class="fa fa-download"></i>&nbsp; Install </span></p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+
+    </div>
+</div>

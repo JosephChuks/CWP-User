@@ -1,0 +1,383 @@
+
+console.log();
+let wdlist = JSON.parse('{{mod.wdlist|json_encode|raw}}');
+let wd_table = null;
+$(document).ready(function() {
+  {% if mod.isie == 1 %}
+    uchip = new $.Uchip();
+  {% else %}
+    uchip = new Uchip();
+  {% endif %}
+  // listSLL(ssl_list);
+  $('[data-toggle="tooltip"]').tooltip()
+  let optpass1 = {};
+  optpass1.ui = {
+      container: "#pass_container",
+      showVerdictsInsideProgressBar: true,
+      viewports: {
+          progress: ".pwstrength_viewport_progress"
+      }
+  };
+  optpass1.common = {
+      debug: false,
+  };
+  $('#pass_wd').pwstrength(optpass1);
+  table_wd(wdlist);
+});
+function table_wd(list){
+  wdlist = list;
+  if(wdlist.length > 0){
+    let html_content = '';
+    let index = 0;
+    wdlist.forEach(function(wd){
+      html_content += '<tr id="trwd_' + index + '" class="gradeA odd" role="row">' +
+                        '<td class="td-table-domain">' +
+                          wd.username +
+                        '</td>' +
+                        '<td class="td-table-domain">' + wd.domain + '</td>' +
+                        '<td class="td-table-domain">' + wd.location + '</td>' +
+                        '<td align="center">' +
+                           (wd.digest == 1 ? '<span class="label label-success" style="margin-right:5px;">Auth. Digest</span>' : '') +
+                           (wd.permissions == 1 ? '<span class="label label-primary">read-write</span>' : '<span class="label label-info">readonly</span>') +
+                        '</td>' +
+                        '<td align="center" class="td-table-wd-btn">' +
+                          '<button type="button" id="btn_edit_' + index + '" data-wd=\'' + JSON.stringify(wd) + '\' title="{{langmod.DBTNDELETE}}" class="btn btn-primary btn-xs mr5 mb10" onclick="return wdedit(' + wd.id + ',this)">' +
+                            '<i class="fa fa-edit"></i>' +
+                          '</button>' +
+                          '<button type="button" id="btn_del_' + index + '" data-wd=\'' + JSON.stringify(wd) + '\' title="{{langmod.DBTNDELETE}}" class="btn btn-danger btn-xs mr5 mb10" onclick="return wddelete(0, ' + wd.id + ' ,' + index + ')">' +
+                            '<i class="fa fa-trash"></i>' +
+                          '</button>' +
+                        '</td>' +
+                      '</tr>';
+      index++;
+    });
+    let table_html = '<table class="table wd_table table-striped table-bordered table-hover">' +
+                        '<thead>' +
+                          '<tr role="row">' +
+                            '<th>Username</th>' +
+                            '<th>Domain</th>' +
+                            '<th>Path</th>' +
+                            '<th style="width:90px;" align="center">Info</th>' +
+                            '<th style="width:60px;" align="center">Actions</th>' +
+                          '</tr>' +
+                        '</thead>' +
+                        '<tbody id="contenttr">' +
+                          html_content +
+                        '</tbody>' +
+                      '</table>';
+    $('#table_webdisk_wrapper').html(table_html);
+    $('.wd_table').DataTable().destroy();
+    wd_table = $('.wd_table').DataTable();
+    $('[data-toggle="tooltip"]').tooltip()
+  }else{
+    $('#table_webdisk_wrapper').html('<div class="empty_list"><h4 class="text-success">{{langmod.WDNONECREATED}}</h4></div>');
+  }
+}
+function newDiskWindow(){
+  uchip.slideToggle('#new_form_wrapper','#list_wrapper');
+}
+function cancelNewForm(){
+  uchip.slideToggle('#list_wrapper','#new_form_wrapper', function(){
+    $('#username_wd').val('');
+    $('#pass_wd').val('');
+    $('#confpass_wd').val('');
+    $('#pass_wd').data('maybempty', false);
+    $('#confpass_wd').data('maybempty', false);
+    $('#read_write_wd').prop('checked',true);
+    $('#read_only_wd').prop('checked',false);
+    $('#digest_auth_wd').prop('checked',false);
+    $('#dirsel').text('/');
+    $('.field-new-wd').show();
+    $('.field-edit-wd').hide();
+    $('#pass_wd').pwstrength('forceUpdate');
+    uchip.validator('.reqwd', true);
+  });
+}
+function copyPass(elem){
+  let field = document.getElementById(elem);
+  field.select();
+  document.execCommand('copy');
+  noti_bubble('{{langmod.ADDCOPIEDPASS}}','{{langmod.SUCCESS}}','success',false,false,'3000',true);
+}
+function wdedit(id, elem){
+  let wddata = $(elem).data('wd');
+  $('.field-new-wd').hide();
+  $('.field-edit-wd').show();
+  $('#uname_edit').text(wddata.username);
+  $('#domain_edit').text(wddata.domain);
+  $('#dirsel').text(wddata.location);
+  if(wddata.permissions == 1){
+    $('#read_write_wd').prop('checked', true);
+    $('#read_only_wd').prop('checked', false);
+  }else{
+    $('#read_write_wd').prop('checked', false);
+    $('#read_only_wd').prop('checked', true);
+  }
+  let digest = wddata.digest == 1 ? true : false;
+  $('#pass_wd').data('maybempty', true);
+  $('#confpass_wd').data('maybempty', true);
+  $('#digest_auth_wd').prop('checked', digest);
+  $('#edit_id_wd').val(id);
+  newDiskWindow();
+}
+function wddelete(st, id, index){
+  if(st==0){
+    let wddata = $('#btn_del_' + index).data('wd');
+    let strheader = '<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{langmod.BCARNING}}</span></button><h4 class="modal-title" style="font-size: 2rem;">{{langmod.WDDELETITLE}}</h4>';
+    let strbody = '<p>{{langmod.WDDELMESS1}}</p>';
+    strbody += '<p class="para-nobottom"><b>{{langmod.WDUNAME}}:</b> ' + wddata.username + '</p>';
+    strbody += '<p class="para-nobottom"><b>{{langmod.WDDOMAIN}}:</b> ' + wddata.domain + '</p>';
+    if(wddata.location != '/'){
+      strbody +='<div class="checkbox checkbox-primary">' +
+                  '<input type="checkbox" name="delete_files_wd" id="delete_files_wd" class="checkbox checkbox-danger" value="ar">' +
+                  '<label for="delete_files_wd">Delete all files in directory <small>(' + wddata.location + ')</small></label>' +
+                '</div>';
+    }
+    strbody += '<br /><p>{{langmod.WDDELMESS2}}</p>';
+    let strfooter = '<button type="button" class="btn btn-white" data-dismiss="modal">{{langmod.WDCANCELBTN}}</button><button type="button" class="btn btn-primary" id="btnyesdel" onclick="return wddelete(1,' + id + ',' + index + ')">{{langmod.WDDELCONT}}</button>';
+    $("#deletemodal .modal-footer").html(strfooter);
+    $("#deletemodal .modal-body").html(strbody);
+    $("#deletemodal .modal-header").html(strheader);
+    ///btnporcess('on','btnyesdel','{{ langmod.DYES }}');
+    $("#deletemodal").modal('toggle');
+    return false;
+  }else{
+    $("#deletemodal").modal('hide');
+    uchip.handleButton('#btn_del_' + index,'fa-trash');
+    let tr = $('#trwd_' + index);
+    tr.addClass('deleting_tr');
+    tr.find('.btn-primary').prop('disabled', true);
+    let delete_files = $('#delete_files_wd').is(':checked') ? 1 : 0;
+    uchip.call('module=webdisk&acc=delete', {
+      data: 'index=' + id + '&delete_files=' + delete_files,
+      callback: function(response){
+        if(response.result == 'success'){
+          noti_bubble('{{langmod.WDDELSUCC}}','{{langmod.WDSUCCESS}}','success',false,false,'3000',true);
+          tr.slideUp('fast', function(){
+            wd_table.row(this).remove().draw();
+          });
+        }else{
+          let message = '{{langmod.WDDELGENERRO}}';
+          if(response.code == 1){
+            message = '{{langmod.WDDELGENERRO1wd}}';
+          }
+          tr.removeClass('deleting_tr');
+          tr.find('.btn-primary').prop('disabled', false);
+          uchip.handleButton('#btn_del_' + index,'fa-trash', true);
+          noti_bubble(message,'{{langmod.WDGENERROR}}','error',false,false,'3000',true);
+        }
+
+      }
+    });
+  }
+}
+function openPGOPT(type, second){
+  let divelem = type == null ? '#pgopt_container' : type;
+  if($(divelem).is(':visible')){
+    $(divelem).slideUp('fast');
+  }else{
+    $(divelem).slideDown('fast');
+    hideOnClickOutside(divelem, second);
+  }
+}
+function hideOnClickOutside(selector, second){
+  let forhide = true;
+  if(second === undefined){
+    second = '.show_options_button';
+    forhide = true;
+  }
+  function outsideClickListener(event){
+    $target = $(event.target);
+    if (!$target.closest(selector).length && !$target.closest(second).length  && $(selector).is(':visible')) {
+      if(forhide){
+        $(selector).slideUp('fast');
+      }else{
+        $(selector).remove();
+      }
+      removeClickListener();
+    }
+  }
+  function removeClickListener(){
+    document.removeEventListener('click', outsideClickListener)
+  }
+  document.addEventListener('click', outsideClickListener)
+}
+function generateNewPass(element){
+  let passmeter = $(element).parent().parent().find('.pass_container input');
+  let lengthpass = $(element).parent().find('.general-password-generator-options .pwlength');
+  let typepass = $(element).parent().find('.general-password-generator-options .pwtype');
+  let confpass = 'ftppass2_ch';
+  // if(type == 'userp'){
+  //   passmeter = 'ftppass1';
+  //   lengthpass = 'lengthpass';
+  //   typepass = 'typepass';
+  //   confpass = 'ftppass2';
+  // }
+  let lpass = lengthpass.val();
+  let tpass = typepass.val();
+  let new_pass = generatePasswordRand(lpass, tpass);
+  passmeter.val(new_pass);
+  passmeter.pwstrength("forceUpdate");
+  // if(type == undefined || type == 'userp'){
+  //   copyPass(passmeter);
+  // }
+  copyPass(passmeter.attr('id'));
+}
+function showExplorer(){
+  let base = $('#dirsel').text();
+  let parent_path_raw = $('#domain_wd').children("option:selected").data('path');
+  let parent_path_pieces = parent_path_raw.split('{{users}}');
+  if(base == '/'){
+    base = parent_path_pieces[1] + base;
+  }
+  $('#dir_explorer_domain .modal-body').html('<div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>');
+  $('#dir_explorer_domain').modal('show');
+  callDirList(base, $('#dirsel').text());
+}
+function selCurrentPath(){
+  let curpath = $('#current_path_dirsel').val();
+  $('.dir-sel-btn').attr('data-original-title',curpath);
+  $('#dirsel').text(curpath);
+  $('#dir_explorer_domain').modal('hide');
+}
+function callDirList(directory, basedomain){
+  uchip.handleButton('#sel_path_btn', 'fa-thumb-tack');
+  $('#dir_explorer_domain .modal-body').html('<div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>');
+  uchip.call('module=webdisk&acc=dirlist', {
+    data: 'basedir=' + directory + '&domain=' + $('#domain_wd').val(),
+    callback: function(response){
+      directory = directory.charAt(directory.length-1) == '/' ? directory : directory + '/';
+      renderDirSelector(directory, basedomain, response);
+      uchip.handleButton('#sel_path_btn', 'fa-thumb-tack', true);
+    }
+  });
+}
+function renderDirSelector(base, basedomain, dirs){
+  let dirs_html = '';
+  dirs.forEach((dir) => {
+    dirs_html += '<div class="dir-item" data-dir="' + dir + '"><div class="row">' +
+                    '<div class="col-md-12">' +
+                      '<i class="fa fa-folder-o" aria-hidden="true"></i>' +
+                      dir +
+                    '</div>' +
+                  '</div></div>';
+  });
+  let html = '<div id="dir_list" class="container-fluid" style="display:none">' +
+                '<div class="row">' +
+                  '<div class="col-md-12 current-path-div">' +
+                    '<label class="form-label">Cuerent path</label>' +
+                    '<input type="text" id="current_path_dirsel" class="form-control" value="' + basedomain + '" readonly>' +
+                    '<input type="hidden" id="current_path_dirsel2" class="form-control" value="' + base + '" readonly>' +
+                  '</div>' +
+                '</div>' +
+                dirs_html +
+              '</div>';
+  $('#dir_explorer_domain .modal-body').html(html);
+  $('.dir-item').mouseover(function() {
+    $(this).find('.fa').removeClass('fa-folder-o').addClass('fa-folder-open-o');
+  })
+  .mouseout(function() {
+    $(this).find('.fa').removeClass('fa-folder-open-o').addClass('fa-folder-o');
+  }).click(function(){
+    let curpath = $('#current_path_dirsel').val();
+    let curpath2 = $('#current_path_dirsel2').val();
+    let dir = $(this).data('dir');
+    let dir2 = '';
+    if(dir == '..'){
+      let pieces = curpath2.split('/');
+      pieces.pop();
+      pieces.pop();
+      dir = pieces.join('/')
+      pieces = curpath.split('/');
+      pieces.pop();
+      pieces.pop();
+      console.log(pieces);
+      if(pieces.length == 0){
+        dir2 = '/';
+      }else if(pieces.length == 1 && pieces[0] == ''){
+        dir2 = '/';
+      }else{
+        dir2 = pieces.join('/') + '/';
+      }
+
+    }else{
+      dir2 = curpath + dir + '/';
+      dir = curpath2 + dir;
+    }
+    callDirList(dir, dir2);
+  });
+  $('#dir_list').slideDown('fast');
+}
+function saveFormWD(){
+  if($('.field-new-wd').is(':visible')){
+    saveNewWD();
+  }else{
+    updateWD();
+  }
+}
+function updateWD(){
+  if(uchip.validator('.reqedit')){
+    uchip.handleButton('.btn-save-webdisk', 'fa-floppy-o');
+    uchip.handleButton('.btn-cancel-webdisk', 'fa-fan');
+    let password = $('#pass_wd').val();
+    password = password != '' ? Base64.encode(password) : '';
+    let mode = $('#read_write_wd').is(':checked') ? 'write' : 'read';
+    let digest = $('#digest_auth_wd').is(':checked') ? true : false;
+    let path_wd = $('#dirsel').text();
+    uchip.call('module=webdisk&acc=updatedisk', {
+      data: 'edit_id_wd=' + $('#edit_id_wd').val() + '&pass_wd=' + password + '&path_wd=' + $('#dirsel').text() + '&mode=' + mode +'&digest=' + digest,
+      callback: function(response){
+        if(response.result == 'success'){
+          noti_bubble('{{langmod.WDUPDTSUCC}}','{{langmod.WDSUCCESS}}','success',false,false,'3000',true);
+          table_wd(response.list);
+          cancelNewForm();
+        }else{
+          let message = '{{langmod.WDUPDTGENERRO}}';
+          if(response.code == 1){
+            message = '{{langmod.WDDELGENERRO1}}';
+          }
+          noti_bubble(message,'{{langmod.WDGENERROR}}','error',false,false,'3000',true);
+        }
+        uchip.handleButton('.btn-save-webdisk', 'fa-floppy-o', true);
+        uchip.handleButton('.btn-cancel-webdisk', 'fa-fan', true);
+        // directory = directory.charAt(directory.length-1) == '/' ? directory : directory + '/';
+        // renderDirSelector(directory, response);
+        // uchip.handleButton('#sel_path_btn', 'fa-thumb-tack', true);
+      }
+    });
+  }
+}
+function saveNewWD(){
+  if(uchip.validator('.reqwd')){
+    uchip.handleButton('.btn-save-webdisk', 'fa-floppy-o');
+    uchip.handleButton('.btn-cancel-webdisk', 'fa-fan');
+    let password = Base64.encode($('#pass_wd').val());
+    let mode = $('#read_write_wd').is(':checked') ? 'write' : 'read';
+    let digest = $('#digest_auth_wd').is(':checked') ? true : false;
+    let path_wd = $('#path_wd').val();
+    path_wd = $('#dirsel').text() + (path_wd.charAt(path_wd.length-1) == '/' || path_wd == '' ? path_wd : path_wd + '/');
+    uchip.call('module=webdisk&acc=savedisk', {
+      data: 'username_wd=' + $('#username_wd').val() + '&domain_wd=' + $('#domain_wd').val() + '&pass_wd=' + password + '&path_wd=' + path_wd + '&mode=' + mode +'&digest=' + digest,
+      callback: function(response){
+        if(response.result == 'success'){
+          noti_bubble('{{langmod.WDADDEDSUCC}}','{{langmod.WDSUCCESS}}','success',false,false,'3000',true);
+          table_wd(response.list);
+          cancelNewForm();
+        }else{
+          let message = '{{langmod.WDADDEDERR}}';
+          if(response.code == 1){
+            message = '{{langmod.WDADDEDERR1}}';
+          }else if(response.code == 2){
+            message = '{{langmod.WDADDEDERR2}}';
+          }
+          noti_bubble(message,'{{langmod.WDGENERROR}}','error',false,false,'3000',true);
+        }
+        uchip.handleButton('.btn-save-webdisk', 'fa-floppy-o', true);
+        uchip.handleButton('.btn-cancel-webdisk', 'fa-fan', true);
+        // directory = directory.charAt(directory.length-1) == '/' ? directory : directory + '/';
+        // renderDirSelector(directory, response);
+        // uchip.handleButton('#sel_path_btn', 'fa-thumb-tack', true);
+      }
+    });
+  }
+}

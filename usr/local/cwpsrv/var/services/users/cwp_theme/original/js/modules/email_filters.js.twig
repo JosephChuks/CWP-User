@@ -1,0 +1,1694 @@
+
+console.log();
+let html_rule = '';
+let html_action = '';
+const ActionRegExp = /{ACTION_INDEX}/g;
+const RuleRegExp = /{RULE_INDEX}/g;
+const TEMPLATE_FORM_PARAMETERS = {
+  rules_wrapper: '#rules_filter',
+  actions_wrapper: '#actions_filters_preset',
+  join_selector: 'name=_join',
+  name_selector: '#filter_name' //filter_name_toaccount
+};
+let varname_reg = /^[a-zA-Z0-9]{1,12}$/
+let domain_list = [];
+let templates_table = null;
+let presetlist = JSON.parse('{{mod.presets|json_encode|raw}}');
+$(document).ready(function() {
+  {% if mod.isie == 1 %}
+    uchip = new $.Uchip();
+  {% else %}
+    uchip = new Uchip();
+  {% endif %}
+  listAccounts();
+  tablePresets(presetlist);
+  $('#filter_to_accounts').tagsinput({
+    tagClass: 'cwp-tags-input'
+  });
+  let modDomains = JSON.parse('{{mod.domains|json_encode|raw}}');
+  modDomains.forEach(function(dom){
+    let domain = dom.domain;
+    if(domain.type == "subdomain"){
+      domain = dom.subdomain + '.' + dom.domain;
+    }
+    domain_list.push(domain);
+  });
+  $('#filter_to_accounts').on('beforeItemAdd', function(event) {
+    if(!validateEmail(event.item)){
+      event.cancel = true;
+      noti_bubble('{{langmod.EMFILTERSLAB95}}','{{langmod.EMFILTERSLAB96}}!','error',false,false,'3000',true);
+    }else if(!validDomainEmail(event.item)){
+      event.cancel = true;
+      noti_bubble('Invalid domain','{{langmod.EMFILTERSLAB96}}!','error',false,false,'3000',true);
+    }
+    // event.item: contains the item
+    // event.cancel: set to true to prevent the item getting added
+  });
+  $('[data-toggle=tab]').on('show.bs.tab', function (e) {
+    let target = e.target.dataset.idenifier;
+    if(target == '#tab-1' && $('#new_filter_form').is(':visible')){
+      confirmChangeTab(function(){
+        presetBackFrom('#new_filter_form');
+      });
+    }else if(target == '#tab-2' && $('#email_filters_manager').is(':visible')){
+      confirmChangeTab(function(){
+        cancelFilterFormAccount();
+        $('#goat_wrap').hide();
+        $('#list_presets').show(); 
+      });
+    } else if (target == '#tab-2'){
+      $('#goat_wrap').hide();
+      $('#list_presets').show(); 
+    }
+
+  });
+  // $('#save_type_domain_list').select2();
+});
+function cancelPreset(){
+  confirmChangeTab(function(){
+    presetBackFrom('#goat_wrap');
+    $('#filter_name').val('');
+    $('#_allof').prop('checked', true);
+  });
+
+}
+function confirmChangeTab(onConfirm){
+  let r = confirm("{{langmod.EMFILTERSLAB125}}");
+  if (r !== true) {
+    return;
+  }else{
+    onConfirm();
+  }
+}
+function deleteTemplate(index, action) {
+  let li_element = $('#trpreset_' + index);
+  let set_name = li_element.data('name');
+  if (action !== true) {
+    $('#conf_del_buttons').html('<button type="button" class="btn btn-white" data-dismiss="modal">{{langmod.EMFILTERSLAB131}}</button>' +
+      '<button type = "button" class= "btn btn-primary" onclick="deleteTemplate(' + index + ', true)" > {{langmod.EMFILTERSLAB132}}</button >');
+    $('#modal_del_item_filter .modal-body').html('<p style="font-weight: 500;">{{langmod.EMFILTERSLAB168}}: <b>' + set_name + '</b>.' +
+      '<br> <span style="font-weight: bold;">{{langmod.EMFILTERSLAB150}}</span></p >');
+    $("#modal_del_item_filter").modal('toggle');
+  } else {
+    li_element.addClass('deleting_row');
+    uchip.handleButton('#_btn_edit_preset_' + index, 'fa-edit');
+    uchip.handleButton('#_btn_del_preset_' + index, 'fa-trash');
+    $("#modal_del_item_filter").modal('toggle');
+    uchip.call('module=email_filters&acc=deletetemplate', {
+      data: 'template=' + set_name,
+      callback: function (response) {
+        if (response.hasOwnProperty('result') && response.result === 'success') {
+          noti_bubble('{{langmod.EMFILTERSLAB169}}', '{{langmod.EMFILTERSLAB101}}', 'success', false, false, '3000', true);
+          li_element.slideUp('fast', function () {
+            templates_table.row(this).remove().draw();
+          });
+        } else {
+          let message_error = '{{langmod.EMFILTERSLAB141}}';
+          if (response.hasOwnProperty('code')) {
+            if (response.code == 2) {
+              message_error = '{{langmod.EMFILTERSLAB143}}';
+            } else if (response.code == 1) {
+              message_error = '{{langmod.EMFILTERSLAB170}}';
+            }
+          }
+          noti_bubble(message_error, '{{langmod.EMFILTERSLAB96}}', 'error', false, false, '5000', true);
+          li_element.removeClass('deleting_row');
+          uchip.handleButton('#_btn_edit_preset_' + index, 'fa-edit', true);
+          uchip.handleButton('#_btn_del_preset_' + index, 'fa-trash', true);
+        }
+      }
+    });
+  }
+}
+function templateToForm(template, parameters){
+  parameters = parameters === undefined ? TEMPLATE_FORM_PARAMETERS : parameters;
+  templateInitForm(parameters);
+  bindTagsInput(0);
+  let $radios = $('input:radio[' + parameters.join_selector + ']');
+  $(parameters.name_selector).val(template.general.name);
+  $radios.filter('[value=' + template.general.filter_type + ']').prop('checked', true);
+  matchingType(parameters.rules_wrapper);
+  if (template.general.filter_type !== 'any') {
+    renderRulesEditTemplate(template.rules, parameters.rules_wrapper);
+  }
+  renderActionsEditTemplate(template.actions, parameters.actions_wrapper);
+}
+function renderActionsEditTemplate(actions, actions_wrapper) {
+  let index = 0;
+  do {
+    let action = actions[index];
+    if (index !== 0) {
+      $(actions_wrapper).append(html_action.replace(ActionRegExp, index));
+      bindTagsActionsInput(index);
+    }
+    let action_type = $('#action_type' + index);
+    action_type.val(action.type);
+    actionType(action_type);
+    if (action.type === 'redirect_copy' || action.type === 'redirect') {
+      $('#_action_row_' + index).find('.redirection-filter-address').val(action.addres);
+    } else if (action.type === 'reject') {
+      $('#action_target_area' + index).val(action.message);
+    } else if (action.type === 'fileinto' || action.type === 'fileinto_copy') {
+      $('#action_mailbox' + index).val(action.redirect_to);
+    } else if (action.type === 'vacation') {
+      $('#vacation_message_area' + index).val(action.message);
+      let div_action = $('#_action_row_' + index);
+      div_action.find('.vacation-action-subject').val(action.subject);
+      div_action.find('.vacation-action-sndradd').val(action.sender);
+      if (action.addresses !== undefined) {
+        fillInputTags(action.addresses, div_action.find('.vacation-action-myadds'));
+      }
+      div_action.find('.vacation-action-days').val(action.days !== undefined ? action.days : (action.often !== undefined ? action.often : ''));
+    } else if (action.type === 'setflag' || action.type === 'addflag' || action.type === 'removeflag') {
+      // let $check_flags = $('input:checkbox[name=filter_action_flags' + index + ']');
+      // action.target.forEach(function(flag){
+      //   $check_flags.filter('[value=' + flag + ']').prop('checked', true);
+      // });
+      poblateChecksActions('filter_action_flags' + index, action.flags);
+    } else if (action.type === 'set') {
+      console.log('ACTION', action);
+      $('#action_varname' + index).val(action.name);
+      $('#action_varvalue' + index).val(action.value);
+      poblateChecksActions('_action_varmods' + index, action.modifiers);
+      // let $check_modifiers = $('input:checkbox[name=filter_action_flags' + index + ']');
+      // action.target.forEach(function (flag) {
+      //   $check_flags.filter('[value=' + flag + ']').prop('checked', true);
+      // });
+    } else if (action.type === 'notify') {
+      $('#action_notifytarget' + index).val(action.target);
+      $('#action_notifymessage' + index).val(action.message);
+      $('#action_notifyfrom' + index).val(action.sender);
+      $('#_action_notifyimportance' + index).val(action.importance);
+    }
+    index++;
+  } while (index < actions.length);
+}
+function renderRulesEditTemplate(rules, rules_wrapper) {
+  let index = 0;
+  do {
+    let rule = rules[index];
+    if (index !== 0) {
+      $(rules_wrapper).append(html_rule.replace(RuleRegExp, index));
+      bindTagsRulesInput(index);
+    }
+    let rule_header = $('#rule_type' + index);
+    rule_header.val(rule.type);
+    let selindex = rule_header.prop('selectedIndex');
+    ruleType(rule_header);
+    if (selindex < 5) {
+      renderRulesTexts(index, rule, selindex);
+    } else if (selindex === 5) {
+      renderRulesSize(index, rule);
+    } else if (selindex > 5 && selindex < 8) {
+      renderRulesDate(index, rule);
+    }
+    index++;
+  } while (index < rules.length);
+}
+function editTemplate(index){
+  let template_name = $('#trpreset_' + index).data('name');
+  uchip.slideToggle('#goat_wrap', '#list_presets', function(){
+    $('#new_filter_form').hide();
+    $('#preset_form_loader').show();
+    $('#_template_editor_title').html('{{langmod.EMFILTERSLAB173}}: ' + template_name);
+  });
+  $('#editor_action').val('update');
+  $('#editing_index').val(template_name);
+  uchip.call('module=email_filters&acc=gettemplateinfo', {
+    data: 'name=' + template_name,
+    callback: function (response) {
+      if (response.hasOwnProperty('result') && response.result === 'success') {
+        uchip.slideToggle('#new_filter_form', '#preset_form_loader', function () {
+          templateToForm(response.template_data);
+        });
+      } else {
+        let message_error = '{{langmod.EMFILTERSLAB141}}';
+        if (response.hasOwnProperty('code')) {
+          if (response.code == 2) {
+            message_error = '{{langmod.EMFILTERSLAB143}}';
+          } else if (response.code == 1) {
+            message_error = '{{langmod.EMFILTERSLAB170}}';
+          }
+        }
+        uchip.slideToggle('#list_presets', '#goat_wrap', function () {
+          $('#new_filter_form').show();
+          $('#preset_form_loader').hide();
+        });
+        noti_bubble(message_error, '{{langmod.EMFILTERSLAB96}}', 'error', false, false, '5000', true);
+      }
+    }
+  });
+}
+function createFromTemplate(index){
+  let template_name = $('#_template_trpreset_' + index).data('name');
+  let email = $('#set_filter_account').val();
+  $('#modal_pick_template').modal('toggle');
+  uchip.slideToggle('#email_filters_manager', '#email_filters_main', function () {
+    $('#filter_title_prefix_account').text('{{langmod.EMFILTERSLAB172}}');
+    $('#filter_title_account').text(email);
+    $('#filter_for_account').val(email);
+    $('#editor_action').val('create');
+    $('#editing_index').val(template_name);
+    $('#editor_form').hide();
+    $('#editor_loader').show();
+    uchip.call('module=email_filters&acc=gettemplateinfo', {
+      data: 'name=' + template_name,
+      callback: function (response) {
+        if (!response.hasOwnProperty('result') || response.result === 'error') {
+          let message_error = '{{langmod.EMFILTERSLAB141}}';
+          if (response.hasOwnProperty('code')) {
+            if (response.code == 1) {
+              message_error = '{{langmod.EMFILTERSLAB170}}';
+            }
+          }
+          uchip.slideToggle('#email_filters_main', '#email_filters_manager');
+          noti_bubble(message_error, '{{langmod.EMFILTERSLAB96}}', 'error', false, false, '5000', true);
+        } else {
+          // console.log('KENJI');
+          templateToForm(response.template_data, {
+            rules_wrapper: '#rules_filter_account',
+            actions_wrapper: '#actions_filters_account',
+            join_selector: 'name=_join_account',
+            name_selector: '#filter_name_toaccount' //filter_name_toaccount
+          });
+        }
+        uchip.slideToggle('#editor_form', '#editor_loader');
+      }
+    });
+  });
+  // uchip.call('module=email_filters&acc=gettemplateinfo', {
+  //   data: 'name=' + template_name,
+  //   callback: function (response) {
+  //     if (response.hasOwnProperty('result') && response.result === 'success') {
+  //       uchip.slideToggle('#new_filter_form', '#preset_form_loader', function () {
+  //         templateToForm(response.template_data);
+  //       });
+  //     } else {
+  //       let message_error = '{{langmod.EMFILTERSLAB141}}';
+  //       if (response.hasOwnProperty('code')) {
+  //         if (response.code == 2) {
+  //           message_error = '{{langmod.EMFILTERSLAB143}}';
+  //         } else if (response.code == 1) {
+  //           message_error = '{{langmod.EMFILTERSLAB170}}';
+  //         }
+  //       }
+  //       uchip.slideToggle('#list_presets', '#goat_wrap', function () {
+  //         $('#new_filter_form').show();
+  //         $('#preset_form_loader').hide();
+  //       });
+  //       noti_bubble(message_error, '{{langmod.EMFILTERSLAB96}}', 'error', false, false, '5000', true);
+  //     }
+  //   }
+  // });
+}
+function tablePresets(list, return_html){
+  presetlist = list;
+  mod_prefix = '';
+  if (return_html === true) {
+    mod_prefix = '_template_';
+  }
+  if(presetlist.length > 0){
+    let html_content = '';
+    let index = 0;
+    presetlist.forEach(function(preset){
+      let btn_actions = '<button class="btn btn-xs btn-success" id="_btn_edit_preset_' + index + '" onclick="editTemplate(' + index + ')" style="margin-right:5px;"><i class="fa fa-edit"></i></button>' +
+                        '<button class="btn btn-xs btn-danger" id="_btn_del_preset_' + index + '" onclick="deleteTemplate(' + index + ')"><i class="fa fa-trash"></i></button>';
+      if (return_html === true){
+        btn_actions = '<button class="btn btn-xs btn-success btn-xxs" onclick="createFromTemplate(' + index + ')" style="margin-right:5px;"><i class="fa fa-sticky-note-o"></i> Use this</button>';
+      }
+      html_content += '<tr id="' + mod_prefix + 'trpreset_' + index + '" data-name="' + preset.name + '" class="gradeA odd" role="row">' +
+                        '<td>' + preset.name + '</td>' +
+                        '<td style="width:140px">' +
+                          '<span class="badge badge-success mr5">' + preset.rules +  ' {{langmod.EMFILTERSLAB127}}</span> ' +
+                        '</td>' +
+                        '<td style="width:140px">' +
+                          '<span class="badge badge-primary">' + preset.actions +  ' {{langmod.EMFILTERSLAB129}}</span> ' +
+                        '</td>' +
+                        '<td style="width:80px">' +
+                          btn_actions +
+                        '</td>' +
+                      '</tr>';
+      index++;
+    });
+    let table_html = '<table class="table ' + mod_prefix + 'preset_table table-striped table-bordered table-hover">' +
+                        '<thead>' +
+                          '<tr role="row">' +
+                            '<th>Name</th>' +
+                            '<th style="width:140px">{{langmod.EMFILTERSLAB126}}</th>' +
+                            '<th style="width:140px">{{langmod.EMFILTERSLAB128}}</th>' +
+                            '<th style="width:80px">&nbsp;</th>' +
+                          '</tr>' +
+                        '</thead>' +
+                        '<tbody id="contenttr">' +
+                          html_content +
+                        '</tbody>' +
+                      '</table>';
+    if (return_html === undefined){
+      $('#table_preset_container').html(table_html);
+      $('.preset_table').DataTable().destroy();
+      templates_table = $('.preset_table').DataTable({
+        "columnDefs": [
+          { "orderable": false, "targets": [1, 2, 3] }
+        ]
+      });
+      $('[data-toggle="tooltip"]').tooltip()
+    }else{
+      return table_html;
+    }
+  }else{
+    let empty_html = '<div class="empty_list"><h4 class="text-success">{{langmod.EMFILTERSLAB177}}</h4></div>';
+    if (return_html === undefined) {
+      $('#table_preset_container').html(empty_html);
+    }else{
+      return empty_html;
+    }
+  }
+}
+function savePreSet() {
+  let valid = validFilter();
+  if (valid === true) {
+    let filter_data = getFilterData();
+    let editor_action = $('#editor_action').val();
+    let original_name = $('#editing_index').val();
+    uchip.handleButton('.cancel-preset', 'fa-ban');
+    uchip.handleButton('.save-preset', 'fa-floppy-o');
+    uchip.slideToggle('#preset_form_loader', '#new_filter_form');
+    uchip.call('module=email_filters&acc=newpreset', {
+      data: 'data=' + Base64.encode(filter_data) + '&editor_action=' + editor_action + '&original_name=' + original_name,
+      callback: function (response) {
+        if (response.hasOwnProperty('result') && response.result === 'success') {
+          // uchip.slideToggle('#filter_account_form', '#filter_account_form_loader');
+          tablePresets(response.list);
+          uchip.handleButton('.cancel-preset-account', 'fa-ban', true);
+          uchip.handleButton('.save-preset-account', 'fa-floppy-o', true);
+          uchip.handleButton('.cancel-preset', 'fa-ban', true);
+          uchip.handleButton('.save-preset', 'fa-floppy-o', true);
+          $('#filter_name').val('');
+          $('#_allof').prop('checked', true);
+          presetBackFrom('#goat_wrap');
+          setTimeout(function () {
+            uchip.slideToggle('#new_filter_form', '#preset_form_loader');
+          }, 400);
+
+          noti_bubble('{{langmod.EMFILTERSLAB100}}', '{{langmod.EMFILTERSLAB101}}', 'success', false, false, '3000', true);
+          // displayNewFilter({
+          //   'name': filter_name,
+          //   'status': response.filter_status
+          // }, filter_set);
+          // cancelFilterFormAccount();
+        } else {
+          let message_error = '{{langmod.EMFILTERSLAB141}}';
+          if (response.hasOwnProperty('code')) {
+            if (response.code == 2) {
+              message_error = '{{langmod.EMFILTERSLAB143}}';
+            } else if (response.code == 1) {
+              message_error = '{{langmod.EMFILTERSLAB144}}';
+            }
+          }
+          noti_bubble(message_error, '{{langmod.EMFILTERSLAB96}}', 'error', false, false, '5000', true);
+        }
+      }
+    });
+  } else {
+    noti_bubble('{{langmod.EMFILTERSLAB102}}', '{{langmod.EMFILTERSLAB96}}', 'error', false, false, '3000', true);
+  }
+}
+function validateEmail(email) {
+  var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  return re.test(email);
+}
+function validDomainEmail(email) {
+  let pieces = email.split('@');
+  let index = domain_list.findIndex(function(dom){
+    return dom == pieces[1];
+  });
+  return index > -1 ? true : false;
+}
+function addNewRule(){
+  let last_index = $('.rules-filter-wrapper:visible .rules-filter:last-child').data('index');
+  $('.rules-filter-wrapper:visible').append(html_rule.replace(RuleRegExp, last_index + 1));
+  $('#filter_value' + (last_index + 1)).tagsinput({
+    tagClass: 'cwp-tags-input'
+  });
+  $('#rule_custom' + (last_index + 1)).tagsinput({
+    tagClass: 'cwp-tags-input'
+  });
+  $('#rule_custom' + (last_index + 1)).on('beforeItemAdd', function (event) {
+    if (!varname_reg.test(event.item)) {
+      event.cancel = true;
+      noti_bubble('{{langmod.EMFILTERSLAB130}}', '{{langmod.EMFILTERSLAB96}}', 'error', false, false, '3000', true);
+    }
+  });
+}
+function remRule(index, type, confirmed){
+  if(confirmed === undefined){
+    $('#conf_del_buttons').html('<button type="button" class="btn btn-white" data-dismiss="modal">{{langmod.EMFILTERSLAB131}}</button>' + 
+    '<button type = "button" class= "btn btn-primary" onclick="remRule(' + index + ', \'' + type + '\',true)" > {{langmod.EMFILTERSLAB132}}</button >');
+    $('#modal_del_item_filter .modal-body').html('<p style="font-weight: 500;">{{langmod.EMFILTERSLAB149}} <span id="item_filter_deleting">' + (type === 'rule' ? 'rule' : 'action') + '</span>.' +
+                                      '<br> <span style="font-weight: bold;">{{langmod.EMFILTERSLAB150}}</span></p >');
+    $("#modal_del_item_filter").modal('toggle');
+  }else{
+    let elem = '#' + (type === 'rule' ? '_rule_row_' : '_action_row_') + index;
+    $(elem).slideUp('fast', function () {
+      $(this).remove();
+    });
+    $('#modal_del_item_filter').modal('hide');
+  }
+}
+function addNewAction(){
+  let last_index = $('.actions-filters:visible .redirection-filter:last-child').data('index');
+  $('.actions-filters:visible').append(html_action.replace(ActionRegExp, last_index + 1));
+  $('#_action_notifyoption' + (last_index + 1)).tagsinput({
+    tagClass: 'cwp-tags-input'
+  });
+  $('#_vacation_addresses' + (last_index + 1)).tagsinput({
+    tagClass: 'cwp-tags-input'
+  });
+  $('#_vacation_addresses' + (last_index + 1)).on('beforeItemAdd', function (event) {
+    if (!validateEmail(event.item)) {
+      event.cancel = true;
+      noti_bubble('{{langmod.EMFILTERSLAB133}}', '{{langmod.EMFILTERSLAB96}}', 'error', false, false, '3000', true);
+    }
+  });
+  ui_account_folders.forEach(function(folder){
+    $('.action-redirect-to:not(.added-folders)').append(new Option(folder, folder));
+  });
+  $('.action-redirect-to').addClass('added-folders');
+}
+function actionType(elem){
+  let value = $(elem).val();
+  let parent = $(elem).parent();
+  parent.find('.subnormal').hide();
+  if(value == 'fileinto' || value == 'fileinto_copy'){
+    parent.find('.redirection-filter-natural').show();
+  }else if(value == 'redirect' || value == 'redirect_copy'){
+    parent.find('.redirection-filter-natural').hide();
+    parent.find('.redirection-filter-address').show();
+  }else if(value == 'reject'){
+    parent.find('.redirection-filter-natural').hide();
+    parent.find('.redirection-filter-message').show();
+  } else if (value == 'vacation') {
+    parent.find('.redirection-filter-natural').hide();
+    parent.find('.vacation-action-message-wrapper').show();
+  }else if(value == 'setflag' || value == 'addflag' || value == 'removeflag'){
+    parent.find('.redirection-filter-natural').hide();
+    parent.find('.redirection-filter-flags').show();
+  }else if(value == 'set'){
+    parent.find('.redirection-filter-natural').hide();
+    parent.find('.redirection-filter-vars').show();
+  }else if(value == 'notify'){
+    parent.find('.redirection-filter-natural').hide();
+    parent.find('.redirection-filter-notify').show();
+  }else if(value == 'discard' || value == 'keep' || value == 'stop'){
+    parent.find('.redirection-filter-natural').hide();
+  }
+}
+function ruleType(elem){
+  let value = $(elem).val();
+  let parent = $(elem).parent();
+  parent.find('.subnormal').hide();
+  parent.find('.filter-by-size').hide();
+  parent.find('.rules-filter-contains').val('contains');
+  if(value == '...'){
+    parent.find('.rules-filter-custom-wrapper').show();
+  }else if(value == 'size'){
+    parent.find('.filter-normal').hide();
+    parent.find('.filter-by-size').show();
+  }else if(value == 'date' || value == 'currentdate'){
+    parent.find('.rules-filter-date').show();
+    parent.find('.filter-normal').show();
+  }else{
+    parent.find('.filter-normal').show();
+  }
+}
+function matchingType(elem){
+  if($('#_any').is(':checked') || $('#_any_account').is(':checked')){
+    $(elem).slideUp('fast');
+  }else{
+    $(elem).slideDown('fast');
+  }
+}
+function containType(elem){
+  let currval = $(elem).val();
+  let rule_wrapper = $(elem).next('.rules-filter-value-wrapper')
+  if(currval == 'exists' || currval == 'notexists'){
+    rule_wrapper.hide();
+  }else{
+    let selindex = $(elem).prop('selectedIndex');
+    rule_wrapper.show();
+    if(selindex > 9){
+      rule_wrapper.find('.rules-filter-value').data('type', 'numeric')
+    }else{
+      rule_wrapper.find('.rules-filter-value').data('type', 'string')
+    }
+  }
+}
+function validFilter(){ 
+  function placeError(elem_parent, message){
+    elem_parent.parent().find('.error-span').remove();
+    elem_parent.after('<span class="error-span">' + message + '</span>');
+  }
+  let valid = true;
+  $('.data-required:visible').each(function(){
+    let numeric = $(this).data('numeric');
+    let isemail = $(this).data('isemail');
+    let isvarname = $(this).data('isvarname');
+    let numeric_reg = /^\d+$/;
+    let itemval = $(this).val();
+    let optional = $(this).data('isoptional');
+    if (itemval == '' && optional === undefined){
+      valid = false;
+      $(this).addClass('error');
+    } else if (isemail !== undefined && itemval != '' && !validateEmail(itemval)){
+      console.log('optional', optional);
+      valid = false;
+      $(this).addClass('error');
+    } else if (isvarname !== undefined && itemval != '' && !varname_reg.test(itemval)) {
+      valid = false;
+      $(this).addClass('error');
+    } else if (numeric !== undefined && itemval != '' && !numeric_reg.test(itemval)){
+      valid = false;
+      $(this).addClass('error');
+    }else{
+      $(this).removeClass('error');
+    }
+  });
+  $('.rules-filter-value-wrapper:visible .rules-filter-value').each(function(){
+    let validtags = true;
+    let elem_value = $(this).val();
+    let elem_parent = $(this).parent().find('.bootstrap-tagsinput');
+    if(elem_value != ''){
+      let numeric_reg = /^\d+$/;
+      let values = elem_value.split(',');
+      let type = $(this).data('type');
+      let index = $(this).data('index');
+      values.forEach(function(item){
+        if(type == 'numeric' && !numeric_reg.test(item)){
+          validtags =  false;
+          elem_parent.addClass('error_filter');
+          // elem_parent.parent().append('<span class="error-span">Number required</span>');
+          placeError(elem_parent, '{{langmod.EMFILTERSLAB98}}');
+        }else if(type == 'string'){
+          if (item == ''){
+            validtags = false;
+            elem_parent.addClass('error_filter');
+            placeError(elem_parent, '{{langmod.EMFILTERSLAB99}}');
+          } else if ($('#rule_date' + index).is(':visible')){
+            let date_val = $('#rule_date' + index).val();
+            if (!checkDateInput(date_val, item)){
+              validtags = false;
+              elem_parent.addClass('error_filter');
+              placeError(elem_parent, '{{langmod.EMFILTERSLAB99}}');
+            }
+          }
+        }
+      });
+    }else{
+      validtags = false;
+      elem_parent.addClass('error_filter');
+      placeError(elem_parent, '{{langmod.EMFILTERSLAB99}}');
+    }
+    if(validtags === true){
+      elem_parent.removeClass('error_filter');
+      elem_parent.parent().find('.error-span').remove();
+    }
+    valid = valid && validtags;
+  });
+  if(!valid){
+    noti_bubble('Fields marked in red are required', 'Error!','error',false,false,'3000', true);  
+  }
+  return valid;
+}
+function checkDateInput(date_type, val){
+  let numeric_reg = /^\d+$/;
+  let month_reg = /^(0[1-9]|1[012])$/;
+  let day_reg = /^(0[1-9]|[12][0-9]|3[01])$/;
+  let hour_reg = /^([0-1][0-9]|2[0-3])$/;
+  let weekday_reg = /^[0-6]$/;
+  let timezone_reg = /^([+-](?:2[0-3]|[01][0-9]):[0-5][0-9])$/;
+  let minute_reg = /^[0-5][0-9]$/;
+  let time_reg = /(?:[01]\d|2[0-3]):(?:[0-5]\d):(?:[0-5]\d)/;
+  let date_reg = /^(19|20)\d\d([- /.])(0[1-9]|1[012])\2(0[1-9]|[12][0-9]|3[01])$/
+  let date_iso_reg = /^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$/
+  if (date_type == 'date' && !date_reg.test(val)){
+    return false;
+  } else if (date_type == 'iso8601' && !date_iso_reg.test(val)){
+    return false;
+  } else if ((date_type == 'julian' && val.length != 5 && val.length != 7) || (date_type == 'julian' && !numeric_reg.test(val))){
+    return false;
+  } else if (date_type == 'time' && !time_reg.test(val)) {
+    return false;
+  } else if (date_type == 'year' && (!numeric_reg.test(val) || val.length !== 4)) {
+    return false;
+  } else if (date_type == 'month' && !month_reg.test(val)) {
+    return false;
+  } else if (date_type == 'day' && !day_reg.test(val)) {
+    return false;
+  } else if (date_type == 'hour' && !hour_reg.test(val)) {
+    return false;
+  } else if (date_type == 'minute' && !minute_reg.test(val)) {
+    return false;
+  } else if (date_type == 'second' && !minute_reg.test(val)) {
+    return false;
+  } else if (date_type == 'zone' && !timezone_reg.test(val)) {
+    return false;
+  } else if (date_type == 'weekday' && !weekday_reg.test(val)) {
+    return false;
+  }
+  return true;
+}
+function editFilterInSet(set_name, index){
+  let filter_name = $('#_filter_list_item_' + index).data('filtername');
+  let email = $('#set_filter_account').val();
+  $('#new_filter_selector').removeClass('open');
+  uchip.slideToggle('#email_filters_manager', '#email_filters_main', function () {
+    $('#filter_title_prefix_account').text('{{langmod.EMFILTERSLAB171}}');
+    $('#filter_title_account').text('');
+    $('#filter_for_account').val(email);
+    $('#editor_action').val('update');
+    $('#editing_index').val(index);
+    $('#editor_form').hide();
+    $('#editor_loader').show(); 
+    uchip.call('module=email_filters&acc=getfilterdata', {
+      data: 'account=' + email + '&set=' + set_name + '&filter_name=' + filter_name,
+      callback: function (response) {
+        if (!response.hasOwnProperty('result') || response.result === 'error') {
+          let message_error = '{{langmod.EMFILTERSLAB141}}';
+          if (response.hasOwnProperty('code')) {
+            if (response.code == 1) {
+              message_error = '{{langmod.EMFILTERSLAB144}}';
+            } else if (response.code == 2) {
+              message_error = '{{langmod.EMFILTERSLAB144}}';
+            }
+          }
+          uchip.slideToggle('#email_filters_main', '#email_filters_manager');
+          noti_bubble(message_error, '{{langmod.EMFILTERSLAB96}}', 'error', false, false, '5000', true);
+        } else {
+          renderEditform(response.filter_data);
+        }
+      }
+    });
+  }); 
+}
+function bindTagsRulesInput(index){
+  $('#filter_value' + index).tagsinput({
+    tagClass: 'cwp-tags-input'
+  });
+  $('#rule_custom' + index).tagsinput({
+    tagClass: 'cwp-tags-input'
+  });
+  $('#rule_custom' + index).on('beforeItemAdd', function (event) {
+    if (!varname_reg.test(event.item)) {
+      event.cancel = true;
+      noti_bubble('Forbiden characters were found!', 'Error!', 'error', false, false, '3000', true);
+    }
+  });
+}
+function bindTagsActionsInput(index){
+  $('#_action_notifyoption' + index).tagsinput({
+    tagClass: 'cwp-tags-input'
+  });
+  $('#_vacation_addresses' + index).tagsinput({
+    tagClass: 'cwp-tags-input'
+  });
+  $('#_vacation_addresses' + index).on('beforeItemAdd', function (event) {
+    if (!validateEmail(event.item)) {
+      event.cancel = true;
+      noti_bubble('Just valid email addresses allowed', 'Error!', 'error', false, false, '3000', true);
+    }
+  });
+}
+function bindTagsInput(index){
+  bindTagsRulesInput(index);
+  bindTagsActionsInput(index);
+}
+function renderEditform(filter_data){
+  uchip.slideToggle('#editor_form', '#editor_loader', function () {
+    html_rule = $('#rules_filter_raw').html();
+    $('#filter_name_toaccount').val(filter_data.name);
+    let check_status_filter = filter_data.status === 1 ? '#_filter_status_form_active' : '#_filter_status_form_inactive';
+    $(check_status_filter).prop('checked', true);
+    $('#filter_name_toaccount').data('original',filter_data.name);
+    html_action = $('.actions-filters_raw').html();
+    $('#rules_filter_account').html(html_rule.replace(RuleRegExp, '0'));
+    $('#actions_filters_account').html(html_action.replace(ActionRegExp, '0'));
+    bindTagsInput(0);
+    let $radios = $('input:radio[name=_join_account]');
+    $radios.filter('[value=' + filter_data.join + ']').prop('checked', true);
+    matchingType('#rules_filter_account');
+    if (filter_data.join !== 'any'){
+      renderRulesEditForm(filter_data.tests);
+    }
+    renderActionsEditForm(filter_data.actions);
+  });
+}
+function renderActionsEditForm(actions){
+  let index = 0;
+  do {
+    let action = actions[index];
+    if (index !== 0) {
+      $('#actions_filters_account').append(html_action.replace(ActionRegExp, index));
+      bindTagsActionsInput(index);
+    }
+    let action_type = $('#action_type' + index);
+    action_type.val(action.type);
+    actionType(action_type);
+    ui_account_folders.forEach(function(folder){
+      $('.action-redirect-to:not(.added-folders)').append(new Option(folder, folder));
+    });
+     $('.action-redirect-to').addClass('added-folders');
+    if (action.type === 'redirect_copy' || action.type === 'redirect'){
+      $('#_action_row_' + index).find('.redirection-filter-address').val(action.target);
+    } else if (action.type === 'reject'){
+      $('#action_target_area' +  index).val(action.message);
+    } else if (action.type === 'fileinto' || action.type === 'fileinto_copy') {
+      $('#action_mailbox' + index).val(action.target);
+    } else if (action.type === 'vacation') {
+      $('#vacation_message_area' + index).val(action.msg);
+      let div_action = $('#_action_row_' + index);
+      div_action.find('.vacation-action-subject').val(action.subject);
+      div_action.find('.vacation-action-sndradd').val(action.from);
+      if (action.addresses !== undefined){
+        fillInputTags(action.addresses, div_action.find('.vacation-action-myadds'));
+      }
+      div_action.find('.vacation-action-days').val(action.days !== undefined ? action.days : '');
+    } else if (action.type === 'setflag' || action.type === 'addflag' || action.type === 'removeflag') {
+      // let $check_flags = $('input:checkbox[name=filter_action_flags' + index + ']');
+      // action.target.forEach(function(flag){
+      //   $check_flags.filter('[value=' + flag + ']').prop('checked', true);
+      // });
+      poblateChecksActions('filter_action_flags' + index, action.target);
+    } else if (action.type === 'set') {
+      $('#action_varname' + index).val(action.name);
+      $('#action_varvalue' + index).val(action.value);
+      poblateChecksActions('_action_varmods' + index, action.modifiers);
+      // let $check_modifiers = $('input:checkbox[name=filter_action_flags' + index + ']');
+      // action.target.forEach(function (flag) {
+      //   $check_flags.filter('[value=' + flag + ']').prop('checked', true);
+      // });
+    } else if (action.type === 'notify'){
+      $('#action_notifytarget' + index).val(action.method.replace('mailto:',''));
+      $('#action_notifymessage' + index).val(action.msg !== undefined ? action.msg : '');
+      $('#action_notifyfrom' + index).val(action.from !== undefined ? action.from : '');
+      $('#_action_notifyimportance' + index).val(action.importance !== undefined ? action.importance : '2');
+    }
+    index++; 
+  } while (index < actions.length);
+}
+function poblateChecksActions(name_field, values){
+  let $check_modifiers = $('input:checkbox[name=' + name_field + ']');
+  values.forEach(function (val) {
+    $check_modifiers.filter('[value=' + val + ']').prop('checked', true);
+  });
+}
+function fillInputTags(tags_val, tags_input){
+  if (Array.isArray(tags_val)) {
+    tags_val.forEach(function (val) {
+      tags_input.tagsinput('add', val);
+    });
+  } else {
+    tags_input.tagsinput('add', tags_val);
+  }
+}
+function renderRulesEditForm(rules){
+  let index = 0;
+  do {
+    let rule = rules[index];
+    if(index !== 0){
+      $('#rules_filter_account').append(html_rule.replace(RuleRegExp, index));
+      bindTagsRulesInput(index);
+    }
+    let rule_header = $('#rule_type' + index);
+    if (rule.is_custom !== undefined && rule.is_custom === true){
+      rule_header.val('...');
+    }else{
+      rule_header.val(rule.type === 'header' ? rule.header : rule.type);
+    }
+    let selindex = rule_header.prop('selectedIndex');
+    ruleType(rule_header);
+    if (selindex < 5){
+      renderRulesTexts(index, rule, selindex);
+    } else if(selindex === 5){
+      renderRulesSize(index, rule);
+    } else if (selindex > 5 && selindex < 8) {
+      // renderRulesDate(index, rule);
+    }
+    index++ ;
+  } while (index < rules.length);
+}
+function renderRulesDate(index, rule){
+  let rule_contain = $('#filter_rule_contain' + index);
+  let operator = rule.hasOwnProperty('operator') ? rule.operator.replace(' "', '-') : rule.contains;
+  operator = operator.replace('"', '');
+  rule_contain.val((rule.not === true ? 'not' : '') + operator);
+  $('#rule_date' + index).val(rule.hasOwnProperty('datepart') ? rule.datepart : rule.date_type);
+  fillInputTags((rule.hasOwnProperty('target') ? rule.target : rule.contains_values), $('#filter_value' + index));
+}
+function renderRulesSize(index, rule){
+  let size_reg = /[1-9]+[0-9]|[gbmkt]{1}/gi;
+  let size_info = rule.hasOwnProperty('target') ? rule.target.match(size_reg) : [rule.quota, rule.unit];
+  $('#rule_size_op' + index).val(rule.hasOwnProperty('operator') ? rule.operator : rule.size_type);
+  $('#rule_size_quota' + index).val(size_info[0]);
+  let $radios = $('input:radio[name=filter_rule_size' + index + ']');
+  $radios.filter('[value=' + (size_info[1] == undefined ? 'B' : size_info[1]) + ']').prop('checked', true);
+}
+function renderRulesTexts(index, rule, selindex){
+  let rule_contain = $('#filter_rule_contain' + index);
+  let operator = rule.hasOwnProperty('operator') ? rule.operator.replace(' "', '-') : rule.contains;
+  operator = operator.replace('"', '');
+  rule_contain.val((rule.not === true ? 'not' : '') + operator);
+  if (selindex === 3) {
+    fillInputTags((rule.hasOwnProperty('header') ? rule.header : rule.custom_rule), $('#rule_custom' + index));
+  }
+  containType(rule_contain);
+  let sel_contain_index = rule_contain.prop('selectedIndex');
+  if (sel_contain_index !== 4 && sel_contain_index !== 5) {
+    fillInputTags((rule.hasOwnProperty('target') ? rule.target : rule.contains_values), $('#filter_value' + index));
+  }
+}
+function handleFilterStatus(index){
+  let li_element = $('#_filter_list_item_' + index);
+  li_element.addClass('deleting_row');
+  let current_status = li_element.data('st');
+  let filter_name = li_element.data('filtername');
+  let current_icon = 'fa-check';
+  let current_class = 'btn-primary';
+  if (current_status !== 1){
+    current_icon = 'fa-ban';
+    current_class = 'btn-warning';
+  }
+  uchip.handleButton('#_btn_status_filter_' + index, current_icon);
+  $('#_btn_edit_filter_' + index).prop('disabled', true);
+  $('#_btn_delete_filter_' + index).prop('disabled', true);
+  uchip.call('module=email_filters&acc=statusfilter', {
+    data: 'st=' + (current_status !== 1 ? 1 : 0) + '&filter_name=' + filter_name + '&account=' + $('#set_filter_account').val() + '&set=' + $('#set_filter_selected').val(),
+    callback: function (response) {
+      if (response.hasOwnProperty('result') && response.result === 'success') {
+        let new_class = 'btn-warning';
+        let btn_status = $('#_btn_status_filter_' + index);
+        let message_action = '{{langmod.EMFILTERSLAB161}}';
+        if (current_icon === 'fa-ban'){
+          current_icon = 'fa-check';
+          li_element.data('st', 1);
+          new_class = 'btn-primary';
+          btn_status.prop('title', '{{langmod.EMFILTERSLAB160}}');
+          message_action = '{{langmod.EMFILTERSLAB160}}';
+          li_element.removeClass('filter-list-item-inactive');
+        }else{
+          current_icon = 'fa-ban';
+          li_element.data('st', 0);
+          btn_status.prop('title', '{{langmod.EMFILTERSLAB161}}');
+          li_element.addClass('filter-list-item-inactive');
+        }
+        btn_status.removeClass(current_class);
+        btn_status.addClass(new_class);
+        noti_bubble('{{langmod.EMFILTERSLAB164}} ' + message_action + '.', '{{langmod.EMFILTERSLAB101}}', 'success', false, false, '3000', true);
+      } else {
+        let message_error = '{{langmod.EMFILTERSLAB141}}';
+        if (response.hasOwnProperty('code')) {
+          if (response.code == 2) {
+            message_error = '{{langmod.EMFILTERSLAB174}}';
+          } else if (response.code == 1) {
+            message_error = '{{langmod.EMFILTERSLAB144}}';
+          }
+        }
+        noti_bubble(message_error, '{{langmod.EMFILTERSLAB96}}', 'error', false, false, '5000', true);
+      }
+      li_element.removeClass('deleting_row');
+      uchip.handleButton('#_btn_status_filter_' + index, current_icon, true);
+      $('#_btn_edit_filter_' + index).prop('disabled', false);
+      $('#_btn_delete_filter_' + index).prop('disabled', false);
+    }
+  });
+}
+function redenderFilterHtml(filter_data, set_name, index){
+  let status_btn = 'class="btn btn-primary btn-xs" title="{{langmod.EMFILTERSLAB160}}"><i class="fa fa-check"></i>';
+  let stclass = '';
+  if(filter_data.status !== 1){
+    stclass = 'filter-list-item-inactive';
+    status_btn = 'class="btn btn-warning btn-xs" title="{{langmod.EMFILTERSLAB161}}"><i class="fa fa-ban"></i>';
+  }
+  return '<li id="_filter_list_item_' + index + '" class="' + stclass + '" data-filtername="' + filter_data.name + '" data-st="' + filter_data.status + '">' +
+            '<div class="filters-list-item">' +
+              '<span class="filters-list-item-name" data-index="' + index + '">' + filter_data.name + '</span>' +
+              '<div>' +
+                  '<button title="{{langmod.EMFILTERSLAB162}}" type="button" onclick="editFilterInSet(\'' + set_name + '\',\'' + index + '\')"' + 
+                    ' class="btn btn-success btn-edit-filter btn-xs" id="_btn_edit_filter_' + index + '" style="margin-right:5px;">' +
+                    '<i class="fa fa-edit"></i>' +
+                  '</button>' +
+                  '<button type="button" style="margin-right: 5px;" onclick="handleFilterStatus(' + index + ')" id="_btn_status_filter_' + index + '"' +
+                    status_btn +
+                  '</button>' +
+                  '<button title="{{langmod.EMFILTERSLAB163}}" type="button" ' +
+                  'onclick="deleteFilterFromSet(' + index + ', 0)" id="_btn_delete_filter_' + index + '" class="btn btn-danger btn-xs"><i class="fa fa-trash"></i></button>' +
+              '</div>' +
+            '</div>' +
+          '</li>';
+}
+function deleteFilterFromSet(index, action){
+  let li_element = $('#_filter_list_item_' + index);
+  let filter_name = li_element.data('filtername');
+  if(action === 0){
+    $('#conf_del_buttons').html('<button type="button" class="btn btn-white" data-dismiss="modal">{{langmod.EMFILTERSLAB131}}</button>' +
+      '<button type = "button" class= "btn btn-primary" onclick="deleteFilterFromSet(' + index + ', 1)" > {{langmod.EMFILTERSLAB132}}</button >');
+    $('#modal_del_item_filter .modal-body').html('<p style="font-weight: 500;">{{langmod.EMFILTERSLAB151}}: <b>' + filter_name + '</b>.' +
+      '<br> <span style="font-weight: bold;">{{langmod.EMFILTERSLAB150}}</span></p >');
+    $("#modal_del_item_filter").modal('toggle');
+  }else{
+    li_element.addClass('deleting_row');
+    uchip.handleButton('#_btn_edit_filter_' + index, 'fa-edit');
+    uchip.handleButton('#_btn_delete_filter_' + index, 'fa-trash');
+    $("#modal_del_item_filter").modal('toggle');
+    uchip.call('module=email_filters&acc=deletefilter', {
+      data: 'filter_name=' + filter_name + '&account=' + $('#set_filter_account').val() + '&set=' + $('#set_filter_selected').val(),
+      callback: function (response) {
+        if (response.hasOwnProperty('result') && response.result === 'success') {
+          noti_bubble('{{langmod.EMFILTERSLAB154}}', '{{langmod.EMFILTERSLAB101}}', 'success', false, false, '3000', true);
+          li_element.slideUp('fast', function(){
+            li_element.remove();
+            if ($('.filters-list-item-name').length === 0){
+              $('#filter_list_box').html(emptyFilterListHtml());
+            }
+            let set_index = $('#_set_viewing_index').val();
+            let set_data = $('#_btn_manage_set_list_' + set_index).data('set');
+            set_data.filters.splice(index, 1);
+            $('#_btn_manage_set_list_' + set_index).data('set', set_data);
+          });
+        } else {
+          let message_error = '{{langmod.EMFILTERSLAB141}}';
+          if (response.hasOwnProperty('code')) {
+            if (response.code == 2) {
+              message_error = '{{langmod.EMFILTERSLAB143}}';
+            } else if (response.code == 1) {
+              message_error = '{{langmod.EMFILTERSLAB144}}';
+            }
+          }
+          noti_bubble(message_error, '{{langmod.EMFILTERSLAB96}}', 'error', false, false, '5000', true);
+          li_element.removeClass('deleting_row');
+          uchip.handleButton('#_btn_edit_filter_' + index, 'fa-edit', true);
+          uchip.handleButton('#_btn_delete_filter_' + index, 'fa-trash', true);
+        }
+      }
+    });
+  }
+}
+function emptyFilterListHtml(){
+  return '<div id="filters_list_wrapper">' +
+          '<div class="no-filters-stored">{{langmod.EMFILTERSLAB135}}<br /> ' +
+            '<button class="btn btn-primary btn-xs" onclick="showNewFilterFormAccount()"><i class="fa fa-plus"></i> {{langmod.EMFILTERSLAB134}}</button>' +
+          '</div>' +
+          '</div>'
+}
+function showFiltersInSet(elem, index){
+  $('.current-viewing').removeClass('current-viewing');
+  $('#_list_set_item_' + index).addClass('current-viewing');
+  let data_set = $(elem).data('set');
+  let filters_content = emptyFilterListHtml();
+  if(data_set.filters.length > 0){
+    filters_content = '<ul class="ul-filters-list" id="set_filters_list">';
+    data_set.filters.forEach(function (filter, index){
+      filters_content += redenderFilterHtml(filter, data_set.name, index);
+    });
+    filters_content += '</ul>';
+  }
+  let filters_html = '<div class="ibox"> ' +
+                        '<input type="hidden" id="_set_viewing_index" value="' + index + '">' +
+                        '<div class="ibox-title"> ' +
+                          '<input type="hidden" id="set_filter_selected"> ' +
+                          '<div class="email-filters-title">' +
+                            '<h4>{{langmod.EMFILTERSLAB138}}: ' + data_set.name + '</h4>' +
+                            '<div class="text-right">' +
+                              '<button type="button" id="btn_add_new_set" onclick="showNewFilterSelector()" class="btn btn-success btn-xs mr5 mb10"><i class="fa fa-plus"></i></button>' +
+                            '</div>' +
+                          '</div>' +
+                          '<div class="dropdown" id="new_filter_selector">' +
+                            '<div class="dropdown-menu" aria-labelledby="dropdownMenuButton">' +
+                              '<a class="dropdown-item" href="#" onclick="showNewFilterFormAccount()"><i class="fa fa-file-text-o"></i>{{langmod.EMFILTERSLAB136}}</a>' +
+                              '<a class="dropdown-item" href="#" onclick="showTemplatePicker()"><i class="fa fa-tags"></i>{{langmod.EMFILTERSLAB137}}</a>' +
+                            '</div>' + 
+                          '</div>' +
+                        '</div> ' +
+                        '<div class="ibox-content filters-list-box" id="filter_list_box"> ' + 
+                          filters_content +
+                        '</div> ' +
+                      '</div>';
+  $('#set_filters_wrapper').html(filters_html);
+  $('#set_filter_selected').val(data_set.name);
+  $('[data-toggle="tooltip"]').tooltip()
+  $('#filters_list_wrapper').height($('.sets-account-list .ibox-content').height() - 30);
+}
+function showNewFilterSelector(){
+  $('#new_filter_selector').toggleClass('open');
+  hideOnClickOutside('#new_filter_selector', '#btn_add_new_set');
+}
+function hideOnClickOutside(selector, second) {
+  let forhide = false;
+  // if (second === undefined) {
+  //   second = '#show_options_button';
+  //   forhide = true;
+  // }
+  function outsideClickListener(event) {
+    $target = $(event.target);
+    if (!$target.closest(selector).length && !$target.closest(second).length && $(selector).is(':visible')) {
+      $(selector).removeClass('open');
+      removeClickListener();
+    }
+  }
+
+  function removeClickListener() {
+    document.removeEventListener('click', outsideClickListener)
+  }
+
+  document.addEventListener('click', outsideClickListener)
+}
+function showNewFilterFormAccount(){
+  let email = $('#set_filter_account').val();
+  $('#new_filter_selector').removeClass('open');
+  $('#editor_action').val('create');
+  $('#_filter_status_form_active').prop('checked', true);
+  uchip.slideToggle('#email_filters_manager', '#email_filters_main', function(){
+    $('#filter_title_prefix_account').text('{{langmod.EMFILTERSLAB172}}');
+    $('#filter_title_account').text(email);
+    $('#filter_for_account').val(email);
+    filterForAccount();
+  });
+}
+function getFilterData(){
+  let data_rules = [];
+  $('.rules-filter-wrapper:visible .rules-filter').each(function(){
+    let rule = $(this);
+    let rule_type_elem = rule.find('.rules-filter-first');
+    let selindex = rule_type_elem.prop('selectedIndex');
+    let rule_data = {};
+    rule_data.type = rule_type_elem.val();
+    if(selindex < 3 || selindex == 4){
+      rule_data.contains = rule.find('.rules-filter-contains').val();
+      rule_data.contains_values = rule.find('.rules-filter-value').val();
+    }else if(selindex == 3){
+      rule_data.contains = rule.find('.rules-filter-contains').val();
+      rule_data.contains_values = rule.find('.rules-filter-value').val();
+      rule_data.custom_rule = rule.find('.rules-filter-custom').val();
+    }else if(selindex == 5){
+      rule_data.size_type = rule.find('.rules-filter-size').val();
+      rule_data.quota = rule.find('.rules-filter-quota').val();
+      rule_data.unit = rule.find('.filter_size_unit:checked').val();
+    }else{
+      rule_data.date_type = rule.find('.rules-filter-date').val();
+      rule_data.contains = rule.find('.rules-filter-contains').val();
+      rule_data.contains_values = rule.find('.rules-filter-value').val();
+    }
+    data_rules.push(rule_data);
+  });
+  let data_actions = [];
+  $('.actions-filters:visible .redirection-filter').each(function(){
+    let action = $(this);
+    let action_type_elem = action.find('.redirection-filter-first');
+    let selindex = action_type_elem.prop('selectedIndex');
+    let action_data = {};
+    action_data.type = action_type_elem.val();
+    if(selindex < 2){
+      action_data.redirect_to = action.find('.action-redirect-to').val();
+    }else if(selindex > 1 && selindex < 4){
+      action_data.addres = action.find('.redirection-filter-address').val();
+    }else if(selindex > 3 && selindex < 5){
+      action_data.message = action.find('.redirection-filter-message').val();
+    } else if (selindex === 5) {
+      action_data.message = action.find('.vacation-action-message').val();
+      action_data.subject = action.find('.vacation-action-subject').val();
+      action_data.sender = action.find('.vacation-action-sndradd').val();
+      action_data.often = action.find('.vacation-action-days').val();
+      action_data.addresses = action.find('.vacation-action-myadds').val();
+    }else if(selindex > 6 && selindex < 10){
+      action_data.flags = [];
+      action.find('.redirection-filter-flags .action-flag-item:checked').each(function(){
+        action_data.flags.push($(this).val());
+      });
+    }else if(selindex == 10){
+      action_data.name = action.find('.action-var-name').val();
+      action_data.value = action.find('.action-var-value').val();
+      action_data.modifiers = [];
+      action.find('.redirection-filter-vars .action-var-modifier:checked').each(function(){
+        action_data.modifiers.push($(this).val());
+      });
+    }else if(selindex == 11){
+      action_data.action_type = action.find('.action-notify-type').val();
+      action_data.target = action.find('.action-notify-target').val();
+      action_data.message = action.find('.action-notify-message').val();
+      action_data.sender = action.find('.action-notify-sender').val();
+      action_data.importance = action.find('.action-notify-importance').val();
+      action_data.options = action.find('.action-notify-options').val();
+    }
+    data_actions.push(action_data);
+  });
+  let general_info = {};
+  general_info.name = $('.filter_name_input:visible').val();
+  general_info.usage = $('#how_to_use').val();
+  general_info.status = parseInt($('.filter-status-check-form:checked').val());
+  if(general_info.usage == 'domains'){
+    general_info.domain = $('#save_type_domain_list').val();
+  }else if(general_info.usage == 'accounts'){
+    general_info.accounts = $('#filter_to_accounts').val();
+  }
+  general_info.filter_type = $('.rules-selector:visible .type_filter:checked').val();
+  return JSON.stringify({
+    rules: data_rules,
+    actions: data_actions,
+    general: general_info
+  });
+}
+function presetBackFrom(from){
+  uchip.slideToggle('#list_presets', from, function(){
+    $('#rules_filter').html('');
+    $('#actions_filters_preset').html('');
+  });
+}
+function showNewFilterForm(){
+  uchip.slideToggle('#goat_wrap', '#list_presets', function(){
+    $('#editor_action').val('update');
+    $('#_template_editor_title').html('{{langmod.EMFILTERSLAB4}}');
+    $('#preset_form_loader ').hide();
+    $('#new_filter_form').show();
+    templateInitForm(TEMPLATE_FORM_PARAMETERS);
+  });
+}
+function showTemplatePicker(){
+  $('#new_filter_selector').removeClass('open');
+  let table_html = tablePresets(presetlist, true);
+  $('#modal_pick_template .modal-body').html(table_html);
+  $('#modal_pick_template').modal('toggle');
+  setTimeout(function(){
+    $('._template_preset_table').DataTable().destroy();
+    $('._template_preset_table').DataTable({
+      "columnDefs": [
+        { "orderable": false, "targets": [1, 2, 3] }
+      ]
+    },15);
+  });
+}
+function templateInitForm(parameters){
+  html_rule = $('#rules_filter_raw').html();
+  html_action = $('.actions-filters_raw').html();
+  $(parameters.rules_wrapper).html(html_rule.replace(RuleRegExp, '0'));
+  $(parameters.actions_wrapper).html(html_action.replace(ActionRegExp, '0'));
+  bindTagsInput(0);
+}
+function listAccounts(){
+  let content_html = '';
+  content_html = '<table class="table table-striped email-accounts-table">' +
+                  '<thead>' +
+                      '<tr>' +
+                        '<th>{{langmod.EMFILTERSLAB103}}</th>' +
+                        '<th>{{langmod.EMFILTERSLAB104}}</th>' +
+                        '<th style="width:100px">{{langmod.EMFILTERSLAB105}}</th>' +
+                        '<th class="actions-td" style="width:30px">{{langmod.EMFILTERSLAB106}}</th>' +
+                      '</tr>' +
+                  '</thead>' +
+                  '<tbody id="table_email_account">' +
+                  '</tbody>' +
+              '</table>';
+  // console.log('content_html', content_html);
+  $('#table_email_container').append(content_html);
+  tableAccounts();
+}
+function tableAccounts(){
+  $('.email-accounts-table').DataTable().destroy();
+  mail_accounts_table = $('.email-accounts-table').on('processing.dt', function (e, settings, processing) {
+    $('#DataTables_Table_0_processing').hide();
+    if (processing) {
+      $('#accounts_loader').fadeIn('fast');
+      // $('#DataTables_Table_0').fadeOut('fast', function(){
+      //   $('#accounts_loader').fadeIn('fast');
+      // });
+    } else {
+      $('#accounts_loader').fadeOut('fast');
+      $('[data-toggle="tooltip"]').tooltip()
+      // $('#accounts_loader').fadeOut('fast', function(){
+      //   $('#DataTables_Table_0').fadeIn('fast');
+      // });
+    }
+  }).DataTable({
+    "dom": '<"row"<"col-sm-4"l><"col-sm-4 filter-type"><"col-sm-4"f>>rt<"row"<"col-sm-6"i><"col-sm-6"p>>',
+    serverSide: true,
+    processing: true,
+    ajax: {
+      url: './{{users}}/index.php?module=email_filters&acc=listaccounts',
+      type: 'POST',
+      data:{
+        filters: filter_type
+      }
+    },
+    columnDefs: [
+        {
+          targets: [-1, -2],
+          orderable: false
+        }
+    ],
+    columns: [
+      { data: 'email' },
+      { data: 'domain' },
+      { render: function(data, type, row){
+                  return '<div class="td-filters">' + (row.filters !== false ?
+                            '<i class="fa fa-check-circle text-success" data-toggle="tooltip" title="" data-placement="top" aria-hidden="true" data-original-title="' + row.filters + (row.filters > 1 ? ' {{langmod.EMFILTERSLAB107}}' : ' {{langmod.EMFILTERSLAB108}}') + ' {{langmod.EMFILTERSLAB109}}"></i>' :
+                            '<i class="fa fa-ban text-warning subdomain-icon" title="" data-toggle="tooltip" data-placement="top" aria-hidden="true" data-original-title="{{langmod.EMFILTERSLAB110}}"></i>') +
+                        '</div>';
+                }
+      },
+      { render: function(data, type, row){
+                  return '<button class="btn btn-primary btn-xs" onclick="manageFilterAccount(\'' + row.email + '\',\'' + row.domain + '\',' + row.filters + ')"><i class="fa fa-filter" aria-hidden="true"></i> {{langmod.EMFILTERSLAB111}}</button>';
+                }
+      }
+    ],
+    deferRender: true
+  });
+  renderFilterTable();
+}
+let filter_type = '*';
+let ui_account_folders = [];
+function filterForAccount(){
+  html_rule = $('#rules_filter_raw').html();
+  html_action = $('.actions-filters_raw').html();
+  $('#rules_filter_account').html(html_rule.replace(RuleRegExp, '0'));
+  $('#actions_filters_account').html(html_action.replace(ActionRegExp, '0'));
+  $('#filter_value0').tagsinput({
+    tagClass: 'cwp-tags-input'
+  });
+  $('#rule_custom0').tagsinput({
+    tagClass: 'cwp-tags-input'
+  });
+  $('#rule_custom0').on('beforeItemAdd', function (event) {
+    if (!varname_reg.test(event.item)) {
+      event.cancel = true;
+      noti_bubble('Forbiden characters were found!', 'Error!', 'error', false, false, '3000', true);
+    }
+  });
+  $('#_action_notifyoption0').tagsinput({
+    tagClass: 'cwp-tags-input'
+  });
+  $('#_vacation_addresses0').tagsinput({
+    tagClass: 'cwp-tags-input'
+  });
+  ui_account_folders.forEach(function (folder){
+    $('#action_mailbox0').append(new Option(folder, folder));
+  });
+  $('#_vacation_addresses0').on('beforeItemAdd', function (event) {
+    if (!validateEmail(event.item)) {
+      event.cancel = true;
+      noti_bubble('Just valid email addresses allowed', 'Error!', 'error', false, false, '3000', true);
+    }
+  });
+}
+function cancelManageFilterAccount(){
+  uchip.slideToggle('#list_filters', '#email_filters_sets');
+}
+function manageFilterAccount(email, domain, havefilters){
+  // if(havefilters !== false){
+  //   $('#filters_account_modal').modal('show');
+  // }else{
+  //   uchip.slideToggle('#email_filters_manager', '#email_filters_main', function(){
+  //     $('#filter_title_prefix_account').text('{{langmod.EMFILTERSLAB172}}');
+  //     $('#filter_title_account').text(email);
+  //     $('#filter_for_account').val(email);
+  //     filterForAccount();
+  //   });
+  // }
+  $('#manager_content_wrapper').html('<div class="ibox-content-loader">' +
+              '<div class="table_cron_loader accounts_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>' +
+            '</div>');
+  $('#title_manage_filter').text('Managing Filters for ' + email);
+  uchip.slideToggle('#email_filters_sets', '#list_filters');
+
+  uchip.call('module=email_filters&acc=filtersaccount', {
+    data: 'account=' + email,
+    callback: function(response){
+      renderFilterSets(response, email);
+      ui_account_folders = response.folders;
+    }
+  });
+}
+function statusFilterSet(elem, index){
+  $('#set_filter_account_wrapper').fadeOut('fast', function(){
+    $('#filter_set_loader').fadeIn('fast');
+  });
+  let filter_set = $(elem).data('filterset');
+  uchip.call('module=email_filters&acc=statusofset', {
+    data: 'status=' + ($(elem).is(':checked') ? 1 : 0) + '&set_name=' + filter_set.name + '&account=' + $('#set_filter_account').val(),
+    callback: function (response) {
+      if (response.hasOwnProperty('result') && response.result === 'success') {
+        noti_bubble('{{langmod.EMFILTERSLAB159}}', '{{langmod.EMFILTERSLAB101}}', 'success', false, false, '3000', true);
+        $('.chk-set-status:not(#_chk_status_set_list_' + index + ')').prop('checked', false);
+        let item_active = $('.set-item.set-item-active');
+        item_active.find('.badge-success').remove();
+        item_active.find('.radio').removeClass('radio-success');
+        item_active.addClass('set-item-inactive').removeClass('set-item-active');
+        $(elem).closest('.set-item').addClass('set-item-active');
+        $(elem).closest('.set-item').removeClass('set-item-inactive');
+        $('.set-item.set-item-active').find('.set-item-info-name').after('&nbsp;<span class="badge badge-success">{{langmod.EMFILTERSLAB166}}</span>');
+      } else {
+        let message_error = '{{langmod.EMFILTERSLAB141}}';
+        if (response.hasOwnProperty('code')) {
+          if (response.code == 1) {
+            message_error = '{{langmod.EMFILTERSLAB144}}';
+          }
+        }
+        $(elem).prop('checked', !$(elem).is(':checked'));
+        noti_bubble(message_error, '{{langmod.EMFILTERSLAB96}}', 'error', false, false, '5000', true);
+      }
+      $('#filter_set_loader').slideUp('fast', function () {
+        $('#set_filter_account_wrapper').slideDown('fast');
+      });
+    }
+  });
+}
+
+function deleteSetInAccount(index, action){
+  let li_element = $('#_list_set_item_' + index);
+  let set_name = li_element.data('setname');
+  if (action !== true) {
+    $('#conf_del_buttons').html('<button type="button" class="btn btn-white" data-dismiss="modal">{{langmod.EMFILTERSLAB131}}</button>' +
+      '<button type = "button" class= "btn btn-primary" onclick="deleteSetInAccount(' + index + ', true)" > {{langmod.EMFILTERSLAB132}}</button >');
+    $('#modal_del_item_filter .modal-body').html('<p style="font-weight: 500;">{{langmod.EMFILTERSLAB158}}: <b>' + set_name + '</b>.' +
+      '<br> <span style="font-weight: bold;">{{langmod.EMFILTERSLAB150}}</span></p >');
+    $("#modal_del_item_filter").modal('toggle');
+  } else {
+    li_element.addClass('deleting_row');
+    uchip.handleButton('#_btn_manage_set_list_' + index, 'fa-edit');
+    uchip.handleButton('#_btn_delete_set_list_' + index, 'fa-trash');
+    $('#_chk_status_set_list_' + index).prop('disabled', true);
+    $("#modal_del_item_filter").modal('toggle');
+    uchip.call('module=email_filters&acc=deleteset', {
+      data: 'set_name=' + set_name + '&account=' + $('#set_filter_account').val(),
+      callback: function (response) {
+        if (response.hasOwnProperty('result') && response.result === 'success') {
+          noti_bubble('{{langmod.EMFILTERSLAB159}}', '{{langmod.EMFILTERSLAB101}}', 'success', false, false, '3000', true);
+          li_element.slideUp('fast', function () {
+            li_element.remove();
+            if ($('.set-item').length === 0) {
+              $('#_set_list_content').slideUp('fast', function(){
+                $(this).html(emptySetListHtml())
+                $(this).slideDown('fast');
+              });
+            }
+            if (index == $('#_set_viewing_index').val()){
+              $('#set_filters_wrapper').html(filterListInfoHtml());
+              $('.select-filter-set').height($('.sets-account-list').height());
+              $('#filter_set_loader').height($('.sets-account-list').height());
+            }
+          });
+        } else {
+          let message_error = '{{langmod.EMFILTERSLAB141}}';
+          if (response.hasOwnProperty('code')) {
+            if (response.code == 2) {
+              message_error = '{{langmod.EMFILTERSLAB143}}';
+            } else if (response.code == 1) {
+              message_error = '{{langmod.EMFILTERSLAB144}}';
+            }
+          }
+          noti_bubble(message_error, '{{langmod.EMFILTERSLAB96}}', 'error', false, false, '5000', true);
+          li_element.removeClass('deleting_row');
+          uchip.handleButton('#_btn_manage_set_list_' + index, 'fa-edit', true);
+          uchip.handleButton('#_btn_delete_set_list_' + index, 'fa-trash', true);
+          $('#_chk_status_set_list_' + index).prop('disabled', false);
+        }
+      }
+    });
+  }
+}
+
+function emptySetListHtml(){
+  return '<div class="empty-set-filter">' +
+            '<div><h5>{{langmod.EMFILTERSLAB139}}</h5><button class="btn-primary btn-xs btn-block" onclick="showNewSetForm()">{{langmod.EMFILTERSLAB140}}</button></div>' +
+          '</div>';
+}
+function filterListInfoHtml(){
+  return '<div class="select-filter-set">' +
+            '<h4>{{langmod.EMFILTERSLAB145}} ' +
+            '<button type="button" onclick="" class="btn btn-primary btn-xs mr5 mb10"><i class="fa fa-cogs"></i></button>' +
+            ' {{langmod.EMFILTERSLAB146}}</h4>' +
+          '</div>'
+}
+function renderFilterSets(data, email){
+  let sets_html = emptySetListHtml();
+  if(data.sets.length > 0){
+    sets_html = '<ul>';
+    data.sets.forEach(function(filter_set, index){
+      sets_html += '<li data-set="" data-setname="' + filter_set.name + '" id="_list_set_item_' + index + '" data-index="' + index + '" ' +
+                      'class="set-item ' + (filter_set.active === true ? 'set-item-active' : 'set-item-inactive') + '">' +
+                      '<div class="row">' +
+                        '<div class="col-md-12">' +
+                          '<div class="set-item-info">' +
+                            '<div class="switch">' +
+                              '<div class="onoffswitch">' +
+                                '<input type="checkbox"' + (filter_set.active === true ? ' checked ' : ' ') + 'class="onoffswitch-checkbox chk-set-status" onchange="statusFilterSet(this, ' + index + ')"' +
+                                'data-filterset=\'' + JSON.stringify(filter_set) + '\' name="set-filter-status" id="_chk_status_set_list_' + index + '">' +
+                                '<label class="onoffswitch-label" for="_chk_status_set_list_' + index + '">' +
+                                  '<span class="onoffswitch-inner"></span>' +
+                                  '<span class="onoffswitch-switch"></span>' +
+                                '</label>' +
+                              '</div>' +
+                            '</div>' +
+                            '<span class="set-item-info-name">' + filter_set.name +  '</span>' +
+                            (filter_set.active === true ? ' <span class="badge badge-success">{{langmod.EMFILTERSLAB166}}</span>' : '') +
+                            // '<div class="radio radio-' + (filter_set.active === true ? 'success' : 'plain') + '">' +
+                            //   '<input id="_chk_status_set_list_' + index + '" onchange="statusFilterSet(this)" data-filterset=\'' + JSON.stringify(filter_set) + '\' name="set-filter-status" ' + 
+                            //     (filter_set.active === true ? 'checked' : '') + ' onchange="" type="radio" id="filter_set_' + index + '" value="">' +
+                            //   '<label for="filter_set_' + index + '">' + filter_set.name +  '</label>' + 
+                            //   (filter_set.active === true ? ' <span class="badge badge-success">{{langmod.EMFILTERSLAB166}}</span>' : '') +
+                            // '</div>' +
+                          '</div>' +
+                          '<div class="set-item-buttons">' +
+                            '<button type="button" id="_btn_manage_set_list_' + index + '" data-set=\'' + JSON.stringify(filter_set) + '\' onclick="showFiltersInSet(this, ' + index + ')"' +
+                              ' class="btn btn-primary btn-xs" style="margin-right:5px;">' +
+                              '<i class="fa fa-cogs"></i>' +
+                            '</button>' +
+                            '<button type="button" id="_btn_delete_set_list_' + index + '" onclick="deleteSetInAccount(' + index + ')" class="btn btn-danger btn-xs">' + 
+                              '<i class="fa fa-trash"></i>' +
+                            '</button>' +
+                          '</div>' +
+                        '</div>' +
+                      '</div>' +
+                    '</li>';
+    });
+    sets_html += '</ul>';
+  }
+  let content_html = '<div class="row">' +
+                        '<div class="col-md-6 sets-account-list">' +
+                          '<div class="ibox" id="set_filter_account_wrapper"> ' +
+                            '<div class="ibox-title"> ' +
+                              '<input type="hidden" id="set_filter_account"> ' +
+                              '<div class="email-filters-title">' +
+                                '<h4>{{langmod.EMFILTERSLAB157}}</h4>' +
+                                '<div class="text-right">' +
+                                  '<button type="button" id="btn_add_new_set" onclick="showNewSetForm()" class="btn btn-success btn-xs mr5 mb10"><i class="fa fa-plus"></i> {{langmod.EMFILTERSLAB176}}</button>' +
+                                '</div>' +
+                              '</div>' +
+                              '<div class="dropdown" id="new_set_dropdown">' +
+                                '<div class="dropdown-menu" aria-labelledby="dropdownMenuButton">' +
+                                  '<div class="form-group" style="margin-bottom:5px">' +
+                                    '<label>{{langmod.EMFILTERSLAB155}}</label> ' +
+                                    '<input type="text" data-required="true" id="set_name" placeholder="{{langmod.EMFILTERSLAB156}}" class="form-control">' +
+                                  '</div>' +
+                                  '<div class="btn-container"> ' +
+                                    '<button class="btn btn-warning btn-xs" id="btn_cancel_set" onclick="showNewSetForm()" style="margin-right:10px">' +
+                                    '<i class="fa fa-ban" style="margin-right:5px"></i>{{langmod.EMFILTERSLAB5}}</button>' +
+                                    '<button class="btn btn-success btn-xs" id="btn_save_set" onclick="saveFilterSet()"><i class="fa fa-floppy-o" style="margin-right:5px"></i>{{langmod.EMFILTERSLAB6}}</button>' +
+                                  '</div>' +
+                                '</div>' +
+                              '</div>' +
+                            '</div> ' +
+                            '<div class="ibox-content" id="_set_list_content"> ' +
+                              '<div class="container-fluid">' +
+                                '<div class="row head-set-list">' +
+                                  '<div class="col-md-2">Status</div>' +
+                                  '<div class="col-md-10">Set name</div>' +
+                                '</div>' + 
+                              '</div>' +
+                              sets_html +
+                            '</div> ' +
+                          '</div>'+
+                          '<div class="filter-set-loader-wrapper" id="filter_set_loader">' +
+                            '<div class="filter-set-loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>' +
+                          '</div>' +
+                        '</div>' +
+                        '<div class="col-md-6" id="set_filters_wrapper">' +
+                          filterListInfoHtml()+
+                        '</div>' +
+                      '</div>';
+  $('#manager_content_wrapper').html(content_html);
+  $('.select-filter-set').height($('.sets-account-list').height());
+  $('#filter_set_loader').height($('.sets-account-list').height());
+  $('#set_filter_account').val(email);
+}
+function showNewSetForm(){
+  $('#new_set_dropdown').toggleClass('open');
+  if($('#new_set_dropdown').hasClass('open')){
+    $('#set_name').focus();
+  }else{
+    uchip.validator('#set_name', true);
+  }
+}
+function saveFilterSet(){
+  if(uchip.validator('#set_name')){
+    uchip.handleButton('#btn_cancel_set', 'fa-ban');
+    uchip.handleButton('#btn_save_set', 'fa-floppy-o');
+    uchip.handleButton('#btn_add_new_set', 'fa-plus');
+    let set_name = encodeURIComponent($('#set_name').val());
+    uchip.call('module=email_filters&acc=saveset', {
+      data: 'name=' + set_name + '&account=' + $('#set_filter_account').val(),
+      callback: function(response){
+        if(response.hasOwnProperty('result') && response.result == 'success'){
+          showNewSetForm();
+          $('#set_name').val('');
+          renderFilterSets(response, $('#set_filter_account').val());
+          noti_bubble('{{langmod.EMFILTERSLAB100}}','{{langmod.EMFILTERSLAB101}}','success',false,false,'3000', true);
+        }else{
+          let message = '{{langmod.EMFILTERSLAB141}}';
+          if(response.hasOwnProperty('code') && response.code == 1){
+            message = '{{langmod.EMFILTERSLAB142}}';
+          }
+          noti_bubble(message,'{{langmod.EMFILTERSLAB96}}','error',false,false,'3000', true);
+        }
+        uchip.handleButton('#btn_cancel_set', 'fa-ban', false);
+        uchip.handleButton('#btn_save_set', 'fa-floppy-o', false);
+        uchip.handleButton('#btn_add_new_set', 'fa-plus', false);
+      }
+    });
+  }
+}
+function cancelFilterFormAccount(){
+  uchip.slideToggle('#email_filters_main', '#email_filters_manager', function(){
+    $('#rules_filter_account').html('');
+    $('#filter_name_toaccount').val('');
+    $('#actions_filters_account').html('');
+    $('#_allof_account').prop('checked', true);
+  });
+}
+function cancelManage(){
+  confirmChangeTab(function(){
+    cancelFilterFormAccount();
+  });
+}
+function saveFilterAccount(){
+  let valid = validFilter();
+  if(valid){
+    let filter_data = getFilterData();
+    let filter_set = $('#set_filter_selected').val();
+    let filter_name = $('.filter_name_input:visible').val();
+    uchip.slideToggle('#filter_account_form_loader', '#filter_account_form');
+    uchip.handleButton('.cancel-preset-account','fa-ban');
+    uchip.handleButton('.save-preset-account','fa-floppy-o');
+    if ($('#editor_action').val() === 'create'){
+      mkSaveNewItem(filter_data, filter_set, filter_name);
+    }else{
+      mkUpdateItem(filter_data, filter_set, filter_name);
+    }
+  }
+}
+function mkUpdateItem(filter_data, filter_set, filter_name){
+  uchip.call('module=email_filters&acc=updatefilter', {
+    data: 'data=' + Base64.encode(filter_data) + '&account=' + $('#filter_for_account').val() + '&original_name=' + $('#filter_name_toaccount').data('original') + '&set=' + filter_set,
+    callback: function (response) {
+      if (response.hasOwnProperty('result') && response.result === 'success') {
+        let editing_index = $('#editing_index').val();
+        noti_bubble('{{langmod.EMFILTERSLAB152}}', '{{langmod.EMFILTERSLAB101}}', 'success', false, false, '3000', true);
+        $('.filters-list-item-name[data-index=' + editing_index + ']').text(response.filter_name);
+        let li_filter = $('#_filter_list_item_' + editing_index);
+        let button_status = $('#_btn_status_filter_' + editing_index);
+        li_filter.data('filtername', response.filter_name);
+        li_filter.data('st', response.filter_status);
+        let btn_class = 'btn-warning';
+        let ico_class = 'fa-ban';
+        let button_tittle = '{{langmod.EMFILTERSLAB161}}'; 
+        if (response.filter_status === 1){
+          li_filter.removeClass('filter-list-item-inactive');
+          btn_class = 'btn-primary';
+          ico_class = 'fa-check';
+          button_tittle = '{{langmod.EMFILTERSLAB160}}'
+        }else{
+          li_filter.addClass('filter-list-item-inactive');
+        }
+        button_status.removeClass().addClass('btn ' + btn_class + ' btn-xs');
+        button_status.find('.fa').removeClass().addClass('fa ' + ico_class);
+        button_status.prop('title', button_tittle);
+        cancelFilterFormAccount();
+      } else {
+        let message_error = '{{langmod.EMFILTERSLAB141}}';
+        if (response.hasOwnProperty('code')) {
+          if (response.code == 2) {
+            message_error = '{{langmod.EMFILTERSLAB143}}';
+          } else if (response.code == 1) {
+            message_error = '{{langmod.EMFILTERSLAB144}}';
+          }
+        }
+        noti_bubble(message_error, '{{langmod.EMFILTERSLAB96}}', 'error', false, false, '5000', true);
+      }
+      uchip.slideToggle('#filter_account_form', '#filter_account_form_loader');
+      uchip.handleButton('.cancel-preset-account', 'fa-ban', true);
+      uchip.handleButton('.save-preset-account', 'fa-floppy-o', true);
+    }
+  });
+}
+function mkSaveNewItem(filter_data, filter_set, filter_name){
+  uchip.call('module=email_filters&acc=filtertoaccount', {
+    data: 'data=' + Base64.encode(filter_data) + '&account=' + $('#filter_for_account').val() + '&set=' + filter_set,
+    callback: function (response) {
+      if (response.hasOwnProperty('result') && response.result === 'success') {
+        noti_bubble('{{langmod.EMFILTERSLAB153}}', '{{langmod.EMFILTERSLAB101}}', 'success', false, false, '3000', true);
+        displayNewFilter({
+          'name': filter_name,
+          'status': response.filter_status
+        }, filter_set);
+        cancelFilterFormAccount();
+      } else {
+        let message_error = '{{langmod.EMFILTERSLAB141}}';
+        if (response.hasOwnProperty('code')) {
+          if (response.code == 2) {
+            message_error = '{{langmod.EMFILTERSLAB143}}';
+          } else if (response.code == 1) {
+            message_error = '{{langmod.EMFILTERSLAB144}}';
+          }
+        }
+        noti_bubble(message_error, '{{langmod.EMFILTERSLAB96}}', 'error', false, false, '5000', true);
+      }
+      uchip.slideToggle('#filter_account_form', '#filter_account_form_loader');
+      uchip.handleButton('.cancel-preset-account', 'fa-ban', true);
+      uchip.handleButton('.save-preset-account', 'fa-floppy-o', true);
+    }
+  });
+}
+function displayNewFilter(filter_data, filter_set){
+  let items_qty = $('.filters-list-item').length;
+  if (items_qty == 0){
+    $('.filters-list-box').html('<ul class="ul-filters-list" id="set_filters_list"></ul>');
+  }
+  $('#set_filters_list').append(redenderFilterHtml(filter_data, filter_set, items_qty));
+  let set_index = $('#_set_viewing_index').val();
+  let set_data = $('#_btn_manage_set_list_' + set_index).data('set');
+  set_data.filters.push(filter_data);
+  $('#_btn_manage_set_list_' + set_index).data('set', set_data);
+  $('[data-toggle="tooltip"]').tooltip(); 
+}
+function setFilterTable(elem){
+  filter_type = $(elem).val();
+  tableAccounts();
+}
+function renderFilterTable(){
+  let content = '<label>Show'+
+                  '<select onchange="setFilterTable(this)" name="" class="form-control input-sm">' +
+                    '<option value="*" ' + (filter_type == '*' ? 'selected' : '') + '>{{langmod.EMFILTERSLAB112}}</option>' +
+                    '<option value="1" ' + (filter_type == '1' ? 'selected' : '') + '>{{langmod.EMFILTERSLAB113}}</option>' +
+                    '<option value="0" ' + (filter_type == '0' ? 'selected' : '') + '>{{langmod.EMFILTERSLAB114}}</option>' +
+                  '</select>' +
+                '</label>'
+  $('.filter-type').html(content);
+}
+function saveType(elem){
+  let value = $(elem).val();
+  $('.pick-on-save').hide();
+  if(value == 'domains'){
+    $('#save_type_domains').show();
+  }else if(value == 'accounts'){
+    $('#save_type_accounts').show();
+  }
+  save_type_domains
+  save_type_accounts
+}

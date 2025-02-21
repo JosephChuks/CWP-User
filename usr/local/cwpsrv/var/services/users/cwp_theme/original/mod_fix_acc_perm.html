@@ -1,0 +1,185 @@
+<style media="screen">
+    .noti-module-header .switch{
+        margin-left:1rem;
+    }
+    .noti-module-header{
+        display:flex;
+        align-items: center;
+        padding: 10px 15px 10px 15px;
+    }
+    .noti-module-header label,
+    .noti-items label{
+        margin-bottom:0px;
+    }
+    .noti-items{
+        padding:15px 20px 0px 15px;
+    }
+    .noti-items .panel-body{
+        padding-bottom:0px;
+    }
+    .noti-items::before {
+        content: "";
+        background-color: #ffffffad;
+        width: 96.5%;
+        height: 30rem;
+        position: absolute;
+        z-index: 100;
+        margin: -15px;
+    }
+    .noti-items.noti-active::before{
+        display:none;
+    }
+    .noti-item{
+        display: flex;
+        padding: 0px 0px .8rem;
+        margin-bottom: .8rem;
+        align-items: center;
+    }
+    .notifications-type .noti-item{
+        border-bottom: 1px #e7eaec solid;
+    }
+    .notifications-type .noti-item:last-child{
+        border-bottom:none;
+        padding-bottom:0px;
+    }
+    .email-notifier{
+        align-items: center;
+    }
+    .noti-item .btn-success.btn-xs{
+        margin-left:10px;
+    }
+    .noti-item.email-tag label{
+        padding-right:10px;
+    }
+    .noti-item-label{
+        margin-left:1rem;
+        cursor:pointer;
+    }
+    .noti-item label{
+        margin-bottom:0px;
+    }
+    .notfier-description{
+        margin-top: -1.4rem;
+    }
+    .notifer-configurator{
+        margin-top: -7rem;
+        margin-left: -11rem;
+        display:none;
+    }
+    #configure_email_alerts{
+        top: -22rem;
+        left: 4.5rem;
+        z-index: 1000;
+        margin-top: auto;
+        margin-left: auto;
+    }
+    #configure_email_alerts input{
+        height:30px;
+    }
+    #btn_save_email{
+        margin-left: auto;
+        margin-top: 10px;
+    }
+    .form-group, .form-group label{
+        margin-bottom:5px;
+    }
+    .configure-header{
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    #configure_badwidth_alert{
+        margin-top: auto;
+        margin-left: auto;
+        top: -1.5rem;
+        left: 14.5rem;
+    }
+    #configure_badwidth_alert .fa-stack{
+        font-size: 1rem;
+        margin-left: 5px;
+        color: #1c84c6;
+        cursor: pointer;
+    }
+    #configure_badwidth_alert select{
+        width: 8rem;
+        margin-left: 10px;
+        padding: 5px;
+        height: 30px;
+    }
+    .panel-heading h4{
+        margin-bottom:5px;
+    }
+</style>
+<div class="row  border-bottom white-bg dashboard-header">
+    {% if mod.fsl == 1 %}
+    <div class="row  alert alert-warning col-lg-12" style="margin-left: 5px; padding-right: 5px;display:{{stflalert}}" id="alertfl">
+        <strong>{{langene.GALARTFILEBLOCK}}</strong>
+    </div>
+    {% endif %}
+    <div class="col-lg-10">
+        <h2>{{langmod.FIXACCPERM1}} ({{users}})</h2>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="?">Home</a></li>
+            <li class="breadcrumb-item active"><strong>{{langmod.FIXACCPERM1}}</strong></li>
+        </ol>
+    </div>
+</div>
+<div class="row" style="margin-top:2rem">
+    <div class="col-lg-9">
+        <div class="row text-center ibox-content">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    <!--<div class="panel-heading">
+                        <h4>Fix</h4>
+                    </div>-->
+                    <div class="panel-body notifications-type">
+                        <div class="noti-item">
+                            <div class="switch">
+                                <div class="onoffswitch">
+                                    <input type="checkbox" checked="" class="onoffswitch-checkbox" id="fix_permissions" onclick="return changestnot(this, 'fix_permissions')">
+                                    <label class="onoffswitch-label" for="fix_permissions">
+                                        <span class="onoffswitch-inner" style="margin-left: -10px !important;"></span>
+                                        <span class="onoffswitch-switch"></span>
+                                    </label>
+                                    <input type="hidden" id="fix_permissions-h" value="">
+                                </div>
+                            </div>
+                            <label class="noti-item-label" for="fix_permissions">{{langmod.FIXACCPERM2}}</label> <div style="font-size:10px;margin-left: 10px">{{langmod.FIXACCPERM3}}.</div>
+                        </div>
+                        <div class="noti-item">
+                            <div class="switch">
+                                <div class="onoffswitch">
+                                    <input type="checkbox" checkbox class="onoffswitch-checkbox" name="internalError" id="internalError" onclick="return changestnot(this, 'internalError')">
+                                    <label class="onoffswitch-label" for="internalError">
+                                        <span class="onoffswitch-inner"></span>
+                                        <span class="onoffswitch-switch"></span>
+                                    </label>
+                                    <input type="hidden" id="internalError-h" value="">
+                                </div>
+                            </div>
+                            <label class="noti-item-label" for="internalError">{{langmod.FIXACCPERM4}}</label>  <div style="font-size:10px;margin-left: 10px">{{langmod.FIXACCPERM5}}</div>
+                        </div>
+                        <div class="noti-item">
+                            <div class="switch">
+                                <div class="onoffswitch">
+                                    <input type="checkbox"  class="onoffswitch-checkbox" id="removeHandler" name="removeHandler" onclick="return changestnot(this, 'removeHandler')">
+                                    <label class="onoffswitch-label" for="removeHandler">
+                                        <span class="onoffswitch-inner"></span>
+                                        <span class="onoffswitch-switch"></span>
+                                    </label>
+                                    <input type="hidden" id="removeHandler-h" value="">
+                                </div>
+                            </div>
+                            <label class="noti-item-label" for="removeHandler">{{langmod.FIXACCPERM6}}</label>  <div style="font-size:10px;margin-left: 10px">{{langmod.FIXACCPERM7}}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-12 text-center">
+                <button class="btn btn-success" id="accFixIssues">{{langmod.FIXACCPERM8}}</button>
+            </div>
+        </div>
+    </div>
+    {% include 'sidebar.html' %}
+</div>
+{% include 'footer.html' %}

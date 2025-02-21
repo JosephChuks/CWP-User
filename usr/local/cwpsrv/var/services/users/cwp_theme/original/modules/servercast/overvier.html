@@ -1,0 +1,125 @@
+<div class="col-lg-12" style="margin-top:20px">
+    <div class="row">
+        <div class="col-lg-12 text-right">
+            <span class="titleServide">{{langmod.SERVERCAST54}}</span>  <button class="btn btn-primary btn-xs"><i class="fa fa-stop"></i></button> <button class="btn btn-warning btn-xs"><i class="fa fa-recycle"></i></button>   <span class="titleautodj"></span> <button class="btn btn-default btn-xs btStatusAutoDj" title="{{langmod.SERVERCAST55}}" id="btStatusAutoDj"> <i class="fa fa-stop"  title="{{langmod.SERVERCAST55}}"></i></button> <button class="btn btn-warning btn-xs btnRestarAutoDJ" title="{{langmod.SERVERCAST8}}" id="btnRestarAutoDJ"> <i class="fa fa-recycle iconrestautodj" title="{{langmod.SERVERCAST8}}" id="iconrestautodj"></i></button>
+        </div>
+    </div>
+    <div class="row" style="margin-top:20px">
+        <div class="col-lg-4">
+            <div class="row" style="margin-bottom: 5px;">
+                <div class="col-lg-4">
+                    {{langmod.SERVERCAST56}}
+                </div>
+                <div class="col-lg-8 text-right">
+                    <a href="#" id="hreflinkuser" target="_blank"><i class="fa fa-link"></i> {{langmod.SERVERCAST57}}</a>  <a href="#" id="hreflinkadmin" target="_blank"><i class="fa fa-link"></i> {{langmod.SERVERCAST58}}</a>
+                </div>
+            </div>
+            <div class="row" style="margin-bottom: 5px;">
+                <div class="col-lg-4">
+                    {{langmod.SERVERCAST59}}
+                </div>
+                <div class="col-lg-8 text-right" id="conexCast">
+                    <i class="fa fa-spinner fa-spin"></i>
+                </div>
+            </div>
+            <div class="row" style="margin-bottom: 5px;">
+                <div class="col-lg-4">
+                    {{langmod.SERVERCAST60}}
+                </div>
+                <div class="col-lg-8 text-right" id="maxListCast">
+                    <i class="fa fa-spinner fa-spin"></i>
+                </div>
+            </div>
+            <div class="row" style="margin-bottom: 5px;">
+                <div class="col-lg-4">
+                    {{langmod.SERVERCAST61}}
+                </div>
+                <div class="col-lg-8 text-right" id="overbit">
+                    <i class="fa fa-spinner fa-spin"></i>
+                </div>
+            </div>
+            <div class="row" style="margin-bottom: 5px;">
+                <div class="col-lg-4">
+                    {{langmod.SERVERCAST62}}
+                </div>
+                <div class="col-lg-8 text-right">
+                    <div class="progress" style="margin-bottom: 5px;" id="grafdisk">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 text-center">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <audio preload="none" autoplay="autoplay" controls="controls">
+                        <source src="" type="audio/mpeg">
+                        {{langmod.SERVERCAST63}}
+                    </audio>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12 text-center" id="songtitle">
+                    <i class="fa fa-spinner fa-spin"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <label for="">{{langmod.SERVERCAST64}}</label>
+                </div>
+                <div class="panel-body">
+                    {% if mod.serverAD == 1%}
+
+                        <div class="row">
+                            <div class="col-lg-12 text-justify">
+                                {{langmod.SERVERCAST65}}
+                            </div>
+                        </div>
+
+                        <div class="row" style="margin-top:20px">
+                            <div class="col-lg-5">
+                                {{langmod.SERVERCAST66}}:
+                            </div>
+                            <div class="col-lg-7" id="labeltype">
+
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-5">
+                                {{langmod.SERVERCAST67}}:
+                            </div>
+                            <div class="col-lg-7" id="labelip">
+
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-5">
+                                {{langmod.SERVERCAST68}}:
+                            </div>
+                            <div class="col-lg-7" id="labelport">
+
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top:20px">
+                            <div class="col-lg-12">
+                                {{langmod.SERVERCAST69}}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-12">
+                                {{langmod.SERVERCAST70}}.
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning" style="margin-left: 5px; padding-right: 5px;" id="alertAD">
+                            <strong>{{langmod.SERVERCAST71}}</strong>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

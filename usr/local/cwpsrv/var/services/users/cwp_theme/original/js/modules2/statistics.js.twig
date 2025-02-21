@@ -1,0 +1,55 @@
+$("#domain_stats").change(function () {
+    if($("#domain_stats").val()!=''){
+        $("#frecuen").attr('disabled',false);
+        $("#file").attr('disabled',true);
+        $("#frecuen").removeClass('disabled');
+        $("#file").html('');
+        $("#file").addClass('disabled');
+
+    }else{
+        $("#frecuen").attr('disabled',true);
+        $("#file").attr('disabled',true);
+        $("#frecuen").addClass('disabled');
+        $("#file").html('');
+        $("#file").addClass('disabled');
+    }
+});
+$("#frecuen").change(function () {
+    if($("#frecuen").val()!=''){
+        $("#file").html('<option>loading...!</option>');
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=statistics&acc=files",
+            data:"domain="+$("#domain_stats").val()+"&frecuen="+$("#frecuen").val(),
+            complete: function(datos){
+                console.log(datos.responseText);
+                if(datos.responseText==0){
+                    $("#file").html('');
+                    noti_bubble('{{langmod.SLABEL12}}','{{langmod.SLABEL11}}','error',false,false,'3000',true);
+                }else{
+                    $("#file").html(datos.responseText);
+                    $("#file").attr('disabled',false);
+                    $("#file").removeClass('disabled');
+                }
+                return false;
+            }
+        });
+    }else{
+        $("#file").attr('disabled',true);
+        $("#file").html('');
+        $("#file").addClass('disabled');
+    }
+});
+$("#file").change(function () {
+    if($("#file").val()!=''){
+        $("#btn-generate").removeClass('disabled');
+        $("#btn-generate").attr('disabled',false);
+    }else{
+        $("#btn-generate").addClass('disabled');
+        $("#btn-generate").attr('disabled',true);
+    }
+});
+$("#btn-generate").click(function () {
+    window.open('?module=statistics&view=1&domain='+$("#domain_stats").val()+'&frecuen='+$("#frecuen").val()+'&file='+$("#file").val(), 'Nombre Ventana','_blank');
+});

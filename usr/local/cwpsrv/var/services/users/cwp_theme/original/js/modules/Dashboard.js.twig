@@ -1,0 +1,237 @@
+
+console.log();
+
+function getRandomArbitrary(min, max) {
+  return (Math.random() * (max - min) + min).toFixed();
+}
+let uname = '{{mod.uname}}';
+let uchip = null;
+let bwstats = JSON.parse('{{mod.bwstats|raw}}');
+function savePref() {
+  setTimeout(function(){
+    let visible = $('#graph_content').is(':visible') ? true : false;
+    uchip.call('module=preferences&acc=store', {
+      data: 'uname=' + uname + '&setting=view_band_graph&value=' + visible,
+    });
+  }, 800);
+}
+$('#toggle_graph').click(function(){
+  savePref();
+});
+Date.prototype.addDays = function(days) {
+    this.setDate(this.getDate() + parseInt(days));
+    return this;
+};
+const changeGraph = (elem) => {
+  // $(elem).val();
+  $('#bandwidth-graph').html('<div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>');
+  uchip.call('module=preferences&acc=changegraph', {
+    data: 'days=' + ($(elem).val() == 'c' ? 0 : 1),
+    callback: (response) => {
+      bwstats = response;
+      $('#bandwidth-graph').html('<div id="bandwidth-line-chart"></div>' +
+                                  '<div id="legend"></div>');
+      bandGraph();
+    }
+  });
+}
+const bandGraph = () => {
+  if(bwstats == null || !bwstats.hasOwnProperty('data') || bwstats.data.length == 0){
+    $('#bandwidth-graph').html('<div class="graph-nodata">{{langene.GRAPHNODATA}}</div>');
+    return;
+  }
+  let datagraph = [];
+  let acum = 0;
+  let lines_data = ['acum', 'current', 'pro']
+  let lines_label = ['{{langene.GRAPHLABEL1}}', '{{langene.GRAPHLABEL2}}', '{{langene.GRAPHLABEL3}}']
+  let lines_color = ['#0f1429','#1ab394', '#f8ac59'];
+  let last_date = null;
+  let last_acum = 0;
+  let prom_band = 0;
+  let acum_band = 0;
+  // bwstats.numdays = 25;
+  // bwstats.bwpackage = 10000;
+  for (let i = 0; i < bwstats.numdays; i++) {
+    let acum = null;
+    let current = null;
+    let pro = null;
+    if(i < bwstats.data.length){
+      last_date = bwstats.data[i].date;
+      current = bwstats.data[i].usage;
+      last_acum = bwstats.data[i].accum;
+      acum = bwstats.data[i].accum;
+      if(i == bwstats.data.length - 1 && i !=  bwstats.numdays - 1){
+        pro = last_acum;
+        acum_band = last_acum;
+      }
+      prom_band = acum / bwstats.data.length;
+    }else{
+      acum_band += prom_band;
+      pro = acum_band;
+      ndate = new moment(last_date);
+      ndate.add(1, 'days');
+      last_date = ndate.format('YYYY-MM-DD');
+    }
+    datagraph.push({
+      d : moment(last_date).format('DD/MM'),
+      acum : acum,
+      current : current,
+      pro : (pro != null ? pro.toFixed(2) : pro),
+      plan : bwstats.bwpackage,
+    });
+  }
+  let limit_y = (acum_band == 0 ? last_acum : acum_band) * 6;
+  if(bwstats.bwpackage != -1 && limit_y > bwstats.bwpackage){
+    lines_data.push('plan');
+    lines_label.push('{{langene.GRAPHLABEL4}}');
+    lines_color.push('#FF0000');
+  }
+  let band_graph = Morris.Line({
+      element: 'bandwidth-line-chart',
+      data: datagraph,
+      xkey: 'd',
+      ykeys: lines_data,
+      labels: lines_label,
+      parseTime: false,
+      resize: true,
+      pointFillColors:['#ffffff'],
+      pointStrokeColors: ['black'],
+      lineColors: lines_color,
+      postUnits: ' MB'
+  });
+  band_graph.options.labels.forEach(function(label, i){
+    var legendlabel=$('<span class="color_box" style="background-color:' + band_graph.options.lineColors[i] + '">&nbsp;</span><span class="legendera">'+label+'</span>')
+    var legendItem = $('<div class="mbox"></div>').append(legendlabel)
+    $('#legend').append(legendItem)
+  });
+  if(limit_y <= bwstats.bwpackage || bwstats.bwpackage == -1){
+    let newleg = '<div class="mbox"><span class="color_box" style="background-color:#FF0000">&nbsp;</span><span class="legendera">{{langene.GRAPHLABEL4}} (' + (bwstats.bwpackage == -1 ? '<b>&infin; Unlimited</b>' : bwstats.bwpackage + ' MB') + ')</span></div>';
+    $('#legend').append(newleg);
+  }
+}
+function miniGraph(settings){
+  // used, limit, label1, label2, selector
+  let gf2a = settings.used;
+  let gf2b = settings.limit;
+  let dispemail = gf2b == -1 ? 100 : (gf2b == 0 ? 0 : Math.round((100/gf2b)*(gf2b-gf2a)));
+  let consemail = Math.round(100 - dispemail);
+  let classbar = '#23c6c8';
+  if (consemail >=26 && consemail <=50){
+    classbar = '#1ab394';
+  }else if(consemail >=51 && consemail <=75){
+    classbar = '#f8ac59';
+  }else if(consemail >75){
+    classbar = '#ed5565';
+  }
+  let doughnutData = {
+      labels: [settings.label1,settings.label2],
+      datasets: [{
+          data: [Math.round(consemail),Math.round(dispemail)],
+          backgroundColor: [classbar,"#dedede"]
+      }]
+  } ;
+
+  var doughnutOptions = {
+      responsive: false,
+      legend: {
+          display: false
+      },
+      tooltips: {
+          callbacks: {
+              label: function(tooltipItem, data) {
+                  var label = data.labels[tooltipItem.index] + ': ' + data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index] + '%';
+                  return label;
+              }
+          }
+      }
+  };
+  var emailg = document.getElementById(settings.selector).getContext("2d");
+  new Chart(emailg, {type: 'doughnut', data: doughnutData, options:doughnutOptions});
+}
+$(document).ready(function() {
+
+  uchip = new Uchip();
+  bandGraph();
+
+          miniGraph({
+            used: {{mod.email_accounts}},
+            limit: {{mod.email_pack}},
+            label1: '{{langene.DSWLABEL2}}',
+            label2: '{{langene.DSWLABLE1}}',
+            selector: 'doughnutChart'
+          });
+          miniGraph({
+            used: {{mod.mysqlpack.used}},
+            limit: {{mod.mysqlpack.package}},
+            label1: '{{langene.DSWLABEL2}}',
+            label2: '{{langene.DSWLABLE1}}',
+            selector: 'doughnutChart2'
+          });
+          miniGraph({
+            used: {{mod.domain_accounts}},
+            limit: {{mod.domain_pack}},
+            label1: '{{langene.DSWLABEL2}}',
+            label2: '{{langene.DSWLABLE1}}',
+            selector: 'doughnutChart3'
+          });
+          miniGraph({
+            used: {{mod.ftp_accounts}},
+              limit: {{ (mod.ftp_pack) }},
+            label1: '{{langene.DSWLABEL2}}',
+            label2: '{{langene.DSWLABLE1}}',
+            selector: 'doughnutChart4'
+          });
+          miniGraph({
+            //used: {{(mod.subdomain_pack)-(mod.subdomain_accounts)}},
+            used: {{mod.subdomain_accounts}},
+            limit: {{ (mod.subdomain_pack) }},
+            label1: '{{langene.DSWLABEL2}}',
+            label2: '{{langene.DSWLABLE1}}',
+            selector: 'doughnutChart5'
+          });
+
+  $("#top-search").on("keyup", function() {
+      var value = $(this).val().toLowerCase();
+      if(value != ''){
+          $('.searchmenu').addClass('active');
+          $('.searchmenu ul').addClass('in');
+          $('.searchmenu ul').css('height','auto');
+          $("div.float-e-margins").show();
+          //$('.ibox-content').css('display','block');
+      }else{
+          $('.searchmenu').removeClass('active');
+          $('.searchmenu ul').removeClass('in');
+          $('.searchmenu ul').css('height','0px');
+          $("div.float-e-margins").show();
+      }
+      $("#side-menu li.searchmenu, #side-menu li.search").filter(function() {
+          $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+      });
+      $("div.ibox-content div a").filter(function() {
+          $(this).parent().toggle($(this).text().toLowerCase().indexOf(value) > -1);
+      });
+      $("div.float-e-margins div.ibox-content").each(function(){
+          var bandera=0;
+          $(this).find(".col-md-3").each(function(){
+              //console.log($(this).text());
+              if(!$(this).is(':hidden') && $(this).text()!=''){
+                  bandera=1;
+              }
+          });
+          //console.log(bandera);
+          if(bandera==0){
+              $(this).parent().hide();
+          }
+      });
+  });
+    $.ajax({
+        type: "POST",
+        url: './{{users}}/index.php?acc=disk_space',
+        complete: function(response){
+
+        }
+    });
+});
+
+
+

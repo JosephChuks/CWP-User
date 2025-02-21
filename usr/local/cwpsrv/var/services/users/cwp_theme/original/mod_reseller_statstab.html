@@ -1,0 +1,129 @@
+<div>
+  {% set stats = mod.init_info.dashboard %}
+  <div class="ibox">
+    <div class="ibox-title">
+      <h3 style="margin-top:10px">{{langmod.RSLABEL15}}: {{stats.package_name}}</h3>
+    </div>
+    <div class="ibox-content">
+      <div class="mini-dashboard">
+
+        <div class="row">
+          <div class="col-md-2 col-md-offset-1">
+            <div class="mini-dashboard-graph" data-used="{{stats.quota[0]}}" data-limit="{{stats.quota[1]}}" data-donout="rs_dash_disk">
+              <canvas id="rs_dash_disk" width="100" style="width:70%; height:auto;"></canvas>
+              <h5 class="mini-dashboard-bytes">{{langmod.RSLABEL16}} <span class="used-bytes"></span> / <span class="limit-bytes"></span>
+              </h5>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="mini-dashboard-graph" data-used="{{stats.bandwidth[0]}}" data-limit="{{stats.bandwidth[1]}}" data-donout="rs_dash_bw">
+              <canvas id="rs_dash_bw" width="100" style="width:70%; height:auto;"></canvas>
+              <h5 class="mini-dashboard-bytes">{{langmod.RSLABEL25}} <span class="used-bytes"></span> / <span class="limit-bytes"></span>
+
+              </h5>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="mini-dashboard-graph" data-used="{{stats.ftp_accounts[0]}}" data-limit="{{stats.ftp_accounts[1]}}" data-donout="rs_dash_ftp">
+              <canvas id="rs_dash_ftp" width="100" style="width:70%; height:auto;"></canvas>
+              <h5>{{langmod.RSLABEL17}} {{stats.ftp_accounts[0]}} /
+                {% if stats.ftp_accounts[1] != '-1' %}
+                  {{stats.ftp_accounts[1]}}
+                {% else %}
+                  <span class="infinite-sign">&infin;</span>
+                {% endif %}
+              </h5>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="mini-dashboard-graph" data-used="{{stats.email_accounts[0]}}" data-limit="{{stats.email_accounts[1]}}" data-donout="rs_dash_email">
+              <canvas id="rs_dash_email" width="100" style="width:70%; height:auto;"></canvas>
+              <h5>{{langmod.RSLABEL18}} {{stats.email_accounts[0]}} /
+                {% if stats.email_accounts[1] != '-1' %}
+                  {{stats.email_accounts[1]}}
+                {% else %}
+                  <span class="infinite-sign">&infin;</span>
+                {% endif %}
+              </h5>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="mini-dashboard-graph" data-used="{{stats.email_lists[0]}}" data-limit="{{stats.email_lists[1]}}" data-donout="rs_dash_emlist">
+              <canvas id="rs_dash_emlist" width="100" style="width:70%; height:auto;"></canvas>
+              <h5>{{langmod.RSLABEL19}} {{stats.email_lists[0]}} /
+                {% if stats.email_lists[1] != '-1' %}
+                  {{stats.email_lists[1]}}
+                {% else %}
+                  <span class="infinite-sign">&infin;</span>
+                {% endif %}
+              </h5>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-2 col-md-offset-1">
+            <div class="mini-dashboard-graph" data-used="{{stats.addons_domains[0]}}" data-limit="{{stats.addons_domains[1]}}" data-donout="rs_dash_doms">
+              <canvas id="rs_dash_doms" width="100" style="width:70%; height:auto;"></canvas>
+              <h5>{{langmod.RSLABEL22}} {{stats.addons_domains[0]}} /
+                {% if stats.addons_domains[1] != '-1' %}
+                  {{stats.addons_domains[1]}}
+                {% else %}
+                  <span class="infinite-sign">&infin;</span>
+                {% endif %}
+              </h5>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="mini-dashboard-graph" data-used="{{stats.sub_domains[0]}}" data-limit="{{stats.sub_domains[1]}}" data-donout="rs_dash_sdoms">
+              <canvas id="rs_dash_sdoms" width="100" style="width:70%; height:auto;"></canvas>
+              <h5>{{langmod.RSLABEL20}} {{stats.sub_domains[0]}} /
+                {% if stats.sub_domains[1] != '-1' %}
+                  {{stats.sub_domains[1]}}
+                {% else %}
+                  <span class="infinite-sign">&infin;</span>
+                {% endif %}
+              </h5>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="mini-dashboard-graph" data-used="{{stats.parked_domains[0]}}" data-limit="{{stats.parked_domains[1]}}" data-donout="rs_dash_pdoms">
+              <canvas id="rs_dash_pdoms" width="100" style="width:70%; height:auto;"></canvas>
+              <h5>{{langmod.RSLABEL21}} {{stats.parked_domains[0]}} /
+                {% if stats.parked_domains[1] != '-1' %}
+                  {{stats.parked_domains[1]}}
+                {% else %}
+                  <span class="infinite-sign">&infin;</span>
+                {% endif %}
+              </h5>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="mini-dashboard-graph" data-used="{{stats.databases[0]}}" data-limit="{{stats.databases[1]}}" data-donout="rs_dash_db">
+              <canvas id="rs_dash_db" width="100" style="width:70%; height:auto;"></canvas>
+              <h5>{{langmod.RSLABEL24}} {{stats.databases[0]}} /
+                {% if stats.databases[1] != '-1' %}
+                  {{stats.databases[1]}}
+                {% else %}
+                  <span class="infinite-sign">&infin;</span>
+                {% endif %}
+              </h5>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="mini-dashboard-graph" data-used="{{stats.accounts[0]}}" data-limit="{{stats.accounts[1]}}" data-donout="rs_dash_accounts">
+              <canvas id="rs_dash_accounts" width="100" style="width:70%; height:auto;"></canvas>
+              <h5>{{langmod.RSLABEL46}} {{stats.accounts[0]}} /
+                {% if stats.accounts[1] != '-1' %}
+                  {{stats.accounts[1]}}
+                {% else %}
+                  <span class="infinite-sign">&infin;</span>
+                {% endif %}
+              </h5>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="table_cron_loader" id="mini_dashboard_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+    </div>
+  </div>
+</div>

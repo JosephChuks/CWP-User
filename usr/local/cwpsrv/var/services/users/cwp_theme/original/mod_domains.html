@@ -1,0 +1,387 @@
+{% if mod.domain_pack > -1 %}
+  {% set domainbar=100/mod.domain_pack*mod.domain_accounts %}
+  {% if domainbar >=26 and domainbar <=50 %}
+      {% set classbar = 'progress-bar progress-bar-success' %}
+  {% elseif domainbar >=51 and domainbar <=75 %}
+      {% set classbar = 'progress-bar progress-bar-warning' %}
+  {% elseif domainbar >75 %}
+      {% set classbar = 'progress-bar progress-bar-danger' %}
+  {% else %}
+      {% set classbar = 'progress-bar' %}
+  {% endif %}
+  {% set label_dom = mod.domain_pack %}
+{% else %}
+  {% set domainbar = 0 %}
+  {% set classbar = 'progress-bar' %}
+  {% set label_dom = '&infin;' %}
+{% endif %}
+<style media="screen">
+  .mail-contracted{
+    min-width: 20vw;
+    top:-7.9rem;
+    width: auto;
+  }
+  #new_form_wrapper{
+    display:none;
+  }
+  .domain-header-title{
+    display: flex;
+    padding-right: 15px;
+    justify-content: space-between;
+  }
+  .ibox-footer{
+    font-size:100%;
+  }
+  #new_form_wrapper .form-group{
+    display:flex;
+    align-items: center;
+  }
+  .directory-selector-btn{
+    display:flex;
+  }
+  #dir_explorer_domain .modal-body{
+    max-height:70vh;
+    min-height:40vh;
+    overflow:auto;
+  }
+  #dir_explorer_domain .dir-item:nth-child(even){
+    background-color:#f3f3f3;
+  }
+  #dir_explorer_domain .dir-item:hover{
+    background-color:#cccccc;
+    cursor:pointer;
+    color: #333;
+  }
+  #dir_explorer_domain .dir-item{
+    padding: 5px;
+  }
+  .dir-item .fa{
+    margin-right:5px;
+  }
+  .current-path-div{
+    padding-bottom:10px;
+    padding-top:10px;
+  }
+  #dir_list{
+    padding-bottom: 10px;
+  }
+  #dirsel{
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 25rem;
+    /* border: 1px solid #999; */
+    direction: rtl;
+    text-align: left;
+    line-height: 1.5rem;
+    padding: 0px;
+    display: inline-block;
+    margin-bottom: 0px;
+  }
+  .dir-sel-btn .fa{
+    font-size: 2rem;
+    margin-right: 5px;
+  }
+  .dir-sel-btn{
+    display: flex;
+    align-items: center;
+  }
+  .new-form-flex{
+    display:flex;
+    flex-wrap:wrap;
+  }
+  .new-form-flex-form{
+    width:70%;
+    padding-right:2rem;
+  }
+  .new-form-flex-info{
+    width:30%;
+  }
+  .ssl-row-label .fa-stack{
+    font-size: 1rem;
+    margin-left: 3px;
+    color: #156192;
+    cursor:pointer;
+  }
+  .ssl-row-label{
+    display: flex;
+    align-items: center;
+  }
+  #ssl_checkbox{
+    cursor:pointer;
+  }
+  .error-field{
+    color: #ff0000;
+    margin-top: 5px;
+    font-size: 12px;
+    display: block;
+    margin-bottom: -10px;
+  }
+  #san_selector{
+    display:none;
+  }
+  .san-list{
+    list-style: none;
+    margin: 0px;
+    padding: 0px;
+  }
+  .san-selector-title{
+    border-bottom: 1px solid #e7eaec;
+    padding-bottom: 5px;
+    font-weight: 600;
+  }
+  .deleting_tr{
+    background-color: #f5f5f566;
+    color: #e7eaec;
+  }
+  .td-table-domain-icon,
+  .td-table-domain{
+    padding-top: 1.6rem !important;
+  }
+  .td-table-domain-btn{
+    padding-top: 1.3rem !important;
+  }
+  #alert_info{
+    display:none;
+  }
+  #alert_info .alert-info{
+    display:flex;
+  }
+  #alert_info .alert-info p{
+    margin-left: 5px;
+    padding-left: 5px;
+    border-left: 1px solid #c2d2da;
+  }
+  .subdomain-icon{
+    font-size:1.5em;
+  }
+  .domain_bw .progress{
+    margin-bottom:5px;
+    margin-top:5px;
+  }
+  .infinite-bandwidth{
+    font-size: 2.5rem;
+    line-height: 10px;
+    top: 4px;
+    position: relative;
+  }
+</style>
+<div class="modal" id="dir_explorer_domain" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" style="width:500px;">
+    <div class="modal-content animated fadeIn">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+            <span aria-hidden="true">&times;</span><span class="sr-only">{{langene.MDCLOSE}}</span>
+        </button>
+        <h4>{{langmod.DOMDIRSEL}}</h4>
+      </div>
+      <div class="modal-body" style="padding:0px">
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" disabled class="btn btn-success btn-block disabled" id="sel_path_btn" onclick="selCurrentPath()">
+          <i class="fa fa-thumb-tack" aria-hidden="true"></i> {{langmod.DOMCHOOSEDIR}}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal" id="dir_explorer_domainEdit" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" style="width:500px;">
+    <div class="modal-content animated fadeIn">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span><span class="sr-only">{{langene.MDCLOSE}}</span>
+        </button>
+        <h4>{{langmod.DOMDIRSEL}}</h4>
+      </div>
+      <div class="modal-body" style="padding:0px">
+
+      </div>
+      <div class="modal-footer">
+        <input type="hidden" id="domain" value="">
+        <button type="button" disabled class="btn btn-success btn-block disabled" id="sel_path_btnEdit" onclick="selCurrentPathEdit()">
+          <i class="fa fa-thumb-tack" aria-hidden="true"></i> {{langmod.DOMCHOOSEDIR}}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal" id="deletemodaldomain" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm" style="width:300px">
+        <div class="modal-content animated fadeIn">
+            <div class="modal-header" style="padding: 10px;">
+              <button type="button" class="close" data-dismiss="modal">
+                <span aria-hidden="true">×</span>
+                <span class="sr-only">{{langene.MDCLOSE}}</span>
+              </button>
+              <h4 class="modal-title" style="font-size:2rem">{{langmod.DOMMODALATTENTION}}</h4>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+              <!-- <p>You are about to delete the FTP user: <br>
+              <strong id="descron">sanitarios@testcecilio.com</strong>
+              <br>Are you sure you want to continue?</p> -->
+            </div>
+            <div class="modal-footer">
+              <!-- <button type="button" class="btn btn-white" data-dismiss="modal">NO</button>
+              <button type="button" class="btn btn-primary" onclick="ftpdelete(1,'sanitarios','testcecilio.com',0)">YES</button>-->
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row  border-bottom white-bg dashboard-header">
+  {% if mod.fsl == 1 %}
+    <div class="row  alert alert-warning col-lg-12" style="margin-left: 5px; padding-right: 5px;display:{{stflalert}}" id="alertfl">
+        <strong>{{langene.GALARTFILEBLOCK}}</strong>
+    </div>
+  {% endif %}
+  <div class="col-lg-10">
+    <h2>{{langmod.DTITLE}} ({{users}})</h2>
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="?">Home</a></li>
+        <li class="breadcrumb-item active"><strong>{{langmod.DTITLE}}</strong></li>
+    </ol>
+  </div>
+</div>
+<div class="row" style="margin-top:2rem">
+  <div class="col-lg-9">
+    <div class="row" >
+      <div class="col-lg-12">
+        <div class="mail-contracted">
+          <div class="ibox-content">
+            <ul class="stat-list">
+              <li id="inddom">
+                <h2 class="no-margins" id="tldomind">{{langene.PGDOMAINS}} <span id="domains_used">{{mod.domain_accounts}}</span> / {{label_dom|raw}}</h2>
+                <small>{{langmod.DOMLABEL4}} / {{langmod.DOMLABEL5}}</small>
+                <div class="stat-percent">{{domainbar|round}}%</div>
+                <div id="bardomind" class="progress progress-mini">
+                  <div style="width: {{domainbar}}%;" class="{{classbar}}" id="bardomindpor"></div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="ibox" id="list_wrapper">
+          <div class="ibox-title">
+            <h4>
+              {{langmod.DOMLABEL1}}
+              {% if (mod.domain_accounts < mod.domain_pack) or (mod.domain_pack == -1) %}
+                {% set swver =''%}
+              {% else %}
+                {% set swver ='disabled'%}
+              {% endif %}
+              <button id="btn_add_domain" onclick="showNewDomainForm()"  class="btn btn-success btn-xs mr5 mb10 pull-right {{swver}}" {{swver}}><i class="fa fa-plus"></i> {{langmod.DBNTADD}}</button>
+            </h4>
+          </div>
+          <div class="ibox-content" id="table_domains_wrapper">
+            <div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+          </div>
+        </div>
+        <div class="ibox" id="new_form_wrapper">
+          <div class="ibox-title domain-header-title">
+            <h4>
+              {{langmod.DBNTADD}}
+            </h4>
+            <div class="actions-btn text-right">
+              <button onclick="saveNewDomain()" class="btn btn-w-m btn-sm btn-success btn-save-domain {{swver}}" {{swver}}><i class="fa fa-floppy-o" aria-hidden="true"></i> {{langmod.DOMSAVEBTN}}</button>
+              <button onclick="cancelNewForm()" class="btn btn-w-m btn-sm btn-warning btn-cancel-domain {{swver}}" {{swver}}><i class="fa fa-ban" aria-hidden="true"></i> {{langmod.DCANDELDOMAIN}}</button>
+            </div>
+          </div>
+          <div class="ibox-content new-form-flex">
+            <div class="new-form-flex-form">
+              <div class="form-group row">
+                <div class="col-sm-3"><b>{{ langmod.DDOMAIN }}:</b></div>
+                <div class="col-sm-9"><input type="text" class="form-control" data-required="true" data-reqdomain="true" data-nowww="true" id="newdomain"></div>
+                <!-- <div class="col-sm-5"><input type="text" class="form-control" id="newdomain" onkeyup="newdomainkeyup(this)"></div> -->
+              </div>
+              <div class="form-group row" style="margin-bottom: 5px;">
+                <div class="col-sm-3"><b>{{ langmod.DPATH }}:</b></div>
+                <div class="col-sm-9 directory-selector-btn">
+                  <span class="btn btn-white dir-sel-btn" data-toggle="tooltip" data-placement="bottom" title="{{langmod.DOMCHOOBPAT}}" onclick="showExplorer()">
+                    <i class="fa fa-home" aria-hidden="true"></i>
+                    <div id="dirsel">/</div>
+                  </span>
+                  <input type="text" id="pathdomain" class="form-control">
+                  <!-- <input type="text" class="form-control" id="pathdomain" value="/public_html/"> -->
+                </div>
+              </div>
+              <div class="form-group row" style="margin-bottom: 0px;">
+                <div class="col-sm-3 ssl-row-label">
+                  <b>{{ langmod.DOMADDSSSL }}</b>
+                  <span class="fa-stack fa-lg" data-toggle="tooltip" data-placement="bottom" title="{{langmod.DONLABEL8}}">
+                    <i class="fa fa-circle-thin fa-stack-2x"></i>
+                    <i class="fa fa-info fa-stack-1x"></i>
+                  </span>
+                </div>
+                <div class="col-sm-9">
+                  <div class="checkbox">
+                      <input type="checkbox" id="ssl_checkbox" value="option1">
+                      <label for="ssl_checkbox">&nbsp;</label>
+                  </div>
+                </div>
+              </div>
+              <div class="row" id="san_selector">
+                <div class="col-md-9 col-md-offset-3">
+                  <span class="san-selector-title">{{langmod.DOMADDSSLSERV}}</span>
+                  <ul class="san-list">
+                    <li>
+                      <div class="checkbox">
+                          <input type="checkbox" class="san-checkbox" id="mail_san" value="mail">
+                          <label for="mail_san">mail</label>
+                      </div>
+                    </li>
+                    <li>
+                      <div class="checkbox">
+                          <input type="checkbox" class="san-checkbox" id="webmail_san" value="webmail">
+                          <label for="webmail_san">webmail</label>
+                      </div>
+                    </li>
+                    <li>
+                      <div class="checkbox">
+                          <input type="checkbox" class="san-checkbox" id="ftp_san" value="ftp">
+                          <label for="ftp_san">ftp</label>
+                      </div>
+                    </li>
+                    <li>
+                      <div class="checkbox">
+                          <input type="checkbox" class="san-checkbox" id="cpanel_san" value="cpanel">
+                          <label for="cpanel_san">cpanel</label>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="new-form-flex-info">
+              <div class="row">
+                <div class="col-md-12" id="alert_info">
+                  <div class="alert alert-info" style="margin-bottom: 0px;">
+                    <div class="">
+                      <span class="fa-stack">
+                        <i class="fa fa-circle fa-stack-2x"></i>
+                        <i class="fa fa fa-info fa-stack-1x fa-inverse"></i>
+                      </span>
+                    </div>
+                    <p><b>{{langmod.DOMIMPORTANT}}</b> {{ langmod.DONLABEL7 }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="ibox-footer">
+            <div class="text-right">
+              <button onclick="saveNewDomain()" class="btn btn-w-m btn-sm btn-success btn-save-domain {{swver}}" {{swver}}>
+                <i class="fa fa-floppy-o" aria-hidden="true"></i> {{langmod.DOMSAVEBTN}}
+              </button>
+              <button onclick="cancelNewForm()" class="btn btn-w-m btn-sm btn-warning btn-cancel-domain {{swver}}" {{swver}}>
+                <i class="fa fa-ban" aria-hidden="true"></i> {{langmod.DCANDELDOMAIN}}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% include 'sidebar.html' %}
+</div>
+{% include 'footer.html' %}

@@ -1,0 +1,180 @@
+function validatetypephp(){
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=phpini_editor&acc=validatetypephp",
+        data: "domain="+$("#domainini").val(),
+        complete: function(datos){
+            var stn=datos.responseText;
+            var trz=stn.split('||');
+            if(trz[1]=='php-fpm'){var filename='.user.ini';}else{var filename='php.ini';}
+            $("#hfilename").val(trz[2]+'/'+filename);
+            $("#pathini").html('<h5>'+trz[2]+'/'+filename+'</h5>');
+            listregphpini();
+            //$("#conteditphp").html(trz[3]);
+            return false;
+        }
+    });
+    return false;
+}
+function listregphpini(){
+    $.ajax({
+        type: "POST",
+        url: "./{{ users }}/index.php?module=phpini_editor&acc=listregphpini",
+        data: "file="+$("#hfilename").val(),
+        complete: function (datos) {
+            var trs='';
+            var str=datos.responseText;
+            var valuehidden=str.split('/*/');
+            var linet=valuehidden[0].split('/:');
+            var countline=linet.length;
+            for(i=0;i<(countline-1);i++){
+                trs+='<tr>';
+                var trozos=linet[i].split("|");
+                var namelabel=trozos[1];
+                var n = namelabel.indexOf(";;");
+                var btnst='';
+                if(n == -1){btnst='<button type="button" class="btn btn-warning btn-xs" onclick="return disablephpini(0,'+(i+1)+')" style="margin-left: 2px">Disable</button>  ';
+                }else{
+                    var fin = str.length;
+                    var res = namelabel.substring(2, fin);
+                    namelabel=res;
+                    btnst='<button type="button" class="btn btn-default btn-xs" onclick="return disablephpini(1,'+(i+1)+')" style="margin-left: 2px">Enable</button>  ';
+                }
+                trs+='<td><label class="col-form-label">'+namelabel+'</label></td>';
+                trs+='<td><input type="text" id="'+namelabel+'" value="'+trozos[3]+'" class="form-control"></td>';
+                trs+='<td class="text-center">'+btnst+'<button type="button" class="btn btn-danger btn-xs" onclick="return deletephpini(0,'+(i+1)+')">Delete</button></td>';
+                trs+='</tr>';
+                //}
+            }
+            noti_bubble('{{langmod.EXIST}}','{{langmod.EXITO}}','success',true,false,'3000',true);
+            $("#conteditphp").html(trs);
+            $("#addnew_tex").val('');
+            $("#valuehidden").val(valuehidden[1]);
+            return false;
+        }
+    });
+}
+function deletephpini(st,id,name){
+    if(st==0){
+        var varheader='<h2>{{ langmod.PHPLABEL6 }}</h2>';
+        var varbody='<p class="text-center"><b>{{ langmod.ALERTDELETE }}  '+name+' ?</b></p>';
+        var varfooter='<button type="button" class="btn btn-white" data-dismiss="modal">{{langmod.BTN_NO}}</button>  <button type="button" class="btn btn-primary" onclick="return deletephpini(1,\''+id+'\',\''+name+'\')">{{langmod.BTN_YES}}</button>';
+        $("#deletemodal .modal-header").html(varheader);
+        $("#deletemodal .modal-body").html(varbody);
+        $("#deletemodal .modal-footer").html(varfooter);
+        $("#deletemodal").modal('toggle');
+        //var msj='<div class="alert alert-warning fade in"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button><i class="glyphicon glyphicon-ban-circle alert-icon "></i> {{langmod.ALERTDELETE}}  '+name+'?  <strong><a href="#" onclick="return deletephpini(1,\''+id+'\',\''+name+'\')"> {{langmod.BTN_YES}}</a>  <a href="#" data-dismiss="alert" aria-hidden="true"></strong> {{langmod.BTN_NO}}</strong></a></div>';
+        //$('#erroreditphp').html(msj);
+        //$('#erroreditphp').show('blind');
+    }else if(st==1){
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=phpini_editor&acc=deletephpini",
+            data:"id="+id+"&file="+$("#hfilename").val(),
+            complete: function(datos){
+                listregphpini();
+                $("#deletemodal").modal('hide');
+                return false;
+            }
+        });
+    }
+    return false;
+}
+function disablephpini(st,id){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=phpini_editor&acc=disablephpini",
+        data:"id="+id+"&file="+$("#hfilename").val(),
+        complete: function(datos){
+            //$("#conteditphp").html(datos.responseText);
+            listregphpini();
+            return false;
+        }
+    });
+}
+function insertText(data){
+    var cm = $(".CodeMirror")[0].CodeMirror;
+    var doc = cm.getDoc();
+    var cursor = doc.getCursor(); // gets the line number in the cursor position
+    var line = doc.getLine(cursor.line); // get the line contents
+    var pos = {
+        line: cursor.line
+    };
+    if (line.length === 0) {
+        // check if the line is empty
+        // add the data
+        doc.replaceRange(data, pos);
+    } else {
+        // add a new line and the data
+        doc.replaceRange("\n" + data, pos);
+    }
+}
+
+
+$("#btn_editphp_add").click(function () {
+    if(($("#addnew_tex").val()=='')&&($("#addnew_sel").val()=='')){
+        noti_bubble('{{langmod.LABELPHP}}','{{langmod.ERROR1}}','error',true,false,'3000',true);
+        return false;
+    }else{
+        if($("#addvalue").val()==''){
+            noti_bubble('{{langmod.LABELPHP}}','{{langmod.ERROR1}}','error',true,false,'3000',true);
+            return false;
+        }else{
+            if($("#addnew_tex").val()!=''){var label=$("#addnew_tex").val();}else{var label=$("#addnew_sel").val();}
+            $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+            $.ajax({
+                type: "POST",
+                url: "./{{users}}/index.php?module=phpini_editor&acc=addlabelphpini",
+                data:"label="+Base64.encode(label)+"&value="+Base64.encode($("#addvalue").val())+"&file="+$("#hfilename").val(),
+                complete: function(datos){
+                    var str=datos.responseText;
+                    var res=str.split("||");
+                    if(res[0]==1) {
+                        listregphpini();
+                        noti_bubble('{{langmod.EXIST}}','{{langmod.EXITO}}','success',true,false,'3000',true);
+                        insertText(label+'='+$("#addvalue").val());
+                        return false;
+                    }else if(res[0]==2){
+                        noti_bubble('{{langmod.LABELEXIST}}','{{langmod.ERROR1}}','error',true,false,'3000',true);
+                        return false;
+                    }else{
+                        noti_bubble('{{langmod.ERRORINI}}','{{langmod.ERROR1}}','error',true,false,'3000',true);
+                        return false;
+                    }
+                    return false;
+                }
+            });
+        }
+    }
+});
+$("#btn_update_editphpini").click(function () {
+    $("#btn_update_editphpini").html('<i class="fa fa-spinner  fa-spin"></i>&nbsp;{{ langmod.PHPLABEL9 }}');
+    var arr=$("#valuehidden").val();
+    var resp=[];
+    arr=arr.split(',');
+    var fin=((arr.length)-1);
+    for(i=0;i<fin;i++){
+        resp.push(encodeURIComponent($("#"+arr[i]).val()));
+    }
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=phpini_editor&acc=update",
+        data:"value="+resp+"&title="+arr+"&file="+$("#hfilename").val(),
+        complete: function(datos){
+            if(datos.responseText!=0){
+                noti_bubble('{{langmod.UPDATEREG}}','{{langmod.PHPEXIT}}','success',true,false,'3000',true);
+            }else{
+                noti_bubble('{{langmod.ERROR1}}','{{langmod.LABELVALUE}}','error',true,false,'3000',true);
+            }
+            $("#btn_update_editphpini").html('&nbsp;{{langmod.BTN_UPDATE}}');
+            return false;
+        }
+    });
+});
+$("#addphpini").click(function () {
+    $("#addphpinieditor").modal('toggle');
+    return false;
+});

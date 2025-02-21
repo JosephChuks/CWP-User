@@ -1,0 +1,223 @@
+function deletwp(pathwp,line,ps){
+    var troz=pathwp.split('@');
+    if(ps=='wp'){var pack='WordPress';}
+    if(ps=='ps'){var pack='PrestaShop';}
+    if(ps=='dp'){var pack='Drupal';}
+    if(ps=='jl'){var pack='Joomla';}
+    //alert('Aqui: '+pathwp);
+    $("#valuedelete").val(pathwp);
+    $("#line").val(line);
+    var troz2=pathwp.split('@');
+    var msj='<i class="fa fa-exclamation-triangle"></i>    <strong>{{ langmod.ADDDDP28 }}</strong>    {{ langmod.ADDDDP31 }}';
+    msj+='<br><br><div class="radio-custom"><input type="radio" name="deletewp" value="1" id="radio1" checked><label for="radio1">{{ langmod.ADDDDP41 }} <b>'+troz[1]+'</b> {{ langmod.ADDDDP42 }}</label></div>';
+    msj+='<div class="radio-custom"><input type="radio" name="deletewp" value="2" checked="checked" id="radio2"><label for="radio2">{{ langmod.ADDDDP43 }} '+pack+' {{ langmod.ADDDDP44 }}</label></div>';
+    msj+='<input type="hidden" id="valuedelete" value="2"><div class="radio-custom"><input type="radio" name="deletewp" value="3" id="radio3"><label for="radio3">{{ langmod.ADDDDP43 }} '+pack+' {{ langmod.ADDDDP44 }}</label></div>';
+    var headervar='<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{ langmod.ADDDDP29 }}</span></button><h4 class="modal-title">{{ langmod.ADDDDP28 }}</h4><small class="font-bold">{{ langmod.ADDDDP30 }} </small>';
+    var bodyvar='<p class="text-center"><b>'+troz[1]+'</b></p>'+msj;
+    var footervar='<button type="button" class="btn btn-white" data-dismiss="modal">{{ langmod.ADDDDP29 }}</button><button type="button" class="btn btn-primary" id="btnyesdel" onclick="return deletewp(\''+ps+'\')">{{ langmod.TYES }}</button>';
+    //$(".modal-dialog").removeClass('modal-lg');
+    $("#addmodal .modal-header").html(headervar);
+    $("#addmodal .modal-body").html(bodyvar);
+    $("#addmodal .modal-footer").html(footervar);
+    $("#addmodal").modal('toggle');
+    return false;
+}
+function deletewp(pack){
+    var op=$('input:radio[name=deletewp]:checked').val();
+    var sitedelete=$("#valuedelete").val();
+    var line=$("#line").val();
+
+    if(pack=='wp'){ var urlajax="./{{users}}/index.php?module=addons&acc=wordpress&op=deletewp"; }
+    if(pack=='ps'){ var urlajax="./{{users}}/index.php?module=addons&acc=prestashop&op=deleteps"; }
+    if(pack=='dp'){ var urlajax="./{{users}}/index.php?module=addons&acc=drupal&op=deletedp"; }
+    if(pack=='jl'){ var urlajax="./{{users}}/index.php?module=addons&acc=joomla&op=deletejl"; }
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: urlajax,
+        data:"option="+op+"&site="+sitedelete+"&line="+line+"&pack="+pack,
+        complete: function(datos){
+            //alert(datos.responseText);// return false;
+            if(datos.responseText==1){
+                if(pack=='wp'){ $("#tdwp"+line).hide('blind'); $("#messagewp").hide('blind'); $("#messagewp").html(''); }
+                if(pack=='ps'){ $("#tdps"+line).hide('blind'); $("#messageps").hide('blind'); $("#messageps").html(''); }
+                if(pack=='dp'){ $("#tddp"+line).hide('blind'); $("#messagedp").hide('blind'); $("#messagedp").html(''); }
+                if(pack=='jl'){ $("#tdjl"+line).hide('blind'); $("#messagedp").hide('blind'); $("#messagejl").html(''); }
+                noti_bubble('{{langmod.ADDSUCCT}}','{{langmod.ADDALERT1}}','success',false,false,'3000',true);
+                $("#addmodal").modal('toggle');
+            }
+            return false;
+        }
+    });
+    return false;
+}
+function alertdeletefilemanager(st){
+    if(st==0){
+        $("#alert-delete-filemanager").hide('blind');
+        return false;
+    }else{
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=addons&acc=filemanager&op=delete",
+            complete: function(datos){
+                window.location.href="/{{users}}/?module=addons&acc=filemanager";
+                return false;
+            }
+        });
+    }
+    return false;
+}
+
+$("#btn-addons-efm-add").click(function (){
+    if(($("#pass1fm").val()!='')&&($("#pass2fm").val()!='')) {
+        if ($("#pass1fm").val() != $("#pass2fm").val()) {
+            noti_bubble('{{langmod.ADDERROR1}}','{{langmod.ADDERROR2}}','error',false,false,'3000',true);
+            return false;
+        } else {
+            $("#row1").hide();
+            $("#row2").hide();
+            $("#btnoff").hide();
+            $("#install").show();
+            $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+            $.ajax({
+                type: "POST",
+                url: "./{{users}}/index.php?module=addons&acc=filemanager&op=install",
+                data:"pass="+$("#pass1fm").val(),
+                complete: function(datos){
+                    window.location.href="/{{users}}/?module=addons&acc=filemanager";
+                    return false;
+                }
+            });
+            return false;
+        }
+    }else{
+        noti_bubble('{{langmod.ADDERROR2}}','{{langmod.FERROR}}','error',false,false,'3000',true);
+    }
+});
+$("#generate_dp").click(function (){
+    if(($("#dpdomain").val()=='')||($("#dpbd").val()=='')||($("#dpuserdb").val()=='')||($("#dppassbd").val()=='')||($("#dpadminuser").val()=='')||($("#pdadminemail").val()=='')||($("#pdadminpass").val()=='')){
+        noti_bubble('{{langmod.ADDALLREQ}}','','error',false,false,'3000',true);
+        return false;
+    }else{
+        $("#generate_dp").addClass('disabled');
+        $("#generate_dp").attr('disabled',true);
+        $("#modaladdwp .modal-header").html('<h4>{{ langmod.ADDDDP36 }}</h4>');
+        $("#modaladdwp .modal-body").html('<div class="text-center"><i class="fa fa-hourglass-start"></i>  {{ langmod.ADDDDP37 }}</div>');
+
+        $("#modaladdwp").modal('toggle');
+        $.ajaxSetup({ headers: { 'csrftoken' : 'ff1ee1e9dea6a0ec617d828f8e2bdc28' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{ users }}/index.php?module=addons&acc=drupal&op=add",
+            data:"dpdomain="+$("#dpdomain").val()+"&dppach="+$("#dppach").val()+"&dpbd="+$("#dpbd").val()+"&dpuserdb="+$("#dpuserdb").val()+"&dppassbd="+$("#dppassbd").val()+"&dpadminuser="+$("#dpadminuser").val()+"&pdadminemail="+$("#pdadminemail").val()+"&pdadminpass="+Base64.encode($("#pdadminpass").val()),
+            complete: function(datos){
+                $("#modaladdwp").modal('toggle');
+                $("#generate_dp").removeClass('disabled');
+                $("#generate_dp").attr('disabled',false);
+                $("#pdadminemail").val('');
+                $("#pdadminpass").val('');
+                $("#dpbd").val('');
+                $("#dpuserdb").val('');
+                $("#dppassbd").val('');
+                $("#trpaneldp").html(datos.responseText);
+                return false;
+            }
+        });
+        return false;
+    }
+    //}
+});
+$("#generate_jl").click(function (){
+    if(($("#jldomain").val()=='')||($("#jlbd").val()=='')||($("#jluserdb").val()=='')||($("#jlpassbd").val()=='')){
+        noti_bubble('{{langmod.ADDALLREQ}}','','error',false,false,'3000',true);
+        return false;
+    }else{
+        $("#generate_jl").addClass('disabled');
+        $("#generate_jl").attr('disabled',true);
+        $("#modaladdwp .modal-header").html('<h4>{{ langmod.ADDDDP38 }}</h4>');
+        $("#modaladdwp .modal-body").html('<div class="text-center"><i class="fa fa-hourglass-start"></i>  {{ langmod.ADDDDP37 }}</div>');
+        $("#modaladdwp").modal('toggle');
+        $.ajaxSetup({ headers: { 'csrftoken' : 'ff1ee1e9dea6a0ec617d828f8e2bdc28' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{ users }}/index.php?module=addons&acc=joomla&op=add",
+            data:"jldomain="+$("#jldomain").val()+"&jlpach="+$("#jlpach").val()+"&jlbd="+$("#jlbd").val()+"&jluserdb="+$("#jluserdb").val()+"&jlpassbd="+Base64.encode($("#jlpassbd").val()),
+            complete: function(datos){
+                $("#modaladdwp").modal('toggle');
+                $("#generate_jl").removeClass('disabled');
+                $("#generate_jl").removeClass('disabled');
+                $("#generate_jl").attr('disabled',false);
+                $("#jlpach").val('');
+                $("#jlbd").val('');
+                $("#jlpassbd").val('');
+                $("#trpaneljl").html(datos.responseText);
+                return false;
+            }
+        });
+        return false;
+    }
+});
+$("#generate_ps").click(function (){
+    if(($("#psurl").val()=='')||($("#psdomain").val()=='')||($("#pslang").val()=='')||($("#psbd").val()=='')||($("#psuserdb").val()=='')||($("#pspassbd").val()=='')){
+        noti_bubble('{{langmod.ADDALLREQ}}','','error',false,false,'3000',true);
+        return false;
+    }else{
+        $("#generate_ps").addClass('disabled');
+        $("#generate_ps").attr('disabled',true);
+        $("#modaladdwp .modal-header").html('<h4>{{ langmod.ADDDDP39 }}</h4>');
+        $("#modaladdwp .modal-body").html('<div class="text-center"><i class="fa fa-hourglass-start"></i>  {{ langmod.ADDDDP37 }}</div>');
+
+        $("#modaladdwp").modal('toggle');
+        $.ajaxSetup({ headers: { 'csrftoken' : 'ff1ee1e9dea6a0ec617d828f8e2bdc28' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{ users }}/index.php?module=addons&acc=prestashop&op=add",
+            data:"psurl="+$("#psurl").val()+"&psdomain="+$("#psdomain").val()+"&pspach="+$("#pspach").val()+"&pslang="+$("#pslang").val()+"&psbd="+$("#psbd").val()+"&psuserdb="+$("#psuserdb").val()+"&pspassbd="+Base64.encode($("#pspassbd").val())+"&version="+$("#psversion").val()+"&psadminemail="+$("#psadminemail").val()+"&psadminpass="+$("#psadminpass").val(),
+            complete: function(datos){
+                $("#modaladdwp").modal('toggle');
+                $("#generate_ps").removeClass('disabled');
+                $("#generate_ps").attr('disabled',false);
+                $("#psadminemail").val('');
+                $("#psadminpass").val('');
+                $("#psbd").val('');
+                $("#psuserdb").val('');
+                $("#pspassbd").val('');
+                $("#trpanelps").html(datos.responseText);
+                return false;
+            }
+        });
+        return false;
+    }
+});
+$("#generate_wp").click(function (){
+    if(($("#wpurl").val()=='')||($("#wpdomain").val()=='')||($("#wplang").val()=='')||($("#wpbd").val()=='')||($("#wpuserdb").val()=='')||($("#wppassbd").val()=='')){
+        noti_bubble('{{langmod.ADDALLREQ}}','{{langmod.ADDSNAP}}','error',false,false,'3000',true);
+        return false;
+    }else{
+        $("#generate_wp").addClass('disabled');
+        $("#generate_wp").attr('disabled',true);
+        $("#modaladdwp .modal-header").html('<h4>{{ langmod.ADDDDP40 }}</h4>');
+        $("#modaladdwp .modal-body").html('<div class="text-center"><i class="fa fa-hourglass-start"></i>  {{ langmod.ADDDDP37 }}</div>');
+        $("#modaladdwp").modal('toggle');
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        var passwp=Base64.encode($("#wppassbd").val());
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=addons&acc=wordpress&op=add",
+            data:"wpurl="+$("#wpurl").val()+"&wpdomain="+$("#wpdomain").val()+"&wppach="+$("#wppach").val()+"&wplang="+$("#wplang").val()+"&wpbd="+$("#wpbd").val()+"&wpuserdb="+$("#wpuserdb").val()+"&wppassbd="+passwp,
+            complete: function(datos){
+                $("#modaladdwp").hide();
+                $("#generate_wp").removeClass('disabled');
+                $("#wpbd").val('');
+                $("#wpuserdb").html('');
+                $("#wppassbd").html('');
+                $("#wppach").html('');
+                $("#trpanelwp").html(datos.responseText);
+                $("#modaladdwp").modal('toggle');
+                return false;
+            }
+        });
+        return false;
+    }
+});

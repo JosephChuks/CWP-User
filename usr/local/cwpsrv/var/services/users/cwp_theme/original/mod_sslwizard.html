@@ -1,0 +1,798 @@
+<style media="screen">
+  .ssl-wizard{
+    margin-top:2rem;
+  }
+  .ssl-wizard .ibox-title{
+    border: 0px;
+    padding: 0px 15px;
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+  }
+  .ssl-wizard .ibox-title h4{
+    margin:0px;
+  }
+  #ssl_csr_generated,
+  #ssl_install_wrapper,
+  #installing_loader_wrapper,
+  #ssl_csr_wrapper{
+    display:none;
+  }
+  .installing-loader{
+    display: flex;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    height:40rem;
+    flex-flow: column;
+  }
+  .installing-loader .fa-spin{
+    color: #1c84c6;
+    font-size: 10rem;
+  }
+  .installing-loader .icon-script{
+    position: absolute;
+    font-size: 4rem;
+    color: #0f1429;
+  }
+  .installing-loader h1{
+    font-size: 3rem !important;
+    margin-bottom: 2rem;
+    font-weight:500;
+  }
+  .installing-loader p{
+    margin-top: 2rem;
+    font-size: 2rem;
+  }
+  .select2-container{
+    width:100% !important;
+  }
+  .select2-selection{
+    height: 34px !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid #ddd !important;
+    border-radius: 0px !important;
+  }
+  .select2-selection__rendered{
+    color:#999999 !important;
+  }
+  .select2-selection__arrow{
+    position:relative !important;
+  }
+  .bootstrap-tagsinput{
+    border-radius: 0px;
+    border-color: #ddd;
+  }
+  .control-label{
+    text-align:left !important;
+  }
+  .ibox-footer{
+    font-size:100%;
+  }
+  .error-field{
+    color: #ff0000;
+    margin-top: 5px;
+    font-size: 12px;
+    display: block;
+    margin-bottom: -1rem;
+  }
+  .csr-input-gnerated{
+    height:340px !important;
+    font-size:12px;
+  }
+  .csr-generated-title{
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+    margin-bottom: 5px;
+  }
+  .csr-generated-title h4{
+    margin-top:10px;
+  }
+  .val-selected{
+    color:#696969 !important;
+  }
+  #email_send_csr{
+    display:none;
+    margin-top: 5px;
+    margin-bottom: 0px;
+  }
+  .domain-actions-wrapper{
+    display:flex;
+    justify-content: space-evenly;
+  }
+  .domain-actions-wrapper .caret{
+    margin-left:5px;
+  }
+  #modalinfo_twice .modal-header{
+    padding:10px;
+  }
+  #modalinfo_twice .modal-title{
+    font-size:1.8rem;
+  }
+  .info_certificate_body{
+    line-height:2.5rem;
+  }
+  #modalinfo_twice .modal-body{
+    max-height: 80vh;
+    overflow: auto;
+  }
+  .file-content-ssl-header{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .file-content-ssl{
+    margin: -1rem;
+  }
+  .file-content-ssl textarea{
+    height: 35rem;
+    font-size: 12px;
+  }
+  .copy-file{
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 3px 5px;
+    color: #ccc;
+    cursor: pointer;
+  }
+  .copy-file:hover{
+    border-color:#999;
+    color:#999;
+  }
+  #ssl_table_wrapper{
+    padding-bottom:0px;
+  }
+  #install_form .form-group{
+    margin-bottom:0px;
+  }
+  #install_form .control-label{
+    margin-bottom:5px;
+  }
+  #install_form textarea{
+    height: 30rem;
+  }
+  #preinstall_info .modal-header{
+    padding: 10px;
+  }
+  #preinstall_info .modal-header h4{
+    font-size: 2rem;
+  }
+  #preinstall_info_body{
+    background-color: #fff;
+    padding: 15px 20px;
+    max-height: 60vh;
+    overflow: auto;
+  }
+  #preinstall_info_body h3{
+    font-size:15px;
+  }
+  #preinstall_info_body .checkbox label::before,
+  #preinstall_info_body .checkbox label::after{
+    top:3px
+  }
+  #preinstall_info_body .checkbox{
+    margin-bottom:5px;
+    margin-top:5px;
+  }
+  .ssl-info-title{
+    border-bottom: 1px solid #cecece;
+    margin-bottom: 0px;
+    margin-top: 0px;
+    cursor: pointer;
+    background-color: #f48513;
+    padding: 10px;
+    color: #fff;
+  }
+  #preinstall_info_body .item-install-container{
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+  #preinstall_info_body h4{
+    font-size:13px;
+  }
+  .install-btn-wrapper{
+    display: flex;
+    justify-content: space-around;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px #ccc solid;
+  }
+  .deleting_tr{
+    background-color: #f5f5f566;
+    color: #e7eaec;
+  }
+</style>
+<div class="modal inmodal" id="preinstall_info" tabindex="-1" role="dialog" aria-labelledby="videoModal" aria-hidden="true">
+  <div class="modal-dialog" style="width:400px;">
+    <div class="modal-content animated fadeIn">
+      <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">
+              <span aria-hidden="true">&times;</span><span class="sr-only">{{langmod.SSLCLOSE}}</span>
+          </button>
+          <h4 class="modal-title">{{langmod.SSLWLABEL64}}</h4>
+      </div>
+      <div class="modal-body" id="preinstall_info_body">
+
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal inmodal" id="modalinfo_twice" tabindex="-1" role="dialog" aria-labelledby="videoModal" aria-hidden="true">
+  <div class="modal-dialog" style="width:550px;">
+    <div class="modal-content animated fadeIn">
+      <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">
+              <span aria-hidden="true">&times;</span><span class="sr-only">{{langmod.SSLCLOSE}}</span>
+          </button>
+          <h4 class="modal-title">{{langmod.SSLWLABEL51}}</h4>
+      </div>
+      <div class="modal-body">
+
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal" id="deleteletsencrypt" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm" style="width:300px">
+        <div class="modal-content animated fadeIn">
+            <div class="modal-header" style="padding: 10px;">
+              <button type="button" class="close" data-dismiss="modal">
+                <span aria-hidden="true">×</span>
+                <span class="sr-only">{{langene.MDCLOSE}}</span>
+              </button>
+              <h4 class="modal-title text-center" style="font-size:2rem">{{langmod.SSLWLABEL53}}</h4>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+              <!-- <p>You are about to delete the FTP user: <br>
+              <strong id="descron">sanitarios@testcecilio.com</strong>
+              <br>Are you sure you want to continue?</p> -->
+            </div>
+            <div class="modal-footer">
+              <!-- <button type="button" class="btn btn-white" data-dismiss="modal">NO</button>
+              <button type="button" class="btn btn-primary" onclick="ftpdelete(1,'sanitarios','testcecilio.com',0)">YES</button>-->
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row  border-bottom white-bg dashboard-header">
+    {% if mod.fsl == 1 %}
+    {% set stflalert ='block' %}
+    {% else %}
+    {% set stflalert ='none' %}
+    {% endif %}
+    <div class="row  alert alert-warning col-lg-12" style="margin-left: 5px; padding-right: 5px;display:{{stflalert}}" id="alertfl">
+        <strong>{{langene.GALARTFILEBLOCK}}</strong>
+    </div>
+    <div class="col-lg-10">
+        <h2>{{langmod.SSLWLABEL1}} ({{users}})</h2>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="?">Home</a></li>
+            <li class="breadcrumb-item active"><strong>{{langmod.SSLWLABEL1}}</strong></li>
+        </ol>
+    </div>
+</div>
+<div class="row ssl-wizard">
+  <div class="col-lg-9">
+    <div class="row" id="ssl_list_wrapper">
+      <div class="col-md-12">
+        <div class="ibox">
+          <div class="ibox-title">
+            <h4>
+             {{langmod.SSLWLABEL2}}
+            </h4>
+            <div class="">
+              <button id="btn_add_account" onclick="showNewCSR()" class="btn btn-xs btn-success"><i class="fa fa-pencil" aria-hidden="true"></i> {{langmod.SSLWLABEL3}}</button>
+              <button id="btn_add_account" onclick="showInstallForm()" class="btn btn-xs btn-success"><i class="fa fa-lock" aria-hidden="true"></i> {{langmod.SSLWLABEL4}}</button>
+            </div>
+          </div>
+          <div class="ibox-content" id="table_ssl_wrapper">
+            <div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+          </div>
+        </div>
+      </div>
+      <!-- <div class="col-md-4">
+        <div class="ibox">
+          <div class="ibox-title">
+            <h4>
+             Step by Step
+            </h4>
+          </div>
+          <div class="ibox-content">
+            <p><b>1)</b> {{langmod.SSLWLABEL42}}</p>
+            <p><b>2)</b> {{langmod.SSLWLABEL43}}</p>
+          </div>
+        </div>
+      </div> -->
+    </div>
+    <div class="row" id="ssl_csr_wrapper">
+      <div class="col-md-8">
+        <div class="ibox">
+          <div class="ibox-title">
+            <h4>
+             {{langmod.SSLWLABEL5}}
+            </h4>
+            <div class="">
+              <button id="btn_add_account" onclick="processNewCSR()" class="btncsr-gen btn btn-xs btn-success"><i class="fa fa-cogs"></i> {{langmod.SSLWLABEL9}}</button>
+              <button id="btn_add_account" onclick="cancelNewCSR()" class="btncsr-cnl btn btn-xs btn-warning"><i class="fa fa-ban" aria-hidden="true"></i> {{langmod.SSLWLABEL7}}</button>
+            </div>
+          </div>
+          <div class="ibox-content">
+            <div class="form-horizontal">
+                <div class="form-group">
+                    <label for="inputEmail5" class="col-sm-4 control-label">{{langmod.SSLWLABEL21}}:</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control reqcsr" data-required="true" value="" id="commonName" placeholder="{{langmod.SSLWLABEL31}}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="inputEmail5" class="col-sm-4 control-label">{{langmod.SSLWLABEL22}}:</label>
+                    <div class="col-sm-8">
+                        <select class="form-control reqcsr" data-required="true" id="countryName" name="countryName">
+                          <option value="">{{langmod.SSLWLABEL8}}</option>
+                          <option value="US">United States of America (US)</option>
+                          <option value="CA">Canada (CA)</option>
+                          <option value="AX">Åland Islands (AX)</option>
+                          <option value="AD">Andorra (AD)</option>
+                          <option value="AE">United Arab Emirates (AE)</option>
+                          <option value="AF">Afghanistan (AF)</option>
+                          <option value="AG">Antigua and Barbuda (AG)</option>
+                          <option value="AI">Anguilla (AI)</option>
+                          <option value="AL">Albania (AL)</option>
+                          <option value="AM">Armenia (AM)</option>
+                          <option value="AN">Netherlands Antilles (AN)</option>
+                          <option value="AO">Angola (AO)</option>
+                          <option value="AQ">Antarctica (AQ)</option>
+                          <option value="AR">Argentina (AR)</option>
+                          <option value="AS">American Samoa (AS)</option>
+                          <option value="AT">Austria (AT)</option>
+                          <option value="AU">Australia (AU)</option>
+                          <option value="AW">Aruba (AW)</option>
+                          <option value="AZ">Azerbaijan (AZ)</option>
+                          <option value="BA">Bosnia and Herzegovina (BA)</option>
+                          <option value="BB">Barbados (BB)</option>
+                          <option value="BD">Bangladesh (BD)</option>
+                          <option value="BE">Belgium (BE)</option>
+                          <option value="BF">Burkina Faso (BF)</option>
+                          <option value="BG">Bulgaria (BG)</option>
+                          <option value="BH">Bahrain (BH)</option>
+                          <option value="BI">Burundi (BI)</option>
+                          <option value="BJ">Benin (BJ)</option>
+                          <option value="BM">Bermuda (BM)</option>
+                          <option value="BN">Brunei Darussalam (BN)</option>
+                          <option value="BO">Bolivia (BO)</option>
+                          <option value="BR">Brazil (BR)</option>
+                          <option value="BS">Bahamas (BS)</option>
+                          <option value="BT">Bhutan (BT)</option>
+                          <option value="BV">Bouvet Island (BV)</option>
+                          <option value="BW">Botswana (BW)</option>
+                          <option value="BZ">Belize (BZ)</option>
+                          <option value="CA">Canada (CA)</option>
+                          <option value="CC">Cocos (Keeling) Islands (CC)</option>
+                          <option value="CF">Central African Republic (CF)</option>
+                          <option value="CH">Switzerland (CH)</option>
+                          <option value="CI">Cote D'Ivoire (Ivory Coast) (CI)</option>
+                          <option value="CK">Cook Islands (CK)</option>
+                          <option value="CL">Chile (CL)</option>
+                          <option value="CM">Cameroon (CM)</option>
+                          <option value="CN">China (CN)</option>
+                          <option value="CO">Colombia (CO)</option>
+                          <option value="CR">Costa Rica (CR)</option>
+                          <option value="CS">Czechoslovakia (former) (CS)</option>
+                          <option value="CV">Cape Verde (CV)</option>
+                          <option value="CX">Christmas Island (CX)</option>
+                          <option value="CY">Cyprus (CY)</option>
+                          <option value="CZ">Czech Republic (CZ)</option>
+                          <option value="DE">Germany (DE)</option>
+                          <option value="DJ">Djibouti (DJ)</option>
+                          <option value="DK">Denmark (DK)</option>
+                          <option value="DM">Dominica (DM)</option>
+                          <option value="DO">Dominican Republic (DO)</option>
+                          <option value="DZ">Algeria (DZ)</option>
+                          <option value="EC">Ecuador (EC)</option>
+                          <option value="EE">Estonia (EE)</option>
+                          <option value="EG">Egypt (EG)</option>
+                          <option value="EH">Western Sahara (EH)</option>
+                          <option value="ER">Eritrea (ER)</option>
+                          <option value="ES">Spain (ES)</option>
+                          <option value="ET">Ethiopia (ET)</option>
+                          <option value="FI">Finland (FI)</option>
+                          <option value="FJ">Fiji (FJ)</option>
+                          <option value="FK">Falkland Islands (Malvinas) (FK)</option>
+                          <option value="FM">Micronesia (FM)</option>
+                          <option value="FO">Faroe Islands (FO)</option>
+                          <option value="FR">France (FR)</option>
+                          <option value="FX">France, Metropolitan (FX)</option>
+                          <option value="GA">Gabon (GA)</option>
+                          <option value="GB">Great Britain (UK) (GB)</option>
+                          <option value="GD">Grenada (GD)</option>
+                          <option value="GE">Georgia (GE)</option>
+                          <option value="GF">French Guiana (GF)</option>
+                          <option value="GG">Guernsey (GG)</option>
+                          <option value="GH">Ghana (GH)</option>
+                          <option value="GI">Gibraltar (GI)</option>
+                          <option value="GL">Greenland (GL)</option>
+                          <option value="GM">Gambia (GM)</option>
+                          <option value="GN">Guinea (GN)</option>
+                          <option value="GP">Guadeloupe (GP)</option>
+                          <option value="GQ">Equatorial Guinea (GQ)</option>
+                          <option value="GR">Greece (GR)</option>
+                          <option value="GS">S. Georgia and S. Sandwich Isls. (GS)</option>
+                          <option value="GT">Guatemala (GT)</option>
+                          <option value="GU">Guam (GU)</option>
+                          <option value="GW">Guinea-Bissau (GW)</option>
+                          <option value="GY">Guyana (GY)</option>
+                          <option value="HK">Hong Kong (HK)</option>
+                          <option value="HM">Heard and McDonald Islands (HM)</option>
+                          <option value="HN">Honduras (HN)</option>
+                          <option value="HR">Croatia (Hrvatska) (HR)</option>
+                          <option value="HT">Haiti (HT)</option>
+                          <option value="HU">Hungary (HU)</option>
+                          <option value="ID">Indonesia (ID)</option>
+                          <option value="IE">Ireland (IE)</option>
+                          <option value="IL">Israel (IL)</option>
+                          <option value="IM">Isle of Man (IM)</option>
+                          <option value="IN">India (IN)</option>
+                          <option value="IO">British Indian Ocean Territory (IO)</option>
+                          <option value="IS">Iceland (IS)</option>
+                          <option value="IT">Italy (IT)</option>
+                          <option value="JE">Jersey (JE)</option>
+                          <option value="JM">Jamaica (JM)</option>
+                          <option value="JO">Jordan (JO)</option>
+                          <option value="JP">Japan (JP)</option>
+                          <option value="KE">Kenya (KE)</option>
+                          <option value="KG">Kyrgyzstan (KG)</option>
+                          <option value="KH">Cambodia (KH)</option>
+                          <option value="KI">Kiribati (KI)</option>
+                          <option value="KM">Comoros (KM)</option>
+                          <option value="KN">Saint Kitts and Nevis (KN)</option>
+                          <option value="KR">Korea (South) (KR)</option>
+                          <option value="KW">Kuwait (KW)</option>
+                          <option value="KY">Cayman Islands (KY)</option>
+                          <option value="KZ">Kazakhstan (KZ)</option>
+                          <option value="LA">Laos (LA)</option>
+                          <option value="LC">Saint Lucia (LC)</option>
+                          <option value="LI">Liechtenstein (LI)</option>
+                          <option value="LK">Sri Lanka (LK)</option>
+                          <option value="LS">Lesotho (LS)</option>
+                          <option value="LT">Lithuania (LT)</option>
+                          <option value="LU">Luxembourg (LU)</option>
+                          <option value="LV">Latvia (LV)</option>
+                          <option value="LY">Libya (LY)</option>
+                          <option value="MA">Morocco (MA)</option>
+                          <option value="MC">Monaco (MC)</option>
+                          <option value="MD">Moldova (MD)</option>
+                          <option value="ME">Montenegro (ME)</option>
+                          <option value="MG">Madagascar (MG)</option>
+                          <option value="MH">Marshall Islands (MH)</option>
+                          <option value="MK">Macedonia (MK)</option>
+                          <option value="ML">Mali (ML)</option>
+                          <option value="MM">Myanmar (MM)</option>
+                          <option value="MN">Mongolia (MN)</option>
+                          <option value="MO">Macau (MO)</option>
+                          <option value="MP">Northern Mariana Islands (MP)</option>
+                          <option value="MQ">Martinique (MQ)</option>
+                          <option value="MR">Mauritania (MR)</option>
+                          <option value="MS">Montserrat (MS)</option>
+                          <option value="MT">Malta (MT)</option>
+                          <option value="MU">Mauritius (MU)</option>
+                          <option value="MV">Maldives (MV)</option>
+                          <option value="MW">Malawi (MW)</option>
+                          <option value="MX">Mexico (MX)</option>
+                          <option value="MY">Malaysia (MY)</option>
+                          <option value="MZ">Mozambique (MZ)</option>
+                          <option value="NA">Namibia (NA)</option>
+                          <option value="NC">New Caledonia (NC)</option>
+                          <option value="NE">Niger (NE)</option>
+                          <option value="NF">Norfolk Island (NF)</option>
+                          <option value="NG">Nigeria (NG)</option>
+                          <option value="NI">Nicaragua (NI)</option>
+                          <option value="NL">Netherlands (NL)</option>
+                          <option value="NO">Norway (NO)</option>
+                          <option value="NP">Nepal (NP)</option>
+                          <option value="NR">Nauru (NR)</option>
+                          <option value="NT">Neutral Zone (NT)</option>
+                          <option value="NU">Niue (NU)</option>
+                          <option value="NZ">New Zealand (Aotearoa) (NZ)</option>
+                          <option value="OM">Oman (OM)</option>
+                          <option value="PA">Panama (PA)</option>
+                          <option value="PE">Peru (PE)</option>
+                          <option value="PF">French Polynesia (PF)</option>
+                          <option value="PG">Papua New Guinea (PG)</option>
+                          <option value="PH">Philippines (PH)</option>
+                          <option value="PK">Pakistan (PK)</option>
+                          <option value="PL">Poland (PL)</option>
+                          <option value="PM">St. Pierre and Miquelon (PM)</option>
+                          <option value="PN">Pitcairn (PN)</option>
+                          <option value="PR">Puerto Rico (PR)</option>
+                          <option value="PS">Palestinian Territory (PS)</option>
+                          <option value="PT">Portugal (PT)</option>
+                          <option value="PW">Palau (PW)</option>
+                          <option value="PY">Paraguay (PY)</option>
+                          <option value="QA">Qatar (QA)</option>
+                          <option value="RE">Reunion (RE)</option>
+                          <option value="RO">Romania (RO)</option>
+                          <option value="RS">Serbia (RS)</option>
+                          <option value="RU">Russian Federation (RU)</option>
+                          <option value="RW">Rwanda (RW)</option>
+                          <option value="SA">Saudi Arabia (SA)</option>
+                          <option value="SB">Solomon Islands (SB)</option>
+                          <option value="SC">Seychelles (SC)</option>
+                          <option value="SE">Sweden (SE)</option>
+                          <option value="SG">Singapore (SG)</option>
+                          <option value="SH">St. Helena (SH)</option>
+                          <option value="SI">Slovenia (SI)</option>
+                          <option value="SJ">Svalbard and Jan Mayen Islands (SJ)</option>
+                          <option value="SK">Slovak Republic (SK)</option>
+                          <option value="SL">Sierra Leone (SL)</option>
+                          <option value="SM">San Marino (SM)</option>
+                          <option value="SN">Senegal (SN)</option>
+                          <option value="SR">Suriname (SR)</option>
+                          <option value="ST">Sao Tome and Principe (ST)</option>
+                          <option value="SU">USSR (former) (SU)</option>
+                          <option value="SV">El Salvador (SV)</option>
+                          <option value="SZ">Swaziland (SZ)</option>
+                          <option value="TC">Turks and Caicos Islands (TC)</option>
+                          <option value="TD">Chad (TD)</option>
+                          <option value="TF">French Southern Territories (TF)</option>
+                          <option value="TG">Togo (TG)</option>
+                          <option value="TH">Thailand (TH)</option>
+                          <option value="TJ">Tajikistan (TJ)</option>
+                          <option value="TK">Tokelau (TK)</option>
+                          <option value="TM">Turkmenistan (TM)</option>
+                          <option value="TN">Tunisia (TN)</option>
+                          <option value="TO">Tonga (TO)</option>
+                          <option value="TP">East Timor (TP)</option>
+                          <option value="TR">Turkey (TR)</option>
+                          <option value="TT">Trinidad and Tobago (TT)</option>
+                          <option value="TV">Tuvalu (TV)</option>
+                          <option value="TW">Taiwan (TW)</option>
+                          <option value="TZ">Tanzania (TZ)</option>
+                          <option value="UA">Ukraine (UA)</option>
+                          <option value="UG">Uganda (UG)</option>
+                          <option value="UM">US Minor Outlying Islands (UM)</option>
+                          <option value="US">United States (US)</option>
+                          <option value="UY">Uruguay (UY)</option>
+                          <option value="UZ">Uzbekistan (UZ)</option>
+                          <option value="VA">Vatican City State (Holy See) (VA)</option>
+                          <option value="VC">Saint Vincent and the Grenadines (VC)</option>
+                          <option value="VE">Venezuela (VE)</option>
+                          <option value="VG">Virgin Islands (British) (VG)</option>
+                          <option value="VI">Virgin Islands (U.S.) (VI)</option>
+                          <option value="VN">Viet Nam (VN)</option>
+                          <option value="VU">Vanuatu (VU)</option>
+                          <option value="WF">Wallis and Futuna Islands (WF)</option>
+                          <option value="WS">Samoa (WS)</option>
+                          <option value="YE">Yemen (YE)</option>
+                          <option value="YT">Mayotte (YT)</option>
+                          <option value="ZA">South Africa (ZA)</option>
+                          <option value="ZM">Zambia (ZM)</option>
+                          <option value="COM">US Commercial (COM)</option>
+                          <option value="EDU">US Educational (EDU)</option>
+                          <option value="GOV">US Government (GOV)</option>
+                          <option value="INT">International (INT)</option>
+                          <option value="MIL">US Military (MIL)</option>
+                          <option value="NET">Network (NET)</option>
+                          <option value="ORG">Non-Profit Organization (ORG)</option>
+                          <option value="ARPA">Old style Arpanet (ARPA)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="inputEmail5" class="col-sm-4 control-label">{{langmod.SSLWLABEL23}}:</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control reqcsr" data-required="true" value="" id="stateOrProvinceName" placeholder="{{langmod.SSLWLABEL31}}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="inputEmail5" class="col-sm-4 control-label">{{langmod.SSLWLABEL24}}:</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control reqcsr" data-required="true" value="" id="localityName" placeholder="{{langmod.SSLWLABEL31}}">
+                    </div>
+                </div>
+                <div class="form-group">
+
+                    <label for="inputEmail5" class="col-sm-4 control-label">{{langmod.SSLWLABEL25}}:</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control reqcsr" data-required="true" value="" id="organizationName" placeholder="{{langmod.SSLWLABEL31}}">
+                    </div>
+                </div>
+                <div class="form-group">
+
+                    <label for="inputEmail5" class="col-sm-4 control-label">{{langmod.SSLWLABEL26}}:</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control reqcsr" data-required="true" value="" id="organizationalUnitName" placeholder="{{langmod.SSLWLABEL31}}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="inputEmail5" class="col-sm-4 control-label">{{langmod.SSLWLABEL27}}:</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control reqcsr" data-reqemail="true" data-required="true" value="" id="emailAddress" placeholder="{{langmod.SSLWLABEL31}}">
+                    </div>
+                </div>
+                <!-- <div class="form-group">
+                    <label for="inputEmail5" class="col-sm-4 control-label">Valid Days (default 365):</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control reqcsr" data-required="true" value="365" id="validDays" placeholder="{{langmod.SSLWLABEL31}}">
+                    </div>
+                </div> -->
+                <div class="form-group">
+                    <label for="inputEmail5" class="col-sm-4 control-label">{{langmod.SSLWLABEL28}}:</label>
+                    <div class="col-sm-8">
+                        <select class="form-control" data-required="true" id="key_size">
+                            <option value="2048">2048 bits ({{langmod.SSLWLABEL29}})</option>
+                            <option value="4096">4096 bits</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom:0px;">
+                    <label for="emailsend" class="col-sm-4 control-label" style="padding-top:0px;">{{langmod.SSLWLABEL30}}:</label>
+                    <div class="col-sm-8">
+                      <div class="checkbox" style="padding-top:0px;">
+                        <input type="checkbox" id="emailsend" onchange="emailCSR(this)" value="option1">
+                        <label for="emailsend">&nbsp;</label>
+                      </div>
+                        <!-- <div class="checkbox-custom"><input type="checkbox" id="emailsend"><label for="emailsend"></label></div> -->
+                    </div>
+                </div>
+                <div class="form-group" id="email_send_csr">
+                    <label for="emailAddressSend" class="col-sm-4 control-label">{{langmod.SSLWLABEL37}}:</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" data-reqemail="true" data-required="true" value="{{mod.email_username}}" id="emailAddressSend" placeholder="{{langmod.SSLWLABEL31}}">
+                    </div>
+                </div>
+
+                <!-- <div class="form-group">
+                    <div class="col-sm-offset-3 col-sm-8" style="text-align:center;">
+                        <button class="btn btn-primary" onclick="processNewCSR()" id="btnbtncsr -generate-csr"><i class="fa fa-cogs"></i> {{langmod.SSLWLABEL9}}</button>
+                        <button class="btn btn-warning" onclick="cancelNewCSR()"><i class="fa fa-ban"></i> {{langmod.SSLWLABEL7}}</button>
+                    </div>
+                </div> -->
+                <!-- <div class="alert alert-success fade in" id="sslfs_ok" style="display: none">
+                    <i class="fa fa-check alert-icon "></i>
+                    <strong>Installation successful</strong>
+                </div>
+                <div class="alert alert-danger fade in" id="sslfs_error" style="display: none">
+
+                </div> -->
+            </div>
+          </div>
+          <div class="ibox-footer">
+            <div class="text-right">
+              <button onclick="processNewCSR()" class="btncsr-gen btn btn-xs btn-success">
+                <i class="fa fa-cogs" aria-hidden="true"></i> {{langmod.SSLWLABEL9}}
+              </button>
+              <button onclick="cancelNewCSR()" class="btncsr-cnl btn btn-xs btn-warning">
+                <i class="fa fa-ban" aria-hidden="true"></i> {{langmod.SSLWLABEL7}}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="ibox">
+          <div class="ibox-title">
+            <h4>
+             {{langmod.SSLWLABEL35}}
+            </h4>
+          </div>
+          <div class="ibox-content">
+            <p>{{langmod.SSLWLABEL33}}</p>
+            <p>{{langmod.SSLWLABEL34}}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row" id="ssl_install_wrapper">
+      <div class="col-md-8">
+        <div class="ibox">
+          <div class="ibox-title">
+            <h4>
+             {{langmod.SSLWLABEL5}}
+            </h4>
+            <div class="">
+              <button id="btn_add_account" onclick="installSSL()" class="btninstall-gen btn btn-xs btn-success"><i class="fa fa-lock"></i> {{langmod.SSLWLABEL59}}</button>
+              <button id="btn_add_account" onclick="cancelInstall()" class="btninsatll-cnl btn btn-xs btn-warning"><i class="fa fa-ban" aria-hidden="true"></i> {{langmod.SSLWLABEL7}}</button>
+            </div>
+          </div>
+          <div class="ibox-content" id="install_form">
+            <div class="form-horizontal" id="install_form_wrapper">
+                <!-- <div class="form-group row">
+                    <div class="col-md-12">
+                      <label for="domain_install" class="control-label">{{langmod.SSLWLABEL47}}:</label>
+                      <input type="text" class="form-control" data-required="true" value="" id="domain_install" placeholder="{{langmod.SSLWLABEL31}}">
+                    </div>
+                </div> -->
+                <div class="form-group row">
+                    <div class="col-md-12">
+                      <label for="certificate_install" class="control-label">{{langmod.SSLWLABEL61}}:</label>
+                      <textarea name="name" id="certificate_install" class="form-control reqinstall" data-minlength="50" data-required="true" placeholder="{{langmod.SSLWLABEL31}}" rows="8" cols="80"></textarea>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-12">
+                      <label for="privkey_install" class="control-label">{{langmod.SSLWLABEL20}}:</label>
+                      <textarea name="name" id="privkey_install" class="form-control reqinstall" data-minlength="50" data-required="true" placeholder="{{langmod.SSLWLABEL31}}" rows="8" cols="80"></textarea>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-12">
+                      <label for="bundle_install" class="control-label">{{langmod.SSLWLABEL60}} ({{langmod.SSLWLABEL62}}):</label>
+                      <textarea name="name" id="bundle_install" class="form-control " data-required="true" placeholder="{{langmod.SSLWLABEL62}}" rows="8" cols="80"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div id="installing_loader_wrapper">
+              <div class="installing-loader" id="installing_loader">
+                <h1>{{langmod.SSLWLABEL66}} <span id="installing_title_script"></span></h1>
+                <span class="icon-script"><i class="fa fa-lock" id="icon_installing"></i></span>
+                <span><i class="fa fa-circle-o-notch fa-spin"></i></span>
+                <p>{{langmod.SSLWLABEL67}}</p>
+              </div>
+            </div>
+          </div>
+          <div class="ibox-footer">
+            <div class="text-right">
+              <button onclick="installSSL()" class="btninstall-gen btn btn-xs btn-success">
+                <i class="fa fa-lock" aria-hidden="true"></i> {{langmod.SSLWLABEL59}}
+              </button>
+              <button onclick="cancelInstall()" class="btninsatll-cnl btn btn-xs btn-warning">
+                <i class="fa fa-ban" aria-hidden="true"></i> {{langmod.SSLWLABEL7}}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="ibox">
+          <div class="ibox-title">
+            <h4>
+             {{langmod.SSLWLABEL35}}
+            </h4>
+          </div>
+          <div class="ibox-content">
+            <p>{{langmod.SSLWLABEL33}}</p>
+            <p>{{langmod.SSLWLABEL34}}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ibox" id="ssl_csr_generated">
+      <div class="ibox-title">
+        <h4>
+         {{langmod.SSLWLABEL36}}
+        </h4>
+      </div>
+      <div class="ibox-content">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="csr-generated-title">
+              <h4>{{langmod.SSLWLABEL19}} (CSR)</h4>
+              <span><button class="btn btn-xs btn-primary" onclick="copyCSR('csr_csr')"><i class="fa fa-copy"></i></button> {{langmod.SSLWLABEL16}}</span>
+            </div>
+            <textarea class="form-control csr-input-gnerated" readonly id="csr_csr" name="csr_csr" value=""></textarea>
+          </div>
+          <div class="col-md-6">
+            <div class="csr-generated-title">
+              <h4>{{langmod.SSLWLABEL20}}</h4>
+              <span><button class="btn btn-xs btn-primary" onclick="copyCSR('csr_priv')"><i class="fa fa-copy"></i></button> {{langmod.SSLWLABEL16}}</span>
+            </div>
+            <textarea class="form-control csr-input-gnerated" readonly id="csr_priv" name="csr_priv" value=""></textarea>
+          </div>
+          <div class="col-md-12 text-center">
+            <div class="checkbox" style="padding-top:0px;">
+              <input type="checkbox" id="copied_csr_check" onchange="copiedCSR(this)" value="option1">
+              <label for="copied_csr_check">{{langmod.SSLWLABEL17}}</label>
+            </div>
+            <button class="btn btn-success disabled" id="copied_csr_btn" onclick="genCSRContinue()" disabled><i class="fa fa-floppy-o"></i> {{langmod.SSLWLABEL18}}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+ {% include 'sidebar.html' %}
+</div>
+{% include 'footer.html' %}

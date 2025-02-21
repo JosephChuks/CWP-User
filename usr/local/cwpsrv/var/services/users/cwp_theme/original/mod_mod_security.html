@@ -1,0 +1,440 @@
+<style media="screen">
+  #top_wrapper:focus{
+    outline:none !important;
+  }
+  .security-table-btn{
+    display:flex;
+    align-items: center;
+    justify-content: space-around;
+  }
+  .security-table-btn label{
+    margin-bottom:0px;
+  }
+  .security-table-btn .btn{
+    font-size: 11px;
+  }
+  .security-table-btn .onoffswitch-inner:before{
+    padding-left:0px !important;
+  }
+  .logs-wrapper-error-content,
+  .IPlogs-wrapper-error-content,
+  .mod-security-notinstalled{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 30vh;
+    flex-flow: wrap;
+  }
+  .IPlogs-wrapper-error-content .fa-stack,
+  .logs-wrapper-error-content .fa-stack,
+  .mod-security-notinstalled .fa-stack{
+    font-size: 3.5rem;
+  }
+  .IPlogs-wrapper-error-content h5,
+  .logs-wrapper-error-content h5,
+  .mod-security-notinstalled h5{
+    width: 100%;
+    text-align: center;
+    font-size: 2.5rem;
+    padding: 0px 10rem;
+  }
+  .ibox-title{
+    display: flex;
+    padding: 10px 15px;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .ibox-title h4{
+    margin:0px;
+  }
+  .mod-security-log-display{
+    max-height: 80vh;
+  }
+  #search_rule,
+  #check_ip_field{
+    margin-top: -2rem;
+  }
+  .IPlogs-wrapper-success .input-group{
+    height: 3.4rem;
+  }
+  .IPlogs-wrapper-success .controls{
+    margin-bottom:10px;
+  }
+  #log_liner{
+    width: 70px;
+    margin: 0px 10px;
+  }
+  #logs_wrapper h4{
+    display: flex;
+    align-items: center;
+  }
+  #logs-wrapper-error,
+  #logs_wrapper,
+  .mod-security-ipchecker,
+  #Iplogs-wrapper-error,
+  #IP_logs_wrapper,
+  .mod-security-rules,
+  .mod-security-logs{
+    display:none;
+  }
+  #rules_loader,
+  #logip_loader{
+    flex-direction: column;
+    height: 20rem;
+  }
+  #rules_loader h3,
+  #logip_loader h3{
+    margin-top:2rem;
+  }
+  .with-tabs{
+    padding:0px;
+  }
+  .rules-editor-title{
+    margin: 10px 0px 0px !important;
+    padding-bottom:10px;
+    border-bottom: 1px solid #e7eaec;
+  }
+  #rules_list_wrapper .rules-editor-line:nth-child(even){
+    background-color:#f3f3f4;
+  }
+  .rules-editor-line{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    border-bottom: 1px solid #e7eaec;
+    padding: 5px;
+  }
+  .rules-editor-value{
+    width:70%;
+  }
+  .rules-editor-actions{
+    width:30%;
+    text-align:right;
+  }
+  #rules_basic_editor .alert-info{
+    margin-bottom:10px;
+  }
+  .new-rule-form{
+    border-left: 1px solid #e7eaec;
+  }
+  .rules-list-top{
+    display: flex;
+    justify-content: space-between;
+    margin-bottom:10px;
+  }
+  .rules-list-top .input-group-addon{
+    height: 3.4rem;
+  }
+  .rules-list-top .rules-editor-title{
+    border-bottom:none;
+  }
+  .rules-list-top{
+    border-bottom: 1px solid #e7eaec;
+  }
+  #file_domain_editor_warning{
+    display:none;
+    margin-bottom:0px;
+  }
+  .rules-list-empty{
+    display: flex;
+    height: 25rem;
+    align-items: center;
+    /* background: #000; */
+    justify-content: center;
+  }
+  .rules-list-empty-content{
+    text-align:center;
+  }
+  .rules-editor-nosearch{
+    display:none;
+  }
+  .error-field{
+    color: #ff0000;
+    margin-top: 5px;
+    font-size: 12px;
+    display: block;
+    margin-bottom: -10px;
+  }
+  .codemirror-editor-title{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .codemirror-editor-title h4{
+    margin:0px !important;
+  }
+  .CodeMirror.cm-s-default{
+    margin:10px 0px;
+  }
+  .rules-editor-nosearch-content{
+    display: flex;
+    height: 22rem;
+    align-items: center;
+    justify-content: center;
+  }
+  .rules-editor-nosearch-content h4{
+    margin: 0px;
+    font-size: 2rem;
+  }
+  .deleting_tr{
+    background-color: #f5f5f566;
+    color: #e7eaec;
+  }
+  #log_domain{
+    width:auto;
+    margin-left:10px;
+  }
+</style>
+<div class="modal" id="deleterule" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-sm" style="width:300px">
+      <div class="modal-content animated fadeIn">
+          <div class="modal-header" style="padding: 10px;">
+            <button type="button" class="close" data-dismiss="modal">
+              <span aria-hidden="true">×</span>
+              <span class="sr-only">{{langene.MDCLOSE}}</span>
+            </button>
+            <h4 class="modal-title" style="font-size:2rem">{{langmod.SECLABEL44}}</h4>
+          </div>
+          <div class="modal-body" style="padding: 20px;">
+
+          </div>
+          <div class="modal-footer">
+
+          </div>
+      </div>
+  </div>
+</div>
+<div class="row  border-bottom white-bg dashboard-header">
+  {% if mod.fsl == 1 %}
+    <div class="row  alert alert-warning col-lg-12" style="margin-left: 5px; padding-right: 5px;display:{{stflalert}}" id="alertfl">
+        <strong>{{langene.GALARTFILEBLOCK}}</strong>
+    </div>
+  {% endif %}
+  <div class="col-lg-10">
+    <h2>{{langmod.SECLABEL1}} ({{users}})</h2>
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="?">Home</a></li>
+        <li class="breadcrumb-item active"><strong>{{langmod.SECLABEL1}}</strong></li>
+    </ol>
+  </div>
+</div>
+<div class="row" style="margin-top:2rem">
+  <div class="col-lg-9">
+    <div class="row" id="top_wrapper" tabindex='1'>
+      <div class="col-lg-12">
+        <div class="ibox mod-security-wrapper">
+          <div class="ibox-title">
+            <h4>Your domains & subdomains list</h4>
+            {% if (mod.mod_status == 1) %}
+              <button type="button" onclick="showLogs()" class="btn btn-success btn-xs" name="button"><i class="fa fa-ban"></i> {{langmod.SECLABEL12}}</button>
+            {% endif %}
+          </div>
+          <div class="ibox-content" id="table_domain_wrapper">
+            {% if (mod.mod_status == 1) %}
+              <div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+            {% else %}
+              <div class="mod-security-notinstalled">
+                <span class="fa-stack fa-lg text-success">
+                  <i class="fa fa-square fa-stack-2x"></i>
+                  <i class="fa fa-ban fa-stack-1x fa-inverse"></i>
+                </span>
+                <h5>{{langmod.SECLABEL11}}</h5>
+              </div>
+            {% endif %}
+
+          </div>
+        </div>
+        <div class="ibox mod-security-logs">
+          <div class="ibox-title">
+            <h4>{{langmod.SECLABEL14}}</h4>
+            <button type="button" onclick="backFrom('.mod-security-logs')" class="btn btn-success btn-xs" name="button"><i class="fa fa-arrow-left"></i> {{langmod.SECLABEL13}}</button>
+          </div>
+          <div class="ibox-content">
+            <div class="table_cron_loader" id="log_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+            <div id="logs_wrapper">
+              <div class="logs-wrapper-success">
+                <h4>{{langmod.SECLABEL15}}
+                  <select id="log_liner" onchange="logLiner()" class="form-control">
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="500">500</option>
+                  </select>
+                  Lines matching ModSecurity and Domain:
+                  <select id="log_domain" onchange="logLiner()" class="form-control">
+                    {% for domain in mod.domain_list %}
+                      {% if loop.index	 == 1 %}
+                        <option value="{{ (domain.type == 'domain' ? domain.domain : domain.subdomain ~ '.' ~ domain.domain) }}" selected>{{ (domain.type == 'domain' ? domain.domain : domain.subdomain ~ '.' ~ domain.domain) }}</option>
+                      {% else %}
+                        <option value="{{ (domain.type == 'domain' ? domain.domain : domain.subdomain ~ '.' ~ domain.domain) }}">{{ (domain.type == 'domain' ? domain.domain : domain.subdomain ~ '.' ~ domain.domain) }}</option>
+                      {% endif %}
+                    {% endfor %}
+                  </select>
+                </h4>
+                <pre id="log_area_viewer" class="mod-security-log-display"></pre>
+              </div>
+              <div class="logs-wrapper-error">
+                <div class="logs-wrapper-error-content">
+                  <span class="fa-stack fa-lg text-danger">
+                    <i class="fa fa-square fa-stack-2x"></i>
+                    <i class="fa fa-exclamation-circle fa-stack-1x fa-inverse"></i>
+                  </span>
+                  <h5>{{langmod.SECLABEL17}}</h5>
+                  <button id="retry_logs_btn" class="btn btn-warning" name="button"><i class="fa fa-refresh"></i> {{langmod.SECLABEL18}}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ibox mod-security-ipchecker">
+          <div class="ibox-title">
+            <h4>{{langmod.SECLABEL32}}</h4>
+            <button type="button" onclick="backFrom('.mod-security-ipchecker')" class="btn btn-success btn-xs" name="button"><i class="fa fa-arrow-left"></i> {{langmod.SECLABEL13}}</button>
+          </div>
+          <div class="ibox-content">
+            <div class="table_cron_loader" id="logip_loader">
+              <span><i class="fa fa-circle-o-notch fa-spin"></i></span>
+              <h3>{{langmod.SECLABEL33}} <span id="ip_checker_address"></span> in <span id="ip_checker_domain"></span>.error.log</h3>
+            </div>
+            <div id="IP_logs_wrapper">
+              <div class="IPlogs-wrapper-success">
+                <h4>{{langmod.SECLABEL34}} <span id="ip_checker_domain2"></span></h4>
+                <div class="row controls">
+                  <div class="col-md-4">
+                    <div class="input-group input-icon">
+                        <span class="input-group-addon"><i class="fa fa-search s16"></i></span>
+                        <input type="text" class="form-control" id="check_ip_field" size="30">
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <select class="form-control" id="check_ip_domain" name="">
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <button type="button" onclick="reCheckIP()" class="btn btn-primary" name="button"><i class="fa fa-sitemap"></i> {{langmod.SECLABEL5}}</button>
+                  </div>
+                </div>
+                <pre id="IPlog_area_viewer" class="mod-security-log-display"></pre>
+              </div>
+              <div class="Iplogs-wrapper-error">
+                <div class="IPlogs-wrapper-error-content">
+                  <span class="fa-stack fa-lg text-danger">
+                    <i class="fa fa-square fa-stack-2x"></i>
+                    <i class="fa fa-exclamation-circle fa-stack-1x fa-inverse"></i>
+                  </span>
+                  <h5>{{langmod.SECLABEL17}}</h5>
+                  <button id="IPretry_logs_btn" class="btn btn-warning" name="button"><i class="fa fa-refresh"></i> {{langmod.SECLABEL18}}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ibox mod-security-rules">
+          <div class="ibox-title">
+            <h4>{{langmod.SECLABEL35}} <span id="rules_title_domain"></span>.</h4>
+            <button type="button" id="btn_back_ruler_editor" onclick="backFrom('.mod-security-rules')" class="btn btn-success btn-xs" name="button"><i class="fa fa-arrow-left"></i> {{langmod.SECLABEL13}}</button>
+          </div>
+          <div class="ibox-content" id="rules_editor_wrapper">
+            <div class="table_cron_loader" id="rules_loader">
+              <span><i class="fa fa-circle-o-notch fa-spin"></i></span>
+              <h3>{{langmod.SECLABEL36}} <span id="rules_editor_domain_loader"></span></h3>
+            </div>
+            <div id="rules_logs_wrapper">
+              <div class="alert alert-warning" id="file_domain_editor_warning">
+                  {{langmod.SECLABEL39}} /usr/local/apache/conf/userdata/{{users}}/<span id="file_domain_editor"></span>/modsec.conf {{langmod.SECLABEL40}}
+               </div>
+              <div class="rules-wrapper-success">
+                <div class="panel-body">
+                   <div class="row">
+                     <div class="col-md-7" id="rules_list_wrapper">
+
+                     </div>
+                     <div class="col-md-5 new-rule-form">
+                       <h4 class="rules-editor-title">{{langmod.SECLABEL41}}</h4>
+                       <div class="">
+                          <div class="">
+                            <input type="text" style="margin-top:10px;" class="form-control" data-required="true" id="addID" maxlength="6" placeholder="Rule ID to Add" name="addID">
+                          </div>
+                          <button type="button" style="margin:10px 0px;" onclick="addNeRuleID(this)" class="btn btn-success btn-block" name="button" id="bt_add_rule"><i class="fa fa-floppy-o"></i> {{langmod.SECLABEL42}}</button>
+                          <div class="alert alert-info">
+                           {{langmod.SECLABEL43}}
+                           </div>
+                        </div>
+                     </div>
+                   </div>
+                </div>
+                <!-- <div class="tabs-container">
+                  <ul class="nav nav-tabs" role="tablist">
+                      <li><a class="nav-link active" data-toggle="tab" href="#rules_basic_editor">{{langmod.SECLABEL37}}</a></li>
+                      <li><a class="nav-link" data-toggle="tab" onclick="displayEditor()" href="#rules_advanced_editor">{{langmod.SECLABEL38}}</a></li>
+                  </ul>
+                  <div class="tab-content">
+                      <div role="tabpanel" id="rules_basic_editor" class="tab-pane active">
+                        <div class="panel-body">
+                           <div class="row">
+                             <div class="col-md-7" id="rules_list_wrapper">
+
+                             </div>
+                             <div class="col-md-5 new-rule-form">
+                               <h4 class="rules-editor-title">{{langmod.SECLABEL41}}</h4>
+                               <div class="">
+                                  <div class="">
+                                    <input type="text" style="margin-top:10px;" class="form-control" data-required="true" id="addID" placeholder="Rule ID to Add" name="addID">
+                                  </div>
+                                  <button type="button" style="margin:10px 0px;" onclick="addNeRuleID(this)" class="btn btn-success btn-block" name="button" id="bt_add_rule"><i class="fa fa-floppy-o"></i> {{langmod.SECLABEL42}}</button>
+                                  <div class="alert alert-info">
+                                   {{langmod.SECLABEL43}}
+                                   </div>
+                                </div>
+                             </div>
+                           </div>
+                        </div>
+                      </div>
+                      <div role="tabpanel" id="rules_advanced_editor" class="tab-pane">
+                        <div class="panel-body">
+                          <div class="codemirror-editor-title">
+                            <h4>Editing file /usr/local/apache/conf/userdata/{{users}}/<span class="file-domain-editor"></span>/modsec.conf</h4>
+                            <button type="button" class="btn-save-editor btn btn-primary btn-xs" onclick="saveFromEditor()" name="button"><i class="fa fa-floppy-o"></i> Save</button>
+                          </div>
+                          <textarea name="name" id="rules_editor_mirror" rows="8" cols="80"></textarea>
+                          <div class="codemirror-editor-title">
+                            <h4>Editing file /usr/local/apache/conf/userdata/{{users}}/<span class="file-domain-editor"></span>/modsec.conf</h4>
+                            <button type="button" class="btn-save-editor btn btn-primary btn-xs" onclick="saveFromEditor()" name="button"><i class="fa fa-floppy-o"></i> Save</button>
+                          </div>
+                        </div>
+                      </div>
+                  </div>
+                </div> -->
+              </div>
+              <div class="rules-wrapper-error">
+                <div class="IPlogs-wrapper-error-content">
+                  <span class="fa-stack fa-lg text-danger">
+                    <i class="fa fa-square fa-stack-2x"></i>
+                    <i class="fa fa-exclamation-circle fa-stack-1x fa-inverse"></i>
+                  </span>
+                  <h5>{{langmod.SECLABEL44}}</h5>
+                  <button id="rules_retry_logs_btn" class="btn btn-warning" name="button"><i class="fa fa-refresh"></i> {{langmod.SECLABEL18}}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-12">
+        <div class="ibox">
+          <div class="ibox-title">
+            <h4>{{langmod.SECLABEL19}}</h4>
+          </div>
+          <div class="ibox-content">
+            <p><b>ModSecurity (ModSec)</b> {{langmod.SECLABEL50}}
+              <br />
+              <br />
+              {{langmod.SECLABEL51}} <a target="_blank" href="https://en.wikipedia.org/wiki/Payment_Card_Industry_Data_Security_Standard">PCI DSS compliance</a>, {{langmod.SECLABEL52}}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% include 'sidebar.html' %}
+</div>
+{% include 'footer.html' %}

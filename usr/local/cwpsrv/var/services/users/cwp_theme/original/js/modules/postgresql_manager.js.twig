@@ -1,0 +1,150 @@
+
+console.log();
+let database_list = JSON.parse('{{mod.database_list|json_encode|raw}}');
+let pgre_sql_table = null;
+let uchip = null;
+$(document).ready(function () {
+    {% if mod.isie == 1 %}
+    uchip = new $.Uchip();
+    {% else %}
+    uchip = new Uchip();
+    {% endif %}
+    // pgreListDatabases();
+    {% if mod.mod_installed == true %}
+        pgreListDatabases();
+        BindUserModal();
+        renderUsersList();
+    {% endif %}
+    $('#_pgre_manage_user_modal_').on('hidden.bs.modal', function () {
+        CleanUserModal()
+    });
+    $('#_pgre_new_db_user_modal_').on('hidden.bs.modal', function () {
+        cancelForm()
+    });
+    $('#_pgre_delete_user_modal_').on('hidden.bs.modal', function () {
+        $('#_user_deletion_type_user').trigger('click');
+    });
+});
+function calculateQuota(){
+  let plan = {{mod.pgresql_quota}};
+  $('#pgresql_used').text(database_list.length);
+  if(plan >= 0){
+    if(database_list.length == plan){
+      $('#btn_add_pgresql_database_').addClass('disabled');
+      $('#btn_add_pgresql_database_').prop('disabled', true)
+    }else{
+      $('#btn_add_pgresql_database_').removeClass('disabled');
+      $('#btn_add_pgresql_database_').prop('disabled', false)
+    }
+    let percent = ((database_list.length * 100) / plan).toFixed(0);
+    $('.stat-percent').text(percent + '%');
+    let barcolor = uchip.getBarColor(percent);
+    $('#_bar_pgresql_quota_').removeClass();
+    $('#_bar_pgresql_quota_').addClass(barcolor);
+    $('#_bar_pgresql_quota_').width(percent + '%');
+  }
+} 
+function showUsesrTab(){
+    LoadeDBUsers()
+}
+function cancelForm() {
+    $('#_pgre_sql_user_select_').val('');
+    $('#_pgre_sql_user_select_').trigger('change');
+    $('#_pgre_sql_name_input_').val('');
+    $('.select2-container .select2-choice').removeClass('error-field');
+    $('#_pgre_sql_name_input_').removeClass('error-field');
+    $('#_pgre_form_alert_dbname_').text('dbname');
+}
+function updateDBNameExample(elem) {
+    let elem_value = $(elem).val();
+    if (elem_value == ''){
+        elem_value = 'dbname';
+    }
+    $('#_pgre_form_alert_dbname_').text(elem_value);
+}
+function copyPass(elem) {
+    let field = document.getElementById(elem);
+    field.select();
+    document.execCommand('copy');
+    noti_bubble('{{langmod.LABPGRECOPIEDPASS}}', '{{langmod.LABPGRESUCCESS}}', 'success', false, false, '3000', true);
+    // noti_bubble('{{lang.LABPGRECOPIEDPASS}}', '{{lang.LABPGRESUCCESS}}', 'success', false, false, '3000', true);
+}
+function openPGOPT(type, second) {
+    let divelem = type == null ? '#pgopt_container' : type;
+    if ($(divelem).is(':visible')) {
+        $(divelem).slideUp('fast');
+    } else {
+        $(divelem).slideDown('fast');
+        hideOnClickOutside(divelem, second);
+    }
+}
+function hideOnClickOutside(selector, second) {
+    let forhide = true;
+    if (second === undefined) {
+        second = '.show_options_button';
+        forhide = true;
+    }
+    function outsideClickListener(event) {
+        $target = $(event.target);
+        if (!$target.closest(selector).length && !$target.closest(second).length && $(selector).is(':visible')) {
+            if (forhide) {
+                $(selector).slideUp('fast');
+            } else {
+                $(selector).remove();
+            }
+            removeClickListener();
+        }
+    }
+    function removeClickListener() {
+        document.removeEventListener('click', outsideClickListener)
+    }
+    document.addEventListener('click', outsideClickListener)
+}
+function generatePasswordRand(length, type) {
+    switch (type) {
+        case 'num':
+            characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            break;
+        case 'alf':
+            characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            break;
+        case 'rand':
+            //FOR ↓
+            break;
+        default:
+            characters = "0123456789/-_%*!^><.abcdefghijklmnopqrstuvwxyz/-_%*!^><.ABCDEFGHIJKLMNOPQRSTUVWXYZ/-_%*!^><.";
+            break;
+    }
+    var pass = "";
+    for (i = 0; i < length; i++) {
+        if (type == 'rand') {
+            pass += String.fromCharCode((Math.floor((Math.random() * 100)) % 94) + 33);
+        } else {
+            pass += characters.charAt(Math.floor(Math.random() * characters.length));
+        }
+    }
+    return pass;
+}
+function generateNewPass(element) {
+    let passmeter = $(element).parent().parent().find('.pass_container input');
+    let lengthpass = $(element).parent().find('.general-password-generator-options .pwlength');
+    let typepass = $(element).parent().find('.general-password-generator-options .pwtype');
+    let confpass = 'ftppass2_ch';
+    // if(type == 'userp'){
+    //   passmeter = 'ftppass1';
+    //   lengthpass = 'lengthpass';
+    //   typepass = 'typepass';
+    //   confpass = 'ftppass2';
+    // }
+    let lpass = lengthpass.val();
+    let tpass = typepass.val();
+    let new_pass = generatePasswordRand(lpass, tpass);
+    passmeter.val(new_pass);
+    passmeter.pwstrength("forceUpdate");
+    // if(type == undefined || type == 'userp'){
+    //   copyPass(passmeter);
+    // }
+    copyPass(passmeter.attr('id'));
+}
+{% include("/js/modules/postgresql_manager/databases.js.twig") %}
+{% include("/js/modules/postgresql_manager/users.js.twig") %}

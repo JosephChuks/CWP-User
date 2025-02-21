@@ -1,0 +1,481 @@
+{% if mod.ncmod.actnoti == 1 %}
+{% set actnoti='checked' %}
+{% set actnoti_container = 'noti-active' %}
+{% else %}
+{% set actnoti='' %}
+{% set actnoti_container = '' %}
+{% endif %}
+{% if mod.ncmod.notiemail == 1 %} {% set notiemail='checked' %} {% set emailaccountst='block' %} {% else %}
+{% set notiemail='' %}{% set emailaccountst='none' %} {% endif %}
+{% if mod.ncmod.notiview == 1 %} {% set notiview='checked' %}{% else %} {% set notiview='' %} {% endif %}
+{% if mod.ncmod.userdisk == 1 %} {% set userdisk='checked' %}{% else %}{% set userdisk='' %} {% endif %}
+{% if mod.ncmod.serverst == 1 %} {% set serverst='checked' %}{% else %}{% set serverst='' %} {% endif %}
+{% if mod.ncmod.quota == 1 %} {% set quota='checked' %}{% else %}{% set quota='' %} {% endif %}
+{% if mod.ncmod.dectwebchang == 1 %} {% set dectwebchang='checked' %}{% else %}{% set dectwebchang='' %} {% endif %}
+{% if mod.ncmod.quotaemail == 1 %} {% set quotaemail='checked' %}{% else %}{% set quotaemail='' %} {% endif %}
+{% if mod.ncmod.newsession == 1 %} {% set newsession='checked' %}{% else %}{% set newsession='' %} {% endif %}
+{% if mod.ncmod.bandwquota == 1 %} {% set bandwquota='checked' %}{% else %}{% set bandwquota='' %} {% endif %}
+{% if mod.ncmod.bandwidth_daily == 1 %} {% set bandwidth_daily='checked' %}{% else %}{% set bandwidth_daily='' %}
+{% endif %}
+{% if mod.ncmod.bandwidth_onlimit == 1 %} {% set bandwidth_onlimit='checked' %}{% else %}{% set bandwidth_onlimit='' %}
+{% endif %}
+{% if mod.ncmod.passchange == 1 %} {% set passchange='checked' %}{% else %}{% set passchange='' %} {% endif %}
+{% set emailaccount=mod.ncmod.emailaccount %}
+<style media="screen">
+  .noti-module-header .switch {
+    margin-left: 1rem;
+  }
+
+  .noti-module-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px 10px 15px;
+  }
+
+  .noti-module-header label,
+  .noti-items label {
+    margin-bottom: 0px;
+  }
+
+  .noti-items {
+    padding: 15px 20px 0px 15px;
+  }
+
+  .noti-items .panel-body {
+    padding-bottom: 0px;
+  }
+
+  .noti-items::before {
+    content: "";
+    background-color: #ffffffad;
+    width: 96.5%;
+    height: 30rem;
+    position: absolute;
+    z-index: 100;
+    margin: -15px;
+  }
+
+  .noti-items.noti-active::before {
+    display: none;
+  }
+
+  .noti-item {
+    display: flex;
+    padding: 0px 0px .8rem;
+    margin-bottom: .8rem;
+    align-items: center;
+  }
+
+  .notifications-type .noti-item {
+    border-bottom: 1px #e7eaec solid;
+  }
+
+  .notifications-type .noti-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0px;
+  }
+
+  .email-notifier {
+    align-items: center;
+  }
+
+  .noti-item .btn-success.btn-xs {
+    margin-left: 10px;
+  }
+
+  .noti-item.email-tag label {
+    padding-right: 10px;
+  }
+
+  .noti-item-label {
+    margin-left: 1rem;
+    cursor: pointer;
+  }
+
+  .noti-item label {
+    margin-bottom: 0px;
+  }
+
+  .notfier-description {
+    margin-top: -1.4rem;
+  }
+
+  .notifer-configurator {
+    margin-top: -7rem;
+    margin-left: -11rem;
+    display: none;
+  }
+
+  #configure_email_alerts {
+    top: -22rem;
+    left: 4.5rem;
+    z-index: 1000;
+    margin-top: auto;
+    margin-left: auto;
+  }
+
+  #configure_email_alerts input {
+    height: 30px;
+  }
+
+  #btn_save_email {
+    margin-left: auto;
+    margin-top: 10px;
+  }
+
+  .form-group,
+  .form-group label {
+    margin-bottom: 5px;
+  }
+
+  .configure-header {
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #eee;
+  }
+
+  #configure_badwidth_alert {
+    margin-top: auto;
+    margin-left: auto;
+    top: -1.5rem;
+    left: 14.5rem;
+  }
+
+  #configure_badwidth_alert .fa-stack {
+    font-size: 1rem;
+    margin-left: 5px;
+    color: #1c84c6;
+    cursor: pointer;
+  }
+
+  #configure_badwidth_alert select {
+    width: 8rem;
+    margin-left: 10px;
+    padding: 5px;
+    height: 30px;
+  }
+
+  .panel-heading h4 {
+    margin-bottom: 5px;
+  }
+</style>
+<div class="row  border-bottom white-bg dashboard-header">
+  {% if mod.fsl == 1 %}
+  {% set stflalert ='block' %}
+  {% else %}
+  {% set stflalert ='none' %}
+  {% endif %}
+  <div class="row  alert alert-warning col-lg-12" style="margin-left: 5px; padding-right: 5px;display:{{stflalert}}"
+    id="alertfl">
+    <strong>{{langene.GALARTFILEBLOCK}}</strong>
+  </div>
+
+  <div class="col-lg-10">
+    <h2>{{langmod.NCTITLE}} ({{users}})</h2>
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="?">Home</a>
+      </li>
+      <li class="breadcrumb-item active">
+        <strong>{{langmod.NCTITLE}}</strong>
+      </li>
+    </ol>
+  </div>
+</div>
+<div class="row" style="margin-top:2rem">
+  <div class="col-lg-9">
+    <div class="row">
+      <div class="col-md-9">
+        <div class="ibox ">
+          <div class="ibox-title noti-module-header">
+            <label class="control-label">{{langmod.NCACTIVETITLE}}</label>
+            <div class="switch">
+              <div class="onoffswitch">
+                <input type="checkbox" {{actnoti}} class="onoffswitch-checkbox" id="actnoti" name="actnoti"
+                  onclick="return activateNotifications(this)">
+                <label class="onoffswitch-label" for="actnoti">
+                  <span class="onoffswitch-inner"></span>
+                  <span class="onoffswitch-switch"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="ibox-content noti-items {{actnoti_container}}">
+            <!-- <div class="row noti-module-header">
+                <div class="col-md-4">
+
+                </div>
+              </div> -->
+            <div class="row">
+              <div class="col-md-6">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    <h4>{{langmod.NCLABELNOTI}}</h4>
+                  </div>
+                  <div class="panel-body notifications-type">
+                    <div class="noti-item">
+                      <div class="switch">
+                        <div class="onoffswitch">
+                          <input type="checkbox" class="onoffswitch-checkbox" name="quota" id="quota" {{quota}}
+                            onclick="return changestnot(this, 'quota')">
+                          <label class="onoffswitch-label" for="quota">
+                            <span class="onoffswitch-inner"></span>
+                            <span class="onoffswitch-switch"></span>
+                          </label>
+                        </div>
+                      </div>
+                      <label class="noti-item-label" for="quota">{{langmod.NCLABELDSQ}}</label>
+                    </div>
+                    <div class="noti-item">
+                      <div class="switch">
+                        <div class="onoffswitch">
+                          <input type="checkbox" {{dectwebchang}} class="onoffswitch-checkbox" id="dectwebchang"
+                            name="dectwebchang" onclick="return changestnot(this, 'dectwebchang')">
+                          <label class="onoffswitch-label" for="dectwebchang">
+                            <span class="onoffswitch-inner"></span>
+                            <span class="onoffswitch-switch"></span>
+                          </label>
+                        </div>
+                      </div>
+                      <label class="noti-item-label" for="dectwebchang">{{langmod.NCDETCT}}</label>
+                    </div>
+                    <div class="noti-item">
+                      <div class="switch">
+                        <div class="onoffswitch">
+                          <input type="checkbox" {{quotaemail}} class="onoffswitch-checkbox" id="quotaemail"
+                            name="quotaemail" onclick="return changestnot(this, 'quotaemail')">
+                          <label class="onoffswitch-label" for="quotaemail">
+                            <span class="onoffswitch-inner"></span>
+                            <span class="onoffswitch-switch"></span>
+                          </label>
+                        </div>
+                      </div>
+                      <label class="noti-item-label" for="quotaemail">{{langmod.NCQUOTEMAIL}}</label>
+                    </div>
+                    <div class="noti-item">
+                      <div class="switch">
+                        <div class="onoffswitch">
+                          <input type="checkbox" {{bandwquota}} class="onoffswitch-checkbox" id="bandwquota"
+                            name="bandwquota" onclick="return changestnot(this, 'bandwquota')">
+                          <label class="onoffswitch-label" for="bandwquota">
+                            <span class="onoffswitch-inner"></span>
+                            <span class="onoffswitch-switch"></span>
+                          </label>
+                        </div>
+                      </div>
+                      <label class="noti-item-label" for="bandwquota">{{langmod.NCLABELBWQL}}</label>
+                      <div class="">
+                        <div class="mail-config-menu notifer-configurator" id="configure_badwidth_alert">
+                          <h4 class="configure-header">{{langmod.NCLABELBQCO}}</h4>
+                          <div class="mail-config-menu-container">
+                            <div class="noti-item">
+                              <label>{{langmod.NCLABELBDQNAR}}</label>
+                              <select class="form-control" onchange="setBWPercent(this)" id="bandwidth_percent"
+                                name="bandwidth_percent">
+                                <option value="50">50%</option>
+                                <option value="55">55%</option>
+                                <option value="60">60%</option>
+                                <option value="65">65%</option>
+                                <option value="70">70%</option>
+                                <option value="75">75%</option>
+                                <option value="80">80%</option>
+                                <option value="85">85%</option>
+                                <option value="90">90%</option>
+                                <option value="95">95%</option>
+                              </select>
+                            </div>
+                            <div class="noti-item">
+                              <div class="switch">
+                                <div class="onoffswitch">
+                                  <input type="checkbox" {{bandwidth_daily}} class="onoffswitch-checkbox"
+                                    id="bandwidth_daily" name="bandwidth_daily"
+                                    onclick="return changestnot(this, 'bandwidth_daily')">
+                                  <label class="onoffswitch-label" for="bandwidth_daily">
+                                    <span class="onoffswitch-inner"></span>
+                                    <span class="onoffswitch-switch"></span>
+                                  </label>
+                                </div>
+                              </div>
+                              <label class="noti-item-label" for="bandwidth_daily">{{langmod.NCLABELBWAL}}</label>
+                              <span class="fa-stack fa-xs" title="{{langmod.NCLABELBWAL2}}" data-toggle="tooltip"
+                                data-placement="top" aria-hidden="true">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-info fa-stack-1x fa-inverse"></i>
+                              </span>
+                            </div>
+                            <div class="noti-item">
+                              <div class="switch">
+                                <div class="onoffswitch">
+                                  <input type="checkbox" {{bandwidth_onlimit}} class="onoffswitch-checkbox"
+                                    id="bandwidth_onlimit" name="bandwidth_onlimit"
+                                    onclick="return changestnot(this, 'bandwidth_onlimit')">
+                                  <label class="onoffswitch-label" for="bandwidth_onlimit">
+                                    <span class="onoffswitch-inner"></span>
+                                    <span class="onoffswitch-switch"></span>
+                                  </label>
+                                </div>
+                              </div>
+                              <label class="noti-item-label" for="bandwidth_onlimit">{{langmod.NCLABELBWONTL}}</label>
+                            </div>
+                          </div>
+                        </div>
+                        <button type="button" class="btn btn-success btn-xs" name="button" id="btn_email_config"
+                          onclick="openConfig(this)"><i class="fa fa-gear"></i></button>
+                      </div>
+                    </div>
+                    <div class="noti-item">
+                      <div class="switch">
+                        <div class="onoffswitch">
+                          <input type="checkbox" {{newsession}} class="onoffswitch-checkbox" id="newsession"
+                            name="newsession" onclick="return changestnot(this, 'newsession')">
+                          <label class="onoffswitch-label" for="newsession">
+                            <span class="onoffswitch-inner"></span>
+                            <span class="onoffswitch-switch"></span>
+                          </label>
+                        </div>
+                      </div>
+                      <label class="noti-item-label" for="newsession">{{langmod.NCLABELNEWS}}</label>
+                    </div>
+                    <div class="noti-item">
+                      <div class="switch">
+                        <div class="onoffswitch">
+                          <input type="checkbox" {{passchange}} class="onoffswitch-checkbox" id="passchange"
+                            name="passchange" onclick="return changestnot(this, 'passchange')">
+                          <label class="onoffswitch-label" for="passchange">
+                            <span class="onoffswitch-inner"></span>
+                            <span class="onoffswitch-switch"></span>
+                          </label>
+                        </div>
+                      </div>
+                      <label class="noti-item-label" for="passchange">{{langmod.NCLABELPACCCH}}</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    <h4>{{langmod.NCLABELNOTICH}}</h4>
+                  </div>
+                  <div class="panel-body">
+                    <div class="noti-item email-notifier">
+                      <div class="switch">
+                        <div class="onoffswitch">
+                          <input type="checkbox" {{notiemail}} class="onoffswitch-checkbox" id="notiemail"
+                            name="notiemail" onclick="return changestnot(this, 'notiemail')">
+                          <label class="onoffswitch-label" for="notiemail">
+                            <span class="onoffswitch-inner"></span>
+                            <span class="onoffswitch-switch"></span>
+                          </label>
+                        </div>
+                      </div>
+                      <label class="noti-item-label" for="notiemail">{{langmod.NCEMAIL}}</label>
+                      <div class="">
+                        <div class="mail-config-menu notifer-configurator" id="configure_email_alerts">
+                          <h4 class="configure-header">{{langmod.NCLABELCONFEM}}</h4>
+                          <div class="mail-config-menu-container">
+                            <div class="form-group">
+                              <label>{{langmod.NCLABELEMTO}}:</label>
+                              <input type="email_address" id="sendto" value="{{mod.ncmod.emailaccount}}"
+                                placeholder="Enter email" class="form-control emailconfalert" data-required="true"
+                                data-reqemail="true" data-errorplace="none">
+                            </div>
+                            <div class="form-group">
+                              <label>{{langmod.NCLABELFROMA}}:</label>
+                              <input type="email_address" id="sendfrom" value="{{mod.ncmod.fromaddress}}"
+                                placeholder="Enter email" class="form-control emailconfalert" data-required="true"
+                                data-reqemail="true" data-errorplace="none">
+                            </div>
+                            <div class="form-group">
+                              <label>{{langmod.NCLABELFRONA}}:</label>
+                              <input type="text" id="sendname" value="{{mod.ncmod.fromname}}" placeholder="Enter email"
+                                class="form-control emailconfalert" data-required="true" data-errorplace="none">
+                            </div>
+                          </div>
+                          <button type="button" class="btn btn-success btn-xs btn-block" id="btn_save_email"
+                            name="button" onclick="saveEmailAlert(this)"><i class="fa fa-floppy-o"></i>
+                            {{langmod.NCLABELSV}}</button>
+                        </div>
+                        <button type="button" class="btn btn-success btn-xs" name="button" id="btn_email_config"
+                          onclick="openConfig(this)"><i class="fa fa-gear"></i></button>
+                      </div>
+                      <!-- <input type="text" id="emailaccount" style="width:60%" class="form-control" placeholder="Notification email address" value="{{emailaccount}}"> -->
+                    </div>
+                    <div class="notfier-description">
+                      <p>{{langmod.NCLABELEMTIT}}</p>
+                    </div>
+                    <!-- <div class="noti-item email-tag">
+                        <label class="">{{langmod.NCACCEMAIL}}</label>
+
+                      </div> -->
+                    <div class="noti-item">
+                      <div class="switch">
+                        <div class="onoffswitch">
+                          <input type="checkbox" {{notiview}} class="onoffswitch-checkbox" id="notiview"
+                            onclick="return changestnot(this, 'notiview')">
+                          <label class="onoffswitch-label" for="notiview">
+                            <span class="onoffswitch-inner"></span>
+                            <span class="onoffswitch-switch"></span>
+                          </label>
+                          <input type="hidden" id="notiview-h" value="">
+                        </div>
+                      </div>
+                      <label class="noti-item-label" for="notiview">{{langmod.NCVISUAL}}</label>
+                    </div>
+                    <div class="notfier-description">
+                      <p>{{langmod.NCLABELVITIT}}</p>
+                    </div>
+                    <div class="noti-item">
+                      <div class="switch">
+                        <div class="onoffswitch">
+                          <input type="checkbox" class="onoffswitch-checkbox" disabled>
+                          <label class="onoffswitch-label">
+                            <span class="onoffswitch-inner"></span>
+                            <span class="onoffswitch-switch"></span>
+                          </label>
+                        </div>
+                      </div>
+                      <label class="noti-item-label">{{langmod.NCLABELMOBN}}</label>
+                    </div>
+                    <div class="notfier-description">
+                      <p>{{langmod.NCLABELMOBN2}}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="ibox">
+          <div class="ibox-title">
+            <h4>{{langmod.NCLABELLT1}}</h4>
+          </div>
+          <div class="ibox-content">
+            <p style="margin-bottom:0px;">{{langmod.NCLABELLT2}}
+              <br /><br />{{langmod.NCLABELLT3}}
+            </p>
+          </div>
+        </div>
+      </div>
+      <!-- <div class="col-lg-4">
+                <div class="ibox ">
+                    <div class="ibox-content">
+                        <div class="jumbotron">
+                            <h1>{{langmod.NCLABEL1}}</h1>
+                            <p style="margin-top: 20px"><strong>{{langmod.NCLABEL1}}</strong>: {{langmod.NCLABEL2}}</p>
+                            <p><strong>{{langmod.NCLABEL3}}</strong>: {{langmod.NCLABEL4}}</p>
+                            <p><strong>{{langmod.NCLABEL5}}</strong>: {{langmod.NCLABEL6}}</p>
+                            <p><strong>{{langmod.NCLABEL7}}</strong>: {{langmod.NCLABEL8}}</p>
+                            <p><strong>{{langmod.NCLABEL9}}</strong>: {{langmod.NCLABEL10}}</p>
+                            <p><strong>{{langmod.NCLABEL11}}</strong>: {{langmod.NCLABEL12}}</p>
+                        </div>
+                    </div>
+                </div>
+            </div> -->
+    </div>
+  </div>
+  {% include 'sidebar.html' %}
+</div>
+{% include 'footer.html' %}

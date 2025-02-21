@@ -1,0 +1,201 @@
+<div class="modal fade mongodb-modal" id="_mongo_delete_confirm_modal_" tabindex="-1" role="dialog" aria-labelledby="videoModal" aria-hidden="true">
+    <div class="vertical-alignment-helper">
+        <div class="modal-dialog vertical-align-center" style="width: 400px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="nodejs-modal-title modal-title text-center">
+                        {{langmod.LABMON71}}
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="_mongo_db_deleting_index_" value="">
+                    <h5>{{langmod.LABMON72}}: <span id="_mongodb_database_to_remove_"></span></h5>
+                    <h5>{{langmod.LABMON70}}</h5>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal" id="">
+                        <i class="fa fa-ban" aria-hidden="true"></i>
+                        {{langmod.LABMON9}}
+                    </button>
+                    <button id="" onclick="MongoDeletionConfirmed()" class="btn btn-success">
+                        <i class="fa fa-check-circle" aria-hidden="true"></i>
+                        {{langmod.LABMON69}}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade mongodb-modal" id="_mongo_manage_user_modal_" tabindex="-1" role="dialog" aria-labelledby="videoModal"
+    aria-hidden="true">
+    <div class="vertical-alignment-helper">
+        <div class="modal-dialog vertical-align-center" style="width: 500px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-center" id="_mongodb_modal_user_title_"></h5>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="_mongo_user_modal_dbname_" value="">
+                    <div class="form-group">
+                        <label for="email">{{langmod.LABMON73}}:</label>
+                        <div class="mongodb-username-wrapper" id="_mongodb_username_wrapper_">
+                            <span id="_mongodb_user_modal_sysowner_"></span>
+                            <input type="text" class="form-control" id="_mongodb_username_input_">
+                        </div>
+                        <div id="_mongodb_manage_username_wrapper_">
+                            <span></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">{{langmod.LABMON74}}:</label>
+                        <select class="form-control" id="_user_role">
+                            <option value="" selected>{{langmod.LABMON75}}...</option>
+                            <option value="read">{{langmod.LABMON37}}</option>
+                            <option value="readWrite">{{langmod.LABMON38}}</option>
+                        </select>
+                    </div>
+                    <div class="modal-user-pass-container">
+                        <div class="modal-user-pass-input pass_container">
+                            <label for="_user_new_pass_field">{{langmod.LABMON75}}:</label>
+                            <input type="text" class="form-control" id="_user_new_pass_field">
+                            <div class="pwstrength_viewport_progress"></div>
+                        </div>
+                        <div class="modal-user-pass-generator">
+                            <span class="btn btn-default" title="{{langmod.LABMONCOPYPASS}}" data-toggle="tooltip"
+                                data-placement="top" aria-hidden="true" onclick="copyPass('_user_new_pass_field')">
+                                <i class="fa fa-copy"></i>
+                            </span>
+                            <span class="btn btn-default" title="{{langmod.LABMONGENRPASS}}" data-toggle="tooltip"
+                                data-placement="top" aria-hidden="true" onclick="generateNewPass(this)">
+                                <i class="fa fa-key" aria-hidden="true"></i>
+                            </span>
+                            <div class="btn-group dropdown show_options_wp">
+                                <button type="button" class="btn btn-default" title="{{langmod.LABMONCHOPTPAS}}"
+                                    data-toggle="tooltip" data-placement="top" aria-hidden="true"
+                                    onclick="openPGOPT('#pass_wpad1', '.show_options_wp')">
+                                    <i class="fa fa-cogs"></i>
+                                    <span class="caret" style="margin-left:10px"></span>
+                                </button>
+                                <div class="general-password-generator-options mysql_generator" id="pass_wpad1"
+                                    style="display: none;z-index: 20;box-shadow: 3px 7px 10px -6px #777;">
+                                    <ul class="right animated fadeIn">
+                                        <li>
+                                            <select class="form-control pwlength" id="lengthpass2"
+                                                title="{{langmod.FTPLENGTH}}" style="margin-bottom: 5px;">
+                                                <option value="7"> {{langmod.FTPLENGTH}} 7</option>
+                                                <option value="8"> {{langmod.FTPLENGTH}} 8</option>
+                                                <option value="9"> {{langmod.FTPLENGTH}} 9</option>
+                                                <option value="10"> {{langmod.FTPLENGTH}} 10</option>
+                                                <option value="11"> {{langmod.FTPLENGTH}} 11</option>
+                                                <option value="12" selected=""> {{langmod.FTPLENGTH}} 12</option>
+                                                <option value="13"> {{langmod.FTPLENGTH}} 13</option>
+                                                <option value="14"> {{langmod.FTPLENGTH}} 14</option>
+                                                <option value="15"> {{langmod.FTPLENGTH}} 15</option>
+                                            </select>
+                                        </li>
+                                        <li>
+                                            <select class="form-control pwtype" id="typepass2" title="Type">
+                                                <option value="alf">{{langmod.FTPTYPE}} {{langmod.FTPALF}}</option>
+                                                <option value="num" selected="">{{langmod.FTPTYPE}} {{langmod.FTPALFNUM}}
+                                                </option>
+                                                <option value="def">{{langmod.FTPTYPE}} {{langmod.FTPALFNUMSIG}}</option>
+                                            </select>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0px;">
+                        <label for="_user_new_pass_field_confirm">{{langmod.LABMON76}}:</label>
+                        <input type="text" class="form-control" id="_user_new_pass_field_confirm">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal"
+                        id="_mongodb_modal_user_cancel_btn_">
+                        <i class="fa fa-ban" aria-hidden="true"></i>
+                        {{langmod.LABMON9}}
+                    </button>
+                    <button id="_mongodb_modal_user_save_btn_" class="btn btn-success">
+                        <i class="fa fa-floppy-o" aria-hidden="true"></i>
+                        {{langmod.LABMON10}}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade mongodb-modal" id="_mongo_delete_user_modal_" tabindex="-1" role="dialog" aria-labelledby="videoModal"
+    aria-hidden="true">
+    <div class="vertical-alignment-helper">
+        <div class="modal-dialog" style="width: 400px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="nodejs-modal-title modal-title text-center">
+                        {{langmod.LABMON77}}
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="_mongo_user_deleting_footprint_" value="">
+                    <h5>{{langmod.LABMON78}}: <span id="_mongodb_user_to_remove_"></span></h5>
+                    <h5>{{langmod.LABMON70}}</h5>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal" id="">
+                        <i class="fa fa-ban" aria-hidden="true"></i>
+                        {{langmod.LABMON9}}
+                    </button>
+                    <button id="" onclick="MongoDBUserDeletionConfirmed()" class="btn btn-success">
+                        <i class="fa fa-check-circle" aria-hidden="true"></i>
+                        {{langmod.LABMON69}}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade mongodb-modal" id="_mongo_new_db_user_modal_" tabindex="-1" role="dialog"
+    aria-labelledby="videoModal" aria-hidden="true">
+    <div class="vertical-alignment-helper">
+        <div class="modal-dialog" style="width: 500px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="nodejs-modal-title modal-title text-center">
+                        {{langmod.LABMON6}}
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <div class="mongo-form-wrapper">
+                        <div class="mongo-form-inner">
+                            <!-- <div class="row-db-form">
+                                    <label for="">{{langmod.LABMON11}}: <small class="required-asterisk">*</small></label>
+                                    <input type="text" class="form-control" placeholder="{{langmod.LABMON14}}" maxlength="30" name="" id="_mongo_db_name_input_">
+                                </div>
+                            </div> -->
+                            <div class="form-group">
+                                <label for="usr">{{langmod.LABMON11}}: <small class="required-asterisk">*</small></label>
+                                <input type="text" class="form-control" placeholder="{{langmod.LABMON14}}" onkeyup="updateDBNameExample(this)" maxlength="30" name="" id="_mongo_db_name_input_">
+                            </div>
+                            <div class="mongo-form-wrapper-alert">
+                                <div class="alert alert-info">
+                                    <strong>{{langmod.LABMON13}}:</strong> {{langmod.LABMON12}} <b>{{users}}_<span id="_mongo_form_alert_dbname_">dbname</span></b>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning btn-cancel-form" data-dismiss="modal" id="">
+                        <i class="fa fa-ban" aria-hidden="true"></i>
+                        {{langmod.LABMON9}}
+                    </button>
+                    <button id="" onclick="saveMongoForm()" class="btn btn-success btn-save-mongo-db">
+                        <i class="fa fa-floppy-o" aria-hidden="true"></i>
+                        {{langmod.LABMON10}}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

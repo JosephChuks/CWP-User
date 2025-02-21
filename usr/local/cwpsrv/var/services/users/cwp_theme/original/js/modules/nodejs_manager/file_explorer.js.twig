@@ -1,0 +1,130 @@
+const LOADER_EXPLORER = '<div class="action-loader" id="_nodejs_apps_list_loader">' +
+    '<span><i class="fa fa-circle-o-notch fa-spin"></i></span>' +
+    '<h5 id="">{{langmod.LABNODEJS89}}...</h5>' +
+    '</div>';
+function showExplorer() {
+    $('#modal_file_explorer .modal-body').html(LOADER_EXPLORER);
+    $('#modal_file_explorer').modal('show');
+    callDirList($('#dirsel').text());
+}
+function selCurrentPath() {
+    let curpath = $('#current_path_dirsel').val();
+    $('.dir-sel-btn').attr('data-original-title', curpath);
+    $('#dirsel').text(curpath);
+    $('#modal_file_explorer').modal('hide');
+}
+function callDirList(directory) {
+    uchip.handleButton('#sel_path_btn', 'fa-thumb-tack');
+    $('#modal_file_explorer .modal-body').html(LOADER_EXPLORER);
+
+    loadFileExplorer('user=' + $("#nodejs_user_selector_").val() + '&basedir=' + directory, function (response) {
+        directory = directory.charAt(directory.length - 1) == '/' ? directory : directory + '/';
+        renderDirSelector(directory, response.directories);
+        uchip.handleButton('#sel_path_btn', 'fa-thumb-tack', true);
+    }, function () {
+        $('#modal_file_explorer').modal('hide');
+    });
+    // uchip.call('module=domains&acc=dirlist', {
+    // data: 'basedir=' + directory,
+    // callback: function (response) {
+    // directory = directory.charAt(directory.length - 1) == '/' ? directory : directory + '/';
+    // renderDirSelector(directory, response);
+    // uchip.handleButton('#sel_path_btn', 'fa-thumb-tack', true);
+    // }
+    // });
+}
+function renderDirSelector(base, dirs) {
+    let dirs_html = '';
+    dirs.forEach((dir) => {
+        dirs_html += '<div class="dir-item" data-dir="' + dir + '"><div class="row">' +
+            '<div class="col-md-12">' +
+            '<i class="fa fa-folder-o" aria-hidden="true"></i>' +
+            dir +
+            '</div>' +
+            '</div></div>';
+    });
+    let html = '<div id="dir_list" class="container-fluid" style="display:none">' +
+        '<div class="row">' +
+        '<div class="col-md-12 current-path-div">' +
+        '<label class="form-label">{{langmod.LABNODEJS90}}</label>' +
+        '<input type="text" id="current_path_dirsel" class="form-control" value="' + base + '" readonly>' +
+        '</div>' +
+        '</div>' +
+        dirs_html +
+        '</div>';
+    $('#modal_file_explorer .modal-body').html(html);
+    $('.dir-item').mouseover(function () {
+        $(this).find('.fa').removeClass('fa-folder-o').addClass('fa-folder-open-o');
+    })
+        .mouseout(function () {
+            $(this).find('.fa').removeClass('fa-folder-open-o').addClass('fa-folder-o');
+        }).click(function () {
+            let curpath = $('#current_path_dirsel').val();
+            let dir = $(this).data('dir');
+            if (dir == '..') {
+                let pieces = curpath.split('/');
+                pieces.pop();
+                pieces.pop();
+                dir = pieces.join('/')
+            } else {
+                dir = curpath + dir;
+            }
+            callDirList(dir);
+        });
+    $('#dir_list').slideDown('fast');
+}
+function loadFileExplorer(data, success, cleaner) {
+    uchip.call('module=nodejs_manager&acc=file_explorer', {
+        data: data,
+        callback: function (response) {
+            if (response.result == 'success') {
+                success(response);
+            } else {
+                let message_error = '{{langmod.LABNODEJS81}}';
+                noti_bubble('{{langmod.LABNODEJS82}}', message_error, 'error', true, false, '3000', true);
+                cleaner();
+            }
+        }
+    });
+    // $.ajax({
+    //     type: "POST",
+    //     url: "./loader_ajax.php?ajax=nodejs&acc=file_explorer",
+    //     data: data,
+    //     complete: function (response) {
+    //         let resp_data = {}
+    //         try {
+    //             resp_data = response.hasOwnProperty('responseJson') ? response.responseJson : JSON.parse(response.responseText);
+    //         } catch (error) {
+    //             $.gritter.add({
+    //                 title: '{{langmod.LABNODEJS82}}',
+    //                 text: '{{langmod.LABNODEJS81}}',
+    //                 time: 3500,
+    //                 close_icon: '',
+    //                 icon: 'icomoon-icon-power',
+    //                 class_name: 'error-notice'
+    //             });
+    //             return;
+    //         }
+    //         if (resp_data.hasOwnProperty('result') && resp_data.result === 'success') {
+    //             success(resp_data);
+    //         } else {
+    //             let message_error = '{{langmod.LABNODEJS81}}';
+    //             if (resp_data.hasOwnProperty('code')) {
+    //                 if (resp_data.code == 2) {
+    //                     message_error = '';
+    //                 } else if (resp_data.code == 1) {
+    //                     message_error = '';
+    //                 }
+    //             }
+    //             $.gritter.add({
+    //                 title: '{{langmod.LABNODEJS82}}',
+    //                 text: message_error,
+    //                 time: 3500,
+    //                 close_icon: '',
+    //                 icon: 'icomoon-icon-power',
+    //                 class_name: 'error-notice'
+    //             });
+    //         }
+    //     }
+    // });
+}

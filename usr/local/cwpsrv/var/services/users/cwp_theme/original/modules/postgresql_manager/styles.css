@@ -1,0 +1,249 @@
+#_pgre_tabs_wrapper_{
+    margin-bottom: 0px;
+    margin-top: 2rem;
+}
+.nav-tabs > li > a{
+    background-color: #e6e6e6;
+    color: #999;
+}
+.pgresql-quota-wrapper{
+    position: absolute;
+    top: -2.8rem;
+    right: 1.5rem;
+    z-index: 100;
+    box-shadow: 2px -9px 6px #00000008;
+}
+.nav-tabs li.active a{
+    background-color: #ffffff !important;
+}
+.dataTables_wrapper{
+    padding-bottom: 0px;
+}
+.pgre-sql-actions{
+    display: flex;
+    justify-content: space-around;
+}
+.vertical-alignment-helper {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+}
+.vertical-align-center {
+    margin: 0px !important;
+    position: inherit !important;
+}
+.pgresql-modal .modal-header h5{
+    font-size: 1.5rem;
+}
+.pgresql-modal .modal-body h5{
+    font-size: 1.3rem;
+}
+.pgresql-modal .modal-body{
+    padding: 20px;
+}
+.pgre-userdb-item{
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    padding: 2rem 10px;
+    justify-content: space-between;
+}
+.pgre-userdb-item .btn{
+    margin-left: 5px;
+} 
+.pgre-userdb-item .fa{
+    margin-right: 0px;
+}
+.pgre-userdb-items{
+    padding: 0px !important;
+}
+.pgre-userdb-item-alone{
+    height: 5rem;
+}
+.pgre-userdb-items .pgre-userdb-item-wrapper:not(:first-child){
+    border-top: 1px solid #e7eaec;
+}
+.pgre-userdb-not-users{
+    height:5rem;
+    display:flex;
+    justify-content:center;
+    align-items: center;
+}
+.pgre-userdb-items .pgre-userdb-item-wrapper:not(:first-child){
+    border-top: 1px solid #e7eaec;
+}
+.pgre-userdb-not-users h5{
+    margin: 0px;
+    font-size: 1.3rem;
+}
+.modal-user-pass-container{
+    display: flex;
+    width: 100%;
+    flex-wrap: wrap;
+    /* background-color: blue; */
+    margin-bottom: 11px;
+    align-items: center;
+    justify-content: space-between;
+
+}
+.modal-user-pass-input.pass_container{
+    width: 30rem;
+}
+.pwstrength_viewport_progress .progress{
+    margin-bottom: 5px;
+    margin-top: 5px;
+    border: 1px solid #e7eaec;
+}
+.pwstrength_viewport_progress .password-verdict{
+    color: #333333;
+}
+.pgresql-username-wrapper{
+    display: flex;
+    align-items: flex-end;
+}
+#_pgresql_username_input_{
+    width: 90%;
+}
+#_pgresql_user_modal_sysowner_{
+    font-weight: bold;
+}
+.deleting_tr{
+    background-color: #f5f5f566 !important;
+    color: #b7b7b7;
+}
+.error-field{
+    border-color: lightcoral !important;
+    transition: all ease-in;
+    transition-duration: 100ms;
+}
+.pgre-userdb-item-hidden{
+    display: none;
+}
+.vless-users-btn{
+    display: none;
+}
+.pgresql-users-display-control{
+    display: flex;
+    justify-content: center;
+    padding: 0.8rem;
+    border-top: 1px solid #e7eaec;
+}
+.general-password-generator-options{
+    display: none;
+    position: absolute;
+    top: 3.4rem;
+    left: -13rem;
+    width: 20rem;
+    padding: 5px 10px 10px;
+    box-shadow: 3px 3px 9px #777;
+    background-color: #fff;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+.general-password-generator-options ul{
+  list-style: none;
+  padding: 0px;
+  margin: 0px;
+}
+.general-password-generator-options-close{
+  float: right;
+  cursor: pointer;
+}
+.general-password-generator-options-title{
+  float: left;
+  font-size: 1.3rem;
+  margin-bottom: 5px;
+}
+.ibox-title{
+    padding: 20px 20px 10px 19px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.ibox-title h4{
+    margin:0px;
+}
+.not-available-pgresql{
+    height:20rem;
+    display:flex;
+    justify-content:center;
+    align-items: center;
+}
+.not-available-pgresql h5{
+    font-size: 1.5rem;
+}
+.pgresql-user-list-error{
+    height: 20rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.pgresql-user-list-error h5{
+    font-size: 1.8rem;
+    margin: 2rem;
+}
+.pgresql-user-list-error .fa-ban{
+    font-size: 4rem;
+}
+.pgresql-user-list-error .btn{
+    margin-top: 4px;
+}
+.pgresql-empty-list-database{
+    height: 10rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#_pgresql_not_running_wrapper_{
+    margin-top: 2rem;
+    height: 20rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-flow: column;
+}
+#_pgresql_not_running_wrapper_ h5{
+    margin-top:2rem;
+    font-size:1.8rem;
+}
+#_pgresql_not_running_wrapper_ .fa{
+    font-size:4rem;
+}
+.pgre-remove-user-db-option{
+    display: flex;
+    padding: 10px 0px;
+}
+.pgre-remove-user-db-option .radio-custom,
+.pgre-remove-user-db-option label{
+    margin:0px;
+}
+#_pgre_existing_user_form_{
+    display: none
+} 
+.add-existing-user-select-wrapper{
+    margin-bottom: 1.5rem;
+}
+.select2-container{
+    z-index: 10000;
+    width:100% !important;
+}
+.pgre-remove-user-db-option label{
+    margin-left: 5px;
+}
+.error-ocurred-pgre{
+    margin-top: 2rem;
+    flex-direction: column;
+    height:20rem;
+    display: flex;
+    align-items:center;
+    justify-content:center;
+}
+.error-ocurred-pgre .fa{
+    font-size: 5rem;
+}
+.error-ocurred-pgre h4{
+    font-size: 2rem;
+}

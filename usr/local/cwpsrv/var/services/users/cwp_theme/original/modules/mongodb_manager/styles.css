@@ -1,0 +1,214 @@
+#_mongo_tabs_wrapper_{
+    margin-bottom: 0px;
+    margin-top: 2rem;
+}
+.nav-tabs > li > a{
+    background-color: #e6e6e6;
+    color: #999;
+}
+.mongodb-quota-wrapper{
+    position: absolute;
+    top: -2.8rem;
+    right: 1.5rem;
+    z-index: 100;
+    box-shadow: 2px -9px 6px #00000008;
+}
+.nav-tabs li.active a{
+    background-color: #ffffff !important;
+}
+.dataTables_wrapper{
+    padding-bottom: 0px;
+}
+.mongo-db-actions{
+    display: flex;
+    justify-content: space-around;
+}
+.vertical-alignment-helper {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+}
+.vertical-align-center {
+    margin: 0px !important;
+    position: inherit !important;
+}
+.mongodb-modal .modal-header h5{
+    font-size: 1.5rem;
+}
+.mongodb-modal .modal-body h5{
+    font-size: 1.3rem;
+}
+.mongodb-modal .modal-body{
+    padding: 20px;
+}
+.mongo-userdb-item{
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    padding: 2rem 10px;
+    justify-content: space-between;
+}
+.mongo-userdb-item .btn{
+    margin-left: 5px;
+} 
+.mongo-userdb-item .fa{
+    margin-right: 0px;
+}
+.mongo-userdb-items{
+    padding: 0px !important;
+}
+.mongo-userdb-item-alone{
+    height: 5rem;
+}
+.mongo-userdb-items .mongo-userdb-item-wrapper:not(:first-child){
+    border-top: 1px solid #e7eaec;
+}
+.mongo-userdb-not-users{
+    height:5rem;
+    display:flex;
+    justify-content:center;
+    align-items: center;
+}
+.mongo-userdb-items .mongo-userdb-item-wrapper:not(:first-child){
+    border-top: 1px solid #e7eaec;
+}
+.mongo-userdb-not-users h5{
+    margin: 0px;
+    font-size: 1.3rem;
+}
+.modal-user-pass-container{
+    display: flex;
+    width: 100%;
+    flex-wrap: wrap;
+    /* background-color: blue; */
+    margin-bottom: 11px;
+    align-items: center;
+    justify-content: space-between;
+
+}
+.modal-user-pass-input.pass_container{
+    width: 30rem;
+}
+.pwstrength_viewport_progress .progress{
+    margin-bottom: 5px;
+    margin-top: 5px;
+    border: 1px solid #e7eaec;
+}
+.pwstrength_viewport_progress .password-verdict{
+    color: #333333;
+}
+.mongodb-username-wrapper{
+    display: flex;
+    align-items: flex-end;
+}
+#_mongodb_username_input_{
+    width: 90%;
+}
+#_mongodb_user_modal_sysowner_{
+    font-weight: bold;
+}
+.deleting_tr{
+    background-color: #f5f5f566 !important;
+    color: #b7b7b7;
+}
+.error-field{
+    border-color: lightcoral !important;
+    transition: all ease-in;
+    transition-duration: 100ms;
+}
+.mongo-userdb-item-hidden{
+    display: none;
+}
+.vless-users-btn{
+    display: none;
+}
+.mongodb-users-display-control{
+    display: flex;
+    justify-content: center;
+    padding: 0.8rem;
+    border-top: 1px solid #e7eaec;
+}
+.general-password-generator-options{
+    display: none;
+    position: absolute;
+    top: 3.4rem;
+    left: -13rem;
+    width: 20rem;
+    padding: 5px 10px 10px;
+    box-shadow: 3px 3px 9px #777;
+    background-color: #fff;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+.general-password-generator-options ul{
+  list-style: none;
+  padding: 0px;
+  margin: 0px;
+}
+.general-password-generator-options-close{
+  float: right;
+  cursor: pointer;
+}
+.general-password-generator-options-title{
+  float: left;
+  font-size: 1.3rem;
+  margin-bottom: 5px;
+}
+.ibox-title{
+    padding: 20px 20px 10px 19px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.ibox-title h4{
+    margin:0px;
+}
+.not-available-mongodb{
+    height:20rem;
+    display:flex;
+    justify-content:center;
+    align-items: center;
+}
+.not-available-mongodb h5{
+    font-size: 1.5rem;
+}
+.mongodb-user-list-error{
+    height: 20rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.mongodb-user-list-error h5{
+    font-size: 1.8rem;
+    margin: 2rem;
+}
+.mongodb-user-list-error .fa-ban{
+    font-size: 4rem;
+}
+.mongodb-user-list-error .btn{
+    margin-top: 4px;
+}
+.mongodb-empty-list-database{
+    height: 10rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#_mongdb_not_running_wrapper_{
+    margin-top: 2rem;
+    height: 20rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-flow: column;
+}
+#_mongdb_not_running_wrapper_ h5{
+    margin-top:2rem;
+    font-size:1.8rem;
+}
+#_mongdb_not_running_wrapper_ .fa{
+    font-size:4rem;
+}

@@ -1,0 +1,451 @@
+<style media="screen">
+  .reseller-tab-container{
+    background-color: #fff;
+    padding: 1rem;
+    border: 1px solid #f3f3f4;
+  }
+  .reseller-tab-container .nav-tabs > li > a {
+    background-color: #f3f3f4;
+  }
+  .reseller-module{
+    margin-top:2rem;
+  }
+  .gen-tabs-container{
+    margin:2rem;
+  }
+  .gen-tabs-container .ibox{
+    margin-bottom:0px;
+  }
+  .gen-tabs-container .ibox-title{
+    border: 0px;
+    padding: 0px 15px;
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+  }
+  .gen-tabs-container .ibox-title h4{
+    margin:0px;
+  }
+  #add_new_package_container,
+  #nameservers_wrapper,
+  #add_new_feature_container,
+  #add_new_account_container{
+    display:none;
+  }
+  #add_new_account_container .help-block{
+    margin-bottom:0px;
+  }
+  #add_new_package_container .help-block{
+    display: flex !important;
+    align-items: center !important;
+    padding: 0px !important;
+    line-height: 3.5rem;
+    margin: 0px;
+  }
+  #add_new_package_container .checkbox label::before{
+    top:.9rem;
+  }
+  #add_new_package_container .checkbox{
+    margin-top: 0px;
+    margin-bottom: 0px;
+  }
+  .unlimited-pack{
+    text-align: right;
+    padding-top: 5px;
+    font-size: 15px;
+    color: #676a6c;
+    font-weight: 600;
+    border: 1px solid #dddddd;
+    padding-bottom: 5px;
+    padding-right: 5px;
+    display:none;
+  }
+  .reseller-row-form{
+    display: flex;
+    align-items: center;
+    padding: 5px 0px;
+  }
+  .pass_form_div{
+    display:flex;
+    flex-wrap:wrap;
+  }
+  .pass_form_div .pass_container{
+    width:61%;
+    margin-right: 5px;
+  }
+  .copy-pass-btn{
+    position: absolute;
+    left: 51.5%;
+    top: 4px;
+    color: #999;
+  }
+  .copy-pass-btn:hover{
+    color:#676a6c;
+  }
+  .gen-tabs-container .ibox-content{
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  .gen-tabs-container .dataTables_wrapper{
+    padding-bottom:0px;
+  }
+  .gen-tabs-container .ibox-footer{
+    font-size: 100%;
+  }
+  .error-field{
+    color: #ff0000;
+    margin-top: 5px;
+    font-size: 12px;
+    display: block;
+    margin-bottom: 0px;
+  }
+  .package-inline-editor,
+  .email-inline-editor{
+    text-align:center;
+  }
+  .package-inline-editor select,
+  .email-inline-editor input{
+    display: block !important;
+    width: 100% !important;
+    margin-bottom: 5px;
+  }
+  .package-inline-editor button,
+  .email-inline-editor button{
+    margin-right:5px;
+  }
+  .progress{
+    margin-bottom:5px;
+  }
+  .actions-td button{
+    margin-right:5px;
+  }
+  .btn-xs.goto-edit-btn{
+    font-size: 11px;
+    padding: 1px 5px;
+  }
+  .no-margin-p{
+    margin-bottom:0px;
+  }
+  #modal-reseller_pass .modal-body{
+    padding:20px;
+  }
+  #resellerpass2{
+    width:61%;
+  }
+   .logs-wrapper-error-content,
+  .IPlogs-wrapper-error-content,
+  .mod-security-notinstalled{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 30vh;
+    flex-flow: wrap;
+  }
+  .IPlogs-wrapper-error-content .fa-stack,
+  .logs-wrapper-error-content .fa-stack,
+  .mod-security-notinstalled .fa-stack{
+    font-size: 3.5rem;
+  }
+  .IPlogs-wrapper-error-content h5,
+  .logs-wrapper-error-content h5,
+  .mod-security-notinstalled h5{
+    width: 100%;
+    text-align: center;
+    font-size: 2.5rem;
+    padding: 0px 10rem;
+  }
+  #modal-reseller_pass .form-group.row{
+    margin-bottom:0px;
+  }
+  .deleting_tr{
+    background-color: #f5f5f566;
+    color: #e7eaec;
+  }
+  .ms-activator-loader{
+    padding: 0px 20px;
+    font-size: 2rem;
+    display: none;
+  }
+  .ms-activator-loader .fa{
+    color: #f48513;
+  }
+  .deleting_tr .onoffswitch{
+    display: none;
+  }
+  .deleting_tr .ms-activator-loader{
+    display: block;
+  }
+  .deleting_tr a{
+    color:#f4851340;
+  }
+  .deleting_tr .label-primary{
+    background-color: #1ab39445;
+    color: #f3f3f4;
+  }
+  .packages_table th{
+    font-size:12px;
+  }
+  .features_empty{
+    flex-flow: column;
+  }
+  .wizard-big{
+    display:none;
+    margin-top:10px;
+  }
+  .packfeatures_table{
+    margin-bottom:10px;
+  }
+  .sub-info-table-features{
+    margin-bottom: 5px;
+    font-weight: 600;
+  }
+  .features-ibox-footer{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .features-ibox-footer .sub-info-table-features{
+    margin-bottom: 0px;
+  }
+  #alertdiv,
+  #branding_wrapper,
+  .dualselect-error{
+    display:none;
+  }
+  .labels-features{
+    width:600px;
+  }
+  .labels-features .label{
+    margin-bottom: 4px;
+  }
+  #nameservers_wrapper .checkbox{
+    margin-top:0px;
+    margin-bottom:0px;
+  }
+  .re-nam-item{
+    display:flex;
+    flex-wrap:wrap;
+  }
+  .re-nam-item-prefix{
+    width: 25%;
+    margin-right: 5px;
+    margin-bottom: 5px;
+  }
+  .re-nam-item-domain{
+    width:73%;
+  }
+  .ns-current-config{
+    line-height: 3.8rem;
+  }
+  #alertdiv .alert-warning{
+    margin-top:5px;
+    margin-bottom:0px;
+  }
+  .dropzone{
+    border: 1px #999 dashed;
+    border-radius: 5px;
+  }
+  #divdeletes{
+    position: absolute;
+    margin-top: -3.5rem;
+    right: 2.5rem;
+  }
+  .branding-info{
+    color: #103d67 !important;
+    font-size:10px;
+  }
+  .dropzone .dz-message {
+    margin: 3.5em 0;
+  }
+  .mini-dashboard{
+    display:none;
+    padding-bottom: 20px;
+  }
+  .mini-dashboard-graph h5{
+    text-align:center;
+  }
+  .mini-dashboard-graph canvas{
+    margin:auto;
+  }
+  #mini_dashboard_loader{
+    height:30rem !important;
+  }
+  .infinite-sign{
+    font-size: 2.8rem;
+    font-weight: 500;
+    top: 5px;
+    line-height: 0rem;
+    position: relative;
+  }
+  .progress-mini-dashboard{
+    width:80%;
+    margin:auto;
+  }
+  .mini-dashboard-percent{
+    display:flex
+  }
+  .mini-dashboard-percent span{
+    margin-left:1rem
+  }
+  .rs-more-features{
+    cursor:pointer;
+  }
+  .rs-hidden-feat{
+    display:none;
+  }
+  .maintabs-wrapper{
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+  .maintabs-wrapper .nav-tabs{
+    min-width: 3000px;
+    position: relative;
+  }
+  .maintabs-scrollers{
+    display: none;
+  }
+  .nav-tabs li a {
+    border: 1px solid #ddd !important;
+  }
+  .maintabs-container{
+    width: 100%;
+  }
+  .maintabs-scrollers .fa{
+    color: #b4bcca;
+    font-size: 2rem;
+    cursor: pointer;
+  }
+  .maintabs-scrollers .fa-chevron-left{
+    margin-right: 3px;
+  }
+  .maintabs-scrollers .fa:hover{
+    color: #999999;
+  }
+  @media only screen and (max-width: 1390px) {
+    .maintabs-scrollers{
+      width: 4rem;
+      height: 4rem;
+      display: block;
+      position: absolute;
+      top: 2rem;
+      right: 2rem;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      border-left: 1px solid #ccc;
+      justify-content: center;
+    }
+    .maintabs-wrapper{
+      width: 96.5%;
+    }
+  }
+  .rules-wrapper-success .panel-body{
+    padding-top: 0px;
+    padding-bottom: 0px;
+  }
+  #rules_list_wrapper .rules-editor-line:nth-child(even){
+    background-color:#f3f3f4;
+  }
+  .rules-editor-line{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    border-bottom: 1px solid #e7eaec;
+    padding: 5px;
+    justify-content: space-between;
+  }
+  .rules-editor-nosearch{
+    display:none;
+  }
+  .rules-editor-nosearch-content{
+    display: flex;
+    height: 22rem;
+    align-items: center;
+    justify-content: center;
+  }
+  .rules-editor-nosearch-content h4{
+    margin: 0px;
+    font-size: 2rem;
+  }
+    .rules-list-empty{
+    display: flex;
+    height: 25rem;
+    align-items: center;
+    /* background: #000; */
+    justify-content: center;
+  }
+  .rules-list-empty-content{
+    text-align:center;
+  }
+  .reseller-modsec-action-td{
+    display: flex;
+    align-items: center;
+  }
+  .reseller-modsec-action-td label{
+    margin-bottom: 0px;
+  }
+  .reseller-modsec-action-td .onoffswitch,
+  .reseller-modsec-action-td .btn{
+    margin-right: 5px;
+  }
+  #_reseller_modsec_main .ibox-content{
+    padding: 15px 15px 10px!important;
+  }
+  #rules_loader,
+  #logip_loader{
+    flex-direction: column;
+    height: 20rem;
+  }
+  #rules_loader h3,
+  #logip_loader h3{
+    margin-top:2rem;
+  }
+  #firewall_container .ibox-content{
+    height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  #firewall_wrapper{
+    width: 80%;
+    max-width: 700px;
+  }
+</style>
+<div class="row  border-bottom white-bg dashboard-header">
+    {% if mod.fsl == 1 %}
+    {% set stflalert ='block' %}
+    {% else %}
+    {% set stflalert ='none' %}
+    {% endif %}
+    <div class="row  alert alert-warning col-lg-12" style="margin-left: 5px; padding-right: 5px;display:{{stflalert}}" id="alertfl">
+        <strong>{{langene.GALARTFILEBLOCK}}</strong>
+    </div>
+    <div class="col-lg-10">
+        <h2>{{langmod.RSLABEL4}} ({{users}})</h2>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="?">Home</a></li>
+            <li class="breadcrumb-item active"><strong>{{langmod.RSLABEL4}}</strong></li>
+        </ol>
+    </div>
+</div>
+<div class="row reseller-module">
+    {% if mod.licenseReseller == 0 %}
+        <div class="alert alert-danger" style="margin: 15px">
+            <b>{{langmod.RSLABEL83}}</b>
+        </div>
+        {% set license = 'disabled'%}
+    {% else %}
+        {% set license = ''%}
+    {% endif %}
+    <div class="col-lg-12">
+        <div class="row">
+            {% include 'mod_reseller_gentab.html' %}
+        </div>
+    </div>
+</div>
+<form id="autologinuser" name="autologinuser" action="" method="post" style="display: none" target="_blank">
+    <input type="hidden" name="tokenuser" id="tokenuser">
+    <input type="hidden" name="userRes" id="userRes">
+</form>

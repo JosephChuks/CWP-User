@@ -1,0 +1,121 @@
+function subdomainrefres(){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=subdomains&acc=subdomainrefres",
+        complete: function(datos){
+            $('.dataTables-example').DataTable().destroy();
+            $("#contenttr").html(datos.responseText);
+            $('.dataTables-example').DataTable();
+            return false;
+        }
+    });
+}
+function subdomaindelete(st,domain,subdomin){
+    if(st==0){
+        var strheader = '<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{ langmod.SUBDOMLABEL3 }}</span></button><h4 class="modal-title">{{ langmod.SUBDOMLABEL6 }}</h4><small class="font-bold">{{langmod.SDDLETEDOMAIN}}</small>';
+        var strbody = '<p class="text-center">'+subdomin+'.'+domain+'</p>';
+        var strfooter = '<button type="button" class="btn btn-white" data-dismiss="modal">{{ langmod.SDNO }}</button><button type="button" class="btn btn-primary" id="btnyesdel" onclick="return subdomaindelete(1,\''+domain+'\',\''+subdomin+'\')">{{langmod.SDYES}}</button>';
+
+        $("#deletemodal .modal-footer").html(strfooter);
+        $("#deletemodal .modal-body").html(strbody);
+        $("#deletemodal .modal-header").html(strheader);
+        $("#deletemodal").modal('toggle');
+        return false;
+    }else if(st==1){
+        btnporcess('off','btnyesdel','{{ langmod.SUBDOMLABEL10 }}');
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=subdomains&acc=subdomaindelete",
+            data:"domain="+domain+"&subdomain="+subdomin,
+            complete: function(datos){
+                $("#trdomain"+datos.responseText).hide();
+                //uploadpackage('subdomains');
+                subdomainrefres();
+                refrespanelnew('subdomains');
+                noti_bubble('{{langmod.SDDELDOMAINALERT}}','{{langmod.SDSUCCT}}','success',false,false,'3000',true);
+                btnporcess('on','btnyesdel','{{ langmod.SDYES }}');
+                $("#deletemodal").modal('hide');
+                return false;
+            }
+        });
+    }
+    return false;
+}
+function subdomainkeyup(){
+    var domain=$("#domains").val();
+    domain=domain.substr(1);
+    if($("#subdomain").val()=='mail'){
+        $("#btn_save_subdomain").hide('blind');
+    }else{
+        var expreg = /^[a-zA-Z0-9]+([(\.|\/|\-)]?[a-zA-Z0-9_]+)*$/i;
+        var resp=expreg.test($("#subdomain").val());
+        if(resp==false){
+            noti_bubble('{{langmod.ERRORFORM}}','{{langmod.DERROR}}','error',false,false,'3000',true);
+            $("#btnsavesubdomain").addClass('disabled');
+            $("#btnsavesubdomain").attr('disabled',true);
+        }else{
+            $("#btnsavesubdomain").removeClass('disabled');
+            $("#btnsavesubdomain").attr('disabled',false);
+            $("#alertftp").hide('blind');
+            $("#alertftp").html('');
+            var path='/public_html/';
+            var newpath=$("#subdomain").val();
+            $("#pathdomain").val(path+newpath+'.'+domain);
+        }
+    }
+}
+function btn_save_subdomain(){
+    btnporcess('off','btnsavesubdomain','{{ langmod.SUBDOMLABEL10 }}');
+    if($("#subdomain").val()=='' || $("#pathdomain").val()==''){
+        noti_bubble('{{langmod.SDDATEALL}}','{{langmod.SDERROR}}','error',false,false,'3000',true);
+        btnporcess('on','btnsavesubdomain','{{ langmod.SDBNTADD }}');
+        return false;
+    }else{
+        if ($('#autossl').prop('checked')){ var autossl=1; } else{ var autossl=0; }
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=subdomains&acc=btn_save_subdomain",
+            data: "domain="+$("#domains").val()+"&subdomain="+$("#subdomain").val()+"&path="+$("#pathdomain").val()+"&autossl="+autossl,
+            complete: function(datos){
+                //alert(datos.responseText);
+                if(datos.responseText=='OK'){
+                    $("#suddomain").val('');
+                    $("#pathdomain").val('/public_html/');
+                    subdomainrefres();
+                    refrespanelnew('subdomains');
+                    noti_bubble('{{langmod.SDDOMAINEXIT}}','{{langmod.SDSUCCT}}','success',false,false,'3000',true);
+                    btnporcess('on','btnsavesubdomain','{{ langmod.SDBNTADD }}');
+                    $("#addmodal").modal('hide');
+                }else{
+                    //refrespanelnew('subdomains');
+                    //subdomainrefres();
+                    //subdomainrefres();
+                    noti_bubble(datos.responseText,'{{langmod.SDERROR}}','error',false,false,'3000',true);
+                    btnporcess('on','btnsavesubdomain','{{ langmod.SDBNTADD }}');
+                }
+                return false;
+            }
+        });
+    }
+}
+function btnaddsubdomain(){
+    var headervar='<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{ langmod.SUBDOMLABLE3 }}</span></button><h4 class="modal-title">{{ langmod.SDBNTADD }}</h4>';
+    var bodyvar='<div class="row"><div class="col-sm-3"><b>{{ langmod.SDDOMAIN }}:</b></div><div class="col-sm-3"><input type="text" class="form-control" style="padding:3px 0px;" id="subdomain" onkeyup="return subdomainkeyup()"></div><div class="col-sm-5"><select id="domains" class="form-control" >{% for dsel in mod.seldomain %}<option value="{{ dsel.domain }}">{{ dsel.domain }}</option>{% endfor %}</select></div></div><div class="row" style="padding-top: 5px"><div class="col-sm-3" style="padding-top: 3px"><b>{{ langmod.SDPATH }}:</b> /home/{{ users }}</div><div class="col-sm-5"><input type="text" class="form-control" style="padding:3px 0px;" id="pathdomain" value="/public_html/"></div></div><div class="row" style="padding-top: 5px"><div class="col-sm-3" style="padding-top: 3px"><b>{{ langmod.SUBDOMLABEL8 }}:</b></div><div class="col-sm-5"><input type="checkbox" class="form-control2" style="padding:3px 0px;" id="autossl"></div></div><p class="text-center"  style="padding-top: 15px"><b>{{ langmod.SUBDOMLABEL7 }}</b></p>';
+    var btnvar='<button type="button" class="btn btn-white" data-dismiss="modal">{{ langmod.SUBDOMLABLE3 }}</button> <button type="button" class="btn btn-primary" onclick="return btn_save_subdomain()" id="btnsavesubdomain">{{ langmod.SDBNTADD }}</div></button>';
+    $("#addmodal .modal-header").html(headervar);
+    $("#addmodal .modal-body").html(bodyvar);
+    $("#addmodal .modal-footer").html(btnvar);
+    $("#addmodal").modal('toggle');
+}
+$("#btn_add_subdomain").click(function (){
+    var headervar='<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{ langmod.SUBDOMLABLE3 }}</span></button><h4 class="modal-title">{{ langmod.SDBNTADD }}</h4>';
+    var bodyvar='<div class="row"><div class="col-sm-3"><b>{{ langmod.SDDOMAIN }}:</b></div><div class="col-sm-3"><input type="text" class="form-control" style="padding:3px 0px;" id="subdomain" onkeyup="return subdomainkeyup()"></div><div class="col-sm-5"><select id="domains" class="form-control" >{% for dsel in mod.seldomain %}<option value="{{ dsel.domain }}">{{ dsel.domain }}</option>{% endfor %}</select></div></div><div class="row" style="padding-top: 5px"><div class="col-sm-3" style="padding-top: 3px"><b>{{ langmod.SDPATH }}:</b> /home/{{ users }}</div><div class="col-sm-5"><input type="text" class="form-control" style="padding:3px 0px;" id="pathdomain" value="/public_html/"></div></div><div class="row" style="padding-top: 5px"><div class="col-sm-3" style="padding-top: 3px"><b>{{ langmod.SUBDOMLABEL8 }}:</b></div><div class="col-sm-5"><input type="checkbox" class="form-control2" style="padding:3px 0px;" id="autossl"></div></div><p class="text-center"  style="padding-top: 15px"><b>{{ langmod.SUBDOMLABEL7 }}</b></p>';
+    var btnvar='<button type="button" class="btn btn-white" data-dismiss="modal">{{ langmod.SUBDOMLABLE3 }}</button> <button type="button" class="btn btn-primary" onclick="return btn_save_subdomain()" id="btnsavesubdomain">{{ langmod.SDBNTADD }}</div></button>';
+    $("#addmodal .modal-header").html(headervar);
+    $("#addmodal .modal-body").html(bodyvar);
+    $("#addmodal .modal-footer").html(btnvar);
+    $("#addmodal").modal('toggle');
+});

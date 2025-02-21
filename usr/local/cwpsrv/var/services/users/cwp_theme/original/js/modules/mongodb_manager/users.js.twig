@@ -1,0 +1,442 @@
+let users_db_list = null;
+function ShowDeleteUserConfirm(elem, footprint) {
+    let uname = /^user_/.test(footprint) ? $('.' + footprint).data('uname') : $('#_mongo_user_db_item_' + footprint + '_').data('uname');
+    $('#_mongo_user_deleting_footprint_').val(footprint);
+    $('#_mongodb_user_to_remove_').text(uname);
+    $('#_mongo_delete_user_modal_').modal('show');
+}
+function OpenModaluser(parent_ancestor) {
+    let uname = parent_ancestor.data('uname');
+    let dbname = parent_ancestor.data('dbname');
+    let role = parent_ancestor.data('role');
+    $('#_user_role').val(role);
+    $('#_mongo_user_modal_dbname_').val(dbname);
+    $('#_mongodb_username_wrapper_').hide();
+    $('#_mongodb_manage_username_wrapper_').show();
+    $('#_mongodb_manage_username_wrapper_ span').text(uname);
+    $('#_mongodb_modal_user_title_').text('{{langmod.LABMON39}}');
+    $('#_mongo_manage_user_modal_').modal('show');
+    $('#_mongodb_modal_user_save_btn_').unbind('click').click(function () {
+        MongoSendUserInfo('edit', parent_ancestor);
+    });
+}
+function manageUserFromList(elem) {
+    OpenModaluser($(elem).closest('.mongodb-user-list-item'));
+}
+function manageUsermodal(elem) {
+    OpenModaluser($(elem).closest('.mongo-userdb-item-wrapper'));
+}
+function renderUserDBItem(user, dbname, users_length, footprint, uindex) {
+    return '<div class="db_list_user_' + dbname + '_' + user.uname + ' mongo-userdb-item-wrapper' + (uindex > 1 ? ' mongo-userdb-item-hidden' : '') + '" id="_mongo_user_db_item_' + footprint + '_" data-role="' + user.role + '" data-dbname="' + dbname + '" data-uname="' + user.uname + '">' +
+        '<div class="mongo-userdb-item' + (users_length === 1 ? ' mongo-userdb-item-alone' : '') + '">' +
+        '<span>' + user.uname + ' (<b><span class="user_item_role_' + dbname + '_' + user.uname + ' mongodb-user-role-container">' + parseRoleDisplay(user.role) + '</span></b>)</span> ' +
+        // '<button class="btn btn-success btn-xs" title="Change password" data-toggle="tooltip" data-placement="top"><i class="fa fa-lock"></i></button>' +
+        '<div>' +
+        '<button class="btn btn-success btn-xs" title="{{langmod.LABMON35}}" data-toggle="tooltip" data-placement="top" onclick="manageUsermodal(this)"><i class="fa fa-cogs"></i></button>' +
+        '<button class="btn btn-warning btn-xs" title="{{langmod.LABMON36}}" data-toggle="tooltip" data-placement="top" onclick="ShowDeleteUserConfirm(this,\'' + footprint + '\')"><i class="fa fa-trash"></i></button>' +
+        '</div>' +
+        '</div>' +
+        '</div>';
+}
+function UpdateUserInfoInUI(user_info, anchor) {
+    if (user_info.type === 'edit') {
+        anchor.data('role', user_info.user_data.role);
+        let role_display = parseRoleDisplay(user_info.user_data.role);
+        // anchor.find('.mongodb-user-role-container').text(role_display);
+        $('.user_item_' + user_info.user_data.dbname + '_' + user_info.user_data.uname + ' .users-list-role-container').text(role_display);
+        $('.user_item_role_' + user_info.user_data.dbname + '_' + user_info.user_data.uname + '.mongodb-user-role-container').text(role_display);
+    } else {
+        let users_container = $('#_mongo_db_item_' + anchor + ' .mongo-userdb-items');
+        let dbname = $('#_mongo_db_item_' + anchor).data('name');
+        let user_items = users_container.find('.mongo-userdb-item-wrapper');
+        let uindex = user_items.length;
+        let user = {
+            uname: user_info.user_data.uname,
+            role: user_info.user_data.role,
+            dbname: user_info.user_data.dbname
+        };
+        if (users_db_list !== null) {
+            users_db_list.push({
+                name: user_info.user_data.uname,
+                database: user_info.user_data.dbname,
+                role: user_info.user_data.role
+            });
+        }
+        let html_user = renderUserDBItem(user, dbname, uindex + 1, anchor + '_' + uindex, uindex);
+        if (uindex == 0) {
+            users_container.find('.mongo-userdb-not-users').remove();
+            users_container.prepend(html_user);
+            users_container.find('.mongo-userdb-item').addClass('mongo-userdb-item-alone');
+        } else {
+            user_items.last().after(html_user);
+            users_container.find('.mongo-userdb-item-alone').removeClass('mongo-userdb-item-alone');
+            if (users_container.find('.mongo-userdb-item-hidden').is(':visible')) {
+                $('#_mongo_user_db_item_' + anchor + '_' + uindex + '_').slideDown('fast');
+            }
+            if (uindex >= 2) {
+                users_container.find('.mongodb-users-display-control').slideDown('fast');
+            }
+
+        }
+        $('[data-toggle="tooltip"]').tooltip();
+    }
+}
+function BindUserModal() {
+    let optpass1 = {
+        ui: {
+            container: "#pass_container",
+            showVerdictsInsideProgressBar: true,
+            viewports: {
+                progress: ".pwstrength_viewport_progress"
+            }
+        },
+        common: {
+            debug: false,
+        }
+    }
+    $('#_user_new_pass_field').pwstrength(optpass1);
+}
+function showMoreOrLessUsers(elem, less) {
+    let toShow = 'vless-users-btn';
+    let toHide = 'vmore-users-btn';
+    let parent_items_hidden = $(elem).closest('.mongo-userdb-items').find('.mongo-userdb-item-hidden');
+    if (less != undefined) {
+        toHide = 'vless-users-btn';
+        toShow = 'vmore-users-btn';
+        parent_items_hidden.slideUp('fast');
+    } else {
+        parent_items_hidden.slideDown('fast');
+    }
+    let control_div = $(elem).parent();
+    control_div.find('.' + toHide).hide();
+    control_div.find('.' + toShow).show();
+}
+function parseRoleDisplay(role) {
+    if (role == 'read') {
+        return '{{langmod.LABMON37}}';
+    } else {
+        return '{{langmod.LABMON38}}';
+    }
+}
+function LoadeDBUsers() {
+    if (users_db_list === null){
+        uchip.slideToggle('#_mongdb_users_loader_', '#_mongdb_users_list_wrapper_');
+        getMongoDBUsersList(function(resp_data){
+            users_db_list = resp_data.list;
+            renderUsersList();
+            uchip.slideToggle('#_mongdb_users_list_wrapper_', '#_mongdb_users_loader_');
+        }, function(){
+            $('#_mongdb_users_list_wrapper_').html('<div class="mongodb-user-list-error">' +
+                                                        '<i class="fa fa-ban text-danger"></i>' +
+                                                        '<h5>{{langmod.LABMON32}}</h5>' +
+                                                        '<button class="btn btn-success">' +
+                                                            '<i class="fa fa-refresh"></i> {{langmod.LABMON33}}'+
+                                                        '</button>' +
+                                                    '</div>');
+            uchip.slideToggle('#_mongdb_users_list_wrapper_', '#_mongdb_users_loader_');
+        });
+    }else{
+        renderUsersList();
+    }
+}
+function MongoDBUserDeletionConfirmed() {
+    let footprint = $('#_mongo_user_deleting_footprint_').val();
+    let db_user_item = /^user_/.test(footprint) ? $('.' + footprint) : $('#_mongo_user_db_item_' + footprint + '_');
+    let delete_button = db_user_item.find('.btn-warning');
+    db_user_item.addClass('deleting_tr');
+    uchip.handleButton(delete_button, 'fa-trash');
+    db_user_item.find('.btn').prop('disabled', true);
+    $('#_mongo_delete_user_modal_').modal('hide');
+    let user_data = {
+        uname: db_user_item.data('uname'),
+        dbname: db_user_item.data('dbname')
+    };
+    sendMongoDBUserDeletion(user_data, function () {
+        function cleanUserList(user_data) {
+            let user_item_list = $('.user_item_' + user_data.dbname + '_' + user_data.uname);
+            if (user_item_list.length > 0) {
+                user_item_list.slideUp('fast', function () {
+                    users_db_table.row(this).remove().draw();
+                });
+            }
+        }
+        if (/^user_/.test(footprint)) {
+            db_user_item = $('.db_list_user_' + user_data.dbname + '_' + user_data.uname);
+        }
+        db_user_item.slideUp('fast', function () {
+            let parent_ancestor = db_user_item.parent();
+            if (db_user_item.hasClass('mongo-userdb-item-hidden')) {
+                db_user_item.remove();
+                if (parent_ancestor.find('.mongo-userdb-item-hidden').length === 0) {
+                    parent_ancestor.find('.mongodb-users-display-control').fadeOut('fast');
+                }
+            } else {
+                let next_item = db_user_item.parent().find('.mongo-userdb-item-hidden').first();
+                if (next_item.length === 0) {
+                    db_user_item.remove();
+                    let item_wrappers = parent_ancestor.find('.mongo-userdb-item-wrapper');
+                    if (item_wrappers.length === 1) {
+                        item_wrappers.find(".mongo-userdb-item").animate({ height: "5rem" });
+                    }
+                } else if (next_item.is(':visible')) {
+                    next_item.removeClass('mongo-userdb-item-hidden');
+                    setUserItemVisibleEvent(next_item, db_user_item);
+                } else {
+                    next_item.slideDown('fast', function () {
+                        setUserItemVisibleEvent(next_item, db_user_item);
+                    });
+                }
+            }
+            let item_wrappers_2 = parent_ancestor.find('.mongo-userdb-item-wrapper');
+            if (item_wrappers_2.length == 0 ){
+                parent_ancestor.prepend('<div class="mongo-userdb-not-users"><h5>{{langmod.LABMON55}}</h5></div>');
+                
+            }
+            if (users_db_list !== null){
+                let user_index = users_db_list.findIndex(function(user){
+                    return user.name == user_data.uname && user.database == user_data.dbname;
+                });
+                if (user_index >= 0){
+                    users_db_list.splice(user_index, 1);
+                }
+            }
+            // parent_ancestor.find('.mongo-userdb-item-alone').removeClass('mongo-userdb-item-alone');
+            // mongo-userdb-item 
+            cleanUserList(user_data);
+        });
+        noti_bubble('{{langmod.LABMON66}}', '{{langmod.LABMON18}}', 'success', false, false, '3000', true);
+    }, function () {
+        db_user_item.removeClass('deleting_tr');
+        uchip.handleButton(delete_button, 'fa-trash', true);
+        db_user_item.find('.btn').prop('disabled', false);
+    });
+}
+function setUserItemVisibleEvent(elem, db_user_item) {
+    $(elem).removeClass('mongo-userdb-item-hidden');
+    if (db_user_item.parent().find('.mongo-userdb-item-hidden').length === 0) {
+        db_user_item.parent().find('.mongodb-users-display-control').fadeOut('fast');
+    }
+    db_user_item.remove();
+}
+function renderUsersList(){
+    let html_list = '';
+    if (users_db_list.length > 0) {
+        let html_content = '';
+        index = 0;
+        users_db_list.forEach(function (user) {
+            let footprint = 'user_item_' + user.database + '_' + user.name;
+            html_content += '<tr id="_mongo_db_user_item_' + index + '" class="mongodb-user-list-item  ' + footprint + '" data-role="' + user.role + '" data-dbname="' + user.database + '" data-uname="' + user.name + '">' +
+                                '<td>' + user.name + '</td>' +
+                                '<td>' + user.database + '</td>' +
+                                '<td><span class="users-list-role-container">' + parseRoleDisplay(user.role) + '</span></td>' +
+                                '<td width="90">' +
+                                    '<div class="mongo-db-actions">' +
+                                        '<button title="{{langmod.LABMON39}}" data-toggle="tooltip" data-placement="top" onclick="manageUserFromList(this)" class="btn btn-success btn-md"><i class="fa fa-cogs"></i></button>' +
+                                        '<button class="btn btn-warning btn-md" data-name="' + user.name + '" data-user="' + user.user + '" title="{{langmod.LABMON40}}" data-toggle="tooltip" data-placement="top" onclick="ShowDeleteUserConfirm(this,\'' + footprint + '\')"><i class="fa fa-trash"></i></button>' +
+                                    '</div>' +
+                                '</td>' +
+                            '</tr>';
+            index++;
+        });
+        html_list = '<table class="table mongodb_users_table table-striped table-bordered table-hover" style="width:100% !important;">' +
+                        '<thead>' +
+                            '<tr role="row">' +
+                                '<th>{{langmod.LABMON41}}</th>' +
+                                '<th>{{langmod.LABMON42}}</th>' +
+                                '<th>{{langmod.LABMON43}}</th>' +
+                                '<th width="90">{{langmod.LABMON44}}</th>' +
+                            '</tr>' +
+                        '</thead>' +
+                        '<tbody id="contenttr">' +
+                            html_content +
+                        '</tbody>' +
+                    '</table>';
+        $('#_mongdb_users_list_wrapper_').html(html_list);
+        users_db_table = $('.mongodb_users_table').removeAttr('width').DataTable({
+            columnDefs: [
+                { width: 50, targets: 3 }
+            ],
+            "bAutoWidth": false,
+        });
+    } else {
+        html_list = '<div class="mongodb-empty-list-database">' +
+                        '<h4>{{langmod.LABMON45}}</h4>' +
+                        // '<button class="btn btn-success" onclick="addNewNodeJSApp()">' +
+                        //     '<i class="fa fa-plus"></i> ' +
+                        //     '{{langmod.LABNODEJS115}}'
+                        // '</button>' +
+                    '</div>';
+        $('#_mongdb_users_list_wrapper_').html(html_list);
+    }
+    $('[data-toggle="tooltip"]').tooltip();
+}
+function CleanUserModal() {
+    $('#_mongodb_username_input_').val('');
+    $('#_user_role').val('');
+    $('#_user_new_pass_field').val('');
+    $('#_user_new_pass_field').pwstrength("forceUpdate");
+    $('#_user_new_pass_field_confirm').val('');
+    $('#_mongo_manage_user_modal_ .error-field').removeClass('error-field');
+}
+function LockModalUserButtons(status) {
+    $('#_mongodb_modal_user_cancel_btn_').prop('disabled', status);
+    uchip.handleButton('#_mongodb_modal_user_save_btn_', 'fa-flopp-o', status === true ? undefined : false);
+}
+function AddMongoDBUser(elem, index) {
+    let dbname = $(elem).data('dbname');
+    $('#_mongo_user_modal_dbname_').val(dbname);
+    $('#_mongodb_modal_user_title_').text('Adding user to  database: ' + dbname);
+    $('#_mongodb_manage_username_wrapper_').hide();
+    $('#_mongodb_username_wrapper_').show();
+    $('#_mongodb_user_modal_sysowner_').text('{{ users }}' + '_');
+    $('#_mongo_manage_user_modal_').modal('show');
+    $('#_mongodb_modal_user_save_btn_').unbind('click').click(function () {
+        MongoSendUserInfo('new', index);
+    });
+}
+function MongoValidateuserForm() {
+    let valid = true;
+    let uname = $('#_mongodb_username_input_').val();
+    let dbname = $('#_mongo_user_modal_dbname_').val();
+    let error_message = '{{langmod.LABMON30}}';
+    let is_new_user = $('#_mongodb_username_input_').is(':visible');
+    if (is_new_user) {
+        if (/^[A-Za-z0-9\_\-]+$/.test(uname) === false) {
+            valid = false;
+            $('#_mongodb_username_input_').addClass('error-field');
+        } else {
+            uname = $('#_mongodb_user_modal_sysowner_').text() + uname;
+            $('#_mongodb_username_input_').removeClass('error-field');
+        }
+        if ($('#_user_new_pass_field').val() == '') {
+            valid = false;
+            $('#_user_new_pass_field').addClass('error-field');
+        } else {
+            $('#_user_new_pass_field').removeClass('error-field');
+        }
+    } else {
+        uname = $('#_mongodb_manage_username_wrapper_ span').text();
+    }
+    if ($('#_user_role').val() == '') {
+        valid = false;
+        $('#_user_role').addClass('error-field');
+    } else {
+        $('#_user_role').removeClass('error-field');
+    }
+    if ($('#_user_new_pass_field').val() != $('#_user_new_pass_field_confirm').val()) {
+        $('#_user_new_pass_field').addClass('error-field');
+        $('#_user_new_pass_field_confirm').addClass('error-field');
+        error_message = valid === true ? '{{langmod.LABMON31}}' : error_message + '<br /><b>{{langmod.LABMON31}}</b>';
+        valid = false;
+    } else if (!is_new_user || (is_new_user && $('#_user_new_pass_field').val() != '')) {
+        $('#_user_new_pass_field').removeClass('error-field');
+        $('#_user_new_pass_field_confirm').removeClass('error-field');
+    }
+    if (valid === true) {
+        return {
+            dbname: dbname,
+            uname: uname,
+            role: $('#_user_role').val(),
+            pass: $('#_user_new_pass_field').val(),
+        };
+    } else {
+        noti_bubble(error_message, '{{langmod.LABMON20}}', 'error', false, false, '5000', true);
+        return false;
+    }
+}
+function MongoSendUserInfo(type, anchor) {
+    let user_data = MongoValidateuserForm();
+    if (user_data) {
+        LockModalUserButtons(true);
+        // let user_info = ;
+        sendMongoDBUserInfo(JSON.stringify(user_data), type, function () {
+            UpdateUserInfoInUI({
+                user_data: user_data,
+                type: type
+            }, anchor);
+            LockModalUserButtons(false);
+            $('#_mongo_manage_user_modal_').modal('hide');
+            // $.gritter.add({
+            //     title: '{{langmod.LABMONSUCCESS}}',
+            //     text: '{{langmod.LABMON34}}',
+            //     time: 3500,
+            //     close_icon: '',
+            //     icon: 'icomoon-icon-quill-2',
+            //     class_name: 'success-notice'
+            // });
+            noti_bubble('{{langmod.LABMON34}}', '{{langmod.LABMONSUCCESS}}', 'success', false, false, '3000', true);
+        }, function () {
+            LockModalUserButtons(false);
+        });
+    }
+}
+function sendMongoDBUserDeletion(user_data, success, cleaner) {
+    uchip.call('module=mongodb_manager&acc=delete_mongodb_user', {
+        data: 'uname=' + user_data.uname + '&dbname=' + user_data.dbname,
+        callback: function (response) {
+            
+            if (response.hasOwnProperty('result') && response.result === 'success') {
+                success(response);
+            } else {
+                let message_error = '{{langmod.LABMON23}}';
+                if (response.hasOwnProperty('code')) {
+                    if (response.code == 1) {
+                        message_error = '{{langmod.LABMON46}}';
+                    } else if (response.code == 2) {
+                        message_error = '{{langmod.LABMON47}}';
+                    } else if (response.code == 3) {
+                        message_error = '{{langmod.LABMON48}}';
+                    }
+                }
+                noti_bubble(message_error, '{{langmod.LABMON20}}', 'error', false, false, '5000', true);
+                cleaner();
+            }
+        }
+    });
+}
+function sendMongoDBUserInfo(user_data, type, success, cleaner) {
+    uchip.call('module=mongodb_manager&acc=save_user_info', {
+        data: 'user_data=' + user_data + '&type=' + type,
+        callback: function (response) {
+            
+            if (response.hasOwnProperty('result') && response.result === 'success') {
+                success(response);
+            } else {
+                // let message_error = '{{langmod.LABMON23}}';
+                let message_error = '{{langmod.LABMON23}}';
+                
+                if (response.hasOwnProperty('code')) {
+                    if (response.code == 1) {
+                        message_error = '{{langmod.LABMON48}}';
+                    } else if (response.code == 2) {
+                        message_error = '{{langmod.LABMON49}}';
+                    } else if (response.code == 3) {
+                        message_error = '{{langmod.LABMON51}}';
+                    } else if (response.code == 5) {
+                        message_error = '{{langmod.LABMON52}}';
+                    } else if (response.code == 4) {
+                        message_error = '{{langmod.LABMON53}}';
+                    } else if (response.code == 6) {
+                        message_error = '{{langmod.LABMON54}}';
+                    }
+                }
+                noti_bubble(message_error, '{{langmod.LABMON20}}', 'error', false, false, '4000', true);
+                cleaner();
+            }
+        }
+    });
+}
+function getMongoDBUsersList(success, cleaner) {
+    uchip.call('module=mongodb_manager&acc=users_list', {
+        callback: function(response){
+            
+            if (response.hasOwnProperty('result') && response.result === 'success') {
+                success(response);
+            } else {
+                let message_error = '{{langmod.LABMON23}}';
+                noti_bubble(message_error, '{{langmod.LABMON20}}', 'error', false, false, '5000', true);
+                cleaner();
+            }
+        }
+    });
+}

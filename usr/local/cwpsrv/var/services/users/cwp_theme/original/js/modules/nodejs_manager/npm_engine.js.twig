@@ -1,0 +1,131 @@
+function resetNPMInstallModal() {
+    $('#_npm_install_log_loading').show();
+    $('#_npm_install_log_loader').show();
+    $('#_npm_install_log_container').hide();
+    $('#_npm_install_log_container_log').html('');
+}
+function npmInstallNodeJSApp(elem) {
+    $('#nodejs_app_quick_actions_container .btn').prop('disabled', true);
+    uchip.handleButton(elem, 'fa-angle-right');
+    let key = $('#nodejs_app_quick_actions_container').data('key');
+    resetNPMInstallModal();
+    sendNpmInstallApp(key, function (response) {
+        // handleButtons(elem, 'fa-angle-right', true);
+        $('#nodejs_app_quick_actions_container .btn').prop('disabled', false);
+        $('#modal_npm_install_log').modal('show');
+        npmInstallLogger(key);
+    }, function () {
+        uchip.handleButton(elem, 'fa-angle-right', true);
+        $('#nodejs_app_quick_actions_container .btn').prop('disabled', false);
+    });
+}
+function renderNpmInstallLog(lines, running) {
+    index = 0;
+    function updateLogNpmInstall() {
+        if (lines.length > index) {
+            let log_line = '<p>' + (lines[index] === '' ? '>' : lines[index]) + '</p>';
+            $('#_npm_install_log_container_log').append(log_line);
+            index++;
+            $("#_npm_install_log_container_log p").last().attr("tabindex", -1).focus();
+            setTimeout(function () {
+                updateLogNpmInstall();
+            }, 100);
+        } else if (running !== true) {
+            $.gritter.add({
+                title: '{{lang.LABNODEJS83}}',
+                text: '{{lang.LABNODEJS96}}',
+                time: 5500,
+                close_icon: '',
+                icon: 'icomoon-icon-power',
+                class_name: 'success-notice'
+            });
+            $('#_npm_install_log_container_log').append('<h5>{{lang.LABNODEJS97}}</h5>');
+            $("#_npm_install_log_container_log h5").last().attr("tabindex", -1).focus();
+            $('#_npm_install_log_loading').slideUp('fast');
+            handleButtons('#_npm_install_btn_form', 'fa-angle-right', true)
+        }
+    }
+    if (!$('#_npm_install_log_container').is(':visible')) {
+        $('#_npm_install_log_loader').fadeOut('fast', function () {
+            $('#_npm_install_log_container').fadeIn('fast');
+        });
+    }
+    updateLogNpmInstall();
+}
+function npmInstallLogger(key) {
+    requestNPMInstallLog(key, function (resp_data) {
+        if (resp_data.pid_running === true) {
+            setTimeout(function () {
+                npmInstallLogger(key);
+            }, 1000);
+        }
+        renderNpmInstallLog(resp_data.lines, resp_data.pid_running);
+    });
+}
+function requestNPMInstallLog(key, success, cleaner) {
+    uchip.call('module=nodejs_manager&acc=app_npm_logger', {
+        data: 'key=' + key,
+        callback: function (response) {
+            if (response.hasOwnProperty('result') && response.result === 'success') {
+                success(response);
+            }
+        }
+    });
+}
+function sendNpmInstallApp(key, success, cleaner) {
+    uchip.call('module=nodejs_manager&acc=app_npminstall', {
+        data: 'key=' + key,
+        callback: function (response) {
+            if (response.result == 'success') {
+                success(response);
+            } else {
+                let message_error = '{{langmod.LABNODEJS81}}';
+                noti_bubble('{{langmod.LABNODEJS82}}', message_error, 'error', true, false, '3000', true);
+                cleaner();
+            }
+        }
+    });
+    // $.ajax({
+    //     type: "POST",
+    //     url: "./loader_ajax.php?ajax=nodejs&acc=app_npminstall",
+    //     data: 'key=' + key,
+    //     complete: function (response) {
+    //         let resp_data = {}
+    //         try {
+    //             resp_data = response.hasOwnProperty('responseJson') ? response.responseJson : JSON.parse(response.responseText);
+    //         } catch (error) {
+    //             $.gritter.add({
+    //                 title: '{{lang.LABNODEJS82}}',
+    //                 text: '{{lang.LABNODEJS81}}',
+    //                 time: 3500,
+    //                 close_icon: '',
+    //                 icon: 'icomoon-icon-power',
+    //                 class_name: 'error-notice'
+    //             });
+    //             cleaner();
+    //             return;
+    //         }
+    //         if (resp_data.hasOwnProperty('result') && resp_data.result === 'success') {
+    //             success(resp_data);
+    //         } else {
+    //             let message_error = '{{lang.LABNODEJS81}}';
+    //             if (resp_data.hasOwnProperty('code')) {
+    //                 if (resp_data.code == 2) {
+    //                     message_error = '';
+    //                 } else if (resp_data.code == 1) {
+    //                     message_error = '';
+    //                 }
+    //             }
+    //             $.gritter.add({
+    //                 title: '{{lang.LABNODEJS82}}',
+    //                 text: message_error,
+    //                 time: 3500,
+    //                 close_icon: '',
+    //                 icon: 'icomoon-icon-power',
+    //                 class_name: 'error-notice'
+    //             });
+    //             cleaner();
+    //         }
+    //     }
+    // });
+}

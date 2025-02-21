@@ -1,0 +1,90 @@
+<div class="modal fade" id="_modal_tomcat_sessions_" tabindex="-1" role="dialog" aria-labelledby="videoModal"
+    aria-hidden="true">
+    <div class="vertical-alignment-helper">
+        <div class="modal-dialog vertical-align-center" style="width:400px">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="tomcat-modal-title modal-title text-center">
+                        {{langmod.LABTOMCAT162}}
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <h5>{{langmod.LABTOMCAT163}}:</h5>
+                    <div id="_modal_tomcat_sessions_appname_"></div>
+                    <div class="idle-sessions-container-modal">
+                        <span>{{langmod.LABTOMCAT164}} ≥</span>
+                        <input class="form-control" maxlength="4" id="_modal_tomcat_sessions_time_" value="30"
+                            type="text">
+                        <span> {{langmod.LABTOMCAT165}}</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal" id="">
+                        <i class="fa fa-ban" aria-hidden="true"></i>
+                        {{langmod.LABTOMCAT166}}
+                    </button>
+                    <button id="_btn_kill_sessions_modal_" class="btn btn-success">
+                        <i class="fa fa-check" aria-hidden="true"></i> {{langmod.LABTOMCAT167}}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal_file_explorer" tabindex="-1" role="dialog" aria-labelledby="videoModal"
+    aria-hidden="true">
+    <div class="modal-dialog" style="width: 500px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="tomcat-modal-title modal-title text-center">
+                    {{langmod.LABTOMCAT26}}
+                </h5>
+            </div>
+            <div class="modal-body">
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" disabled class="btn btn-primary disabled" id="sel_file_explorer_btn"
+                    onclick="selFileToExplorer(this)">
+                    <i class="fa fa-check" aria-hidden="true"></i> {{langmod.LABTOMCAT168}}
+                </button>
+                <button type="button" disabled class="btn btn-success disabled" id="sel_path_btn"
+                    onclick="selCurrentPath()">
+                    <i class="fa fa-thumb-tack" aria-hidden="true"></i> {{langmod.LABTOMCAT27}}
+                </button>
+                <button type="button" class="btn btn-warning" data-dismiss="modal" id="">
+                    <i class="fa fa-ban" aria-hidden="true"></i>
+                    {{langmod.LABTOMCAT166}}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modal_app_delete_confirm" tabindex="-1" role="dialog" aria-labelledby="videoModal"
+    aria-hidden="true">
+    <div class="modal-dialog" style="width: 500px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="nodejs-modal-title modal-title text-center">
+                    {{langmod.LABTOMCAT28}}
+                </h5>
+            </div>
+            <div class="modal-body">
+                <h5>{{langmod.LABTOMCAT29}}</h5>
+                <p id="confirm_app_delete_name"></p>
+                <h5>{{langmod.LABTOMCAT24}}</h5>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" data-dismiss="modal" id="">
+                    <i class="fa fa-ban" aria-hidden="true"></i>
+                    {{langmod.LABTOMCAT17}}
+                </button>
+                <button id="_tomcat_app_confirm_del_btn" class="btn btn-success">
+                    <i class="fa fa-check-circle" aria-hidden="true"></i>
+                    {{langmod.LABTOMCAT25}}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

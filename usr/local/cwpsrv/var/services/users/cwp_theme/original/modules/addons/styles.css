@@ -1,0 +1,154 @@
+
+.script-container{
+     padding: 2rem 0px 0px;
+ }
+.script-container-title{
+    display: flex;
+    justify-content: space-between;
+}
+#jl_form, #dp_form, #wp_form, #ps_form,#lv_form,#sf_form,#whc_form{
+    display:none;
+}
+.panel-body .form-group{
+    display: flex;
+    align-items: center;
+    padding: 1rem 0px;
+    margin-bottom:0px;
+}
+.panel-heading{
+    border: 1px solid #ccc
+}
+.panel-body .form-group:nth-child(odd){
+    background-color: #f5f5f5;
+}
+#conf_installation .modal-header{
+    padding:5px;
+}
+#conf_installation .modal-header h4{
+    margin:10px;
+    font-size:2rem;
+}
+#scrpt_install{
+    font-weight:bold;
+}
+.error-field{
+    color: #ff0000;
+    margin-top: 5px;
+    font-size: 12px;
+    display: block;
+    margin-bottom: -10px;
+}
+.more-less {
+    float: right;
+    font-size: 20px;
+    font-weight: bold;
+
+    color:#f48513;
+}
+.conf-detail-title{
+    font-weight:bold;
+}
+#addons_tab_wrapper{
+
+}
+#installing_screen{
+    height: 500px;
+    display:none
+}
+.liAddon{ display:none}
+.installing-loader{
+    display: flex;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    height:100%;
+    flex-flow: column;
+}
+.installing-loader .fa-spin{
+    color: #1c84c6;
+    font-size: 10rem;
+}
+.installing-loader .icon-script{
+    position: absolute;
+    margin-top: 0.5rem;
+    font-size: 4rem;
+    color: #0f1429;
+}
+.installing-loader h1{
+    font-size: 4rem !important;
+}
+.installing-loader p{
+    font-size: 2.5rem;
+}
+#installing_screen:focus{
+    outline:none !important;
+}
+.database-info-td{
+    display:flex;
+    align-items: center;
+}
+.database-info-td .fa-stack{
+    font-size: 1.2rem;
+    color: #f8ac59;
+    margin-left:5px;
+}
+.addon-td-item{
+    line-height: 3.6rem;
+}
+#table_jl_container .table{
+    border-bottom: 1px solid #eee;
+    margin-bottom: 0px;
+}
+.pass_form_div{
+    display:flex;
+    flex-wrap:wrap;
+}
+.pass_container{
+    width: 65%;
+    margin-right: 5px;
+}
+.pwstrength_viewport_progress .progress{
+    margin-bottom: 0px;
+    margin-top: 5px;
+    border: 1px solid #e7eaec;
+}
+.pwstrength_viewport_progress .password-verdict{
+    color: #333333;
+}
+.copy-pass-btn{
+    position: absolute;
+    left: 57%;
+    top: 4px;
+    color: #999;
+}
+.copy-pass-btn:hover{
+    color:#676a6c;
+}
+.general-password-generator-options{
+    right:0px !important;
+}
+.rem-addons-options{
+    padding-left: 0px;
+    list-style: none;
+}
+.rem-addons-options .radio label{
+    font-size:1.4rem;
+}
+#desaddon ul{
+    font-size: 1.4rem;
+    list-style: circle;
+    padding-left: 2rem;
+}
+.deleting_tr{
+    background-color: #f5f5f566;
+    color: #e7eaec;
+}
+.deleting_tr a{
+    color:#1c84c669;
+}
+.dataTables_wrapper{
+    padding-bottom:0px;
+}
+.margin-bottom-none {margin-bottom: 0 !important;}
+.margin-top-none {margin-top: 0 !important;}
+.tabs-container .panel-body {padding: 15px !important;}

@@ -1,0 +1,242 @@
+<style media="screen">
+  .fa-phpver{
+    font-size: 10px;
+    color: #103d67;
+    margin-right: -2rem;
+    cursor:pointer;
+  }
+  .tooltip.top .tooltip-inner {
+    max-width:200px;
+    min-width:190px;
+  }
+  #phpversions_modal .modal-dialog{
+    width:350px;
+  }
+  #phpversions_modal .modal-body{
+    padding:10px 0px  ;
+    overflow: hidden;
+  }
+  #phpversions_modal .row{
+    line-height: 3.5rem;
+    align-items: center;
+    display: flex;
+    border-bottom: 1px solid #f3f3f4;
+  }
+  .copy-row{
+    display:flex;
+    align-items:center;
+  }
+  .copy-php-input{
+    position: absolute;
+    margin-top: 5rem;
+  }
+</style>
+<div id="phpversions_modal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">{{langmod.CRPHPAVAIL}}</h4>
+      </div>
+      <div class="modal-body">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-md-7"><h5>{{langmod.CRPHPPATH}}</h5></div>
+            <div class="col-md-3 text-center"><h5>{{langmod.CRPHPVER}}</h5></div>
+          </div>
+          {% for version in mod.php_versions %}
+            <div class="row">
+              <div class="col-md-7">{{version.path}}</div>
+              <div class="col-md-3 text-center">{{version.version}}</div>
+              <div class="col-md-2 copy-row"><span title="{{langmod.CRPHPCOPY}}" class="btn btn-primary btn-xs" onclick="copyPHPVersion('{{version.path}}')"><i class="fa fa-copy"></i></span></div>
+            </div>
+          {% endfor %}
+        </div>
+        <div class="copy-php-input">
+          <input type="text" id="php_ver_copy_path" value="">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row  border-bottom white-bg dashboard-header">
+    {% if mod.fsl == 1 %}
+    {% set stflalert ='block' %}
+    {% else %}
+    {% set stflalert ='none' %}
+    {% endif %}
+    <div class="row  alert alert-warning col-lg-12" style="margin-left: 5px; padding-right: 5px;display:{{stflalert}}" id="alertfl">
+        <strong>{{langene.GALARTFILEBLOCK}}</strong>
+    </div>
+    <div class="col-lg-10">
+        <h2>{{langmod.cronuser}}  ({{users}})</h2>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="?">Home</a>
+            </li>
+            <li class="breadcrumb-item active">
+                <strong>{{langmod.cronuser}}</strong>
+            </li>
+        </ol>
+    </div>
+</div>
+<div class="row" style="margin:15px 0 15px 0">
+    <div class="col-lg-9">
+
+        <div class="alert alert-danger" id="alerterrorcron" style="display: none">
+            {{langmod.CRLABEL9}}
+        </div>
+        <div class="row" id="row_list_cron">
+          <div class="col-lg-12">
+            <div id="ibox1" class="ibox">
+                <div class="ibox-title" style="padding-right: 15px;">
+                  <div class="crontab_title">
+                    <h4 style="margin:0px">{{langmod.CRHEADTITLE}}</h4><span class="btn btn-sm btn-w-m btn-success" onclick="changeView('row_list_cron')"><i class="fa fa-plus"></i>&nbsp;{{langmod.CRADDBTN}}</span>
+                  </div>
+                </div>
+                <div class="ibox-content" id="cron_list_container">
+                  <div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+
+                </div>
+            </div>
+          </div>
+        </div>
+        <div class="row" id="row_panel_cron" style="display:none">
+        <!-- <div class="row" id="row_panel_cron"> -->
+            <div class="col-lg-12">
+              <div class="ibox">
+                  <div class="ibox-title">
+                      <h5 id="form_title">{{langmod.CRCREATE}}</h5>
+                      <input type="hidden" id="line_editing" name="line_editing" value="">
+                      <input type="hidden" id="status_editing" name="status_editing" value="">
+                  </div>
+                  <div class="ibox-content">
+                    <div class="row">
+                      <div class="col-md-12">
+                        <div class="ibox" style="margin-bottom:0px">
+                            <div class="ibox-title">
+                                <h5>{{langmod.CRGENSETTINGS}}</h5>
+                            </div>
+                            <div class="ibox-content" style="padding-bottom:0px">
+                              <div class="form-group  row" style="display: flex;align-items: center;">
+                                <div class="col-sm-2">
+                                  <label class="col-form-label">{{langmod.command}}:</label>
+                                  <span class="fa-stack fa-lg pull-right fa-phpver" onclick="phpVersionsModal()" data-toggle="tooltip" data-placement="top" title="{{langmod.CRPHPINFO}}">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-info fa-stack-1x fa-inverse"></i>
+                                  </span>
+                                </div>
+                                <div class="col-sm-10"><input type="text" id="crontab_command" class="form-control"></div>
+                              </div>
+                              <div class="form-group  row">
+                                <label class="col-sm-2 col-form-label">{{langmod.CRDESCRIPTION}}:</label>
+                                <div class="col-sm-10"><input type="text" id="cron_description" class="form-control"></div>
+                              </div>
+                            </div>
+                        </div>
+                      </div>
+                      <div class="col-md-12">
+                        <div class="ibox">
+                          <div class="ibox-title">
+                              <h5>{{langmod.CRWHENRUN}}?</h5>
+                          </div>
+                          <div class="ibox-content" style="padding-bottom:0px;">
+                            <div class="" id="simple_scheduled">
+                              <div class="form-group">
+                                <label>{{langmod.CRSIMPLESC}}</label>
+                                <select class="form-control" id="simple_selected" name="special">
+                                  {% for simple in mod.simple_settings %}
+                                    <option value="{{simple.value}}">{{simple.label}} [{{simple.pattern}}]</option>
+                                  {% endfor %}
+                                </select>
+                              </div>
+                              <div class="form-group">
+                                <label onclick="showAdvanceOptions()" style="cursor:pointer"><i class="fa fa-wrench"></i> {{langmod.CRSHOWADVOPT}}</label>
+                              </div>
+                            </div>
+                            <!-- <div class="" id="advance_options"> -->
+                            <div class="" id="advance_options" style="display:none">
+                              <div class="row">
+                                <div class="col-md-4">
+                                  <div class="form-group">
+                                    <label>{{langmod.CRTIMEUNIT1}} <span id="advance_slider_min" onclick="showTimeMenu('#sel_min', '{{langmod.CRTIMEUNIT1}}', '#advance_slider_min')"><i class="fa fa-sliders"></i></span></label>
+                                    <div class="row">
+                                      <div class="col-md-12" style="cursor:pointer" id="advance_sel_min" onclick="showTimeMenu('#sel_min', '{{langmod.CRTIMEUNIT1}}', '#advance_sel_min')">
+                                        <span class="cron_opt_selection">{{mod.minutes_list.options[0].label}}</span>
+                                      </div>
+                                    </div>
+                                    <button type="button" class="btn btn-block btn-outline btn-primary advance_options_item" id="sel_min" onclick="showTimeMenu(this, '{{langmod.CRTIMEUNIT1}}')" data-list='{{mod.minutes_list|json_encode()}}' data-items_selecteds="{{mod.minutes_list.options[0]|json_encode()}}">{{langmod.CRCHANGESEL}}</button>
+                                  </div>
+                                </div>
+                                <div class="col-md-4">
+                                  <div class="form-group">
+                                    <label>{{langmod.CRTIMEUNIT2}} <span id="advance_slider_hour" onclick="showTimeMenu('#sel_hour', '{{langmod.CRTIMEUNIT2}}', '#advance_slider_hour')"><i class="fa fa-sliders"></i></span></label>
+                                    <div class="row">
+                                      <div class="col-md-12" style="cursor:pointer" id="advance_sel_hour" onclick="showTimeMenu('#sel_hour', '{{langmod.CRTIMEUNIT2}}', '#advance_sel_hour')">
+                                        <span class="cron_opt_selection">{{mod.hours_list.options[0].label}}</span>
+                                      </div>
+                                    </div>
+                                    <button type="button" class="btn btn-block btn-outline btn-primary advance_options_item" id="sel_hour" onclick="showTimeMenu(this, '{{langmod.CRTIMEUNIT2}}')" data-list='{{mod.hours_list|json_encode()}}' data-items_selecteds="{{mod.hours_list.options[0]|json_encode()}}">{{langmod.CRCHANGESEL}}</button>
+                                  </div>
+                                </div>
+                                <div class="col-md-4">
+                                  <div class="form-group">
+                                    <label>{{langmod.CRTIMEUNIT3}} <span id="advance_slider_days" onclick="showTimeMenu('#sel_day', '{{langmod.CRTIMEUNIT3}}', '#advance_slider_days')"><i class="fa fa-sliders"></i></span></label>
+                                    <div class="row">
+                                      <div class="col-md-12" style="cursor:pointer" id="advance_sel_day" onclick="showTimeMenu('#sel_day', '{{langmod.CRTIMEUNIT3}}', '#advance_sel_day')">
+                                        <span class="cron_opt_selection">{{mod.days_list.options[0].label}}</span>
+                                      </div>
+                                    </div>
+                                    <button type="button" class="btn btn-block btn-outline btn-primary advance_options_item" id="sel_day" onclick="showTimeMenu(this, '{{langmod.CRTIMEUNIT3}}')" data-list='{{mod.days_list|json_encode()}}' data-items_selecteds="{{mod.days_list.options[0]|json_encode()}}">{{langmod.CRCHANGESEL}}</button>
+                                  </div>
+                                </div>
+                                <div class="clearfix"></div>
+                                <div class="col-md-4">
+                                  <div class="form-group">
+                                    <label>{{langmod.CRTIMEUNIT4}} <span id="advance_slider_months" onclick="showTimeMenu('#sel_month', '{{langmod.CRTIMEUNIT4}}', '#advance_slider_months')"><i class="fa fa-sliders"></i></span></label>
+                                    <div class="row">
+                                      <div class="col-md-12" style="cursor:pointer" id="advance_sel_month" onclick="showTimeMenu('#sel_month', '{{langmod.CRTIMEUNIT4}}', '#advance_sel_month')">
+                                        <span class="cron_opt_selection">{{mod.months_list.options[0].label}}</span>
+                                      </div>
+                                    </div>
+                                    <button type="button" class="btn btn-block btn-outline btn-primary advance_options_item" id="sel_month" onclick="showTimeMenu(this, '{{langmod.CRTIMEUNIT4}}')" data-list='{{mod.months_list|json_encode()}}' data-items_selecteds="{{mod.months_list.options[0]|json_encode()}}">{{langmod.CRCHANGESEL}}</button>
+                                  </div>
+                                </div>
+                                <div class="col-md-4">
+                                  <div class="form-group">
+                                    <label>{{langmod.CRTIMEUNIT5}} <span id="advance_slider_weedays" onclick="showTimeMenu('#sel_weekdays', '{{langmod.CRTIMEUNIT5}}', '#advance_slider_weedays')"><i class="fa fa-sliders"></i></span></label>
+                                    <div class="row">
+                                      <div class="col-md-12" style="cursor:pointer" id="advance_sel_weedays" onclick="showTimeMenu('#sel_weekdays', '{{langmod.CRTIMEUNIT5}}', '#advance_sel_weedays')">
+                                        <span class="cron_opt_selection">{{mod.days_week.options[0].label}}</span>
+                                      </div>
+                                    </div>
+                                    <button type="button" class="btn btn-block btn-outline btn-primary advance_options_item" id="sel_weekdays" onclick="showTimeMenu(this, '{{langmod.CRTIMEUNIT5}}')" data-list='{{mod.days_week|json_encode()}}' data-items_selecteds="{{mod.days_week.options[0]|json_encode()}}">{{langmod.CRCHANGESEL}}</button>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="form-group">
+                                <label onclick="showAdvanceOptions()" style="cursor:pointer"><i class="fa fa-calendar"></i> {{langmod.CRSHOWSIMPLE}}</label>
+                              </div>
+                            </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="ibox-footer">
+                    <div class="">
+                      <button type="button" class="btn btn-w-m btn-success" onclick="createCron(this)"><i class="fa fa-floppy-o" aria-hidden="true"></i> {{langmod.CRSAVEBTN}}</button>
+                      <button type="button" class="btn btn-w-m btn-warning" id="cron_cancel_button" onclick="changeView('row_panel_cron')"><i class="fa fa-ban" aria-hidden="true"></i> {{langmod.CRCANCELBTN}}</button>
+                    </div>
+                  </div>
+              </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+{% include 'sidebar.html' %}
+</div>
+
+{% include 'footer.html' %}
+
+  

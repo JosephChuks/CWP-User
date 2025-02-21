@@ -1,0 +1,119 @@
+const LOADER_EXPLORER = '<div class="action-loader" id="">' +
+    '<span><i class="fa fa-circle-o-notch fa-spin"></i></span>' +
+    '<h5 id="">{{langmod.LABTOMCAT89}}...</h5>' +
+    '</div>';
+let allowed_file = null;
+let file_explorer_elem = null;
+function showExplorer(elem) {
+    let directory = $(elem).data('pathdir') === undefined ? '/' : $(elem).data('pathdir');
+    allowed_file = $(elem).data('afile') === undefined ? '' : $(elem).data('afile');
+    let dir_selectable = $(elem).data('sdirectory') === undefined ? true : $(elem).data('sdirectory');
+    if (dir_selectable) {
+        $('#sel_path_btn').show();
+    } else {
+        $('#sel_path_btn').hide();
+    }
+    file_explorer_elem = $(elem);
+    $('#modal_file_explorer .modal-header .tomcat-modal-title').text('Select ' + $(elem).data('modal'));
+    $('#modal_file_explorer .modal-body').html(LOADER_EXPLORER);
+    $('#modal_file_explorer').modal('show');
+    callDirList(directory);
+}
+function selCurrentPath() {
+    file_explorer_elem.data('pathfile', '');
+    file_explorer_elem.data('pathdir', $('#current_path_dirsel').val());
+    file_explorer_elem.find('.path-selected').text($('#current_path_dirsel').val());
+    $('#modal_file_explorer').modal('hide');
+}
+function callDirList(directory) {
+    uchip.handleButton('#sel_path_btn', 'fa-thumb-tack');
+    $('#modal_file_explorer .modal-body').html(LOADER_EXPLORER);
+    $('#sel_file_explorer_btn').addClass('disabled');
+    $('#sel_file_explorer_btn').prop('disabled', true);
+    //loadFileExplorer('user=' + $("#nodejs_user_selector_").val() + '&basedir=' + directory, function(response){
+    loadFileExplorer('basedir=' + directory + '&allowed_file=' + (allowed_file !== null ? allowed_file : ''), function (response) {
+        directory = directory.charAt(directory.length - 1) == '/' ? directory : directory + '/';
+        renderDirSelector(directory, response.directories, response.files);
+        uchip.handleButton('#sel_path_btn', 'fa-thumb-tack', true);
+    });
+}
+function renderDirSelector(base, dirs, files) {
+    let dirs_html = '';
+    dirs.forEach((dir) => {
+        dirs_html += '<div class="dir-item directory-opener" data-dir="' + dir + '">' +
+            '<div class="row">' +
+            '<div class="col-md-12">' +
+            '<i class="fa fa-folder-o" aria-hidden="true"></i>' +
+            dir +
+            '</div>' +
+            '</div>' +
+            '</div>';
+    });
+    let files_html = '';
+    files.forEach((file) => {
+        files_html += '<div class="dir-item file-selector" data-file="' + file + '">' +
+            '<div class="row">' +
+            '<div class="col-md-12">' +
+            '<i class="fa fa-file-archive-o" aria-hidden="true"></i>' +
+            file +
+            '</div>' +
+            '</div>' +
+            '</div>';
+    });
+    let html = '<div id="dir_list" class="container-fluid" style="display:none">' +
+        '<div class="row">' +
+        '<div class="col-md-12 current-path-div">' +
+        '<label class="form-label">{{langmod.LABTOMCAT90}}</label>' +
+        '<input type="text" id="current_path_dirsel" class="form-control" value="' + base + '" readonly>' +
+        '</div>' +
+        '</div>' +
+        dirs_html +
+        files_html +
+        '</div>';
+    $('#modal_file_explorer .modal-body').html(html);
+    $('.directory-opener').mouseover(function () {
+        $(this).find('.fa').removeClass('fa-folder-o').addClass('fa-folder-open-o');
+    }).mouseout(function () {
+        $(this).find('.fa').removeClass('fa-folder-open-o').addClass('fa-folder-o');
+    }).click(function () {
+        let curpath = $('#current_path_dirsel').val();
+        let dir = $(this).data('dir');
+        if (dir == '..') {
+            let pieces = curpath.split('/');
+            pieces.pop();
+            pieces.pop();
+            dir = pieces.join('/')
+        } else {
+            dir = curpath + dir;
+        }
+        callDirList(dir);
+    });
+    $('.file-selector').click(function () {
+        $('.file-selector').removeClass('active-file');
+        $(this).addClass('active-file');
+        $('#sel_file_explorer_btn').data('file', $(this).data('file'));
+        uchip.handleButton('#sel_file_explorer_btn', 'fa-check', true);
+    });
+    $('#dir_list').slideDown('fast');
+}
+function selFileToExplorer(elem) {
+    file_explorer_elem.data('pathfile', $(elem).data('file'));
+    file_explorer_elem.data('pathdir', $('#current_path_dirsel').val());
+    file_explorer_elem.find('.path-selected').text($('#current_path_dirsel').val() + $(elem).data('file'));
+    $('#modal_file_explorer').modal('hide');
+}
+function loadFileExplorer(data, success) {
+    uchip.call('module=tomcat_manager&acc=file_explorer', {
+        data: data,
+        callback: function (response) {
+            if (response.result == 'success') {
+                success(response);
+            } else {
+                let message_error = '{{langmod.LABNODEJS81}}';
+                
+                noti_bubble('{{langmod.LABNODEJS82}}', message_error, 'error', true, false, '3000', true);
+                cleaner();
+            }
+        }
+    });
+}   

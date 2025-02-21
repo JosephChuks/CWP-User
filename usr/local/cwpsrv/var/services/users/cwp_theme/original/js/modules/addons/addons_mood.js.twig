@@ -1,0 +1,175 @@
+let mood_table = null;
+let mood_list = null;
+function moodTable(list){
+    mood_list = list;
+    if(mood_list.length > 0){
+        let html_content = '';
+        let index = 0;
+        mood_list.forEach(function(installation){
+            let insturl = installation.hasOwnProperty('url') ? installation.url : 'http://' + installation.domain;
+            let dbinf = '';
+            if(installation.hasOwnProperty('db_result') && installation.db_result.result != 'success'){
+                let dbtitle = '{{langmod.ADDDBNOT}}: ' + handleDBError(installation.db_result.code);
+
+                dbinf = '<span class="fa-stack fa-xs" title="' + dbtitle + '" data-toggle="tooltip" data-placement="top" aria-hidden="true">' +
+                    '<i class="fa fa-circle fa-stack-2x"></i>' +
+                    '<i class="fa fa-info fa-stack-1x fa-inverse"></i>' +
+                    '</span>';
+            }
+            html_content += '<tr id="tdmood_' + index + '">' +
+                '<td>' + installation.domain + '<br>' +
+                '<a href="' + insturl + '" target="_blank">' + insturl + '</a></td>' +
+                '<td><div class="addon-td-item">' + installation.path + '</div></td>' +
+                '<td><div class="addon-td-item">' + installation.version + '</div></td>' +
+                '<td>' +
+                '<div class="database-info-td">' +
+                '<div><b>{{langmod.ADDSHORTDB}}: </b> ' + installation.moodbd + '<br><b>{{langmod.ADDSHORTUDB}}: </b>' + installation.mooduserdb + '</div>' +
+                dbinf +
+                '</div>' +
+                '</td>' +
+                '<td>' +
+                '<div class="addon-td-item text-center"><button title="{{langmod.ADDDWP3}}" data-traddon="#tdmood_' + index + '" data-type="moodicket" data-installation=\'' + JSON.stringify(installation) + '\' data-toggle="tooltip" data-placement="top" aria-hidden="true" class="btn btn-danger btn-xs btn-delete" onclick="return deleteAddon(this, 0)">' +
+                '<i aria-hidden="true" class="fa fa-trash"></i>' +
+                '</button></div>' +
+                '</td>' +
+                '</tr>';
+            index++;
+        });
+        let table_html = '<table class="table table-striped mood-table">' +
+            '<thead>' +
+            '<tr>' +
+            '<th>{{langmod.ADDDOMLAB}}</th>' +
+            '<th>{{langmod.ADDPATHLAB}}</th>' +
+            '<th>{{langmod.ADDVERLAB}}</th>' +
+            '<th>{{langmod.ADDBDUDB}}</th>' +
+            '<th class="text-center"></th>' +
+            '</tr>' +
+            '</thead>' +
+            '<tbody id="trpaneljl">' +
+            html_content +
+            '</tbody>' +
+            '</table>';
+        $('#table_mood_container').html(table_html);
+        $('.mood-table').DataTable().destroy();
+        mood_table = $('.mood-table').DataTable();
+    }else{
+        $('#table_mood_container').html('<div class="empty_list"><h4 class="text-success">Thre\'s not Moodle installations</h4></div>');
+    }
+    $('[data-toggle="tooltip"]').tooltip();
+}
+function moodInit(){
+    if(mood_list == null){
+        moodReList();
+    }
+}
+function moodReList(){
+    $('#table_mood_container').html(loader);
+    getList('moodle', function(response){
+        moodTable(response);
+    });
+}
+function cancelmood(idCollapse){
+    uchip.slideToggle('#mood_list','#mood_form', function(){
+
+    });
+    $('#mooddomain').val('');
+    $('#moodpach').val('mood');
+    $('#moodadminemail').val('');
+    $('#moodadminpass').val('');
+    $('#moodadminpass').pwstrength('forceUpdate');
+    $('#moodpassbd').val('');
+    $('#moodpassbd').pwstrength('forceUpdate');
+    $('#moodbd').val('mood{{mod.extra_data.randbd}}');
+    $('#mooduserdb').val('mood{{mod.extra_data.randbd}}');
+    uchip.validator('.reqmood', true);
+    cancelGeneral(idCollapse);
+}
+function addmood(){
+    if(uchip.validator('.reqmood')){
+        let moodurl = $("#moodurl").val();
+        let mooddomain = $("#mooddomain").val();
+        let moodbd = $("#moodbd").val();
+        let mooduserdb = $("#mooduserdb").val();
+        let moodpassbd = $("#moodpassbd").val();
+        let moodpach = $("#moodpach").val();
+        let moodadminemail = $("#moodadminemail").val();
+        let mooddescription = $("#mooddescription").val();
+        let moodfirstname = $("#moodfirstname").val();
+        let moodlastname = $("#moodlastname").val();
+        let moodcompanyname = $("#moodcompname").val();
+        let moodadminpass = $("#moodadminpass").val();
+        let moodfolderadmin= $("#moodfolderadmin").val();
+        let moodadminuser= $("#moodadminuser").val();
+        let dompath =  $('#mooddomain option:selected').data('path');
+        let domssl =  $('#mooddomain option:selected').data('ssl');
+        let data = 'moodcompanyname='+moodcompanyname+'&moodlastname='+moodlastname+'&moodfirstname='+moodfirstname+'&mooddescription='+mooddescription+'&moodadminuser='+moodadminuser+'&moodfolderadmin='+moodfolderadmin+'&moodurl=' + moodurl + '&mooddomain=' + mooddomain + '&moodbd=' + moodbd + '&mooduserdb=' + mooduserdb + '&moodpassbd=' + Base64.encode(moodpassbd) +
+            '&moodpach=' + moodpach + '&moodadminemail=' + moodadminemail + '&moodadminpass=' + Base64.encode(moodadminpass) + '&dompath=' + dompath + '&domssl=' + domssl;
+        let details = [
+            {
+                title : '{{langmod.ADDDOMLAB}}',
+                value : mooddomain
+            },
+            {
+                title : '{{langmod.ADDURLLAB}}',
+                value : (domssl == 1 ? 'http' : 'http') + '://' + mooddomain + '/' + moodpach
+            },
+            {
+                title : '{{langmod.ADDPATHLAB}}',
+                value : dompath + '/' + moodpach
+            },
+            {
+                title : '{{langmod.ADDPS03}}',
+                value : moodadminemail
+            },
+            {
+                title : '{{langmod.ADDDWP20}}',
+                value : moodbd
+            },
+            {
+                title : '{{langmod.ADDDBUSERLAB}}',
+                value : mooduserdb
+            }
+        ];
+        confirmInstallation({
+            type: 'moodle',
+            script: 'Moodle',
+            data : data,
+            wholepath: dompath + '/' + moodpach,
+            callback: function(response){
+                if(response.hasOwnProperty('result') && response.result == 'success'){
+                    if(response.db_result.result != 'success'){
+                        noti_bubble('{{langmod.ADDINSTALLDET}} ' + handleDBError(response.db_result.code),'{{langmod.ADDATENTION}}!','warning',false,false,'6500',true);
+                    }else{
+                        noti_bubble('{{langmod.ADDINSTALLSUCC}}','{{langmod.SUCCESS}}','success',false,false,'3000',true);
+                    }
+                }else{
+                    noti_bubble('{{langmod.ADDERRORGEN}}','{{langmod.FERROR}}','error',false,false,'3000',true);
+                }
+                var variableHTML='';
+                var modulin='mood';
+                if($("#instaled_"+modulin).html()==undefined){
+                    variableHTML+='<div class="panel panel-default" id="instaled_'+modulin+'">'+
+                        ' <div class="panel-heading white-bg script-container-title">'+
+                        '<a class="accordion-toggle" style="width: 100%" data-toggle="collapse"  ' +
+                        'aria-expanded="true" aria-controls="panel_'+modulin+'_container" ' +
+                        'data-parent="#accordion1" data-target="#panel_'+modulin+'_container">'+
+                        '<h4 class="panel-title"><i class="more-less glyphicon-plus font-weight-bolder"></i></h4>' +
+                        '<h4 class="panel-title">Moodle Installations</h4></a></div>' +
+                        '<div id="panel_'+modulin+'_container"  class="panel-collapse collapse">' +
+                        '<div class="panel-body" id="table_'+modulin+'_container"><div class="table_cron_loader"><span>' +
+                        '<i class="fa fa-circle-o-notch fa-spin"></i></span></div></div></div></div>'
+                    $( "#accordion1" ).append( variableHTML );
+                    $(".accordion-toggle").click(function(){
+                        $("#"+$(this).prop('data-target')).slideToggle('slow');
+                    });
+                }
+                $("#instaledEmpty").hide();
+                moodTable(response.list);
+                cancelmood();
+            },
+            details: details
+        });
+    }else{
+        noti_bubble('{{langmod.ADDREQFIELDS}}','{{langmod.FERROR}}','error',false,false,'3000',true);
+    }
+}

@@ -1,0 +1,103 @@
+<style>
+    {% include 'modules/tomcat_manager/styles.css' %}
+</style>
+<div class="row  border-bottom white-bg dashboard-header">
+    {% if mod.fsl == 1 %}
+    <div class="row  alert alert-warning col-lg-12" style="margin-left: 5px; padding-right: 5px;display:{{stflalert}}"
+        id="alertfl">
+        <strong>{{langene.GALARTFILEBLOCK}}</strong>
+    </div>
+    {% endif %}
+    <div class="col-lg-10">
+        <h2>{{langmod.DTITLE}} ({{users}})</h2>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="?">Home</a></li>
+            <li class="breadcrumb-item active"><strong>Tomcat Manager</strong></li>
+        </ol>
+    </div>
+</div>
+<div class="row tomcat-main-wrapper" style="margin-top:2rem;">
+    <div class="col-lg-12">
+        <div class="row">
+            {% if mod.mod_installed == 1 and mod.user_enabled == 1 and mod.tomcat_running == 1%}
+            <div class="col-md-12">
+                {% if mod.apps_quota > -1 %}
+                {% set appsbar=100/mod.apps_quota*mod.apps_qty %}
+                {% if appsbar >=26 and appsbar <=50 %} {% set classbar='progress-bar progress-bar-success' %} {% elseif
+                    appsbar>=51 and appsbar <=75 %} {% set classbar='progress-bar progress-bar-warning' %} {% elseif
+                        appsbar>75 %}
+                        {% set classbar = 'progress-bar progress-bar-danger' %}
+                        {% else %}
+                        {% set classbar = 'progress-bar' %}
+                        {% endif %}
+                        {% set label_dom = mod.apps_quota %}
+                        {% else %}
+                        {% set appsbar = 0 %}
+                        {% set classbar = 'progress-bar' %}
+                        {% set label_dom = '&infin;' %}
+                        {% endif %}
+                        <div class="mail-contracted">
+                            <div class="ibox-content">
+                                <ul class="stat-list">
+                                    <li id="inddom">
+                                        <h2 class="no-margins" id="tldomind">TomcatManager apps <span
+                                                id="apps_used">{{mod.apps_qty}}</span> / {{label_dom|raw}}</h2>
+                                        <small>{{langmod.LABTOMCAT154}}</small>
+                                        <div class="stat-percent">{{appsbar|round}}%</div>
+                                        <div id="bardomind" class="progress progress-mini">
+                                            <div style="width: {{appsbar|round}}%;" class="{{classbar}}" id="barappspor">
+                                            </div>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="ibox tomcat-manager-apps-list" id="tomcat_app_list">
+                            <div class="ibox-title">
+                                <h4>{{langmod.LABTOMCAT134}}</h4>
+                                {% if (mod.apps_qty < mod.apps_quota) or (mod.apps_quota==-1) %} {% set swver='' %} {% else
+                                    %} {% set swver='disabled' %} {% endif %} <button onclick="showTomcatManagerForm()"
+                                    id="_btn_add_app_" {{swver}} style="font-size:90%" class="btn btn-success">
+                                    <i class="fa fa-plus"></i>
+                                    {{langmod.LABTOMCAT133}}
+                                    </button>
+                            </div>
+                            <div class="ibox-content" id="table_tomcat_apps_container">
+                                <div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span>
+                                </div>
+                            </div>
+                        </div>
+                        {% include 'modules/tomcat_manager/app_deployment_form.html' %}
+                        <div id="tomcat_loader_window">
+                            <div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span>
+                                <h4>{{langmod.LABTOMCAT153}}</h4>
+                            </div>
+                        </div>
+            </div>
+            {% else %}
+            <div class="col-md-12">
+                <div class="ibox tomcat-manager-apps-list" id="">
+                    <!-- <div class="ibox-title">
+                                <h4>Node JS application list</h4>
+                                <button onclick="showTomcatManagerForm()" style="font-size:90%" class="btn btn-success">
+                                    <i class="fa fa-plus"></i>
+                                    Add new applicatiom
+                                </button>
+                            </div> -->
+                    <div class="ibox-content">
+                        <div class="tomcat-not-available">
+                            <i class="fa fa-ban text-danger"></i>
+                            {% if mod.user_enabled != 1 or mod.mod_installed != 1%}
+                                <h4>{{langmod.LABTOMCAT145}}</h4>
+                            {% else %}
+                                <h4>{{langmod.LABTOMCAT146}}</h4>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% include 'modules/tomcat_manager/modals.html' %}

@@ -1,0 +1,162 @@
+function saveNewNodeJSApp() {
+    let valid = uchip.validator('.nodejs-req');
+    if (valid) {
+        let data_app = getAppDataFromForm();
+        let type_val = $('#_nodejs_app_form_type').val();
+        let data_request = 'type=' + (type_val !== 'new' ? 'editing&key_id=' + type_val : 'new') + '&app=' + JSON.stringify(data_app);
+        uchip.handleButton('.btn-save-app', 'fa-floppy-o');
+        uchip.handleButton('.btn-cancel-app', 'fa-ban');
+        sendRequestSaveApp(data_request, function (resp_data) {
+            app_list = resp_data.list;
+            calculateQuota();
+            renderNodeJSAppList();
+            cancelNodeJSForm();
+            uchip.handleButton('.btn-save-app', 'fa-floppy-o', true);
+            uchip.handleButton('.btn-cancel-app', 'fa-ban', true);
+        }, function () {
+            uchip.handleButton('.btn-save-app', 'fa-floppy-o', true);
+            uchip.handleButton('.btn-cancel-app', 'fa-ban', true);
+        });
+        // $('#_nodejs_apps_loader_title').text('{{lang.LABNODEJS94}}...');
+        // uchip.slideToggle('#_nodejs_apps_loader', '#_nodejs_apps_newform_window', function () {
+        //     sendRequestSaveApp(data_request, function (resp_data) {
+        //         app_list = resp_data.list;
+        //         renderNodeJSAppList();
+        //         cancelFormNodeJSApp();
+        //     }, function () {
+        //         uchip.slideToggle('#_nodejs_apps_newform_window', '#_nodejs_apps_loader');
+        //     });
+        // });
+
+    }
+    console.log('valid', valid);
+}
+function calculateQuota(){
+    let apps_quota = {{mod.apps_quota}};
+    $('#apps_used').text(app_list.length);
+    if(apps_quota >= 0){
+        if(app_list.length == apps_quota){
+            $('#_btn_add_app_').addClass('disabled');
+            $('#_btn_add_app_').prop('disabled', true)
+        }else{
+            $('#_btn_add_app_').removeClass('disabled');
+            $('#_btn_add_app_').prop('disabled', false)
+        }
+        let percent = ((app_list.length * 100) / apps_quota).toFixed(0);
+        $('.stat-percent').text(percent + '%');
+        let barcolor = uchip.getBarColor(percent);
+        $('#barappspor').removeClass();
+        $('#barappspor').addClass(barcolor);
+        $('#barappspor').width(percent + '%');
+    }
+}
+function getAppDataFromForm() {
+    let env_variables = [];
+    $('#_nodejs_envars_list_container .app-env-var-item').each(function () {
+        let key = $(this).find('.env-var-key').val();
+        if (key !== '') {
+            env_variables.push({
+                key: key,
+                value: $(this).find('.env-var-value').val(),
+            });
+        }
+    });
+    return {
+        type: 'node',
+        version: $('#_nodejs_app_form_node_select').val(),
+        name: $('#_nodejs_app_desc_name').val(),
+        mode: $('#_nodejs_app_mode').val(),
+        path: $('#dirsel').text(),
+        user: $("#nodejs_user_selector_").val(),
+        url: $('#nodejs_url_selector_domain').val(),
+        extra_info: {
+            startup_file: $('#_nodejs_app_start_file').val(),
+            uri: '',
+            env_vars: env_variables
+        }
+    }
+}
+function sendRequestSaveApp(data, success, cleaner) {
+    uchip.call('module=nodejs_manager&acc=nodejs_app_save', {
+        data: data,
+        callback: function (response) {
+            if (response.result == 'success') {
+                success(response);
+            } else {
+                let message_error = '{{langmod.LABNODEJS81}}';
+                if (response.hasOwnProperty('code')) {
+                    if (response.code == 1) {
+                        message_error = 'Invalid appication path';
+                    } else if (response.code == 2) {
+                        message_error = 'Invalid NodeJS Version';
+                    } else if (response.code == 3) {
+                        message_error = 'Invalid domain';
+                    } else if (response.code == 4) {
+                        message_error = 'Invalid APP';
+                    } else if (response.code == 6) {
+                        message_error = 'NodeJs Apps quota exceeded';
+                    } else if (response.code == 5) {
+                        message_error = 'Invalid config, contact admin!';
+                    }
+                }
+                noti_bubble('{{langmod.LABNODEJS82}}', message_error, 'error', true, false, '3000', true);
+                cleaner();
+            }
+        }
+    });
+    // $.ajax({
+    //     type: "POST",
+    //     url: "./loader_ajax.php?ajax=nodejs&acc=nodejs_app_save",
+    //     data: data,
+    //     complete: function (response) {
+    //         let response = {}
+    //         try {
+    //             resp_data = response.hasOwnProperty('responseJson') ? response.responseJson : JSON.parse(response.responseText);
+    //         } catch (error) {
+    //             $.gritter.add({
+    //                 title: '{{lang.LABNODEJS82}}',
+    //                 text: '{{lang.LABNODEJS81}}',
+    //                 time: 3500,
+    //                 close_icon: '',
+    //                 icon: 'icomoon-icon-power',
+    //                 class_name: 'error-notice'
+    //             });
+    //             cleaner();
+    //             return;
+    //         }
+    //         if (resp_data.hasOwnProperty('result') && resp_data.result === 'success') {
+    //             $.gritter.add({
+    //                 title: '{{lang.LABNODEJS83}}',
+    //                 text: '{{lang.LABNODEJS118}}',
+    //                 time: 5500,
+    //                 close_icon: '',
+    //                 icon: 'icomoon-icon-power',
+    //                 class_name: 'success-notice'
+    //             });
+    //             success(resp_data);
+    //         } else {
+    //             let message_error = '{{lang.LABNODEJS81}}';
+    //             if (resp_data.hasOwnProperty('code')) {
+    //                 if (resp_data.code == 1) {
+    //                     message_error = 'Invalid appication path';
+    //                 } else if (resp_data.code == 2) {
+    //                     message_error = 'Invalid NodeJS Version';
+    //                 } else if (resp_data.code == 3) {
+    //                     message_error = 'Invalid domain';
+    //                 } else if (resp_data.code == 4) {
+    //                     message_error = 'Invalid APP';
+    //                 }
+    //             }
+    //             $.gritter.add({
+    //                 title: '{{lang.LABNODEJS82}}',
+    //                 text: message_error,
+    //                 time: 3500,
+    //                 close_icon: '',
+    //                 icon: 'icomoon-icon-power',
+    //                 class_name: 'error-notice'
+    //             });
+    //             cleaner();
+    //         }
+    //     }
+    // });
+}

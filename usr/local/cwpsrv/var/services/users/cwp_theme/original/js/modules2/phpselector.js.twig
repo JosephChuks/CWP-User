@@ -1,0 +1,252 @@
+function deleteversionphpgci(path,namedir,st){
+    if(st==0){
+        $("#btndeldir"+namedir).hide();
+        $("#btnconfirm"+namedir).show();
+        return false;
+    }
+    if(st==1){
+        $("#btnyes"+namedir).attr('disabled',true);
+        $("#btnyes"+namedir).addClass('disabled');
+        $("#btncancel"+namedir).attr('disabled',true);
+        $("#btncancel"+namedir).addClass('disabled');
+        $("#folder"+namedir).removeClass('fa-folder');
+        $("#folder"+namedir).addClass('fa-spinner fa-spin');
+        $("#btnyes"+namedir).html('<i class="fa fa-spinner fa-spin"></i> {{ langmod.SPHPLABEL33 }}');
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=phpselector&acc=deleteversionphpgci",
+            data:"domain="+$("#domainphp").val()+"&path="+path+"&namedir="+namedir,
+            complete: function(datos){
+                if(datos.responseText==1){
+                    $("#folder"+namedir).css("color", "#F8C54D");
+                    $("#btnconfirm"+namedir).hide('blind');
+                    noti_bubble('{{langmod.SPHPLABEL4}}','{{langmod.SPHPLABEL3}}','success',false,false,'3000',true);
+                }else{
+                    noti_bubble('{{langmod.SPHPLABEL20}}','{{langmod.SPHPLABEL17}}','error',false,false,'3000',true);
+                }
+                $("#folder"+namedir).removeClass('fa-spinner fa-spin');
+                $("#folder"+namedir).addClass('fa-folder');
+                $("#btnyes"+namedir).attr('disabled',false);
+                $("#btnyes"+namedir).removeClass('disabled');
+                $("#btncancel"+namedir).attr('disabled',false);
+                $("#btncancel"+namedir).removeClass('disabled');
+                $("#btnyes"+namedir).html('{{ langmod.SPHPLABEL33 }}');
+                return false;
+            }
+        });
+    }
+    if(st==2){
+        $("#btnconfirm"+namedir).hide();
+        $("#btndeldir"+namedir).show('blind');
+        return false;
+    }
+
+}
+function changephp(){
+    $("#transp").show();
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=phpselector&acc=changephp",
+        data:"domain="+$("#domainphp").val()+"&typephp="+$("#phptypehidden").val()+"&path="+$("#pathselect").val(),
+        complete: function(datos){
+            var obj = jQuery.parseJSON( datos.responseText );
+            $("#contverphp").html(obj.contverphp);
+            //$("#divcontenedor").html(obj.html);
+
+            $("#domainphp").attr('disabled',false);
+            $("#domainphp").removeClass('disabled');
+            $("#verphp").attr('disabled',false);
+            $("#verphp").removeClass('disabled');
+
+            $("#updateversionfpm").attr('disabled',false);
+            $("#updateversionfpm").removeClass('disabled');
+
+            $("#exploret").html('<p><strong>{{ langmod.SPHPLABEL11 }}</strong></p><div class="row"><div class="col-lg-10"><input type="text" class="form-control" style="padding-bottom: 15px" id="pathselect" value="'+obj.path+'"></div><div class="col-lg-2"><button class="btn btn-success btn-xs" id="btnapplycgi" onclick="return btnapplycgi()">{{ langmod.SPHPLABEL12 }}</button></div></div></div><div class="ex1" style="overflow: auto; height: 200px; padding-left: 20px;margin-top: 20px">'+obj.exploret+'</div><hr><div style="padding-left: 20px;margin-top: 40px"><p ><i class="fa fa-folder" style="color:#F8C54D"></i> {{ langmod.SPHPLABEL13 }}</p><p><i class="fa fa-folder" style="color:#189FF8"></i>  {{ langmod.SPHPLABEL14 }}</p><p><i class="fa fa-info"></i> {{ langmod.SPHPLABEL15 }}</p><p><i class="fa  fa-info-circle"></i> {{ langmod.SPHPLABEL16 }}</p></div>');
+            if($("#phptypehidden").val()=='php-fpm'){  $("#exploret").hide(); }else{ $("#exploret").show(); }
+            $("#transp").hide();
+        }
+    });
+}
+{#function changephp2(){
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=phpselector&acc=changedomainphp",
+        data:"domain="+$("#domainphp").val(),
+        complete: function(datos){
+            console.log(datos.responseText);
+            var obj = jQuery.parseJSON( datos.responseText );
+            $("#phptypehidden").val(obj.php);
+            $("#labeltypephp").html(obj.php);
+            $("#verphpdiv").html(obj.ver);
+            $("#idapacdiv").html('');
+
+            if(obj.apache==true){ $("#idapacdiv").html('{{langmod.SPHPLABEL1}}'); }else{ $("#idapacdiv").html('{{langmod.SPHPLABEL35}}'); }
+            if(obj.apache==true){ $("#idapacdiver").html('2.4'); }else{ $("#idapacdiver").html('s/n'); }
+            if(obj.nginx==true){ $("#idnixdiv").html('{{langmod.SPHPLABEL1}}'); }else{ $("#idnixdiv").html('{{langmod.SPHPLABEL35}}'); }
+            if(obj.nginx==true){ $("#idnixdiver").html('1.6'); }else{ $("#idnixdiver").html('s/n'); }
+
+            return false;
+        }
+    });
+    //return false;
+}#}
+function opendirdiv(div,path){
+    $("#folder"+div).removeClass('fa-folder fa-spin');
+    $("#folder"+div).addClass(' fa-spinner  fa-spin');
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=phpselector&acc=opendirdiv",
+        data:"path="+path+"&domain="+$("#domainphp").val(),
+        complete: function(datos){
+            //console.log(datos.responseText);
+            if(datos.responseText!='none'){ $("#"+div).html(datos.responseText); }else{ $("#"+div).html('{{ langmod.SPHPLABEL10 }}'); }
+            $("#"+div).toggle('blind');
+            $("#folder"+div).removeClass(' fa-spinner  fa-spin');
+            $("#folder"+div).addClass('fa-folder');
+        }
+    });
+}
+function btnapplycgi(){
+    $("#btnapplycgi").addClass('disabled');
+    $("#btnapplycgi").attr('disabled',true);
+    $("#btnapplycgi").html('<i class="fa fa-spinner fa-spin"></i> {{ langmod.SPHPLABEL12 }}');
+    //var verphp =$('input:radio[name=php-cgi]:checked').val();
+    var verphp =$("#verphp").val();
+
+    if(verphp == undefined){
+        noti_bubble('{{langmod.SPHPLABEL19}}','{{langmod.SPHPLABEL17}}','error',false,false,'3000',true);
+        $("#btnapplycgi").removeClass('disabled');
+        $("#btnapplycgi").attr('disabled',false);
+        $("#btnapplycgi").html('{{ langmod.SPHPLABEL12 }}');
+        return false;
+    }
+    if($("#pathselect").val()==''){
+        noti_bubble('{{langmod.SPHPLABEL18}}','{{langmod.SPHPLABEL17}}','error',false,false,'3000',true);
+        $("#btnapplycgi").removeClass('disabled');
+        $("#btnapplycgi").attr('disabled',false);
+        $("#btnapplycgi").html('{{ langmod.SPHPLABEL12 }}');
+        return false;
+    }
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=phpselector&acc=btnapplycgi",
+        data:"domain="+$("#domainphp").val()+"&ver="+verphp+"&path="+$("#pathselect").val(),
+        complete: function(datos){
+            $("#btnapplycgi").removeClass('disabled');
+            $("#btnapplycgi").attr('disabled',false);
+            $("#btnapplycgi").html('{{ langmod.SPHPLABEL12 }}');
+            if(datos.responseText==1){
+                noti_bubble('{{langmod.SPHPLABEL4}}','{{langmod.SPHPLABEL3}}','success',false,false,'3000',true);
+            }else{
+                noti_bubble('{{langmod.SPHPLABEL20}}','{{langmod.SPHPLABEL17}}','error',false,false,'6000',true);
+            }
+            return false;
+        }
+    });
+}
+
+$("#domainphp").change(function(){
+    $("#contverphp").html('<i class="fa fa-spinner fa-spin fa-2x"></i>');
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+
+    $("#labeltypephp").html('<i class="fa fa-spinner fa-spin"></i>');
+    $("#verphpdiv").html('<i class="fa fa-spinner fa-spin"></i>');
+    $("#idnixdiv").html('<i class="fa fa-spinner fa-spin"></i>');
+    $("#idnixdiver").html('<i class="fa fa-spinner fa-spin"></i>');
+    $("#idapacdiver").html('<i class="fa fa-spinner fa-spin"></i>');
+    $("#idapacdiv").html('<i class="fa fa-spinner fa-spin"></i>');
+    $("#domainphp").attr('disabled',true);
+    $("#domainphp").addClass('disabled');
+    $("#verphp").attr('disabled',true);
+    $("#verphp").addClass('disabled');
+
+    $("#updateversionfpm").attr('disabled',true);
+    $("#updateversionfpm").addClass('disabled');
+
+    $("#transp").show();
+
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=phpselector&acc=changedomainphp",
+        data:"domain="+$("#domainphp").val(),
+        complete: function(datos){
+            var obj = jQuery.parseJSON( datos.responseText );
+            $("#phptypehidden").val(obj.php);
+            $("#labeltypephp").html(obj.php);
+            $("#verphpdiv").html(obj.ver);
+            $("#idapacdiv").html('');
+            if(obj.php=='php'){ var pref='php';}
+            if(obj.php=='php-cgi'){ var pref='php';}
+            if(obj.php=='php-fpm'){ var pref='php-fpm';}
+            var selvalue=pref+obj.ver;
+            //alert(selvalue);
+            $("#verphp option[value='"+selvalue+"']").attr("selected",true);
+
+            if(obj.apache==true){ $("#idapacdiv").html('{{langmod.SPHPLABEL1}}'); }else{ $("#idapacdiv").html('{{langmod.SPHPLABEL35}}'); }
+            if(obj.apache==true){ $("#idapacdiver").html('2.4'); }else{ $("#idapacdiver").html('s/n'); }
+            if(obj.nginx==true){ $("#idnixdiv").html('{{langmod.SPHPLABEL1}}'); }else{ $("#idnixdiv").html('{{langmod.SPHPLABEL35}}'); }
+            if(obj.nginx==true){ $("#idnixdiver").html('1.6'); }else{ $("#idnixdiver").html('s/n'); }
+             {#$("#domainphp").attr('disabled',false);
+             $("#domainphp").removeClass('disabled');
+             $("#verphp").attr('disabled',false);
+             $("#verphp").removeClass('disabled');#}
+            changephp();
+            return false;
+        }
+    });
+    return false;
+});
+$("#updateversionfpm").click(function(){
+    $("#updateversionfpm").html('<i class="fa fa-spinner fa-spin"></i>  {{langmod.SPHPLABEL2}}');
+    $("#updateversionfpm").attr('disabled',true);
+    $("#updateversionfpm").addClass('disabled');
+    //var verphp= $('input:radio[name=php-fpm]:checked').val();
+    var verphp= $("#verphp").val();
+    var domain= $("#domainphp").val();
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=phpselector&acc=updatephpfpm",
+        data:"domain="+domain+"&ver="+verphp,
+        complete: function(datos){
+            console.log(datos.responseText);
+            $("#updateversionfpm").html('{{langmod.SPHPLABEL2}}');
+            $("#updateversionfpm").attr('disabled',false);
+            $("#updateversionfpm").removeClass('disabled');
+            var obj = jQuery.parseJSON( datos.responseText );
+            $("#verphpdiv").html(obj.verphp);
+            $("#labeltypephp").html(obj.php);
+            $("#verphpdiv").html(obj.verphpcwp);
+
+
+            noti_bubble('{{langmod.SPHPLABEL4}}','{{langmod.SPHPLABEL3}}','success',false,false,'3000',true);
+            return false;
+        }
+    });
+});
+$("#btn-changephp").click(function(){
+    //$("#modalselectorphp").modal('toggle');
+    if($("#phptypehidden").val()=='php-fpm'){
+        $("#labeltypephp").html('php-cgi');
+        $("#phptypehidden").val('php-cgi');
+        $("#updateversionfpm").hide();
+    }else{
+        $("#labeltypephp").html('php-fpm');
+        $("#phptypehidden").val('php-fpm');
+        $("#updateversionfpm").show();
+    } //php-cgi  //labeltypephp
+    $("#contverphp").html('<i class="fa fa-spinner fa-spin fa-2x"></i>');
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=phpselector&acc=changephp",
+        data:"domain="+$("#domainphp").val()+"&typephp="+$("#phptypehidden").val(),
+        complete: function(datos){
+            var obj = jQuery.parseJSON( datos.responseText );
+            $("#contverphp").html(obj.contverphp);
+            $("#exploret").html('<p><strong>{{ langmod.SPHPLABEL11 }}</strong></p><div class="row"><div class="col-lg-10"><input type="text" class="form-control" style="padding-bottom: 15px" id="pathselect" value="'+obj.path+'"></div><div class="col-lg-2"><button class="btn btn-success btn-xs" id="btnapplycgi" onclick="return btnapplycgi()">{{ langmod.SPHPLABEL12 }}</button></div></div></div><div class="ex1" style="overflow: auto; height: 200px; padding-left: 20px;margin-top: 20px">'+obj.exploret+'</div><hr><div style="padding-left: 20px;margin-top: 40px"><p ><i class="fa fa-folder" style="color:#F8C54D"></i> {{ langmod.SPHPLABEL13 }}</p><p><i class="fa fa-folder" style="color:#189FF8"></i>  {{ langmod.SPHPLABEL14 }}</p><p><i class="fa fa-info"></i> {{ langmod.SPHPLABEL15 }}</p><p><i class="fa  fa-info-circle"></i> {{ langmod.SPHPLABEL16 }}</p></div>');
+            if($("#phptypehidden").val()=='php-fpm'){ $("#typephp").attr('checked',true); $("#exploret").hide(); }else{ $("#typephp").attr('checked',false); $("#exploret").show();}
+        }
+    });
+    return false;
+});
+

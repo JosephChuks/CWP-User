@@ -1,0 +1,25 @@
+<div class="row">
+    <div class="col-lg-12">
+        <h2 id="titleServer" class="titleServer" style="font-weight: bold"><h1>
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-12">
+        <ul class="nav nav-tabs" id="menuTable" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link" id="myServices-tab" data-toggle="tab" href="#myServices" role="tab" aria-controls="myServices" aria-selected="false" onclick="return MyServices()"><i class="fa fa-server"></i> {{langmod.SERVERCAST73}}</a>
+            </li>
+            <li class="nav-item" id="li_Overvier">
+                <a class="nav-link" id="Overvier-tab" data-toggle="tab" href="#Overvier" role="tab" aria-controls="profile" aria-selected="false" onclick="return Overvier()"><i class="fa fa-server"></i> {{langmod.SERVERCAST74}}</a>
+            </li>
+            <li class="nav-item" id="li-config">
+                <a class="nav-link" id="Config-tab" data-toggle="tab" href="#Config" role="tab" aria-controls="contact" aria-selected="false" onclick="return Config()"><i class="fa fa-cog"></i> {{langmod.SERVERCAST75}}</a>
+            </li>
+            {% if mod.serverAD == 1%}
+            <li class="nav-item" id="li_listRepDJ">
+                <a class="nav-link" id="listRepDJ" data-toggle="tab" href="#listrepdj" role="tab" aria-controls="listrepdj" aria-selected="false" onclick="return autodjList()"><i class="fa fa-list"></i> {{langmod.SERVERCAST76}}</a>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+</div>

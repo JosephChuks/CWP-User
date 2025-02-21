@@ -1,0 +1,95 @@
+
+console.log();
+function updateOption(option){
+
+}
+function openConfig(elem){
+  let config_window = $(elem).parent().find('.notifer-configurator');
+  config_window.fadeIn('fast');
+  hideOnClickOutside('#' + config_window.attr('id'), elem);
+}
+function setBWPercent(elem){
+  uchip.call('module=notification_center&acc=changestnot', {
+    data: 'type=bandwidth_percent&state=' + $(elem).val()
+  });
+}
+function activateNotifications(elem){
+  if($(elem).is(':checked')){
+    $('.noti-items').addClass('noti-active');
+  }else{
+    $('.noti-items').removeClass('noti-active');
+  }
+  changestnot(elem, 'actnoti');
+}
+let uchip = null;
+$(document).ready(function() {
+  {% if mod.isie == 1 %}
+    uchip = new $.Uchip();
+  {% else %}
+    uchip = new Uchip();
+  {% endif %}
+  $('#bandwidth_percent').val('{{mod.ncmod.bandwidth_percent}}');
+  $('[data-toggle="tooltip"]').tooltip();
+});
+function saveEmailAlert(elem){
+  if(uchip.validator('.emailconfalert')){
+    $('#configure_email_alerts').fadeOut();
+    uchip.call('module=notification_center&acc=confemail', {
+      data: 'sendto=' + $('#sendto').val() + '&sendfrom=' + $('#sendfrom').val() + '&sendname=' + $('#sendname').val()
+    });
+  }else{
+    noti_bubble('{{langmod.NCLABELREQF}}','{{langmod.NCLABELERROR}}','error',false,false,'3000',true);
+  }
+}
+function hideOnClickOutside(selector, second){
+  let forhide = false;
+  if(second === undefined){
+    second = '#show_options_button';
+    forhide = true;
+  }
+  function outsideClickListener(event){
+    $target = $(event.target);
+    if (!$target.closest(selector).length && !$target.closest(second).length  && $(selector).is(':visible')) {
+      // $(selector).parent().find('.fa-sliders.selected').removeClass('selected');
+      // if(forhide){
+      //   $(selector).hide();
+      // }else{
+      //   $(selector).remove();
+      // }
+      $(selector).fadeOut('fast');
+      removeClickListener();
+    }
+  }
+
+  function removeClickListener(){
+    document.removeEventListener('click', outsideClickListener)
+  }
+  document.addEventListener('click', outsideClickListener)
+}
+function changestnot(elem, type){
+    // $.ajax({
+    //     type: "POST",
+    //     url: "./{{ users }}/index.php?module=notification_center&acc=changestnot",
+    //     data: "elem="+elem,
+    //     complete: function (datos) {
+    //
+    //     }
+    // });
+    let state = $(elem).is(':checked') ? 1 : 0;
+    uchip.call('module=notification_center&acc=changestnot', {
+      data: 'type=' + type + '&state=' + state
+    });
+}
+// CECILIO MORALES JS
+
+$("#btnsavenoti").click(function (){
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=notification_center&acc=save",
+        data:"emailaccount="+$("#emailaccount").val(),
+        complete: function(datos){
+            noti_bubble('{{langmod.NSEXITALLCHENGE}}','{{langmod.NSACCSUCCESS}}','success',false,false,'3000',false);
+            return false;
+        }
+    });
+});

@@ -1,0 +1,37 @@
+console.log();
+
+
+$("#btngeneratelog").click(function (){
+     $(".form-control").css( 'border-color','#e5e6e7');
+    if(($("#domainini").val()=='')||($("#tipe").val()=='')||($("#numline").val()=='')){
+        if($("#domainini").val()==''){ $("#btngeneratelog").css( 'border-color','#FF0000'); }
+        if($("#tipe").val()==''){ $("#tipe").css( 'border-color','#FF0000'); }
+        if($("#numline").val()==''){ $("#numline").css( 'border-color','#FF0000'); }
+        noti_bubble('{{langmod.ERRLOG008}}','{{langmod.ERRLOG007}}','error',false,false,'3000',true);
+        return false;
+    }else{
+        var msj= $("#btngeneratelog").text();
+        $("#btngeneratelog").addClass('disabled');
+        $("#btngeneratelog").attr('disabled',true);
+        $("#btngeneratelog").html(' <i class="fa fa-spinner fa-spin"></i>  '+msj);
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=error_log&acc=select",
+            data:"domain="+$("#domainini").val()+"&tipe="+$("#tipe").val()+"&numline="+$("#numline").val()+"&op=select&textsearch="+$("#textsearch").val(),
+            complete: function(datos){
+                //console.log(datos.responseText);
+                var rest = datos.responseText;
+                if(rest !=''){
+                    $("#result").html(Base64.decode(rest));
+                    $("#result").show('blind');
+                }
+                $("#btngeneratelog").removeClass('disabled');
+                $("#btngeneratelog").attr('disabled',false);
+                $("#btngeneratelog").html(msj);
+                return false;
+            }
+        });
+    }
+    return false;
+});

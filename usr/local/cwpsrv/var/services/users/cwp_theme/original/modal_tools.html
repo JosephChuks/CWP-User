@@ -1,0 +1,2685 @@
+{% if mod.name =='crontab' %}
+    <div class="modal inmodal" id="cron_confirm_window" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content animated">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{langmod.CRLABEL3}}</span></button>
+                    <h4 class="modal-title">{{langmod.CRLABEL2}}</h4>
+                </div>
+                <div class="modal-body">
+                  <div class="alert alert-warning" id="cron_confirm_message">
+
+                  </div>
+                </div>
+                <input type="hidden" id="idhidencron">
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-white" id="btn-delete-cancel-button" data-dismiss="modal"><i class="fa fa-ban"></i>&nbsp;{{langmod.CRNOT}}</button>
+                    <button type="button" class="btn btn-primary" id="btn-delete-cron"><i class="fa fa-trash"></i>&nbsp;{{langmod.CRYES}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+{% if mod.name =='email_accounts' or mod.name =='forwarders_email' %}
+  <div class="modal" id="deletemodalmail" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-sm">
+          <div class="modal-content animated fadeIn">
+              <div class="modal-header">
+
+              </div>
+              <div class="modal-body small-pad-modal">
+
+              </div>
+              <div class="modal-footer">
+
+              </div>
+          </div>
+      </div>
+  </div>
+  <div class="modal" id="addmailmodal" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog">
+          <div class="modal-content animated fadeIn">
+              <div class="modal-header">
+
+              </div>
+              <div class="modal-body" style="padding-bottom: 5px;">
+
+              </div>
+              <div class="modal-footer">
+
+              </div>
+          </div>
+      </div>
+  </div>
+  <div class="modal" id="modal-changepassemail" tabindex="-1" role="dialog" aria-labelledby="modal-changepassemail" aria-hidden="true">
+      <div class="modal-dialog modal-sm">
+          <div class="modal-content  animated fadeIn">
+              <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal">
+                      <span aria-hidden="true">&times;</span><span class="sr-only">{{langene.MDCLOSE}}</span>
+                  </button>
+                  <h4 class="modal-title" id="mySmallModalLabelemail3">{{langene.MDCHANPASS}}
+                    <p id="labelemail"></p></h4>
+              </div>
+              <div class="modal-body">
+                <div class="alert alert-info mail-password-generator-copied second" style="display:none">
+                    Password copied to clipboard.
+                </div>
+                <div class="form-group">
+                  <label>{{langmod.EPASSW}} generator</label>
+                  <div class="mail-password-generator-container">
+                    <a href="#" onclick="return changerrandom('pass1email', this,'change')" id="generator_button" data-toggle="tooltip" data-placement="top" title="" data-original-title="Change suggested password">
+                      <i class="fa fa-cog" style="font-size: 1.8rem;"></i>
+                    </a>
+                    <i class="fa fa-spinner fa-spin generator_loader" id="generator_loader" style="display:none;font-size: 1.8rem;"></i>
+                    <div class="btn-group dropdown" id="show_options_button">
+                      <button type="button" class="btn btn-default btn-xs" onclick="openPGOPT()">
+                        Encrypted<span class="caret"></span>
+                      </button>
+                      <div class="mail-password-generator-options pgopt_container" id="pgopt_container">
+                        <span class="mail-password-generator-options-title"><b>Options</b></span>
+                        <span class="mail-password-generator-options-close" onclick="closePGOPT()"><i class="fa fa-window-close"></i></span>
+                        <ul class="right animated fadeIn">
+                          <li>
+                            <select class="form-control" id="lengthpass" title="Length" style="margin-bottom: 5px;">
+                              <option value="7"> Length  7</option>
+                              <option value="8"> Length  8</option>
+                              <option value="9"> Length  9</option>
+                              <option value="10"> Length 10</option>
+                              <option value="11"> Length 11</option>
+                              <option value="12" selected=""> Length 12</option>
+                              <option value="13"> Length 13</option>
+                              <option value="14"> Length 14</option>
+                              <option value="15"> Length 15</option>
+                            </select>
+                          </li>
+                          <li>
+                            <select class="form-control" id="typepass" title="Type">
+                              <option value="1">Type Alphabetical</option>
+                              <option value="2" selected="">Type Alphanumeric</option>
+                              <option value="3">Type Alphanumerics + Symbols</option>
+                            </select>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group" id="changepass_container">
+                  <input type="hidden" name="emailpass" id="emailpass" value="">
+                  <label class="control-label" for="">{{langene.MDNEWPASS}}:</label>
+                  <input type="text" style="margin-bottom: 5px;" class="form-control" id="pass1email" placeholder="{{langene.MDYOURPASS}}">
+                  <div class="pwstrength_viewport_progress"></div>
+                </div>
+                <div class="form-group">
+
+                </div>
+                <div class="form-group">
+                  <label class="control-label" for="">{{langene.MDCONFPASS}}:</label>
+                  <input type="text" class="form-control" id="pass2email" placeholder="{{langene.MDYOURPASS}}">
+                </div>
+              </div>
+              <div class="modal-footer">
+                  <button type="button" class="btn btn-default" data-dismiss="modal">{{langene.MDCLOSE}}</button>
+                  <button type="button" class="btn btn-primary" id="btn-changpassemail">{{langene.MDBTN_SAVE}}</button>
+              </div>
+          </div>
+      </div>
+  </div>
+  <div class="modal" id="editforwarddomain" tabindex="-1" role="dialog" aria-labelledby="editforwarddomain" aria-hidden="true">
+      <div class="modal-dialog">
+          <div class="modal-content  animated fadeIn">
+              <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal">
+                      <span aria-hidden="true">&times;</span><span class="sr-only">{{langene.MDCLOSE}}</span>
+                  </button>
+                  <h4 class="modal-title" id="">{{langmod.ETITLEEDITMODAL}}</h4>
+              </div>
+              <div class="modal-body">
+                <div class="" id="contentmodaludp">
+
+                </div>
+                <div>
+                  <label class="control-label" for="">Redirects to:</label>
+                    <input type="tetxt" id="forwardersupd" class="form-control" placeholder=""></input> {{ langmod.ETITLEF3 }}
+                </div>
+                <div class="alert alert-danger alert-dismissable" id="invalid_mail_alert" style="display:none;">
+                    <button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>
+                    Please enter a valid email address.
+                </div>
+              </div>
+
+              <div id="alertdivforw" style="display: none;margin-left: 15px; margin-right: 15px;margin-bottom: 15px"></div>
+              <div class="modal-footer">
+                  <div class="col-md-12 col-sm-12 col-xs-12">
+                      <button type="button" class="btn btn-default" data-dismiss="modal">{{langene.MDCLOSE}}</button>
+                      <button type="button" id="btn-updatemodal" class="btn btn-primary">{{langmod.EBTNEDITMODAL}}</button>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+{% endif %}
+{% if mod.name =='phpini_editor' %}
+    <div class="modal inmodal" id="addphpinieditor" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content animated flipInY">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{langmod.CRLABEL3}}</span></button>
+                <h4 class="modal-title">{{langmod.NAMEMOD}}</h4>
+                <small class="font-bold">{{langmod.PHPELABEL1}}</small>
+            </div>
+            <div class="modal-body">
+                    <div class="form-group row"><label class="col-lg-2 col-form-label">{{langmod.SETTING}}</label>
+                        <div class="col-lg-10">
+                            <input type="text" class="form-control" id="addnew_tex" style="display: none"  value="" placeholder="{{WHITEYOUTOP}}">
+                            <select class="form-control" id="addnew_sel">
+                                <option value="">{{langmod.CHOOSE}}</option>
+                                <option value="allow_url_fopen">allow_url_fopen</option>
+                                <option value="allow_url_include">allow_url_include</option>
+                                <option value="asp_tags">asp_tags</option>
+                                <option value="auto_append_file">auto_append_file</option>
+                                <option value="auto_globals_jit">auto_globals_jit</option>
+                                <option value="auto_prepend_file">auto_prepend_file</option>
+                                <option value="date.timezone">date.timezone</option>
+                                <option value="default_mimetype">default_mimetype</option>
+                                <option value="default_socket_timeout">default_socket_timeout</option>
+                                <option value="define_syslog_variables">define_syslog_variables</option>
+                                <option value="disable_classes">disable_classes</option>
+                                <option value="disable_functions">disable_functions</option>
+                                <option value="display_errors">display_errors</option>
+                                <option value="display_startup_errors">display_startup_errors</option>
+                                <option value="enable_dl">enable_dl</option>
+                                <option value="engine">engine</option>
+                                <option value="error_log">error_log</option>
+                                <option value="error_reporting">error_reporting</option>
+                                <option value="expose_php">expose_php</option>
+                                <option value="file_uploads">file_uploads</option>
+                                <option value="ignore_repeated_errors">ignore_repeated_errors</option>
+                                <option value="ignore_repeated_source">ignore_repeated_source</option>
+                                <option value="implicit_flush">implicit_flush</option>
+                                <option value="log_errors">log_errors</option>
+                                <option value="log_errors_max_len">log_errors_max_len</option>
+                                <option value="magic_quotes_gpc">magic_quotes_gpc</option>
+                                <option value="magic_quotes_runtime">magic_quotes_runtime</option>
+                                <option value="magic_quotes_sybase">magic_quotes_sybase</option>
+                                <option value="max_execution_time">max_execution_time</option>
+                                <option value="max_file_uploads">max_file_uploads</option>
+                                <option value="max_input_time">max_input_time</option>
+                                <option value="memory_limit">memory_limit</option>
+                                <option value="msql.allow_persistent">msql.allow_persistent</option>
+                                <option value="msql.max_persistent">msql.max_persistent</option>
+                                <option value="msql.max_persistent">msql.max_persistent</option>
+                                <option value="mysql.allow_persistent">mysql.allow_persistent</option>
+                                <option value="mysql.default_host">mysql.default_host</option>
+                                <option value="mysql.default_password">mysql.default_password</option>
+                                <option value="mysql.default_port">mysql.default_port</option>
+                                <option value="mysql.default_socket">mysql.default_socket</option>
+                                <option value="mysql.default_user">mysql.default_user</option>
+                                <option value="mysql.max_links">mysql.max_links</option>
+                                <option value="mysql.max_persistent">mysql.max_persistent</option>
+                                <option value="mysql.trace_mode">mysql.trace_mode</option>
+                                <option value="mysqli.default_host ">mysqli.default_host </option>
+                                <option value="mysqli.default_port">mysqli.default_port</option>
+                                <option value="mysqli.default_pw">mysqli.default_pw</option>
+                                <option value="mysqli.default_socket">mysqli.default_socket</option>
+                                <option value="mysqli.default_user ">mysqli.default_user </option>
+                                <option value="mysqli.max_links">mysqli.max_links</option>
+                                <option value="mysqli.reconnect">mysqli.reconnect</option>
+                                <option value="output_buffering">output_buffering</option>
+                                <option value="post_max_size">post_max_size</option>
+                                <option value="precision">precision</option>
+                                <option value="register_argc_argv">register_argc_argv</option>
+                                <option value="register_globals">register_globals</option>
+                                <option value="register_long_arrays">register_long_arrays</option>
+                                <option value="report_memleaks">report_memleaks</option>
+                                <option value="safe_mode">safe_mode</option>
+                                <option value="safe_mode_allowed_env_vars">safe_mode_allowed_env_vars</option>
+                                <option value="safe_mode_exec_dir">safe_mode_exec_dir</option>
+                                <option value="safe_mode_gid">safe_mode_gid</option>
+                                <option value="safe_mode_include_dir">safe_mode_include_dir</option>
+                                <option value="safe_mode_protected_env_vars">safe_mode_protected_env_vars</option>
+                                <option value="serialize_precision">serialize_precision</option>
+                                <option value="session.auto_start">session.auto_start</option>
+                                <option value="session.bug_compat_42">session.bug_compat_42</option>
+                                <option value="session.bug_compat_warn">session.bug_compat_warn</option>
+                                <option value="session.cache_expire">session.cache_expire</option>
+                                <option value="session.cache_limiter">session.cache_limiter</option>
+                                <option value="session.cookie_domain">session.cookie_domain</option>
+                                <option value="session.cookie_httponly">session.cookie_httponly</option>
+                                <option value="session.cookie_lifetime">session.cookie_lifetime</option>
+                                <option value="session.cookie_path">session.cookie_path</option>
+                                <option value="session.entropy_file">session.entropy_file</option>
+                                <option value="session.entropy_length">session.entropy_length </option>
+                                <option value="session.gc_divisor">session.gc_divisor</option>
+                                <option value="session.gc_maxlifetime">session.gc_maxlifetime</option>
+                                <option value="session.gc_probability">session.gc_probability</option>
+                                <option value="session.hash_bits_per_character">session.hash_bits_per_character</option>
+                                <option value="session.hash_function">session.hash_function</option>
+                                <option value="session.name">session.name</option>
+                                <option value="session.referer_check">session.referer_check</option>
+                                <option value="session.save_handler">session.save_handler</option>
+                                <option value="session.save_path">session.save_path</option>
+                                <option value="session.serialize_handler">session.serialize_handler</option>
+                                <option value="session.use_cookies">session.use_cookies</option>
+                                <option value="session.use_trans_sid">session.use_trans_sid</option>
+                                <option value="short_open_tag ">short_open_tag </option>
+                                <option value="SMTP">SMTP</option>
+                                <option value="smtp_port">smtp_port</option>
+                                <option value="sql.safe_mode">sql.safe_mode</option>
+                                <option value="track_errors">track_errors</option>
+                                <option value="unserialize_callback_func">unserialize_callback_func</option>
+                                <option value="upload_max_filesize">upload_max_filesize</option>
+                                <option value="upload_tmp_dir">upload_tmp_dir</option>
+                                <option value="url_rewriter">url_rewriter</option>
+                                <option value="variables_order">variables_order</option>
+                                <option value="y2k_compliance">y2k_compliance</option>
+                                <option value="zend.ze1_compatibility_mode">zend.ze1_compatibility_mode</option>
+                                <option value="zlib.output_compression">zlib.output_compression</option>
+                            </select><a href="#" id="regaddnew"><i class="fa fa-edit" title="{{langmod.FREEFIELD}}"></i></a>
+                        </div>
+                    </div>
+                    <div class="form-group row"><label class="col-lg-2 col-form-label">{{langmod.PHPELABEL2}}</label>
+
+                        <div class="col-lg-10">
+                            <input type="text" class="form-control" id="addvalue"  value="" placeholder="">
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal" id="btn_editphp_add">{{langmod.BTN_ADD}}</button>
+                <button type="button" class="btn btn-white" data-dismiss="modal">{{langmod.BTN_CANCEL}}</button>
+            </div>
+        </div>
+    </div>
+</div>
+    <div class="modal inmodal" id="delphpinieditor" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content animated flipInY">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{langmod.CRLABEL3}}</span></button>
+                <h4 class="modal-title">{{langmod.CRLABEL2}}</h4>
+                <small class="font-bold">{{langmod.CRLABEL}}</small>
+            </div>
+            <div class="modal-body">
+                <p><strong id="descron"></strong></p>
+            </div>
+            <input type="hidden" id="idhidencron">
+            <div class="modal-footer">
+                <button type="button" class="btn btn-white" data-dismiss="modal">{{langmod.CRNOT}}</button>
+                <button type="button" class="btn btn-primary" id="btn-delete-cron">{{langmod.CRYES}}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% if mod.name =='ftp_accounts' %}
+    <div class="modal inmodal" id="modal-changepassftp" tabindex="-1" role="dialog" aria-labelledby="modal-changepassftp" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content animated flipInY">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span><span class="sr-only">{{langene.MDCLOSE}}</span>
+                    </button>
+                    <h4 class="modal-title" id="changepassftptitle"></h4>
+                </div>
+
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="form-group row">
+                                <label class="col-lg-4  control-label" for="">{{langene.MDNEWPASS}}:</label>
+                                <div class="col-lg-4">
+                                    <input type="text" class="form-control" id="pass1ftp" placeholder="{{langene.MDYOURPASS}}">
+                                </div>
+                                <div class="col-md-3">{{langmod.DBLABELRANDON}}   <a href="#"  onclick="return changerrandom('pass1ftp')" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{langmod.ICONRANDOM}}"><i class="icomoon-icon-target"></i></a>
+                                    <div class="btn-group dropdown mb10 mr10">
+                                        <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                            {{langmod.FTPENCRYTED}}
+                                            <span class="caret"></span>
+                                        </button>
+                                        <ul class="dropdown-menu right animated fadeIn" role="menu" style="margin-left: -48.5px;">
+                                            <li>
+                                                <select class="form-control" id="lengthpass" title="{{langmod.FTPLENGTH}}">
+                                                    <option value="7" selected> {{langmod.FTPLENGTH}}  7</option>
+                                                    <option value="8"> {{langmod.FTPLENGTH}}  8</option>
+                                                    <option value="9"> {{langmod.FTPLENGTH}}  9</option>
+                                                    <option value="10"> {{langmod.FTPLENGTH}} 10</option>
+                                                    <option value="11"> {{langmod.FTPLENGTH}} 11</option>
+                                                    <option value="12"> {{langmod.FTPLENGTH}} 12</option>
+                                                    <option value="13"> {{langmod.FTPLENGTH}} 13</option>
+                                                    <option value="14"> {{langmod.FTPLENGTH}} 14</option>
+                                                    <option value="15"> {{langmod.FTPLENGTH}} 15</option>
+                                                </select>
+                                            </li>
+                                            <li>
+                                                <select class="form-control"  id="typepass" title="{{langmod.FTPTYPE}}" style="margin-top: 5px">
+                                                    <option value="1">{{langmod.FTPTYPE}} {{langmod.FTPALF}}</option>
+                                                    <option value="2" selected>{{langmod.FTPTYPE}} {{langmod.FTPALFNUM}}</option>
+                                                    <option value="3">{{langmod.FTPTYPE}} {{langmod.FTPALFNUMSIG}}</option>
+                                                </select>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group row">
+                                <label class="col-lg-4  control-label" for="">{{langene.MDCONFPASS}}:</label>
+                                <div class="col-lg-4">
+                                    <input type="text"  class="form-control" id="pass2ftp" placeholder="{{langene.MDYOURPASS}}">
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="col-lg-12">
+                            <div class="progress progress-mini tip" title="100%" id="progresspassftp">
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" id="hidenuserftp" value="">
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{langene.MDCLOSE}}</button>
+                    <button type="button" class="btn btn-primary" id="btn-submitftp" style="display: none" >{{langene.MDBTN_SAVE}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- <div class="modal inmodal" id="modal-addfaccountftp" tabindex="-1" role="dialog" aria-labelledby="modal-changepassftp" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content animated flipInY">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span><span class="sr-only">{{langene.MDCLOSE}}</span>
+                </button>
+                <h4 class="modal-title">{{langmod.ADDFTP}}</h4>
+            </div>
+
+            <div class="modal-body">
+                <div class="row">
+
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <div class="col-sm-6"><button type="button" id="btn_cancel_ftp" class="btn btn-default btn-block mb10">{{langmod.FTPCANCEL}}</button></div>
+                <div class="col-sm-6"><button type="button" id="btn_save_ftp" class="btn btn-primary btn-block mb10">{{langmod.ADDFTPACCOUNT}}</button></div>
+            </div>
+        </div>
+    </div></div> -->
+{% endif %}
+<div class="modal inmodal" id="modal-pleasewait" tabindex="-1" role="dialog" aria-labelledby="modal-pleasewait" aria-hidden="true">
+    <div class="modal-dialog  modal-sm">
+        <div class="modal-content  animated flipInY">
+            <div class="modal-header">
+            </div>
+            <div class="modal-body">
+                <h4 class="col-lg-12 text-center">{{langmod.DBWAIT}}</h4>
+            </div>
+            <div class="modal-footer">
+
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal inmodal" id="modal-settings" tabindex="-1" role="dialog" aria-labelledby="modal-settings" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content  animated flipInY">
+            <div class="modal-header">
+                <h4 class="text-center">{{langene.GNLABEL11}}</h4>
+            </div>
+            <div class="modal-body">
+               <div class="row">
+                   <div class="col-lg-6">{{langene.GNLABEL12}}</div>
+                   <div class="col-lg-6">
+                       <select class="form-control" id="sessiontime">
+                           {% if confi.SESSIONTIME == 3600 %}<option value="3600" selected>{{langene.GNLABEL13}}</option>{% else %}<option value="3600">{{langene.GNLABEL13}}</option>{% endif %}
+                           {% if confi.SESSIONTIME == 18000 %}<option value="18000" selected>{{langene.GNLABEL14}}</option>{% else %}<option value="18000">{{langene.GNLABEL14}}</option>{% endif %}
+                           {% if confi.SESSIONTIME == 36000 %}<option value="36000" selected>{{langene.GNLABEL15}}</option>{% else %}<option value="36000">{{langene.GNLABEL15}}</option>{% endif %}
+                           {% if confi.SESSIONTIME == 54000 %}<option value="54000" selected>{{langene.GNLABEL16}}</option>{% else %}<option value="54000">{{langene.GNLABEL16}}</option>{% endif %}
+                           {% if confi.SESSIONTIME == 108000 %}<option value="108000" selected>{{langene.GNLABEL17}}</option>{% else %}<option value="108000">{{langene.GNLABEL17}}</option>{% endif %}
+                        </select>
+                   </div>
+               </div>
+                <div class="row" style="margin-top: 5px">
+                    <div class="col-lg-6">{{langene.GNLABEL18}}</div>
+                    <div class="col-lg-6">
+                        <select class="form-control" id="listrow">
+                            {% if confi.LISTROW == 10 %}<option value="10" selected>10</option>{% else %}<option value="10">10</option>{% endif %}
+                            {% if confi.LISTROW == 25 %}<option value="25" selected>25</option>{% else %}<option value="25">25</option>{% endif %}
+                            {% if confi.LISTROW == 50 %}<option value="50" selected>50</option>{% else %}<option value="50">50</option>{% endif %}
+                            {% if confi.LISTROW == 100 %}<option value="100" selected>100</option>{% else %}<option value="100">100</option>{% endif %}
+                        </select></div>
+                </div>
+                <div class="row" style="margin-top: 5px">
+                    <div class="col-lg-6">{{langene.GNLABEL19}}</div>
+                    <div class="col-lg-6">
+                        <select class="form-control" id="soundalert">
+                            {% if confi.SOUNDALERT == 0 %}<option value="0" selected>{{langene.CRNOT}}</option>{% else %}<option value="0">{{langene.CRNOT}}</option>{% endif %}
+                            {% if confi.SOUNDALERT == 1 %}<option value="1" selected>{{langene.CRYES}}</option>{% else %}<option value="1">{{langene.CRYES}}</option>{% endif %}
+                        </select></div>
+                </div>
+                <div class="row" style="margin-top: 5px">
+                    <div class="col-lg-6">{{langene.GNLABEL28}}</div>
+                    <div class="col-lg-6">
+                        {% if confi.GOOGLEFA == 0 %}
+                            {% set check = '' %}
+                            {% set dispp = 'none' %}
+                        {% else %}
+                            {% set check = 'checked' %}
+                            {% set dispp = 'block' %}
+                        {% endif %}
+
+                        <div class="switch">
+                            <div class="onoffswitch">
+                                <input type="checkbox" class="onoffswitch-checkbox" {{check}} id="GOOGLEFA" name="GOOGLEFA" onchange="return googlefa()">
+                                <label class="onoffswitch-label" for="GOOGLEFA">
+                                    <span class="onoffswitch-inner"></span>
+                                    <span class="onoffswitch-switch"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" style="margin-top: 5px; display: {{dispp}}" id="divqr">
+                    <div class="row">
+                        <div class="col-lg-7">
+                            <strong>{{langene.GNLABEL29}}</strong>
+                            <div class="panel-group accordion collapse in" id="accordion" aria-expanded="true" style="padding-top: 15px">
+                                <div class="panel panel-default" id="supr0">
+                                    <div class="panel-heading">
+                                        <h4 class="panel-title">
+                                            <a class="accordion-toggle collapsed" data-toggle="collapse" href="#collapseOne" aria-expanded="false">{{langene.GNLABEL34}}<i class="icomoon-icon-plus s12"></i></a>
+                                        </h4>
+                                    </div>
+                                    <div id="collapseOne" class="panel-collapse collapse" aria-expanded="false" style="height: 0px;">
+                                        <div class="panel-body">
+                                            <p>{{langene.GNLABEL30}}</p>
+                                            <p>{{langene.GNLABEL31}}</p>
+                                            <p><a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&hl=en" target="_blank"><img src="/{{users}}/cwp_theme/original/img/googleplay.png" alt="" title=""></a></p>
+                                            <p><a href="https://apps.apple.com/us/app/google-authenticator/id388497605" target="_blank"><img src="/{{users}}/cwp_theme/original/img/appstore.png" alt="" title=""></a></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="panel panel-default" id="supr1">
+                                    <div class="panel-heading">
+                                        <h4 class="panel-title">
+                                            <a class="accordion-toggle" data-toggle="collapse" href="#collapseTwo">{{langene.GNLABEL35}}<i class="icomoon-icon-plus s12"></i></a>
+                                        </h4>
+                                    </div>
+                                    <div id="collapseTwo" class="panel-collapse collapse">
+                                        <div class="panel-body">
+                                            <p>{{langene.GNLABEL32}}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="panel panel-default" id="supr2">
+                                    <div class="panel-heading">
+                                        <h4 class="panel-title">
+                                            <a class="accordion-toggle" data-toggle="collapse" href="#collapseThree">{{langene.GNLABEL36}}<i class="icomoon-icon-plus s12"></i></a>
+                                        </h4>
+                                    </div>
+                                    <div id="collapseThree" class="panel-collapse collapse">
+                                        <div class="panel-body">
+                                            <p>{{langene.GNLABEL33}}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                        </div>
+                        <div class="col-lg-5" id="divimggoogle">
+                            {% if confi.GOOGLEFA ==1 %}
+                                <img src="{{mod.googleqr}}" id="googleqrimg" width="200" height="200" border="0">
+                            <p align="center">{{mod.secretcode}}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{langene.MDCLOSE}}</button>
+                <button type="button" class="ladda-button ladda-button-demo btn btn-primary" id="btn-updsettings" data-style="zoom-in" >{{langene.GNBTN3}}</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal inmodal" id="modal-fsl" tabindex="-1" role="dialog" aria-labelledby="modal-fsl" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content animated flipInY">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span><span class="sr-only">{{langene.MDCLOSE}}</span>
+                </button>
+                <h4 class="modal-title" id="mySmallModalLabel3">{{langene.FSL_TITLE}} ({{users}})</h4>
+            </div>
+            <div class="modal-body text-center">
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{langene.MDCLOSE}}</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal inmodal" id="modalprocesslist" tabindex="-1" role="dialog" aria-labelledby="modalprocesslist" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content  animated flipInY">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span><span class="sr-only">{{langene.MDCLOSE}}</span>
+                </button>
+                <h4 class="modal-title" id="myModalLabel">{{langene.MDPROCESSLIST}}  ({{users}})</h4>
+            </div>
+            <div class="modal-body" id="contentmodalpl">
+
+            </div>
+            <div class="modal-footer">
+                <div class="col-md-12 col-sm-12 col-xs-12">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{langene.MDCLOSE}}</button>
+                    <button type="button" id="btn-process-list-on" class="btn btn-primary"><i aria-hidden="true" class="icomoon-icon-play-3"></i>{{langene.MDAUTOLO}}</button>
+                    <button type="button" id="btn-process-list-off" class="btn btn-warning" style="display: none"><i aria-hidden="true" class="icomoon-icon-pause-2"></i>{{langene.MDPAUSE}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal inmodal" id="modal-changepass" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-passchanger">
+        <div class="modal-content animated fadeIn">
+            <div class="modal-header" style="padding: 10px;">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span><span class="sr-only">{{langene.MDCLOSE}}</span>
+                </button>
+                <h4 class="modal-title" style="font-size:2rem" id="mySmallModalLabel">{{langene.MDCHANPASS}}</h4>
+            </div>
+            <div class="modal-body" style="padding: 10px;">
+                <h4>{{langene.GNLABELCHPUS}}: {{users}}</h4>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="pass1-div">
+                            <div class="form-group">
+                              <label class="form-label">{{langene.MDNEWPASS}}:</label>
+                              <div class="">
+                                  <input type="text" id="pass1" placeholder="{{langene.MDYOURPASS}}" data-required="true" class="form-control accountpass">
+                                  <div class="pwstrength_viewport_progress"></div>
+                              </div>
+                            </div>
+                            <div class="pass-generator">
+                              <span class="btn btn-default" title="{{langene.GNLABELGENNWP}}" data-toggle="tooltip" data-placement="top" aria-hidden="true" onclick="MPgenerateNewPass(this)"><i class="fa fa-key" aria-hidden="true"></i></span>
+                              <div class="btn-group dropdown show_options_dp">
+                                <button type="button" class="btn btn-default" title="{{langene.GNLABELAUPAOP}}" data-toggle="tooltip" data-placement="top" aria-hidden="true" onclick="MPopenPGOPT('#main_accountpassgen', '.show_options_dp')">{{langene.FTPENCRYTED}}<span class="caret" style="margin-left:10px"></span></button>
+                                <div class="general-password-generator-options mysql_generator" id="main_accountpassgen" style="display: none;z-index: 20;box-shadow: 3px 7px 10px -6px #777;">
+                                  <!-- <span class="general-password-generator-options-title"><b>Options</b></span>
+                                  <span class="general-password-generator-options-close" onclick="closePGOPT()" style="cursor:pointer">s<i class="fa fa-window-close"></i></span> -->
+                                    <ul class="right animated fadeIn">
+                                      <li>
+                                        <select class="form-control pwlength" id="lengthpass2" title="{{langmod.FTPLENGTH}}" style="margin-bottom: 5px;">
+                                          <option value="7"> {{langene.FTPLENGTH}}  7</option>
+                                          <option value="8"> {{langene.FTPLENGTH}}  8</option>
+                                          <option value="9"> {{langene.FTPLENGTH}}  9</option>
+                                          <option value="10"> {{langene.FTPLENGTH}} 10</option>
+                                          <option value="11"> {{langene.FTPLENGTH}} 11</option>
+                                          <option value="12" selected=""> {{langene.FTPLENGTH}} 12</option>
+                                          <option value="13"> {{langene.FTPLENGTH}} 13</option>
+                                          <option value="14"> {{langene.FTPLENGTH}} 14</option>
+                                          <option value="15"> {{langene.FTPLENGTH}} 15</option>
+                                        </select>
+                                      </li>
+                                      <li>
+                                        <select class="form-control pwtype" id="typepass2" title="Type">
+                                          <option value="alf">{{langmod.FTPTYPE}} {{langmod.FTPALF}}</option>
+                                          <option value="num" selected="">{{langmod.FTPTYPE}} {{langmod.FTPALFNUM}}</option>
+                                          <option value="def">{{langmod.FTPTYPE}} {{langmod.FTPALFNUMSIG}}</option>
+                                        </select>
+                                      </li>
+                                    </ul>
+                                  </div>
+                              </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label" for="">{{langene.MDCONFPASS}}:</label>
+                            <div>
+                                <input type="text"  class="form-control accountpass" id="pass2" data-equalto="#pass1" data-required="true" placeholder="{{langene.MDYOURPASS}}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<!--
+                <div>
+                    <div class="col-lg-12">
+                        <div class="progress progress-mini tip" title="100%" id="progresspass">
+
+                        </div>
+                    </div>
+                </div> -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{langene.MDCLOSE}}</button>
+                <button type="button" class="btn btn-primary" id="btn-submit" onclick="return newpass()">{{langene.MDBTN_SAVE}}</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal inmodal" id="antivirus-modalnew" tabindex="-1" role="dialog" aria-labelledby="antivirus-modallabel2" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content animated flipInY">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span><span class="sr-only">{{langene.MDCLOSE}}</span>
+                </button>
+                <h4 class="modal-title" id="mySmallModalLabe2">{{langene.TITLEANTIV}} ({{users}})</h4>
+            </div>
+            <div class="modal-body text-center">
+                <div class="page-header">
+                    <small>{{langene.DESCRIPTANTIV}}</small>
+                </div>
+                <ul class="pager" style="margin-top: 15px">
+                    <label class="radio-inline" style="padding-right: 15px"><input class="form-control" type="radio" name="avtype2" value="1" checked><h5>{{langene.OPTION1}}</h5></label>
+                    <label class="radio-inline" style="padding-right: 15px"><input class="form-control" type="radio" name="avtype2" value="2"><h5>{{langene.OPTION2}}</h5></label>
+                    <label class="radio-inline" style="padding-right: 15px"><input class="form-control" type="radio" name="avtype2" value="3"><h5>{{langene.OPTION3}}</h5></label>
+                </ul>
+                <ul class="pager">
+                    <!--li><a href="#" id="btn-star-antivirus2">{{langene.BTN_ANTIVIRUSRUN}}</a></li-->
+                    <a class="btn btn-primary btn-rounded btn-block" href="#" id="btn-star-antivirus2"><i class="fa fa-search"></i>    {{langene.BTN_ANTIVIRUSRUN}}</a>
+                    <a id="btn-star-antivirus_process2" style="display: none"><i class="icomoon-icon-spinner-3"></i>{{langene.AVPROCES}}   </a>
+                </ul>
+                <p align="center" id="alerbtn_av2" style="display: none"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{langene.MDCLOSE}}</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal inmodal" id="deletemodal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm" style="width:30vw">
+        <div class="modal-content animated fadeIn">
+            <div class="modal-header" style="padding: 10px;font-size:1.8rem">
+
+            </div>
+            <div class="modal-body" style="padding: 15px;">
+
+            </div>
+            <div class="modal-footer">
+
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal inmodal" id="deletemodaluserftp" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm" style="width:30vw">
+        <div class="modal-content animated fadeIn">
+            <div class="modal-header" style="padding: 10px;">
+
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+
+            </div>
+            <div class="modal-footer">
+
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal inmodal" id="addmodal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content animated flipInY">
+            <div class="modal-header">
+
+            </div>
+            <div class="modal-body">
+
+            </div>
+            <div class="modal-footer">
+
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal inmodal" id="modalinfo" tabindex="-1" role="dialog" aria-labelledby="videoModal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content animated flipInY">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span><span class="sr-only">{{langmod.SSLCLOSE}}</span>
+                </button>
+                <h4 class="modal-title" id="myModalLabel2">{{langmod.SSLINFOCERT}}</h4>
+            </div>
+            <div class="modal-body">
+
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal inmodal" id="modal-newusermysql" tabindex="-1" role="dialog" aria-labelledby="modal-newusermysql" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content animated flipInY">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span><span class="sr-only">{{langmod.DBCLOSE}}</span>
+                </button>
+                <h4 class="modal-title">{{langmod.DBLABEL3}}  (<small class="font-bold" id="titlebd"></small>)</h4>
+            </div>
+            <div class="modal-body">
+                <div>
+                    <div class="ibox">
+                        <div class="ibox-content">
+                            <ul id="myTab2" class="nav nav-tabs nav-justified">
+                                <li class="active"><a href="#home2" data-toggle="tab" aria-expanded="true" class="active show">{{langmod.DBTIBLENEWUSER}}</a></li>
+                                <li class=""><a href="#profile2" data-toggle="tab" aria-expanded="false" onclick="return searchusersmysql()">{{langmod.DBUSERANMYSQLUSER}}</a></li>
+                            </ul>
+                            <div id="myTabContent2" class="tab-content" style="padding-left: 25px">
+                                <div class="tab-pane fade active in" id="home2" style="margin-top: 15px">
+                                    <div class="row" style="margin-bottom: 5px">
+                                        <div class="col-md-4"><label >{{langmod.DBUSERNAME}}:</label></div>
+                                        <div class="col-md-4"><input type="text" class="form-control" id="newuser" maxlength="7" placeholder=""></div>
+                                        <div class="col-md-4"></div>
+                                    </div>
+                                    <div class="row" style="margin-bottom: 5px">
+                                        <div class="col-md-4"><label>{{langmod.DBHOST}}:</label></div>
+                                        <div class="col-md-4"><select id="newhost" class="form-control"><option value="localhost">localhost</option><option value="%">{{langmod.DBANY}}</option><option value="IP">{{langmod.DBLABEL5}}</option></select> </div>
+                                        <div class="col-md-3"><input id="ippers" value="" class="form-control hidden" placeholder="XXX.XXX.XXX.XXX"></div>
+                                    </div>
+                                    <div class="row" style="margin-bottom: 5px">
+                                        <div class="col-md-4"><label>{{langmod.DBLABELPASS2}}:</label></div>
+                                        <div class="col-md-4"><input type="text" class="form-control" id="newpass1"  value="r6KnZEQrWA"></div>
+                                        <div class="col-md-4">{{langmod.DBLABELRANDON}}   <a href="#"  onclick="return changerrandom('newpass1')" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{langmod.ICONRANDOM}}"><i class="fa fa-cog"></i></a>
+                                            <div class="btn-group dropdown mb10 mr10">
+                                                <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                                    {{langmod.FTPENCRYTED}}
+                                                    <span class="caret"></span>
+                                                </button>
+                                                <ul class="dropdown-menu right animated fadeIn" role="menu" style="margin-left: -48.5px;">
+                                                    <li>
+                                                        <select class="form-control" id="lengthpass" title="{{langmod.FTPLENGTH}}">
+                                                            <option value="7" selected> {{langmod.FTPLENGTH}}  7</option>
+                                                            <option value="8"> {{langmod.FTPLENGTH}}  8</option>
+                                                            <option value="9"> {{langmod.FTPLENGTH}}  9</option>
+                                                            <option value="10"> {{langmod.FTPLENGTH}} 10</option>
+                                                            <option value="11"> {{langmod.FTPLENGTH}} 11</option>
+                                                            <option value="12"> {{langmod.FTPLENGTH}} 12</option>
+                                                            <option value="13"> {{langmod.FTPLENGTH}} 13</option>
+                                                            <option value="14"> {{langmod.FTPLENGTH}} 14</option>
+                                                            <option value="15"> {{langmod.FTPLENGTH}} 15</option>
+                                                        </select>
+                                                    </li>
+                                                    <li>
+                                                        <select class="form-control"  id="typepass" title="{{langmod.FTPTYPE}}" style="margin-top: 5px">
+                                                            <option value="1">{{langmod.FTPTYPE}} {{langmod.FTPALF}}</option>
+                                                            <option value="2" selected>{{langmod.FTPTYPE}} {{langmod.FTPALFNUM}}</option>
+                                                            <option value="3">{{langmod.FTPTYPE}} {{langmod.FTPALFNUMSIG}}</option>
+                                                        </select>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row" style="margin-bottom: 5px">
+                                        <div class="col-md-4"><label>{{langmod.DBLABELPASS2}}:</label></div>
+                                        <div class="col-md-4"><input type="text" class="form-control" id="newpass2" placeholder=""></div>
+                                        <div class="col-md-3"></div>
+                                        <input type="hidden" id="dbasehiden" value="">
+                                    </div>
+                                    <div class="row" style="margin-top: 20px">
+                                        <div class="col-md-4"><label>Permisos del usuario</label></div>
+                                    </div>
+                                    <div class="row" style="margin-top: 15px">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="panel panel-default">
+                                                    <div class="panel-heading">
+
+                                                        <input type="checkbox" id="alldata">  Data
+
+                                                    </div>
+                                                    <div class="panel-body">
+                                                            <div><input type="checkbox" id="select" value="Y"> SELECT</div>
+                                                            <div><input type="checkbox" id="insert" value="Y"> INSERT</div>
+                                                            <div><input type="checkbox" id="update" value="Y"> UPDATE</div>
+                                                            <div><input type="checkbox" id="delete" value="Y"> DELETE</div>
+                                                            <!--div><input type="checkbox" id="file" value="Y"> FILE</div-->
+                                                    </div>
+                                                </div>
+                                            </div>
+
+
+                                            <div class="col-md-9">
+                                                <div class="panel panel-default">
+                                                    <div class="panel-heading">
+
+                                                        <input type="checkbox" id="allstructure">  Structure
+
+                                                    </div>
+                                                    <div class="panel-body">
+                                                        <div class="row" style="margin-bottom: 5px">
+                                                            <div class="col-md-4"><input type="checkbox" id="create" value="Y"> CREATE</div>
+                                                            <div class="col-md-4"><input type="checkbox" id="alter" value="Y"> ALTER</div>
+                                                            <div class="col-md-4"><input type="checkbox" id="index" value="Y"> INDEX</div>
+                                                        </div>
+                                                        <div class="row" style="margin-bottom: 5px">
+                                                            <div class="col-md-4"><input type="checkbox" id="drop" value="Y"> DROP</div>
+                                                            <div class="col-md-4"><input type="checkbox" id="trigger" value="Y"> TRIGGER</div>
+                                                            <div class="col-md-4"><input type="checkbox" id="showview" value="Y"> SHOW VIEW</div>
+                                                        </div>
+                                                        <div class="row" style="margin-bottom: 5px">
+                                                            <div class="col-md-4"><input type="checkbox" id="createroutine" value="Y"> CREATE ROUTINE </div>
+                                                            <div class="col-md-4"><input type="checkbox" id="alterroutine" value="Y"> ALTER ROUTINE</div>
+                                                            <div class="col-md-4"><input type="checkbox" id="execute" value="Y"> EXECUTE</div>
+                                                        </div>
+                                                        <div class="row" style="margin-bottom: 5px">
+                                                            <div class="col-md-4"><input type="checkbox" id="createview" value="Y"> CREATE VIEW</div>
+                                                            <div class="col-md-4"><input type="checkbox" id="event" value="Y"> EVENT</div>
+                                                            <div class="col-md-4"><input type="checkbox" id="creattemptable" value="Y"> CREATE TEMPORARY TABLES</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-lg-12">
+                                                <div class="ibox collapsed">
+                                                    <div class="ibox-title" style="background-color: #f5f5f5; border-bottom: 1px solid transparent; border-top-left-radius: 3px; border-top-right-radius: 3px;">
+                                                        <h5 class="collapse-link">Resource limits</h5>
+                                                        <div class="ibox-tools">
+                                                            <a class="collapse-link">
+                                                                <i class="fa fa-chevron-up"></i>
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                    <div class="ibox-content" style="display: none;">
+                                                        <div class="row" style="margin-bottom: 5px">
+                                                            <div class="col-md-4">MAX QUERIES PER HOUR</div><div class="col-md-2"><input type="number" value="0" id="maxqueryhour" class="form-control"></div>
+                                                            <div class="col-md-4">MAX UPDATES PER HOUR</div><div class="col-md-2"><input type="number" value="0" id="maxupdhour" class="form-control"></div>
+                                                        </div>
+                                                        <div class="row" style="margin-bottom: 5px">
+                                                            <div class="col-md-4">MAX CONNECTIONS PER HOUR</div><div class="col-md-2"><input type="number" value="0" id="maxconnechour" class="form-control"></div>
+                                                            <div class="col-md-4">MAX USER_CONNECTIONS</div><div class="col-md-2"><input type="number" value="0" id="maxuserconnec" class="form-control"></div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <h5>Note: <small>Setting these options to 0 (zero) removes the limit.</small></h5>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">{{langmod.DBCLOSE}}</button>
+                                        <button type="button" class="btn btn-primary" id="btn-newnewuser" >{{langmod.DBCREATEUSER}}</button>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="profile2"  style="margin-top: 15px">
+                                    <div class="row" style="margin-bottom: 5px">
+                                        <div class="col-md-4"><label >{{langmod.DBUSERNAME}}:</label></div>
+                                        <div class="col-md-4"><select class="form-control" id="useusermyqlsel" ></select></div>
+                                        <div class="col-md-3"></div>
+                                    </div>
+                                    <div class="row" style="margin-bottom: 5px">
+                                        <div class="col-md-4"><label>{{langmod.DBHOST}}:</label></div>
+                                        <div class="col-md-4"><select id="newhostuser" class="form-control"><option value="localhost">localhost</option><option value="%">{{langmod.DBANY}}</option> </select> </div>
+                                        <div class="col-md-3"></div>
+                                    </div>
+                                    <div class="row" id="alertnewdb2" style="margin-top: 20px; display: none">
+
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">{{langmod.DBCLOSE}}</button>
+                                        <button type="button" class="btn btn-primary" id="btn-usemysqluser" >{{langmod.DBBTNASIGN}}</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal inmodal" id="modal-onlypg" tabindex="-1" role="dialog" aria-labelledby="modal-onlypg" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content animated flipInY">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span><span class="sr-only">{{langmod.PGCLOSE}}</span>
+                </button>
+                <h4 class="modal-title" id="mySmallModalLabel">{{langmod.PGCREATEMODAL}} ({{users}})</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="form-group">
+                        <label class="col-lg-4  control-label" for="">{{langmod.PGLABELDB}}:</label>
+                        <div class="col-lg-4">
+                            <input type="text" class="form-control" id="newdbpg" maxlength="7" placeholder="">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{langmod.PGCLOSE}}</button>
+                <button type="button" class="btn btn-primary" id="btn-newdbonlypg" >{{langmod.PGCREATEMODAL}}</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal inmodal" id="modal-updquotemail" tabindex="-1" role="dialog" aria-labelledby="modal-updquotemail" aria-hidden="true">
+    <div class="modal-dialog  modal-sm">
+        <div class="modal-content  animated fadeIn">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span><span class="sr-only">{{langene.MDCLOSE}}</span>
+                </button>
+                <h4 class="modal-title" id="EDITQUOTAEMAILTITLE">{{langmod.ETITLECQUOTA}}</h4>
+            </div>
+            <div class="modal-body" style="padding: 15px;">
+                <h5 class="col-lg-12 text-center" id="quotaemailtitle"></h5>
+                <!-- <div class="input-group col-lg-12 text-center">
+                    <input type="text" class="form-control" id="quotaemailmodal" value="">
+                    <span class="input-group-addon">MB</span>
+                </div> -->
+                <div style="height:6rem;">
+                  <label class="col-sm-7 col-form-label">New size (MB)</label>
+                  <div class="col-sm-5"><input type="text" id="quotaemailmodal" class="form-control"></div>
+                </div>
+                <input type="hidden"  id="quotaemailhidde" value="">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{langene.MDCLOSE}}</button>
+                <button type="button" class="btn btn-primary" id="btn-savequotaemail">{{langmod.EBTCSAVE}}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal inmodal" id="modal-onlymysql" tabindex="-1" role="dialog" aria-labelledby="modal-onlymysql" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content  animated flipInY">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span><span class="sr-only">{{langmod.DBCLOSE}}</span>
+                </button>
+                <h4 class="modal-title">{{langmod.DBCREATEMODAL}} ({{users}})</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group row">
+                        <label class="col-lg-4  control-label" for="newdb">{{langmod.DBLABELDB}}:</label>
+                        <div class="col-lg-4">
+                            <input type="text" class="form-control" id="newdb" maxlength="7" placeholder="">
+                        </div>
+                </div>
+                <div class="form-group  row" style="margin-top: 5px">
+                    <label class="col-lg-4  control-label" for="charsetonly">{{langmod.DBCHARSET}}:</label>
+                    <div class="col-lg-6">
+                        <select class="form-control"  id="charsetonly">
+                            <option value="" selected="">{{langmod.DBDEFAULT}}</option>
+                            <optgroup label="armscii8">
+                                <option value="armscii8_bin">armscii8_bin</option>
+                                <option value="armscii8_general_ci">armscii8_general_ci</option>
+                            </optgroup>
+                            <optgroup label="ascii">
+                                <option value="ascii_bin">ascii_bin</option>
+                                <option value="ascii_general_ci">ascii_general_ci</option>
+                            </optgroup>
+                            <optgroup label="big5">
+                                <option value="big5_bin">big5_bin</option>
+                                <option value="big5_chinese_ci">big5_chinese_ci</option>
+                            </optgroup>
+                            <optgroup label="binary">
+                                <option value="binary">binary</option>
+                            </optgroup>
+                            <optgroup label="cp1250">
+                                <option value="cp1250_bin">cp1250_bin</option>
+                                <option value="cp1250_croatian_ci">cp1250_croatian_ci</option>
+                                <option value="cp1250_czech_cs">cp1250_czech_cs</option>
+                                <option value="cp1250_general_ci">cp1250_general_ci</option>
+                                <option value="cp1250_polish_ci">cp1250_polish_ci</option>
+                            </optgroup>
+                            <optgroup label="cp1251">
+                                <option value="cp1251_bin">cp1251_bin</option>
+                                <option value="cp1251_bulgarian_ci">cp1251_bulgarian_ci</option>
+                                <option value="cp1251_general_ci">cp1251_general_ci</option>
+                                <option value="cp1251_general_cs">cp1251_general_cs</option>
+                                <option value="cp1251_ukrainian_ci">cp1251_ukrainian_ci</option>
+                            </optgroup>
+                            <optgroup label="cp1256">
+                                <option value="cp1256_bin">cp1256_bin</option>
+                                <option value="cp1256_general_ci">cp1256_general_ci</option>
+                            </optgroup>
+                            <optgroup label="cp1257">
+                                <option value="cp1257_bin">cp1257_bin</option>
+                                <option value="cp1257_general_ci">cp1257_general_ci</option>
+                                <option value="cp1257_lithuanian_ci">cp1257_lithuanian_ci</option>
+                            </optgroup>
+                            <optgroup label="cp850">
+                                <option value="cp850_bin">cp850_bin</option>
+                                <option value="cp850_general_ci">cp850_general_ci</option>
+                            </optgroup>
+                            <optgroup label="cp852">
+                                <option value="cp852_bin">cp852_bin</option>
+                                <option value="cp852_general_ci">cp852_general_ci</option>
+                            </optgroup>
+                            <optgroup label="cp866">
+                                <option value="cp866_bin">cp866_bin</option>
+                                <option value="cp866_general_ci">cp866_general_ci</option>
+                            </optgroup>
+                            <optgroup label="cp932">
+                                <option value="cp932_bin">cp932_bin</option>
+                                <option value="cp932_japanese_ci">cp932_japanese_ci</option>
+                            </optgroup>
+                            <optgroup label="dec8">
+                                <option value="dec8_bin">dec8_bin</option>
+                                <option value="dec8_swedish_ci">dec8_swedish_ci</option>
+                            </optgroup>
+                            <optgroup label="eucjpms">
+                                <option value="eucjpms_bin">eucjpms_bin</option>
+                                <option value="eucjpms_japanese_ci">eucjpms_japanese_ci</option>
+                            </optgroup>
+                            <optgroup label="euckr">
+                                <option value="euckr_bin">euckr_bin</option>
+                                <option value="euckr_korean_ci">euckr_korean_ci</option>
+                            </optgroup>
+                            <optgroup label="gb2312">
+                                <option value="gb2312_bin">gb2312_bin</option>
+                                <option value="gb2312_chinese_ci">gb2312_chinese_ci</option>
+                            </optgroup>
+                            <optgroup label="gbk">
+                                <option value="gbk_bin">gbk_bin</option>
+                                <option value="gbk_chinese_ci">gbk_chinese_ci</option>
+                            </optgroup>
+                            <optgroup label="geostd8">
+                                <option value="geostd8_bin">geostd8_bin</option>
+                                <option value="geostd8_general_ci">geostd8_general_ci</option>
+                            </optgroup>
+                            <optgroup label="greek">
+                                <option value="greek_bin">greek_bin</option>
+                                <option value="greek_general_ci">greek_general_ci</option>
+                            </optgroup>
+                            <optgroup label="hebrew">
+                                <option value="hebrew_bin">hebrew_bin</option>
+                                <option value="hebrew_general_ci">hebrew_general_ci</option>
+                            </optgroup>
+                            <optgroup label="hp8">
+                                <option value="hp8_bin">hp8_bin</option>
+                                <option value="hp8_english_ci">hp8_english_ci</option>
+                            </optgroup>
+                            <optgroup label="keybcs2">
+                                <option value="keybcs2_bin">keybcs2_bin</option>
+                                <option value="keybcs2_general_ci">keybcs2_general_ci</option>
+                            </optgroup>
+                            <optgroup label="koi8r">
+                                <option value="koi8r_bin">koi8r_bin</option>
+                                <option value="koi8r_general_ci">koi8r_general_ci</option>
+                            </optgroup>
+                            <optgroup label="koi8u">
+                                <option value="koi8u_bin">koi8u_bin</option>
+                                <option value="koi8u_general_ci">koi8u_general_ci</option>
+                            </optgroup>
+                            <optgroup label="latin1">
+                                <option value="latin1_bin">latin1_bin</option>
+                                <option value="latin1_danish_ci">latin1_danish_ci</option>
+                                <option value="latin1_general_ci">latin1_general_ci</option>
+                                <option value="latin1_general_cs">latin1_general_cs</option>
+                                <option value="latin1_german1_ci">latin1_german1_ci</option>
+                                <option value="latin1_german2_ci">latin1_german2_ci</option>
+                                <option value="latin1_spanish_ci">latin1_spanish_ci</option>
+                                <option value="latin1_swedish_ci">latin1_swedish_ci</option>
+                            </optgroup>
+                            <optgroup label="latin2">
+                                <option value="latin2_bin">latin2_bin</option>
+                                <option value="latin2_croatian_ci">latin2_croatian_ci</option>
+                                <option value="latin2_czech_cs">latin2_czech_cs</option>
+                                <option value="latin2_general_ci">latin2_general_ci</option>
+                                <option value="latin2_hungarian_ci">latin2_hungarian_ci</option>
+                            </optgroup>
+                            <optgroup label="latin5">
+                                <option value="latin5_bin">latin5_bin</option>
+                                <option value="latin5_turkish_ci">latin5_turkish_ci</option>
+                            </optgroup>
+                            <optgroup label="latin7">
+                                <option value="latin7_bin">latin7_bin</option>
+                                <option value="latin7_estonian_cs">latin7_estonian_cs</option>
+                                <option value="latin7_general_ci">latin7_general_ci</option>
+                                <option value="latin7_general_cs">latin7_general_cs</option>
+                            </optgroup>
+                            <optgroup label="macce">
+                                <option value="macce_bin">macce_bin</option>
+                                <option value="macce_general_ci">macce_general_ci</option>
+                            </optgroup>
+                            <optgroup label="macroman">
+                                <option value="macroman_bin">macroman_bin</option>
+                                <option value="macroman_general_ci">macroman_general_ci</option>
+                            </optgroup>
+                            <optgroup label="sjis">
+                                <option value="sjis_bin">sjis_bin</option>
+                                <option value="sjis_japanese_ci">sjis_japanese_ci</option>
+                            </optgroup>
+                            <optgroup label="swe7">
+                                <option value="swe7_bin">swe7_bin</option>
+                                <option value="swe7_swedish_ci">swe7_swedish_ci</option>
+                            </optgroup>
+                            <optgroup label="tis620">
+                                <option value="tis620_bin">tis620_bin</option>
+                                <option value="tis620_thai_ci">tis620_thai_ci</option>
+                            </optgroup>
+                            <optgroup label="ucs2">
+                                <option value="ucs2_bin">ucs2_bin</option>
+                                <option value="ucs2_croatian_ci">ucs2_croatian_ci</option>
+                                <option value="ucs2_croatian_mysql561_ci">ucs2_croatian_mysql561_ci</option>
+                                <option value="ucs2_czech_ci">ucs2_czech_ci</option>
+                                <option value="ucs2_danish_ci">ucs2_danish_ci</option>
+                                <option value="ucs2_esperanto_ci">ucs2_esperanto_ci</option>
+                                <option value="ucs2_estonian_ci">ucs2_estonian_ci</option>
+                                <option value="ucs2_general_ci">ucs2_general_ci</option>
+                                <option value="ucs2_general_mysql500_ci">ucs2_general_mysql500_ci</option>
+                                <option value="ucs2_german2_ci">ucs2_german2_ci</option>
+                                <option value="ucs2_hungarian_ci">ucs2_hungarian_ci</option>
+                                <option value="ucs2_icelandic_ci">ucs2_icelandic_ci</option>
+                                <option value="ucs2_latvian_ci">ucs2_latvian_ci</option>
+                                <option value="ucs2_lithuanian_ci">ucs2_lithuanian_ci</option>
+                                <option value="ucs2_myanmar_ci">ucs2_myanmar_ci</option>
+                                <option value="ucs2_persian_ci">ucs2_persian_ci</option>
+                                <option value="ucs2_polish_ci">ucs2_polish_ci</option>
+                                <option value="ucs2_roman_ci">ucs2_roman_ci</option>
+                                <option value="ucs2_romanian_ci">ucs2_romanian_ci</option>
+                                <option value="ucs2_sinhala_ci">ucs2_sinhala_ci</option>
+                                <option value="ucs2_slovak_ci">ucs2_slovak_ci</option>
+                                <option value="ucs2_slovenian_ci">ucs2_slovenian_ci</option>
+                                <option value="ucs2_spanish2_ci">ucs2_spanish2_ci</option>
+                                <option value="ucs2_spanish_ci">ucs2_spanish_ci</option>
+                                <option value="ucs2_swedish_ci">ucs2_swedish_ci</option>
+                                <option value="ucs2_thai_520_w2">ucs2_thai_520_w2</option>
+                                <option value="ucs2_turkish_ci">ucs2_turkish_ci</option>
+                                <option value="ucs2_unicode_520_ci">ucs2_unicode_520_ci</option>
+                                <option value="ucs2_unicode_ci">ucs2_unicode_ci</option>
+                                <option value="ucs2_vietnamese_ci">ucs2_vietnamese_ci</option>
+                            </optgroup>
+                            <optgroup label="ujis" title="EUC-JP Japanese">
+                                <option value="ujis_bin">ujis_bin</option>
+                                <option value="ujis_japanese_ci">ujis_japanese_ci</option>
+                            </optgroup>
+                            <optgroup label="utf16">
+                                <option value="utf16_bin">utf16_bin</option>
+                                <option value="utf16_croatian_ci">utf16_croatian_ci</option>
+                                <option value="utf16_croatian_mysql561_ci">utf16_croatian_mysql561_ci</option>
+                                <option value="utf16_czech_ci">utf16_czech_ci</option>
+                                <option value="utf16_danish_ci">utf16_danish_ci</option>
+                                <option value="utf16_esperanto_ci">utf16_esperanto_ci</option>
+                                <option value="utf16_estonian_ci">utf16_estonian_ci</option>
+                                <option value="utf16_general_ci">utf16_general_ci</option>
+                                <option value="utf16_german2_ci">utf16_german2_ci</option>
+                                <option value="utf16_hungarian_ci">utf16_hungarian_ci</option>
+                                <option value="utf16_icelandic_ci">utf16_icelandic_ci</option>
+                                <option value="utf16_latvian_ci">utf16_latvian_ci</option>
+                                <option value="utf16_lithuanian_ci">utf16_lithuanian_ci</option>
+                                <option value="utf16_myanmar_ci">utf16_myanmar_ci</option>
+                                <option value="utf16_persian_ci">utf16_persian_ci</option>
+                                <option value="utf16_polish_ci">utf16_polish_ci</option>
+                                <option value="utf16_roman_ci">utf16_roman_ci</option>
+                                <option value="utf16_romanian_ci">utf16_romanian_ci</option>
+                                <option value="utf16_sinhala_ci">utf16_sinhala_ci</option>
+                                <option value="utf16_slovak_ci">utf16_slovak_ci</option>
+                                <option value="utf16_slovenian_ci">utf16_slovenian_ci</option>
+                                <option value="utf16_spanish2_ci">utf16_spanish2_ci</option>
+                                <option value="utf16_spanish_ci">utf16_spanish_ci</option>
+                                <option value="utf16_swedish_ci">utf16_swedish_ci</option>
+                                <option value="utf16_thai_520_w2">utf16_thai_520_w2</option>
+                                <option value="utf16_turkish_ci">utf16_turkish_ci</option>
+                                <option value="utf16_unicode_520_ci">utf16_unicode_520_ci</option>
+                                <option value="utf16_unicode_ci">utf16_unicode_ci</option>
+                                <option value="utf16_vietnamese_ci">utf16_vietnamese_ci</option>
+                            </optgroup>
+                            <optgroup label="utf16le">
+                                <option value="utf16le_bin">utf16le_bin</option>
+                                <option value="utf16le_general_ci">utf16le_general_ci</option>
+                            </optgroup>
+                            <optgroup label="utf32">
+                                <option value="utf32_bin">utf32_bin</option>
+                                <option value="utf32_croatian_ci">utf32_croatian_ci</option>
+                                <option value="utf32_croatian_mysql561_ci">utf32_croatian_mysql561_ci</option>
+                                <option value="utf32_czech_ci">utf32_czech_ci</option>
+                                <option value="utf32_danish_ci">utf32_danish_ci</option>
+                                <option value="utf32_esperanto_ci">utf32_esperanto_ci</option>
+                                <option value="utf32_estonian_ci">utf32_estonian_ci</option>
+                                <option value="utf32_general_ci">utf32_general_ci</option>
+                                <option value="utf32_german2_ci">utf32_german2_ci</option>
+                                <option value="utf32_hungarian_ci">utf32_hungarian_ci</option>
+                                <option value="utf32_icelandic_ci">utf32_icelandic_ci</option>
+                                <option value="utf32_latvian_ci">utf32_latvian_ci</option>
+                                <option value="utf32_lithuanian_ci">utf32_lithuanian_ci</option>
+                                <option value="utf32_myanmar_ci">utf32_myanmar_ci</option>
+                                <option value="utf32_persian_ci">utf32_persian_ci</option>
+                                <option value="utf32_polish_ci">utf32_polish_ci</option>
+                                <option value="utf32_roman_ci">utf32_roman_ci</option>
+                                <option value="utf32_romanian_ci">utf32_romanian_ci</option>
+                                <option value="utf32_sinhala_ci">utf32_sinhala_ci</option>
+                                <option value="utf32_slovak_ci">utf32_slovak_ci</option>
+                                <option value="utf32_slovenian_ci">utf32_slovenian_ci</option>
+                                <option value="utf32_spanish2_ci">utf32_spanish2_ci</option>
+                                <option value="utf32_spanish_ci">utf32_spanish_ci</option>
+                                <option value="utf32_swedish_ci">utf32_swedish_ci</option>
+                                <option value="utf32_thai_520_w2">utf32_thai_520_w2</option>
+                                <option value="utf32_turkish_ci">utf32_turkish_ci</option>
+                                <option value="utf32_unicode_520_ci">utf32_unicode_520_ci</option>
+                                <option value="utf32_unicode_ci">utf32_unicode_ci</option>
+                                <option value="utf32_vietnamese_ci">utf32_vietnamese_ci</option>
+                            </optgroup>
+                            <optgroup label="utf8">
+                                <option value="utf8_bin">utf8_bin</option>
+                                <option value="utf8_croatian_ci">utf8_croatian_ci</option>
+                                <option value="utf8_croatian_mysql561_ci">utf8_croatian_mysql561_ci</option>
+                                <option value="utf8_czech_ci">utf8_czech_ci</option>
+                                <option value="utf8_danish_ci">utf8_danish_ci</option>
+                                <option value="utf8_esperanto_ci">utf8_esperanto_ci</option>
+                                <option value="utf8_estonian_ci">utf8_estonian_ci</option>
+                                <option value="utf8_general_ci">utf8_general_ci</option>
+                                <option value="utf8_general_mysql500_ci">utf8_general_mysql500_ci</option>
+                                <option value="utf8_german2_ci">utf8_german2_ci</option>
+                                <option value="utf8_hungarian_ci">utf8_hungarian_ci</option>
+                                <option value="utf8_icelandic_ci">utf8_icelandic_ci</option>
+                                <option value="utf8_latvian_ci">utf8_latvian_ci</option>
+                                <option value="utf8_lithuanian_ci">utf8_lithuanian_ci</option>
+                                <option value="utf8_myanmar_ci">utf8_myanmar_ci</option>
+                                <option value="utf8_persian_ci">utf8_persian_ci</option>
+                                <option value="utf8_polish_ci">utf8_polish_ci</option>
+                                <option value="utf8_roman_ci">utf8_roman_ci</option>
+                                <option value="utf8_romanian_ci">utf8_romanian_ci</option>
+                                <option value="utf8_sinhala_ci">utf8_sinhala_ci</option>
+                                <option value="utf8_slovak_ci">utf8_slovak_ci</option>
+                                <option value="utf8_slovenian_ci">utf8_slovenian_ci</option>
+                                <option value="utf8_spanish2_ci">utf8_spanish2_ci</option>
+                                <option value="utf8_spanish_ci">utf8_spanish_ci</option>
+                                <option value="utf8_swedish_ci">utf8_swedish_ci</option>
+                                <option value="utf8_thai_520_w2">utf8_thai_520_w2</option>
+                                <option value="utf8_turkish_ci">utf8_turkish_ci</option>
+                                <option value="utf8_unicode_520_ci">utf8_unicode_520_ci</option>
+                                <option value="utf8_unicode_ci">utf8_unicode_ci</option>
+                                <option value="utf8_vietnamese_ci">utf8_vietnamese_ci</option>
+                            </optgroup>
+                            <optgroup label="utf8mb4" title="UTF-8 Unicode">
+                                <option value="utf8mb4_bin">utf8mb4_bin</option>
+                                <option value="utf8mb4_croatian_ci">utf8mb4_croatian_ci</option>
+                                <option value="utf8mb4_croatian_mysql561_ci">utf8mb4_croatian_mysql561_ci</option>
+                                <option value="utf8mb4_czech_ci">utf8mb4_czech_ci</option>
+                                <option value="utf8mb4_danish_ci">utf8mb4_danish_ci</option>
+                                <option value="utf8mb4_esperanto_ci">utf8mb4_esperanto_ci</option>
+                                <option value="utf8mb4_estonian_ci">utf8mb4_estonian_ci</option>
+                                <option value="utf8mb4_general_ci">utf8mb4_general_ci</option>
+                                <option value="utf8mb4_german2_ci">utf8mb4_german2_ci</option>
+                                <option value="utf8mb4_hungarian_ci">utf8mb4_hungarian_ci</option>
+                                <option value="utf8mb4_icelandic_ci">utf8mb4_icelandic_ci</option>
+                                <option value="utf8mb4_latvian_ci">utf8mb4_latvian_ci</option>
+                                <option value="utf8mb4_lithuanian_ci">utf8mb4_lithuanian_ci</option>
+                                <option value="utf8mb4_myanmar_ci">utf8mb4_myanmar_ci</option>
+                                <option value="utf8mb4_persian_ci">utf8mb4_persian_ci</option>
+                                <option value="utf8mb4_polish_ci">utf8mb4_polish_ci</option>
+                                <option value="utf8mb4_roman_ci">utf8mb4_roman_ci</option>
+                                <option value="utf8mb4_romanian_ci">utf8mb4_romanian_ci</option>
+                                <option value="utf8mb4_sinhala_ci">utf8mb4_sinhala_ci</option>
+                                <option value="utf8mb4_slovak_ci">utf8mb4_slovak_ci</option>
+                                <option value="utf8mb4_slovenian_ci">utf8mb4_slovenian_ci</option>
+                                <option value="utf8mb4_spanish2_ci">utf8mb4_spanish2_ci</option>
+                                <option value="utf8mb4_spanish_ci">utf8mb4_spanish_ci</option>
+                                <option value="utf8mb4_swedish_ci">utf8mb4_swedish_ci</option>
+                                <option value="utf8mb4_thai_520_w2">utf8mb4_thai_520_w2</option>
+                                <option value="utf8mb4_turkish_ci">utf8mb4_turkish_ci</option>
+                                <option value="utf8mb4_unicode_520_ci">utf8mb4_unicode_520_ci</option>
+                                <option value="utf8mb4_unicode_ci">utf8mb4_unicode_ci</option>
+                                <option value="utf8mb4_vietnamese_ci">utf8mb4_vietnamese_ci</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row" id="alertnewdb" style="margin-top: 20px; display: none">
+                    <div class="col-md-12">
+                        <div class="alert alert-danger fade in" id="alertmyqlonli">
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{langmod.DBCLOSE}}</button>
+                <button type="button" class="ladda-button ladda-button-demo btn btn-primary" id="btn-newdbonly" data-style="zoom-in" >{{langmod.DBCREATEMODAL}}</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal inmodal" id="modal-createbdanduser" tabindex="-1" role="dialog" aria-labelledby="modal-createbdanduser" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content  animated flipInY">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span><span class="sr-only">{{langmod.DBCLOSE}}</span>
+                </button>
+                <h4 class="modal-title">{{langmod.DBCREATEMODAL}} ({{users}})</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group row">
+                    <label class="col-lg-4  control-label" for="bdname">{{langmod.DBLABELDB}}:</label>
+                    <div class="col-lg-4"><input type="text" class="form-control" id="bdname" value="" maxlength="7">
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-lg-4  control-label" for="newdb">{{langmod.DBLABELPASS1}}:</label>
+                    <div class="col-lg-3"><input type="text" class="form-control"  id="pass1new" value="lFz9Tmpp8c" ></div>
+                    <div class="col-sm-2">{{langmod.DBLABELRANDON}} <a href="#" onclick="return changerrandom('pass1new')" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{langmod.ICONRANDOM}}"><i class="fa fa-cog"></i></a></div>
+                    <div class="col-sm-3">
+                        <div class="btn-group dropdown mb10 mr10">
+                            <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                {{langmod.FTPENCRYTED}}
+                                <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu right animated fadeIn" role="menu" style="margin-left: -48.5px;">
+                                <li>
+                                    <select class="form-control" id="lengthpass" title="{{langmod.FTPLENGTH}}">
+                                        <option value="7" selected> {{langmod.FTPLENGTH}}  7</option>
+                                        <option value="8"> {{langmod.FTPLENGTH}}  8</option>
+                                        <option value="9"> {{langmod.FTPLENGTH}}  9</option>
+                                        <option value="10" selected> {{langmod.FTPLENGTH}} 10</option>
+                                        <option value="11"> {{langmod.FTPLENGTH}} 11</option>
+                                        <option value="12"> {{langmod.FTPLENGTH}} 12</option>
+                                        <option value="13"> {{langmod.FTPLENGTH}} 13</option>
+                                        <option value="14"> {{langmod.FTPLENGTH}} 14</option>
+                                        <option value="15"> {{langmod.FTPLENGTH}} 15</option>
+                                    </select>
+                                </li>
+                                <li>
+                                    <select class="form-control"  id="typepass" title="{{langmod.FTPTYPE}}" style="margin-top: 5px">
+                                        <option value="1">{{langmod.FTPTYPE}} {{langmod.FTPALF}}</option>
+                                        <option value="2" selected>{{langmod.FTPTYPE}} {{langmod.FTPALFNUM}}</option>
+                                        <option value="3">{{langmod.FTPTYPE}} {{langmod.FTPALFNUMSIG}}</option>
+                                    </select>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-lg-4  control-label" for="pass2new">{{langmod.DBLABELPASS2}}:</label>
+                    <div class="col-lg-4"><input type="text" class="form-control"  id="pass2new" value="" >
+                    </div>
+                </div>
+                <div class="form-group  row" style="margin-top: 5px">
+                    <label class="col-lg-4  control-label" for="charset">{{langmod.DBCHARSET}}:</label>
+                    <div class="col-lg-6">
+                        <select class="form-control"  id="charset">
+                            <option value="" selected="">{{langmod.DBDEFAULT}}</option>
+                            <optgroup label="armscii8">
+                                <option value="armscii8_bin">armscii8_bin</option>
+                                <option value="armscii8_general_ci">armscii8_general_ci</option>
+                            </optgroup>
+                            <optgroup label="ascii">
+                                <option value="ascii_bin">ascii_bin</option>
+                                <option value="ascii_general_ci">ascii_general_ci</option>
+                            </optgroup>
+                            <optgroup label="big5">
+                                <option value="big5_bin">big5_bin</option>
+                                <option value="big5_chinese_ci">big5_chinese_ci</option>
+                            </optgroup>
+                            <optgroup label="binary">
+                                <option value="binary">binary</option>
+                            </optgroup>
+                            <optgroup label="cp1250">
+                                <option value="cp1250_bin">cp1250_bin</option>
+                                <option value="cp1250_croatian_ci">cp1250_croatian_ci</option>
+                                <option value="cp1250_czech_cs">cp1250_czech_cs</option>
+                                <option value="cp1250_general_ci">cp1250_general_ci</option>
+                                <option value="cp1250_polish_ci">cp1250_polish_ci</option>
+                            </optgroup>
+                            <optgroup label="cp1251">
+                                <option value="cp1251_bin">cp1251_bin</option>
+                                <option value="cp1251_bulgarian_ci">cp1251_bulgarian_ci</option>
+                                <option value="cp1251_general_ci">cp1251_general_ci</option>
+                                <option value="cp1251_general_cs">cp1251_general_cs</option>
+                                <option value="cp1251_ukrainian_ci">cp1251_ukrainian_ci</option>
+                            </optgroup>
+                            <optgroup label="cp1256">
+                                <option value="cp1256_bin">cp1256_bin</option>
+                                <option value="cp1256_general_ci">cp1256_general_ci</option>
+                            </optgroup>
+                            <optgroup label="cp1257">
+                                <option value="cp1257_bin">cp1257_bin</option>
+                                <option value="cp1257_general_ci">cp1257_general_ci</option>
+                                <option value="cp1257_lithuanian_ci">cp1257_lithuanian_ci</option>
+                            </optgroup>
+                            <optgroup label="cp850">
+                                <option value="cp850_bin">cp850_bin</option>
+                                <option value="cp850_general_ci">cp850_general_ci</option>
+                            </optgroup>
+                            <optgroup label="cp852">
+                                <option value="cp852_bin">cp852_bin</option>
+                                <option value="cp852_general_ci">cp852_general_ci</option>
+                            </optgroup>
+                            <optgroup label="cp866">
+                                <option value="cp866_bin">cp866_bin</option>
+                                <option value="cp866_general_ci">cp866_general_ci</option>
+                            </optgroup>
+                            <optgroup label="cp932">
+                                <option value="cp932_bin">cp932_bin</option>
+                                <option value="cp932_japanese_ci">cp932_japanese_ci</option>
+                            </optgroup>
+                            <optgroup label="dec8">
+                                <option value="dec8_bin">dec8_bin</option>
+                                <option value="dec8_swedish_ci">dec8_swedish_ci</option>
+                            </optgroup>
+                            <optgroup label="eucjpms">
+                                <option value="eucjpms_bin">eucjpms_bin</option>
+                                <option value="eucjpms_japanese_ci">eucjpms_japanese_ci</option>
+                            </optgroup>
+                            <optgroup label="euckr">
+                                <option value="euckr_bin">euckr_bin</option>
+                                <option value="euckr_korean_ci">euckr_korean_ci</option>
+                            </optgroup>
+                            <optgroup label="gb2312">
+                                <option value="gb2312_bin">gb2312_bin</option>
+                                <option value="gb2312_chinese_ci">gb2312_chinese_ci</option>
+                            </optgroup>
+                            <optgroup label="gbk">
+                                <option value="gbk_bin">gbk_bin</option>
+                                <option value="gbk_chinese_ci">gbk_chinese_ci</option>
+                            </optgroup>
+                            <optgroup label="geostd8">
+                                <option value="geostd8_bin">geostd8_bin</option>
+                                <option value="geostd8_general_ci">geostd8_general_ci</option>
+                            </optgroup>
+                            <optgroup label="greek">
+                                <option value="greek_bin">greek_bin</option>
+                                <option value="greek_general_ci">greek_general_ci</option>
+                            </optgroup>
+                            <optgroup label="hebrew">
+                                <option value="hebrew_bin">hebrew_bin</option>
+                                <option value="hebrew_general_ci">hebrew_general_ci</option>
+                            </optgroup>
+                            <optgroup label="hp8">
+                                <option value="hp8_bin">hp8_bin</option>
+                                <option value="hp8_english_ci">hp8_english_ci</option>
+                            </optgroup>
+                            <optgroup label="keybcs2">
+                                <option value="keybcs2_bin">keybcs2_bin</option>
+                                <option value="keybcs2_general_ci">keybcs2_general_ci</option>
+                            </optgroup>
+                            <optgroup label="koi8r">
+                                <option value="koi8r_bin">koi8r_bin</option>
+                                <option value="koi8r_general_ci">koi8r_general_ci</option>
+                            </optgroup>
+                            <optgroup label="koi8u">
+                                <option value="koi8u_bin">koi8u_bin</option>
+                                <option value="koi8u_general_ci">koi8u_general_ci</option>
+                            </optgroup>
+                            <optgroup label="latin1">
+                                <option value="latin1_bin">latin1_bin</option>
+                                <option value="latin1_danish_ci">latin1_danish_ci</option>
+                                <option value="latin1_general_ci">latin1_general_ci</option>
+                                <option value="latin1_general_cs">latin1_general_cs</option>
+                                <option value="latin1_german1_ci">latin1_german1_ci</option>
+                                <option value="latin1_german2_ci">latin1_german2_ci</option>
+                                <option value="latin1_spanish_ci">latin1_spanish_ci</option>
+                                <option value="latin1_swedish_ci">latin1_swedish_ci</option>
+                            </optgroup>
+                            <optgroup label="latin2">
+                                <option value="latin2_bin">latin2_bin</option>
+                                <option value="latin2_croatian_ci">latin2_croatian_ci</option>
+                                <option value="latin2_czech_cs">latin2_czech_cs</option>
+                                <option value="latin2_general_ci">latin2_general_ci</option>
+                                <option value="latin2_hungarian_ci">latin2_hungarian_ci</option>
+                            </optgroup>
+                            <optgroup label="latin5">
+                                <option value="latin5_bin">latin5_bin</option>
+                                <option value="latin5_turkish_ci">latin5_turkish_ci</option>
+                            </optgroup>
+                            <optgroup label="latin7">
+                                <option value="latin7_bin">latin7_bin</option>
+                                <option value="latin7_estonian_cs">latin7_estonian_cs</option>
+                                <option value="latin7_general_ci">latin7_general_ci</option>
+                                <option value="latin7_general_cs">latin7_general_cs</option>
+                            </optgroup>
+                            <optgroup label="macce">
+                                <option value="macce_bin">macce_bin</option>
+                                <option value="macce_general_ci">macce_general_ci</option>
+                            </optgroup>
+                            <optgroup label="macroman">
+                                <option value="macroman_bin">macroman_bin</option>
+                                <option value="macroman_general_ci">macroman_general_ci</option>
+                            </optgroup>
+                            <optgroup label="sjis">
+                                <option value="sjis_bin">sjis_bin</option>
+                                <option value="sjis_japanese_ci">sjis_japanese_ci</option>
+                            </optgroup>
+                            <optgroup label="swe7">
+                                <option value="swe7_bin">swe7_bin</option>
+                                <option value="swe7_swedish_ci">swe7_swedish_ci</option>
+                            </optgroup>
+                            <optgroup label="tis620">
+                                <option value="tis620_bin">tis620_bin</option>
+                                <option value="tis620_thai_ci">tis620_thai_ci</option>
+                            </optgroup>
+                            <optgroup label="ucs2">
+                                <option value="ucs2_bin">ucs2_bin</option>
+                                <option value="ucs2_croatian_ci">ucs2_croatian_ci</option>
+                                <option value="ucs2_croatian_mysql561_ci">ucs2_croatian_mysql561_ci</option>
+                                <option value="ucs2_czech_ci">ucs2_czech_ci</option>
+                                <option value="ucs2_danish_ci">ucs2_danish_ci</option>
+                                <option value="ucs2_esperanto_ci">ucs2_esperanto_ci</option>
+                                <option value="ucs2_estonian_ci">ucs2_estonian_ci</option>
+                                <option value="ucs2_general_ci">ucs2_general_ci</option>
+                                <option value="ucs2_general_mysql500_ci">ucs2_general_mysql500_ci</option>
+                                <option value="ucs2_german2_ci">ucs2_german2_ci</option>
+                                <option value="ucs2_hungarian_ci">ucs2_hungarian_ci</option>
+                                <option value="ucs2_icelandic_ci">ucs2_icelandic_ci</option>
+                                <option value="ucs2_latvian_ci">ucs2_latvian_ci</option>
+                                <option value="ucs2_lithuanian_ci">ucs2_lithuanian_ci</option>
+                                <option value="ucs2_myanmar_ci">ucs2_myanmar_ci</option>
+                                <option value="ucs2_persian_ci">ucs2_persian_ci</option>
+                                <option value="ucs2_polish_ci">ucs2_polish_ci</option>
+                                <option value="ucs2_roman_ci">ucs2_roman_ci</option>
+                                <option value="ucs2_romanian_ci">ucs2_romanian_ci</option>
+                                <option value="ucs2_sinhala_ci">ucs2_sinhala_ci</option>
+                                <option value="ucs2_slovak_ci">ucs2_slovak_ci</option>
+                                <option value="ucs2_slovenian_ci">ucs2_slovenian_ci</option>
+                                <option value="ucs2_spanish2_ci">ucs2_spanish2_ci</option>
+                                <option value="ucs2_spanish_ci">ucs2_spanish_ci</option>
+                                <option value="ucs2_swedish_ci">ucs2_swedish_ci</option>
+                                <option value="ucs2_thai_520_w2">ucs2_thai_520_w2</option>
+                                <option value="ucs2_turkish_ci">ucs2_turkish_ci</option>
+                                <option value="ucs2_unicode_520_ci">ucs2_unicode_520_ci</option>
+                                <option value="ucs2_unicode_ci">ucs2_unicode_ci</option>
+                                <option value="ucs2_vietnamese_ci">ucs2_vietnamese_ci</option>
+                            </optgroup>
+                            <optgroup label="ujis" title="EUC-JP Japanese">
+                                <option value="ujis_bin">ujis_bin</option>
+                                <option value="ujis_japanese_ci">ujis_japanese_ci</option>
+                            </optgroup>
+                            <optgroup label="utf16">
+                                <option value="utf16_bin">utf16_bin</option>
+                                <option value="utf16_croatian_ci">utf16_croatian_ci</option>
+                                <option value="utf16_croatian_mysql561_ci">utf16_croatian_mysql561_ci</option>
+                                <option value="utf16_czech_ci">utf16_czech_ci</option>
+                                <option value="utf16_danish_ci">utf16_danish_ci</option>
+                                <option value="utf16_esperanto_ci">utf16_esperanto_ci</option>
+                                <option value="utf16_estonian_ci">utf16_estonian_ci</option>
+                                <option value="utf16_general_ci">utf16_general_ci</option>
+                                <option value="utf16_german2_ci">utf16_german2_ci</option>
+                                <option value="utf16_hungarian_ci">utf16_hungarian_ci</option>
+                                <option value="utf16_icelandic_ci">utf16_icelandic_ci</option>
+                                <option value="utf16_latvian_ci">utf16_latvian_ci</option>
+                                <option value="utf16_lithuanian_ci">utf16_lithuanian_ci</option>
+                                <option value="utf16_myanmar_ci">utf16_myanmar_ci</option>
+                                <option value="utf16_persian_ci">utf16_persian_ci</option>
+                                <option value="utf16_polish_ci">utf16_polish_ci</option>
+                                <option value="utf16_roman_ci">utf16_roman_ci</option>
+                                <option value="utf16_romanian_ci">utf16_romanian_ci</option>
+                                <option value="utf16_sinhala_ci">utf16_sinhala_ci</option>
+                                <option value="utf16_slovak_ci">utf16_slovak_ci</option>
+                                <option value="utf16_slovenian_ci">utf16_slovenian_ci</option>
+                                <option value="utf16_spanish2_ci">utf16_spanish2_ci</option>
+                                <option value="utf16_spanish_ci">utf16_spanish_ci</option>
+                                <option value="utf16_swedish_ci">utf16_swedish_ci</option>
+                                <option value="utf16_thai_520_w2">utf16_thai_520_w2</option>
+                                <option value="utf16_turkish_ci">utf16_turkish_ci</option>
+                                <option value="utf16_unicode_520_ci">utf16_unicode_520_ci</option>
+                                <option value="utf16_unicode_ci">utf16_unicode_ci</option>
+                                <option value="utf16_vietnamese_ci">utf16_vietnamese_ci</option>
+                            </optgroup>
+                            <optgroup label="utf16le">
+                                <option value="utf16le_bin">utf16le_bin</option>
+                                <option value="utf16le_general_ci">utf16le_general_ci</option>
+                            </optgroup>
+                            <optgroup label="utf32">
+                                <option value="utf32_bin">utf32_bin</option>
+                                <option value="utf32_croatian_ci">utf32_croatian_ci</option>
+                                <option value="utf32_croatian_mysql561_ci">utf32_croatian_mysql561_ci</option>
+                                <option value="utf32_czech_ci">utf32_czech_ci</option>
+                                <option value="utf32_danish_ci">utf32_danish_ci</option>
+                                <option value="utf32_esperanto_ci">utf32_esperanto_ci</option>
+                                <option value="utf32_estonian_ci">utf32_estonian_ci</option>
+                                <option value="utf32_general_ci">utf32_general_ci</option>
+                                <option value="utf32_german2_ci">utf32_german2_ci</option>
+                                <option value="utf32_hungarian_ci">utf32_hungarian_ci</option>
+                                <option value="utf32_icelandic_ci">utf32_icelandic_ci</option>
+                                <option value="utf32_latvian_ci">utf32_latvian_ci</option>
+                                <option value="utf32_lithuanian_ci">utf32_lithuanian_ci</option>
+                                <option value="utf32_myanmar_ci">utf32_myanmar_ci</option>
+                                <option value="utf32_persian_ci">utf32_persian_ci</option>
+                                <option value="utf32_polish_ci">utf32_polish_ci</option>
+                                <option value="utf32_roman_ci">utf32_roman_ci</option>
+                                <option value="utf32_romanian_ci">utf32_romanian_ci</option>
+                                <option value="utf32_sinhala_ci">utf32_sinhala_ci</option>
+                                <option value="utf32_slovak_ci">utf32_slovak_ci</option>
+                                <option value="utf32_slovenian_ci">utf32_slovenian_ci</option>
+                                <option value="utf32_spanish2_ci">utf32_spanish2_ci</option>
+                                <option value="utf32_spanish_ci">utf32_spanish_ci</option>
+                                <option value="utf32_swedish_ci">utf32_swedish_ci</option>
+                                <option value="utf32_thai_520_w2">utf32_thai_520_w2</option>
+                                <option value="utf32_turkish_ci">utf32_turkish_ci</option>
+                                <option value="utf32_unicode_520_ci">utf32_unicode_520_ci</option>
+                                <option value="utf32_unicode_ci">utf32_unicode_ci</option>
+                                <option value="utf32_vietnamese_ci">utf32_vietnamese_ci</option>
+                            </optgroup>
+                            <optgroup label="utf8">
+                                <option value="utf8_bin">utf8_bin</option>
+                                <option value="utf8_croatian_ci">utf8_croatian_ci</option>
+                                <option value="utf8_croatian_mysql561_ci">utf8_croatian_mysql561_ci</option>
+                                <option value="utf8_czech_ci">utf8_czech_ci</option>
+                                <option value="utf8_danish_ci">utf8_danish_ci</option>
+                                <option value="utf8_esperanto_ci">utf8_esperanto_ci</option>
+                                <option value="utf8_estonian_ci">utf8_estonian_ci</option>
+                                <option value="utf8_general_ci">utf8_general_ci</option>
+                                <option value="utf8_general_mysql500_ci">utf8_general_mysql500_ci</option>
+                                <option value="utf8_german2_ci">utf8_german2_ci</option>
+                                <option value="utf8_hungarian_ci">utf8_hungarian_ci</option>
+                                <option value="utf8_icelandic_ci">utf8_icelandic_ci</option>
+                                <option value="utf8_latvian_ci">utf8_latvian_ci</option>
+                                <option value="utf8_lithuanian_ci">utf8_lithuanian_ci</option>
+                                <option value="utf8_myanmar_ci">utf8_myanmar_ci</option>
+                                <option value="utf8_persian_ci">utf8_persian_ci</option>
+                                <option value="utf8_polish_ci">utf8_polish_ci</option>
+                                <option value="utf8_roman_ci">utf8_roman_ci</option>
+                                <option value="utf8_romanian_ci">utf8_romanian_ci</option>
+                                <option value="utf8_sinhala_ci">utf8_sinhala_ci</option>
+                                <option value="utf8_slovak_ci">utf8_slovak_ci</option>
+                                <option value="utf8_slovenian_ci">utf8_slovenian_ci</option>
+                                <option value="utf8_spanish2_ci">utf8_spanish2_ci</option>
+                                <option value="utf8_spanish_ci">utf8_spanish_ci</option>
+                                <option value="utf8_swedish_ci">utf8_swedish_ci</option>
+                                <option value="utf8_thai_520_w2">utf8_thai_520_w2</option>
+                                <option value="utf8_turkish_ci">utf8_turkish_ci</option>
+                                <option value="utf8_unicode_520_ci">utf8_unicode_520_ci</option>
+                                <option value="utf8_unicode_ci">utf8_unicode_ci</option>
+                                <option value="utf8_vietnamese_ci">utf8_vietnamese_ci</option>
+                            </optgroup>
+                            <optgroup label="utf8mb4" title="UTF-8 Unicode">
+                                <option value="utf8mb4_bin">utf8mb4_bin</option>
+                                <option value="utf8mb4_croatian_ci">utf8mb4_croatian_ci</option>
+                                <option value="utf8mb4_croatian_mysql561_ci">utf8mb4_croatian_mysql561_ci</option>
+                                <option value="utf8mb4_czech_ci">utf8mb4_czech_ci</option>
+                                <option value="utf8mb4_danish_ci">utf8mb4_danish_ci</option>
+                                <option value="utf8mb4_esperanto_ci">utf8mb4_esperanto_ci</option>
+                                <option value="utf8mb4_estonian_ci">utf8mb4_estonian_ci</option>
+                                <option value="utf8mb4_general_ci">utf8mb4_general_ci</option>
+                                <option value="utf8mb4_german2_ci">utf8mb4_german2_ci</option>
+                                <option value="utf8mb4_hungarian_ci">utf8mb4_hungarian_ci</option>
+                                <option value="utf8mb4_icelandic_ci">utf8mb4_icelandic_ci</option>
+                                <option value="utf8mb4_latvian_ci">utf8mb4_latvian_ci</option>
+                                <option value="utf8mb4_lithuanian_ci">utf8mb4_lithuanian_ci</option>
+                                <option value="utf8mb4_myanmar_ci">utf8mb4_myanmar_ci</option>
+                                <option value="utf8mb4_persian_ci">utf8mb4_persian_ci</option>
+                                <option value="utf8mb4_polish_ci">utf8mb4_polish_ci</option>
+                                <option value="utf8mb4_roman_ci">utf8mb4_roman_ci</option>
+                                <option value="utf8mb4_romanian_ci">utf8mb4_romanian_ci</option>
+                                <option value="utf8mb4_sinhala_ci">utf8mb4_sinhala_ci</option>
+                                <option value="utf8mb4_slovak_ci">utf8mb4_slovak_ci</option>
+                                <option value="utf8mb4_slovenian_ci">utf8mb4_slovenian_ci</option>
+                                <option value="utf8mb4_spanish2_ci">utf8mb4_spanish2_ci</option>
+                                <option value="utf8mb4_spanish_ci">utf8mb4_spanish_ci</option>
+                                <option value="utf8mb4_swedish_ci">utf8mb4_swedish_ci</option>
+                                <option value="utf8mb4_thai_520_w2">utf8mb4_thai_520_w2</option>
+                                <option value="utf8mb4_turkish_ci">utf8mb4_turkish_ci</option>
+                                <option value="utf8mb4_unicode_520_ci">utf8mb4_unicode_520_ci</option>
+                                <option value="utf8mb4_unicode_ci">utf8mb4_unicode_ci</option>
+                                <option value="utf8mb4_vietnamese_ci">utf8mb4_vietnamese_ci</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{langmod.DBCLOSE}}</button>
+                <button type="button" class="ladda-button ladda-button-demo btn btn-primary" id="btn-addbdandusernew" data-style="zoom-in" onclick="btnaddbdandusernew()" >{{langmod.DBCREATEMODAL}}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal inmodal" id="editmodal" tabindex="-1" role="dialog" aria-labelledby="editmodal" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content  animated flipInY">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span><span class="sr-only">{{langene.MDCLOSE}}</span>
+                </button>
+                <h4 class="modal-title"></h4>
+            </div>
+            <div class="modal-body">
+                <div class="row" style="margin-left: 15px;">
+                    <div class="col-sm-6">
+                        <label for="modsubjectautof">{{langmod.ARSUJECT2}}</label>
+                        <input id="modsubjectautof" class="form-control" value="" placeholder="This is Subject area">
+                    </div>
+                </div>
+                <div class="row" style="margin-left: 15px; margin-top: 15px">
+                    <div class="col-sm-12">
+                        <label for="modmessajeautof">{{langmod.AEMJS}}</label>
+                        <textarea id="modmessajeautof" class="form-control" rows="6" placeholder="Here is your message, you can include html code"></textarea>
+                    </div>
+                    <input id="modemailautof" value="" type="hidden">
+                </div>
+                <div class="i-checksqq" style="margin-left: 25px; margin-top: 15px"><label> <input type="checkbox" id="sendonlydate-edit" name="sendonlydate-edit" onclick="return sendonlydate()" value="0"> <i></i> Only send during this time period </label></div>
+
+                <div class="row">
+                    <div class="col-lg-6">
+                        <h4 class="text-center">{{langmod.ARFROM}}</h4>
+                        <div class="panel panel-default">
+                            <div class="panel-body">
+                                <div class="row" style="margin-left: 15px">
+                                    <div id="data_1" class="col-lg-6">
+                                        <div  class="input-group date">
+                                            <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+                                            <input type="text" id="start_date" class="form-control col-lg-12" value="">
+                                        </div>
+                                    </div>
+                                    <div class="input-group clockpicker  col-lg-6" data-autoclose="true">
+                                <span class="input-group-addon">
+                                    <span class="fa fa-clock-o"></span>
+                                </span>
+                                        <input type="text" id="start_time" class="form-control" value="">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <h4 class="text-center">{{langmod.ARTO}}</h4>
+                        <div class="panel panel-default">
+                            <div class="panel-body">
+                                <div class="row" style="margin-left: 15px">
+                                    <div id="data_2" class="col-lg-6">
+                                        <div class="input-group date">
+                                            <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+                                            <input type="text" id="end_date" class="form-control col-lg-12" value="">
+                                        </div>
+                                    </div>
+                                    <div class="input-group clockpicker  col-lg-6" data-autoclose="true">
+                                <span class="input-group-addon">
+                                    <span class="fa fa-clock-o"></span>
+                                </span>
+                                        <input type="text" id="end_time" class="form-control" value="">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{langene.MDCLOSE}}</button>
+                    <button type="button" id="btn-updautof" class="btn btn-primary">{{langmod.ARUPDATE}}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if mod.name =='dns_zone_editor' %}
+    <div class="" style="display:none">
+      <div id="modal-A">
+        <div class="modal-body">
+            <div class="regit"  style="margin-left: 15px; margin-right: 15px" id="aipv4">
+                <div class="row">
+                    <label class="col-md-4 control-label" for="">{{langmod.DNSNOAME}}</label>
+                    <label class="col-md-5 control-label" for="" >{{langmod.DNSIP4}}</label>
+                    <label class="col-md-3 control-label" for="">TTL</label>
+                </div>
+                <div class="row ">
+                    <div class="col-lg-4">
+                        <input type="text" class="form-control" id="namereg_A" placeholder="">
+                    </div>
+                    <div class="col-lg-5">
+                        <input type="text" class="form-control" id="valuereg_A" placeholder="IE: 127.0.0.1">
+                        <input type="hidden" id="typeregihide" value="A">
+                        <input type="hidden" id="domainsel_A" value="">
+                    </div>
+                    <div class="col-lg-3">
+                        <input type="text" class="form-control" id="cachereg_A" placeholder="" value="14400">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- <div class="modal-footer">
+            <button type="button" id="btn-a" onclick="return addregdns('A')" class="btn btn-success btn-xs mr5 mb10">{{langmod.DNSBTNADD}}</button>
+            <button type="button" id="btn-dnscancel" class="btn btn-default btn-xs mr5 mb10" data-dismiss="modal">{{langmod.DNSCANCEL}}</button>
+        </div> -->
+      </div>
+      <div id="modal-AAAA">
+        <div class="modal-body">
+            <div class="regit"  style="margin-left: 15px; margin-right: 15px; display: block" id="aipv4A">
+                <div class="row">
+                    <label class="col-md-4 control-label" for="">{{langmod.DNSNOAME}}</label>
+                    <label class="col-md-5 control-label" for="" >{{langmod.DNSIP4}}</label>
+                    <label class="col-md-3 control-label" for="">{{langmod.DNSCACHE}}</label>
+                </div>
+                <div class="row ">
+                    <div class="col-lg-4">
+                        <input type="text" class="form-control" id="namereg_AAAA" placeholder="">
+                    </div>
+                    <div class="col-lg-5">
+                        <input type="text" class="form-control" id="valuereg_AAAA" placeholder="IE: 127.0.0.1">
+                        <input type="hidden" id="domainsel_AAAA" value="">
+                    </div>
+                    <div class="col-lg-3">
+                        <input type="text" class="form-control" id="cachereg_AAAA" placeholder="" value="14400">
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <!-- <div class="modal-footer">
+            <button type="button" id="btn-aaaa" onclick="return addregdns('AAAA')" class="btn btn-success btn-xs mr5 mb10">{{langmod.DNSBTNADD}}</button>
+            <button type="button" id="btn-dnscancel" class="btn btn-default btn-xs mr5 mb10" data-dismiss="modal">{{langmod.DNSCANCEL}}</button>
+        </div> -->
+      </div>
+      <div id="modal-CNAME">
+        <div class="modal-body">
+            <div class="regit"  style="margin-left: 15px; margin-right: 15px; display: block" id="aipv4A">
+                <div class="row">
+                    <label class="col-md-4 control-label" for="">{{langmod.DNSNOAME}}</label>
+                    <label class="col-md-5 control-label" for="" >{{lanmod.DNSLABEL31}}</label>
+                    <label class="col-md-3 control-label" for="">TTL</label>
+                </div>
+                <div class="row ">
+                    <div class="col-lg-4">
+                        <input type="text" class="form-control" id="namereg_CNAME" placeholder="">
+                    </div>
+                    <div class="col-lg-5">
+                        <input type="text" class="form-control" id="valuereg_CNAME" placeholder="">
+                        <input type="hidden" id="domainsel_CNAME" value="">
+                    </div>
+                    <div class="col-lg-3">
+                        <input type="text" class="form-control" id="cachereg_CNAME" placeholder="" value="14400">
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <!-- <div class="modal-footer">
+            <button type="button" id="btn-cname" onclick="return addregdns('CNAME')" class="btn btn-success btn-xs mr5 mb10">{{langmod.DNSBTNADD}}</button>
+            <button type="button" id="btn-dnscancelcname" class="btn btn-default btn-xs mr5 mb10" data-dismiss="modal">{{langmod.DNSCANCEL}}</button>
+        </div> -->
+      </div>
+      <div id="modal-MX">
+        <div class="modal-body">
+            <!-- <div class="panel panel-default">
+                <div class="panel-body">
+                    <h4>{{langmod.DNSBTNADDMX}}</h4>
+                    <br>
+
+                </div>
+            </div> -->
+            <div class="regit"  style="margin-left: 15px; margin-right: 15px; display: block">
+              <div class="row">
+                  <label class="col-md-4 control-label" for="">{{langmod.DNSNOAME}}</label>
+                  <label class="col-md-4 control-label" for="" id="">{{langmod.DNSMAILSERVER}}</label>
+                  <label class="col-md-2 control-label" for="">TTL</label>
+                  <label class="col-md-2 control-label" for="">{{langmod.DNSMXPRIO}}</label>
+
+              </div>
+              <div class="row">
+                  <div class="col-lg-4">
+                      <input type="text" class="form-control" id="mxname" placeholder="">
+                  </div>
+
+                  <div class="col-lg-4">
+                      <input type="text" class="form-control" id="mxvalue" placeholder="">
+                  </div>
+                  <div class="col-lg-2">
+                      <input type="text" class="form-control" id="mxcache" placeholder="">
+                  </div>
+                  <div class="col-lg-2">
+                      <input type="text" class="form-control" id="mxprio" placeholder="">
+                  </div>
+              </div>
+            </div>
+        </div>
+        <!-- <div class="modal-footer">
+            <button type="button" id="btn-mx" onclick="return addregdns('MX')" class="btn btn-success btn-xs mr5 mb10">{{langmod.DNSBTNADDMX}}</button>
+            <button type="button" id="btn-dnscancel" class="btn btn-default btn-xs mr5 mb10" data-dismiss="modal">{{langmod.DNSCANCEL}}</button>
+        </div> -->
+      </div>
+      <div id="modal-TXT">
+        <div class="modal-body">
+            <div class="row regit"  style="margin-left: 15px; margin-right: 15px; display: block" id="txt">
+                <!-- <div class="panel panel-default">
+                    <div class="panel-body">
+                        <h4>{{langmod.DNSBTNADDTXT}}</h4>
+                        <br>
+
+                    </div>
+                </div> -->
+                <div class="row">
+                    <label class="col-md-3 control-label" for="">{{langmod.DNSNOAME}}</label>
+                    <label class="col-md-2 control-label" for="">{{langmod.DNSCACHE}}</label>
+                    <label class="col-md-7 control-label" for="">{{langmod.DNSTXTRECORD}}</label>
+                </div>
+                <div class="row">
+                    <div class="col-lg-3">
+                        <input type="text" class="form-control" id="namereg_TXT" placeholder="">
+                    </div>
+
+                    <div class="col-lg-2">
+                        <input type="text" class="form-control" id="cachereg_TXT" placeholder="">
+                    </div>
+                    <div class="col-lg-7">
+                        <textarea id="valuereg_TXT" class="form-control" rows="5"></textarea>
+                    </div>
+                    <input type="hidden" id="domainsel_TXT">
+                </div>
+            </div>
+        </div>
+        <!-- <div class="modal-footer">
+            <button type="button" id="btn-txt" onclick="return addregdns('TXT')" class="btn btn-success btn-xs mr5 mb10">{{langmod.DNSBTNADDTXT}}</button>
+            <button type="button" id="btn-dnscancel" class="btn btn-default btn-xs mr5 mb10" data-dismiss="modal">{{langmod.DNSCANCEL}}</button>
+        </div> -->
+      </div>
+      <div id="modal-CAA">
+        <div class="modal-body">
+            <div class="row regit"  style="margin-left: 15px; margin-right: 15px; display: block" id="txt">
+                <!-- <div class="panel panel-default">
+                    <div class="panel-body">
+                        <h4>{{langmod.DNSLABEL5}}</h4>
+                        <br>
+
+                    </div>
+                </div> -->
+                <div class="row">
+                    <label class="col-md-3 control-label" for="">{{langmod.DNSNOAME}}</label>
+                    <label class="col-md-2 control-label" for="">{{langmod.DNSLABEL2}}</label>
+                    <label class="col-md-3 control-label" for="">{{langmod.DNSLABEL3}}</label>
+                    <label class="col-md-4 control-label" for="">{{langmod.DNSLABEL4}}</label>
+                </div>
+                <div class="row">
+                    <div class="col-lg-3">
+                        <input type="text" class="form-control" id="namereg_CAA" placeholder="">
+                    </div>
+
+                    <div class="col-lg-2">
+                        <select id="flag_CAA" class="form-control">
+                            <option value="0">0</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-3">
+                        <select id="tag_CAA" class="form-control">
+                            <option value="issue">issue</option>
+                            <option value="issuewild">issuewild</option>
+                            <option value="iodef">iodef</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-4">
+                        <input type="text" class="form-control" id="valuereg_CAA">
+                    </div>
+                    <input type="hidden" id="domainsel_CAA">
+                </div>
+            </div>
+        </div>
+        <!-- <div class="modal-footer">
+            <button type="button" id="btn-caa" onclick="return addregdns('CAA')" class="btn btn-success btn-xs mr5 mb10 btn-reg">{{langmod.DNSLABEL5}}</button>
+            <button type="button" id="btn-dnscancelcaa" class="btn btn-default btn-xs mr5 mb10 btn-reg" data-dismiss="modal">{{langmod.DNSCANCEL}}</button>
+        </div> -->
+      </div>
+      <div id="modal-AFSDB">
+        <div class="modal-body">
+            <div class="row regit"  style="margin-left: 15px; margin-right: 15px; display: block" id="txt4">
+                <!-- <div class="panel panel-default">
+                    <div class="panel-body">
+                        <h4>{{langmod.DNSLABEL5}}</h4>
+                        <br>
+
+                    </div>
+                </div> -->
+                <div class="row">
+                    <label class="col-md-6 control-label" for="">{{langmod.DNSLABEL6}}</label>
+                    <label class="col-md-6 control-label" for="">{{langmod.DNSLABEL7}}</label>
+                </div>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <input type="text" class="form-control" id="afsdbaddress" placeholder="">
+                    </div>
+
+                    <div class="col-lg-6">
+                        <input type="number" class="form-control" id="afsdbtl" placeholder="86400" value="86400">
+                    </div>
+                </div>
+                <div class="row" style="padding-top: 15px">
+                    <label class="col-md-6 control-label" for="">{{langmod.DNSLABEL8}}</label>
+                    <label class="col-md-6 control-label" for="">{{langmod.DNSLABEL9}}</label>
+                </div>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <select class="form-control" id="afsdbsersub">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                        </select>
+                    </div>
+                    <input type="hidden" id="typeregihide" value="AFSDB">
+                    <div class="col-lg-6">
+                        <input type="text" class="form-control" id="afsdbserver" placeholder="">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- <div class="modal-footer">
+            <button type="button" id="btn-afsdb" onclick="return addregdns('AFSDB')" class="btn btn-success btn-xs mr5 mb10 btn-reg">{{langmod.DNSLABEL10}}</button>
+            <button type="button" id="btn-dnscancelafsdb" class="btn btn-default btn-xs mr5 mb10 btn-reg" data-dismiss="modal">{{langmod.DNSCANCEL}}</button>
+        </div> -->
+      </div>
+      <div id="modal-DNAME">
+        <div class="modal-body">
+            <div class="row regit"  style="margin-left: 15px; margin-right: 15px; display: block" id="txt5">
+                <!-- <div class="panel panel-default">
+                    <div class="panel-body">
+                        <br>
+                        <div class="row">
+                            <label class="col-md-6 control-label" for="danmename">{{langmod.DNSLABEL11}}</label>
+                            <label class="col-md-6 control-label" for="danmepunta">{{langmod.DNSTITCNAME}}</label>
+                        </div>
+
+                    </div>
+                </div> -->
+                <div class="row">
+                    <label class="col-md-5 control-label" for="danmename">{{langmod.DNSLABEL11}}</label>
+                    <label class="col-md-5 control-label" for="danmepunta">{{langmod.DNSTITCNAME}}</label>
+                    <label class="col-md-2 control-label" for="danmeprio">{{langmod.DNSSVRTTL}}</label>
+                </div>
+                <div class="row">
+                    <div class="col-lg-5">
+                        <input type="text" class="form-control" id="danmename" placeholder="">
+                    </div>
+
+                    <div class="col-lg-5">
+                        <input type="text" class="form-control" id="danmepunta" placeholder="" value="">
+                    </div>
+                    <div class="col-lg-2">
+                        <input type="text" class="form-control" id="danmeprio" placeholder="" value="">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- <div class="modal-footer">
+            <button type="button" id="btn-dname" onclick="return addregdns('DNAME')" class="btn btn-success btn-xs mr5 mb10 btn-reg">{{langmod.DNSLABEL12}}</button>
+            <button type="button" id="btn-dnscanceladname" class="btn btn-default btn-xs mr5 mb10 btn-reg" data-dismiss="modal">{{langmod.DNSCANCEL}}</button>
+        </div> -->
+      </div>
+      <div id="modal-HINFO">
+        <div class="modal-body">
+            <div class="row regit"  style="margin-left: 15px; margin-right: 15px; display: block" id="txt6">
+                <!-- <div class="panel panel-default">
+                    <div class="panel-body">
+                        <br>
+
+                    </div>
+                </div> -->
+                <div class="row">
+                    <label class="col-md-4 control-label" for="hinfohost">{{langmod.DNSLABEL11}}</label>
+                    <label class="col-md-3 control-label" for="hinfohosttype">{{langmod.DNSLABEL13}}</label>
+                    <label class="col-md-3 control-label" for="hinfoos">{{langmod.DNSLABEL14}}</label>
+                    <label class="col-md-2 control-label" for="hinfotl">{{langmod.DNSLABEL7}}</label>
+                </div>
+                <div class="row">
+                    <div class="col-lg-4">
+                        <input type="text" class="form-control" id="hinfohost" placeholder="">
+                    </div>
+                    <div class="col-lg-3">
+                        <input type="text" class="form-control" id="hinfohosttype" placeholder="" value="">
+                    </div>
+
+                    <div class="col-lg-3">
+                        <input type="text" class="form-control" id="hinfoos" placeholder="" value="">
+                    </div>
+                    <div class="col-lg-2">
+                        <input type="number" class="form-control" id="hinfotl" placeholder="" value="86400">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- <div class="modal-footer">
+            <button type="button" id="btn-hinfo" onclick="return addregdns('HINFO')" class="btn btn-success btn-xs mr5 mb10 btn-reg">{{langmod.DNSLABEL15}}</button>
+            <button type="button" id="btn-dnscanceladhinfo" class="btn btn-default btn-xs mr5 mb10 btn-reg" data-dismiss="modal">{{langmod.DNSCANCEL}}</button>
+        </div> -->
+      </div>
+      <div id="modal-PTR">
+        <div class="modal-body">
+            <div class="row regit"  style="margin-left: 15px; margin-right: 15px; display: block" id="txt7">
+                <!-- <div class="panel panel-default">
+                    <div class="panel-body">
+                        <br>
+
+                    </div>
+                </div> -->
+                <div class="row">
+                    <label class="col-md-5 control-label" for="ptrname">{{langmod.DNSLABEL11}}</label>
+                    <label class="col-md-5 control-label" for="ptrapunta">{{langmod.DNSSVRTARGET}}</label>
+                    <label class="col-md-2 control-label" for="ptrprio">{{langmod.DNSSVRTTL}}</label>
+                </div>
+                <div class="row">
+                    <div class="col-lg-5">
+                        <input type="text" class="form-control" id="ptrname" placeholder="">
+                    </div>
+                    <div class="col-lg-5">
+                        <input type="text" class="form-control" id="ptrapunta" placeholder="" value="">
+                    </div>
+                    <div class="col-lg-2">
+                        <input type="number" class="form-control" id="ptrprio" placeholder="" value="">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- <div class="modal-footer">
+            <button type="button" id="btn-ptr" onclick="return addregdns('PTR')" class="btn btn-success btn-xs mr5 mb10 btn-reg">{{langmod.DNSLABEL16}}</button>
+            <button type="button" id="btn-dnscancelptr" class="btn btn-default btn-xs mr5 mb10 btn-reg" data-dismiss="modal">{{langmod.DNSCANCEL}}</button>
+        </div> -->
+      </div>
+      <div id="modal-NS">
+        <div class="modal-body">
+            <div class="row regit"  style="margin-left: 15px; margin-right: 15px; display: block" id="txt8">
+              <div class="row">
+                  <label class="col-md-5 control-label" for="nsname">{{langmod.DNSLABEL11}}</label>
+                  <label class="col-md-5 control-label" for="nsapunta">{{langmod.DNSSVRTARGET}}</label>
+                  <label class="col-md-2 control-label" for="nsprio">{{langmod.DNSSVRTTL}}</label>
+              </div>
+              <div class="row">
+                  <div class="col-lg-5">
+                      <input type="text" class="form-control" id="nsname" placeholder="">
+                  </div>
+                  <div class="col-lg-5">
+                      <input type="text" class="form-control" id="nsapunta" placeholder="" value="">
+                  </div>
+                  <div class="col-lg-2">
+                      <input type="number" class="form-control" id="nsprio" placeholder="" value="">
+                  </div>
+              </div>
+            </div>
+        </div>
+        <!-- <div class="modal-footer">
+            <button type="button" id="btn-ns" onclick="return addregdns('NS')" class="btn btn-success btn-xs mr5 mb10 btn-reg">{{langmod.DNSLABEL17}}</button>
+            <button type="button" id="btn-dnscancelpns" class="btn btn-default btn-xs mr5 mb10 btn-reg" data-dismiss="modal">{{langmod.DNSCANCEL}}</button>
+        </div> -->
+      </div>
+      <div id="modal-RP">
+        <div class="modal-body">
+            <div class="row regit"  style="margin-left: 15px; margin-right: 15px; display: block" id="txt9">
+                <!-- <div class="panel panel-default">
+                    <div class="panel-body">
+                        <br>
+
+                    </div>
+                </div> -->
+                <div class="row">
+                    <label class="col-md-4 control-label" for="rphost">{{langmod.DNSLABEL11}}</label>
+                    <label class="col-md-6 control-label" for="rpemail">{{langmod.DNSLABEL19}}</label>
+                    <label class="col-md-2 control-label" for="rpcache">{{langmod.DNSLABEL7}}</label>
+                </div>
+                <div class="row">
+                    <div class="col-lg-3">
+                        <input type="text" class="form-control" id="rphost" placeholder="">
+                    </div>
+                    <div class="col-lg-6">
+                        <input type="email" class="form-control" id="rpemail" placeholder="" value="">
+                    </div>
+                    <div class="col-lg-3">
+                        <input type="text" class="form-control" id="rpcache" placeholder="" value="">
+                    </div>
+                </div>
+                <div class="row">
+                    <label class="col-md-4 control-label" for="rptxtrecord">TXT Record</label>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <input type="text" class="form-control" id="rptxtrecord" placeholder="" value="">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- <div class="modal-footer">
+            <button type="button" id="btn-rp" onclick="return addregdns('RP')" class="btn btn-success btn-xs mr5 mb10 btn-reg">{{langmod.DNSLABEL18}}</button>
+            <button type="button" id="btn-dnscancelprp" class="btn btn-default btn-xs mr5 mb10 btn-reg" data-dismiss="modal">{{langmod.DNSCANCEL}}</button>
+        </div> -->
+      </div>
+      <div id="modal-TLSA">
+        <div class="modal-body">
+            <div class="row regit"  style="margin-left: 15px; margin-right: 15px; display: block" id="txt10">
+                <!-- <div class="panel panel-default">
+                    <div class="panel-body">
+                        <br>
+
+                    </div>
+                </div> -->
+                <div class="row">
+                    <label class="col-md-4 control-label" for="tlsaport">{{langmod.DNSSVRPORT}}</label>
+                    <label class="col-md-4 control-label" for="tlsatransport">{{langmod.DNSLABEL20}}</label>
+                    <label class="col-md-4 control-label" for="tlsatransport">TTL</label>
+                </div>
+                <div class="row">
+                    <div class="col-lg-4">
+                        <input type="number" class="form-control" id="tlsaport" placeholder="">
+                    </div>
+                    <div class="col-lg-4">
+                        <input type="text" class="form-control" id="tlsatransport" placeholder="" value="">
+                    </div>
+                    <div class="col-lg-4">
+                        <input type="text" class="form-control" id="tlsattl" placeholder="" value="">
+                    </div>
+                </div>
+                <div class="row" style="margin-top: 10px;">
+                    <label class="col-md-4 control-label" for="tlsaselector">{{langmod.DNSLABEL23}}</label>
+                    <label class="col-md-4 control-label" for="tlsamatchin">{{langmod.DNSLABEL24}}</label>
+                    <label class="col-md-4 control-label" for="tlsahash">{{langmod.DNSLABEL25}}</label>
+                </div>
+                <div class="row">
+                    <div class="col-lg-4">
+                        <input type="number" class="form-control" id="tlsaselector" placeholder="">
+                    </div>
+                    <div class="col-lg-4">
+                        <input type="number" class="form-control" id="tlsamatchin" placeholder="" value="">
+                    </div>
+                    <div class="col-lg-4">
+                        <input type="text" class="form-control" id="tlsahash" placeholder="">
+                    </div>
+                </div>
+                <div class="row" style="margin-top: 10px;">
+                    <label class="col-md-6 control-label" for="tlsaDomain">{{langmod.DNSLABEL21}}</label>
+                    <label class="col-md-6 control-label" for="tlsusage">{{langmod.DNSLABEL22}}</label>
+                </div>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <input type="text" class="form-control" id="tlsaDomain" placeholder="">
+                    </div>
+                    <div class="col-lg-6">
+                        <input type="number" class="form-control" id="tlsusage" placeholder="" value="">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <!-- <div class="modal-footer">
+            <button type="button" id="btn-tlsa" onclick="return addregdns('TLSA')" class="btn btn-success btn-xs mr5 mb10 btn-reg">{{langmod.DNSLABEL26}}</button>
+            <button type="button" id="btn-dnscancelptlsa" class="btn btn-default btn-xs mr5 mb10 btn-reg" data-dismiss="modal">{{langmod.DNSCANCEL}}</button>
+        </div> -->
+      </div>
+      <div id="modal-SRV">
+        <div class="modal-body">
+            <!-- <h4>{{langmod.DNSSVRTITLE}}</h4>
+            <br> -->
+            <div class="row">
+                <label class="col-md-4 control-label" for="">{{langmod.DNSSVRNAME}}</label>
+                <label class="col-md-4 control-label" for="">{{langmod.DNSSVRSYMB}}</label>
+                <label class="col-md-2 control-label" for="">{{langmod.DNSSVRPROT}}</label>
+                <label class="col-md-2 control-label" for="">{{langmod.DNSSVRPRIO}}</label>
+            </div>
+            <div class="row">
+                <div class="col-lg-4">
+                    <input type="text" class="form-control" id="srvname" placeholder="">
+                </div>
+
+                <div class="col-lg-4">
+                    <input type="text" class="form-control" id="srvsymb" placeholder="">
+                </div>
+                <div class="col-lg-2">
+                    <input type="text" class="form-control" id="srvprotocol" placeholder="">
+                </div>
+                <div class="col-lg-2">
+                    <input type="text" class="form-control" id="srvprio" placeholder="">
+                </div>
+            </div>
+            <div class="row" style="margin-top: 10px;">
+                <label class="col-md-2 control-label" for="">{{langmod.DNSSVRWEIG}}</label>
+                <label class="col-md-2 control-label" for="">{{langmod.DNSSVRPORT}}</label>
+                <label class="col-md-6 control-label" for="">{{langmod.DNSSVRTARGET}}</label>
+                <label class="col-md-2 control-label" for="">{{langmod.DNSSVRTTL}}</label>
+            </div>
+            <div class="row">
+                <div class="col-lg-2">
+                    <input type="text" class="form-control" id="srvweight" placeholder="">
+                </div>
+                <div class="col-lg-2">
+                    <input type="text" class="form-control" id="srvport" placeholder="">
+                </div>
+                <div class="col-lg-6">
+                    <input type="text" class="form-control" id="srvtarget" placeholder="">
+                </div>
+                <div class="col-lg-2">
+                    <input type="text" class="form-control" id="srvttl" placeholder="">
+                    <input type="hidden" id="typeregihide" value="SRV">
+                    <input type="hidden" id="domainsel_SRV" value="">
+                </div>
+            </div>
+        </div>
+        <!-- <div class="modal-footer">
+            <button type="button" id="btn-srvreg" onclick="return btnsrvreg('SRV')" class="btn btn-success btn-xs mr5 mb10 btn-reg">{{langmod.DNSSVRBTNADD}}</button>
+            <button type="button" id="btn-dnscancel" class="btn btn-default btn-xs mr5 mb10 btn-reg" data-dismiss="modal">{{langmod.DNSCANCEL}}</button>
+        </div> -->
+      </div>
+    </div>
+{% endif %}
+{% if mod.name == 'mysql_manager' %}
+  <div class="modal inmodal" id="confirmDBDelete" tabindex="-1" role="dialog" aria-labelledby="confirmDBDelete" aria-hidden="true">
+      <div class="modal-dialog" style="width:30vw;">
+          <div class="modal-content animated fadeIn">
+              <div class="modal-header">
+                <h4>Atention!</h4>
+              </div>
+              <div class="modal-body" id="db_confirm_text">
+
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="btndbcontinue">Continue</button>
+              </div>
+          </div>
+      </div>
+  </div>
+{% endif %}
+<div class="modal inmodal" id="modal-changepassusermysql" tabindex="-1" role="dialog" aria-labelledby="modal-changepassusermysql" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content  animated flipInY">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span><span class="sr-only">{{langene.MDCLOSE}}</span>
+                </button>
+                <h4 class="modal-title" id="mySmallModalLabelemail">{{langene.MDCHANPASS}} for <samp id="ttcgpss"></samp></h4>
+            </div>
+            <div class="modal-body">
+                <div class="row" style="margin-top: 10px">
+                    <div class="col-md-3"><label style="margin-left: 5px">{{langmod.DBLABELPASS2}}:</label></div>
+                    <div class="col-md-3"><input type="text" class="form-control" id="newpass2user"  value="r6KnZEQrWA"></div>
+                    <div class="col-md-4">{{langmod.DBLABELRANDON}}   <a href="#"  onclick="return changerrandom('newpass2user')" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{langmod.DBLABELRANDON}}"><i class="fa fa-cog"></i></a>
+                        <div class="btn-group dropdown mb10 mr10">
+                            <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                {{langmod.FTPENCRYTED}}
+                                <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu right animated fadeIn" role="menu" style="margin-left: -48.5px;">
+                                <li>
+                                    <select class="form-control" id="lengthpass" title="{{langmod.FTPLENGTH}}">
+                                        <option value="7" selected> {{langmod.FTPLENGTH}}  7</option>
+                                        <option value="8"> {{langmod.FTPLENGTH}}  8</option>
+                                        <option value="9"> {{langmod.FTPLENGTH}}  9</option>
+                                        <option value="10"> {{langmod.FTPLENGTH}} 10</option>
+                                        <option value="11"> {{langmod.FTPLENGTH}} 11</option>
+                                        <option value="12"> {{langmod.FTPLENGTH}} 12</option>
+                                        <option value="13"> {{langmod.FTPLENGTH}} 13</option>
+                                        <option value="14"> {{langmod.FTPLENGTH}} 14</option>
+                                        <option value="15"> {{langmod.FTPLENGTH}} 15</option>
+                                    </select>
+                                </li>
+                                <li>
+                                    <select class="form-control"  id="typepass" title="{{langmod.FTPTYPE}}" style="margin-top: 5px">
+                                        <option value="1">{{langmod.FTPTYPE}} {{langmod.FTPALF}}</option>
+                                        <option value="2" selected>{{langmod.FTPTYPE}} {{langmod.FTPALFNUM}}</option>
+                                        <option value="3">{{langmod.FTPTYPE}} {{langmod.FTPALFNUMSIG}}</option>
+                                    </select>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <input id="mysqluserpass" type="hidden" value="">
+                <div class="row" style="margin-top: 10px">
+                    <label class="col-md-3  control-label" for="">{{langene.MDCONFPASS}}:</label>
+                    <div class="col-md-3">
+                        <input type="text"  class="form-control" id="newpass2user2" placeholder="{{langene.MDYOURPASS}}">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{langene.MDCLOSE}}</button>
+                <button type="button" class="btn btn-primary" id="btn-changpassusermysql" onclick="return btnchangpassusermysql()">{{langene.MDBTN_SAVE}}</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal inmodal" id="mysqlprocesslist" tabindex="-1" role="dialog" aria-labelledby="mysqlprocesslist" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content   animated flipInY">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span><span class="sr-only">{{langene.MDCLOSE}}</span>
+                </button>
+                <h4 class="modal-title">{{langene.PMTITLEMYSQL}} ({{users}})</h4>
+            </div>
+            <div class="modal-body">
+                <div class="col-md-1"></div>
+                <div class="col-md-10"id="contentmodalplmysql"></div>
+                <div class="col-md-1"></div>
+            </div>
+            <div class="modal-footer">
+
+                <div class="col-md-12 col-sm-12 col-xs-12">
+                    <button type="button" id="btn-processmysql-list-on" class="btn btn-primary"><i aria-hidden="true" class="icomoon-icon-play-3"></i>{{langene.MDAUTOLO}}</button>
+                    <button type="button" id="btn-processmysql-list-off" class="btn btn-warning" style="display: none"><i aria-hidden="true" class="icomoon-icon-pause-2"></i>{{langene.MDPAUSE}}</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{langene.MDCLOSE}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal inmodal" id="modal-newuserpg" tabindex="-1" role="dialog" aria-labelledby="modal-newuserpg" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content animated flipInY">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span><span class="sr-only">{{langmod.PGCLOSE}}</span>
+                </button>
+                <h4 class="modal-title">{{langmod.PGTIBLENEWUSER}}   <samp id="titlebdpg"></samp></h4>
+            </div>
+            <div class="modal-body">
+                <div class="row" style="margin-bottom: 5px">
+                    <div class="col-md-4"><label >{{langmod.PGUSERNAME}}:</label></div>
+                    <div class="col-md-4"><input type="text" class="form-control" id="newuserpg" maxlength="7" placeholder=""></div>
+                </div>
+                <div class="row" style="margin-bottom: 5px">
+                    <div class="col-md-4"><label>{{langmod.PGLABELPASS2}}:</label></div>
+                    <div class="col-md-6">
+                        <div class="row">
+                            <div class="col-md-5"><input type="text" class="form-control" id="newpass1pg"  value="r6KnZEQrWA"></div>
+                            <div class="col-md-7">
+                                <div>
+                                    {{langmod.EELABELRANDON}}   <a href="#"  onclick="return changerrandom('newpass1pg')" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{langmod.EELABELRANDON}}"><i class="fa fa-cog"></i></a>
+                                    <div class="btn-group dropdown mb10 mr10">
+                                        <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                            {{langmod.FTPENCRYTED}}
+                                            <span class="caret"></span>
+                                        </button>
+                                        <ul class="dropdown-menu right animated fadeIn" role="menu" style="margin-left: -48.5px;">
+                                            <li>
+                                                <select class="form-control" id="lengthpass" title="{{langmod.FTPLENGTH}}">
+                                                    <option value="7" selected> {{langmod.FTPLENGTH}}  7</option>
+                                                    <option value="8"> {{langmod.FTPLENGTH}}  8</option>
+                                                    <option value="9"> {{langmod.FTPLENGTH}}  9</option>
+                                                    <option value="10" selected> {{langmod.FTPLENGTH}} 10</option>
+                                                    <option value="11"> {{langmod.FTPLENGTH}} 11</option>
+                                                    <option value="12"> {{langmod.FTPLENGTH}} 12</option>
+                                                    <option value="13"> {{langmod.FTPLENGTH}} 13</option>
+                                                    <option value="14"> {{langmod.FTPLENGTH}} 14</option>
+                                                    <option value="15"> {{langmod.FTPLENGTH}} 15</option>
+                                                </select>
+                                            </li>
+                                            <li>
+                                                <select class="form-control"  id="typepass" title="{{langmod.FTPTYPE}}" style="margin-top: 5px">
+                                                    <option value="1">{{langmod.FTPTYPE}} {{langmod.FTPALF}}</option>
+                                                    <option value="2" selected>{{langmod.FTPTYPE}} {{langmod.FTPALFNUM}}</option>
+                                                    <option value="3">{{langmod.FTPTYPE}} {{langmod.FTPALFNUMSIG}}</option>
+                                                </select>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" style="margin-bottom: 5px">
+                    <div class="col-md-4"><label>{{langmod.PGLABELPASS2}}:</label></div>
+                    <div class="col-md-5"><input type="text" class="form-control" id="newpass2pg" placeholder=""></div>
+                    <input type="hidden" id="dbasehidenpg" value="">
+                </div>
+                <div class="row" id="alertnewdb2pg" style="margin-top: 20px; display: none">
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{langmod.PGCLOSE}}</button>
+                <button type="button" class="btn btn-primary" id="btn-newnewuserpg" onclick="return btnnewnewuserpg()" >{{langmod.PGCREATEUSER}}</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal inmodal" id="modaladdwp" tabindex="-1" role="dialog" aria-labelledby="modaladdwp" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content animated flipInY">
+            <div class="modal-header">
+            </div>
+            <div class="modal-body">
+
+            </div>
+            <div class="modal-footer">
+                <p> </p>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal inmodal" id="modalselectorphp" tabindex="-1" role="dialog" aria-labelledby="modalselectorphp" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content animated flipInY">
+            <div class="modal-header">
+                <h3><strong>{{langmod.SPHPLABEL7}}</strong></h3>
+            </div>
+            <div class="modal-body">
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{langmod.SPHPLABEL5}}</button>
+                <button type="button" class="btn btn-primary" id="btn-changephp2" >{{langmod.SPHPLABEL6}}</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal inmodal" id="modal-changeprivmysql" tabindex="-1" role="dialog" aria-labelledby="modal-changeprivmysql" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content animated flipInY">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span><span class="sr-only">{{langmod.DBCLOSE}}</span>
+                </button>
+                <h4 class="modal-title">{{langmod.DBLABEL17}} </h4>
+                <p>(<small class="font-bold" id="titlebd_edi"></small>)</p>
+                <input type="hidden" id="db_h" >
+                <input type="hidden" id="user_h" >
+                <input type="hidden" id="host_h" >
+            </div>
+            <div class="modal-body">
+                <div>
+                    <div class="ibox">
+                        <div class="ibox-content">
+
+                            <div id="myTabContent2" class="tab-content" style="padding-left: 25px">
+                                <div class="tab-pane fade active in" id="home2" style="margin-top: 15px">
+                                    <div class="row" style="margin-top: 20px">
+                                        <div class="col-md-4"><label>{{langmod.DBLABEL7}}</label></div>
+                                    </div>
+                                    <div class="row" style="margin-top: 15px">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="panel panel-default">
+                                                    <div class="panel-heading">
+
+                                                        <input type="checkbox" id="alldata_edi">  {{langmod.DBLABEL9}}
+
+                                                    </div>
+                                                    <div class="panel-body">
+                                                        <div><input type="checkbox" id="select_edi" value="Y"> SELECT</div>
+                                                        <div><input type="checkbox" id="insert_edi" value="Y"> INSERT</div>
+                                                        <div><input type="checkbox" id="update_edi" value="Y"> UPDATE</div>
+                                                        <div><input type="checkbox" id="delete_edi" value="Y"> DELETE</div>
+                                                        <!--div><input type="checkbox" id="file" value="Y"> FILE</div-->
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-9">
+                                                <div class="panel panel-default">
+                                                    <div class="panel-heading">
+
+                                                        <input type="checkbox" id="allstructure_edi">  {{langmod.DBLABEL16}}
+
+                                                    </div>
+                                                    <div class="panel-body">
+                                                        <div class="row" style="margin-bottom: 5px">
+                                                            <div class="col-md-4"><input type="checkbox" id="create_edi" value="Y"> CREATE</div>
+                                                            <div class="col-md-4"><input type="checkbox" id="alter_edi" value="Y"> ALTER</div>
+                                                            <div class="col-md-4"><input type="checkbox" id="index_edi" value="Y"> INDEX</div>
+                                                        </div>
+                                                        <div class="row" style="margin-bottom: 5px">
+                                                            <div class="col-md-4"><input type="checkbox" id="drop_edi" value="Y"> DROP</div>
+                                                            <div class="col-md-4"><input type="checkbox" id="trigger_edi" value="Y"> TRIGGER</div>
+                                                            <div class="col-md-4"><input type="checkbox" id="showview_edi" value="Y"> SHOW VIEW</div>
+                                                        </div>
+                                                        <div class="row" style="margin-bottom: 5px">
+                                                            <div class="col-md-4"><input type="checkbox" id="createroutine_edi" value="Y"> CREATE ROUTINE </div>
+                                                            <div class="col-md-4"><input type="checkbox" id="alterroutine_edi" value="Y"> ALTER ROUTINE</div>
+                                                            <div class="col-md-4"><input type="checkbox" id="execute_edi" value="Y"> EXECUTE</div>
+                                                        </div>
+                                                        <div class="row" style="margin-bottom: 5px">
+                                                            <div class="col-md-4"><input type="checkbox" id="createview_edi" value="Y"> CREATE VIEW</div>
+                                                            <div class="col-md-4"><input type="checkbox" id="event_edi" value="Y"> EVENT</div>
+                                                            <div class="col-md-4"><input type="checkbox" id="creattemptable_edi" value="Y"> CREATE TEMPORARY TABLES</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-lg-12">
+                                                <div class="ibox collapsed">
+                                                    <div class="ibox-title" style="background-color: #f5f5f5; border-bottom: 1px solid transparent; border-top-left-radius: 3px; border-top-right-radius: 3px;">
+                                                        <h5 class="collapse-link">{{langmod.DBLABEL8}}</h5>
+                                                        <div class="ibox-tools">
+                                                            <a class="collapse-link">
+                                                                <i class="fa fa-chevron-up"></i>
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                    <div class="ibox-content" style="display: block;">
+                                                        <div class="row" style="margin-bottom: 5px">
+                                                            <div class="col-md-4">{{langmod.DBLABEL10}}</div><div class="col-md-2"><input type="number" value="0" id="maxqueryhour_edi" class="form-control"></div>
+                                                            <div class="col-md-4">{{langmod.DBLABEL11}}</div><div class="col-md-2"><input type="number" value="0" id="maxupdhour_edi" class="form-control"></div>
+                                                        </div>
+                                                        <div class="row" style="margin-bottom: 5px">
+                                                            <div class="col-md-4">{{langmod.DBLABEL12}}</div><div class="col-md-2"><input type="number" value="0" id="maxconnechour_edi" class="form-control"></div>
+                                                            <div class="col-md-4">{{langmod.DBLABEL13}}</div><div class="col-md-2"><input type="number" value="0" id="maxuserconnec_edi" class="form-control"></div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <h5>{{langmod.DBLABEL14}}: <small>{{langmod.DBLABEL15}}.</small></h5>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">{{langmod.DBCLOSE}}</button>
+                                        <button type="button" class="btn btn-primary" id="btn-savepriv" >{{langmod.DBLABEL6}}</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

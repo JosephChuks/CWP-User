@@ -1,0 +1,474 @@
+
+console.log();
+let uchip = null;
+let apps_table = null;
+let app_list = JSON.parse('{{mod.app_list|json_encode|raw}}');
+let domain_list = JSON.parse('{{mod.domain_list|json_encode|raw}}');
+let version_list = JSON.parse('{{mod.version_list|json_encode|raw}}');
+$(document).ready(function () {
+    {% if mod.isie == 1 %}
+    uchip = new $.Uchip();
+    {% else %}
+    uchip = new Uchip();
+    {% endif %}
+    renderDomainSelect();
+    renderNodeJSAppList();
+    renderNodeJSList();
+    // emptyEnvVarsAppRender();
+});
+// function emptyEnvVarsAppRender() {
+//     $('#_nodejs_envars_list_header').slideUp('fast');
+//     $('#_nodejs_envars_list_container').html('');
+// }
+function addInitialEnvVar() {
+    uchip.slideToggle('#_filled_envars_nodejs_form', '#_nofilled_envars_nodejs_form', function () {
+        $('#_nodejs_envars_list_container').html('');
+        newEnvVarApp();
+    });
+}
+function newEnvVarApp() {
+    $('#_nodejs_envars_list_header').slideDown('fast');
+    let index = $('#_nodejs_envars_list_container .row-app-form').length + 1;
+    let html_vars = envVarTemplateHTML(index);
+    $('#_nodejs_envars_list_container').append(html_vars);
+}
+function envVarTemplateHTML(index, key, val) {
+    return '<div class="row row-app-form app-env-var-item" id="_nodejs_apps_envar_' + index + '">' +
+        '<div class="col-md-5">' +
+        '<input type="text" value="' + (key === undefined ? '' : key) + '" class="form-control env-var-key">' +
+        '</div>' +
+        '<div class="col-md-5">' +
+        '<input type="text" value="' + (val === undefined ? '' : val) + '" class="form-control env-var-value"">' +
+        '</div>' +
+        '<div class="col-md-2 env-vars-btn-container">' +
+        '<button class="btn btn-danger" onclick="deleteEnvVarApp(this)"><i class="fa fa-trash"></i></button>' +
+        '<button class="btn btn-primary" onclick="newEnvVarApp(this)"><i class="fa fa-plus"></i></button>' +
+        '</div>' +
+        '</div>';
+}
+function renderNodeJSList() {
+    if (version_list.length > 0) {
+        let html_select = '';
+        version_list.forEach(function (version) {
+            html_select += '<option value="' + version.ver + '"' + (version.default === true ? ' selected' : '') + '>' + version.ver + '</option>';
+        });
+        $('#_nodejs_app_form_node').html('<select id="_nodejs_app_form_node_select" data-required="true" class="form-control nodejs-req">' + html_select + '</select>');
+
+    } else {
+        let html_install_ver_first = '<span class="nodejs-select-user-empty" onclick="installNodeJSVerFromAppForm()" id="_apps_form_install_nodejs">' +
+            '<span>First install a NodeJS version</span>' +
+            '<input type="hidden" class="required-data" data-error-place="#_apps_form_install_nodejs" value="">' +
+            '</span>';
+        $('#_nodejs_app_form_node').html(html_install_ver_first);
+    }
+}
+function renderNodeJSAppList() {
+    let html_list = '';
+    console.log('app_list',app_list);
+    if (app_list.length > 0) {
+        let html_content = '';
+        index = 1;
+        app_list.forEach(function (app) {
+            let status_btn = '<button id="_nodejs_apps_status_btn_' + index + '" title="Stop application" data-status="running" onclick="nodeJSAppStatus(this, ' + index + ')" data-toggle="tooltip" data-placement="top" class="btn btn-danger btn-xs btn-status_main"><i class="fa fa-stop"></i></button>';
+            let status_class = 'text-running';
+            let btn_restart = '';
+            if (app.status != 'running') {
+                status_class = 'text-danger';
+                btn_restart = 'style="display:none"';
+                status_btn = '<button id="_nodejs_apps_status_btn_' + index + '" title="Start application" data-status="stoped" onclick="nodeJSAppStatus(this, ' + index + ')" data-toggle="tooltip" data-placement="top" class="btn btn-primary btn-xs btn-status_main"><i class="fa fa-play"></i></button>';
+            }
+            html_content += '<tr class="app-tr-' + app.key + '" id="_nodejs_apps_item_' + index + '" data-key="' + app.key + '" data-cwpkey="' + app.cwp_key + '">' +
+                '<td>' + app.name + '</td>' +
+                '<td>' + app.version + '</td>' +
+                '<td>/home/{{users}}' + app.path + '</td>' +
+                '<td>' + app.extra_info.port + 'x</td>' +
+                '<td class="status-app-container">' +
+                '<i class="fa fa-circle ' + status_class + '" aria-hidden="true"></i> ' +
+                '<span>' + app.status + '</span>' +
+                '</td>' +
+                '<td>' + app.mode + '</td>' +
+                '<td>' +
+                '<div class="nodejs-apps-actions">' +
+                '<button title="{{langmod.LABNODEJS99}}" data-toggle="tooltip" data-placement="top" onclick="editNodeJSApp(\'' + app.key + '\')" class="btn btn-success btn-xs"><i class="fa fa-cogs"></i></button>' +
+                status_btn +
+                '<button ' + btn_restart + ' id="_nodejs_apps_restart_btn_' + index + '" onclick="restartApplication(this, ' + index + ')" title="Restart application" data-toggle="tooltip" data-placement="top" class="btn btn-default btn-xs btn-restart-app"><i class="fa fa-refresh"></i></button>' +
+                '<button class="btn btn-warning btn-xs" title="Delete application" data-toggle="tooltip" data-key="' + app.key + '" data-placement="top" onclick="confirmAppDeletion(this, \'' + app.name + '\',' + index + ')"><i class="fa fa-trash"></i></button>' +
+                '<button class="btn btn-default btn-xs" title="View application log" data-toggle="tooltip" data-placement="top" onclick="viewNodeJSAppLog(\'' + app.name + '\', ' + app.key + ')"><i class="fa fa-file-text-o"></i></button>' +
+                '</div>' +
+                '</td>' +
+                '</tr>';
+            index++;
+        });
+        html_list = '<table style="margin-bottom:" class="table nodejs_apps_table table-striped table-bordered table-hover">' +
+            '<thead>' +
+            '<tr role="row">' +
+            '<th>App name</th>' +
+            '<th style="width:100px">Version</th>' +
+            '<th>Path</th>' +
+            '<th>Port</th>' +
+            '<th style="width:85px">Status</th>' +
+            '<th style="width:85px">Mode</th>' +
+            '<th style="width:160px">Action</th>' +
+            '</tr>' +
+            '</thead>' +
+            '<tbody id="contenttr">' +
+            html_content +
+            '</tbody>' +
+            '</table>';
+        $('#table_nodejs_apps_container').html(html_list);
+        apps_table = $('.nodejs_apps_table').DataTable();
+    } else {
+        html_list = '<div class="nodejs-empty-list-version">' +
+            '<h4>{{langmod.LABNODEJS129}}</h4>' +
+            '</div>';
+        $('#table_nodejs_apps_container').html(html_list);
+    }
+    $('[data-toggle="tooltip"]').tooltip();
+}
+function nodeJSAppStatus(elem, index) {
+    let status = $(elem).data('status');
+    let action = 'stop';
+    let curr_ico = 'fa-stop';
+    let next_ico = 'fa-play';
+    let curr_btn = 'btn-primary';
+    let next_btn = 'btn-danger';
+    let next_status = 'stoped';
+    let next_title = '{{langmod.LABNODEJS101}}';
+    let message = 'stoped';
+    if (status !== 'running') {
+        action = 'start';
+        next_ico = 'fa-stop';
+        curr_ico = 'fa-play';
+        next_btn = 'btn-primary';
+        curr_btn = 'btn-danger';
+        next_status = 'running';
+        next_title = '{{langmod.LABNODEJS102}}';
+        message = 'started'
+    }
+    let tr_app = $('#_nodejs_apps_item_' + index);
+    tr_app.addClass('deleting_tr');
+    tr_app.find('.btn').prop('disabled', true);
+    function resetTR() {
+        tr_app.removeClass('deleting_tr');
+        tr_app.find('.btn').prop('disabled', false);
+    }
+    let app_key = tr_app.data('key');
+    let cwp_key = tr_app.data('cwpkey');
+    uchip.handleButton(elem, curr_ico);
+    handleAppStatus(action + '&cwp_key=' + cwp_key + '&key=' + app_key, function (resp_data) {
+        if (action == 'stop' || (action == 'start' && resp_data.app_status === 'running')) {
+            $(elem).addClass(next_btn).removeClass(curr_btn);
+            $(elem).data('status', next_status);
+            $(elem).attr('title', next_title);
+            $(elem).attr('data-original-title', next_title);
+            updateStatusAppTr(app_key, resp_data.app_status);
+            noti_bubble('{{langmod.LABNODEJS83}}', '{{langmod.LABNODEJS103}} ' + message + ' {{langmod.LABNODEJS104}}', 'success', true, false, '5500', true);
+            uchip.handleButton(elem, next_ico, true);
+        } else {
+            noti_bubble('{{langmod.LABNODEJS82}}', '{{langmod.LABNODEJS105}}', 'error', true, false, '3000', true);
+            uchip.handleButton(elem, curr_ico, true);
+        }
+        resetTR();
+    }, function () {
+        resetTR();
+        uchip.handleButton(elem, curr_ico, true);
+    });
+}
+function showNodeJSForm() {
+    $('#_nodejs_form_title').text('{{langmod.LABNODEJS95}}');
+    uchip.slideToggle('#nodejs_form_window', '#nodejs_app_list', function () {
+        $('#_nodejs_app_form_type').val('new');
+    });
+}
+function cancelNodeJSForm() {
+    if ($('#_nodejs_envars_list_container').is(':visible')) {
+        $('#_nodejs_envvars_collapse').trigger('click');
+    }
+    uchip.slideToggle('#nodejs_app_list', '#nodejs_form_window', function () {
+        $('#nodejs_url_selector_domain').val('');
+        uchip.validator('.nodejs-req', true);
+        $('#nodejs_url_selector_domain').trigger('change');
+        $('#_nodejs_form_domain_selected_').val('');
+        $('#_filled_envars_nodejs_form').hide();
+        $('#_nodejs_envars_list_container').html('');
+        $('#_nofilled_envars_nodejs_form').show();
+        // LEGACY
+        $('#_nodejs_app_desc_name').val('');
+        $('#_nodejs_app_mode').val('development');
+        $('#_nodejs_app_start_file').val('');
+        $('#_nodejs_app_uri').val('');
+        $('#nodejs_app_quick_actions_container').hide();
+        let def_ver = version_list.find(function (version) {
+            return version.default === true;
+        });
+        $('#dirsel').text('/');
+        $('#nodejs_app_quick_actions_container').removeClass('is-running');
+        $('#_nodejs_envars_list_container').html('');
+        if (def_ver !== undefined) {
+            $('#_nodejs_app_form_node_select').val(def_ver.ver);
+        }
+    });
+}
+function deleteEnvVarApp(elem) {
+    if ($('.app-env-var-item').length == 1) {
+        uchip.slideToggle('#_nofilled_envars_nodejs_form', '#_filled_envars_nodejs_form', function () {
+            $(elem).closest('.row-app-form').remove();
+            $('#_nodejs_envars_list_container').html('');
+        });
+    } else {
+        $(elem).closest('.row-app-form').slideUp('fast', function () {
+            $(this).remove();
+        });
+    }
+}
+function renderDomainSelect() {
+    let html_select = '<select class="nodejs-req" data-required="true" id="nodejs_url_selector_domain">' +
+        '<option value="">{{langmod.LABNODEJS119}}</option>';
+    // let found = false;
+    domain_list.forEach(function (dom) {
+        html_select += '<option value="' + dom.domain_label + '">' + dom.domain_label + '</option>';
+    });
+    html_select += '</select>';
+    $('#nodejs_url_selector_select').html(html_select);
+    $("#nodejs_url_selector_domain").select2({
+        placeholder: "{{langmod.LABNODEJS119}}",
+        allowClear: true
+    }).on('select2:select', function (e) {
+        let data = e.params.data;
+        $('#_nodejs_form_domain_selected_').val(data.text);
+    });
+}
+function editNodeJsAppWindow(app_data) {
+    // renderDomainForApps(app_data.user);
+    $('#_nodejs_form_domain_selected_').val(app_data.url);
+    $('#nodejs_url_selector_domain').val(app_data.url);
+    $('#nodejs_url_selector_domain').trigger('change');
+    $('#dirsel').text(app_data.path);
+    $('#_nodejs_path_wrapper .nodejs-select-user-empty').fadeOut('fast', function () {
+        $('#_nodejs_path_selector_wrapper').fadeIn('fast');
+    });
+    $('#_nodejs_app_desc_name').val(app_data.name);
+    $('#_nodejs_app_mode').val(app_data.mode);
+    // $('#_nodejs_app_uri').val(app_data.extra_info.uri === undefined ? '' : app_data.extra_info.uri);
+    // $('#_nodejs_app_port').val(app_data.extra_info.port);
+
+    if (app_data.status === 'running') {
+        $('#nodejs_app_quick_actions_container').addClass('is-running');
+    }
+    if (app_data.npm_install_running === true) {
+        uchip.handleButton('#_npm_install_btn_form', 'fa-angle-right');
+        // resetNPMInstallModal();
+        // $('#modal_npm_install_log').modal('show');
+        // npmInstallLogger(app_data.key);
+    }
+    $('#nodejs_app_quick_actions_container').data('key', app_data.key);
+    $('#nodejs_app_quick_actions_container').data('name', app_data.name);
+    $('#nodejs_app_quick_actions_container').data('cwp-key', app_data.cwp_key);
+    $('#nodejs_app_quick_actions_container').show();
+    $('#_nodejs_app_form_node_select').val(app_data.version);
+    $('#_nodejs_app_start_file').val(app_data.extra_info.startup_file);
+    renderEnvVars(app_data.extra_info.env_vars);
+    uchip.slideToggle('#nodejs_form_window', '#nodejs_loader_window');
+}
+function saveNewNodeJSApp() {
+    if (!uchip.validator('.required-data')) {
+        noti_bubble('{{langmod.LABNODEJS92}}', '{{langmod.LABNODEJS93}}', 'error', true, false, '3000', true);
+    } else {
+        let data_app = getAppDataFromForm();
+        let type_val = $('#_nodejs_app_form_type').val();
+        let data_request = 'type=' + (type_val !== 'new' ? 'editing&key_id=' + type_val : 'new') + '&app=' + JSON.stringify(data_app);
+        $('#_nodejs_apps_loader_title').text('{{langmod.LABNODEJS94}}...');
+        slideToggle('#_nodejs_apps_loader', '#_nodejs_apps_newform_window', function () {
+            sendRequestSaveApp(data_request, function (resp_data) {
+                app_list = resp_data.list;
+                renderNodeJSAppList();
+                cancelFormNodeJSApp();
+            }, function () {
+                slideToggle('#_nodejs_apps_newform_window', '#_nodejs_apps_loader');
+            });
+        });
+    }
+}
+function getAppDataFromForm() {
+    let env_variables = [];
+    $('#_nodejs_envars_list_container .app-env-var-item').each(function () {
+        let key = $(this).find('.env-var-key').val();
+        if (key !== '') {
+            env_variables.push({
+                key: key,
+                value: $(this).find('.env-var-value').val(),
+            });
+        }
+    });
+    return {
+        type: 'node',
+        version: $('#_nodejs_app_form_node_select').val(),
+        name: $('#_nodejs_app_desc_name').val(),
+        mode: $('#_nodejs_app_mode').val(),
+        path: $('#dirsel').text(),
+        user: $("#nodejs_user_selector_").val(),
+        url: $('#nodejs_url_selector_domain').val(),
+        extra_info: {
+            startup_file: $('#_nodejs_app_start_file').val(),
+            uri: $('#_nodejs_app_uri').val(),
+            port: $('#_nodejs_app_port').val(),
+            env_vars: env_variables
+        }
+    }
+}
+function renderEnvVars(env_vars) {
+    let html_vars = '';
+    if (env_vars === undefined || env_vars.length < 1) {
+        $('#_filled_envars_nodejs_form').hide();
+        $('#_nofilled_envars_nodejs_form').show();
+        $('#_nodejs_envars_list_container').html('');
+    } else {
+        $('#_nodejs_envvars_collapse').trigger('click');
+        let index = 1;
+        env_vars.forEach(function (env_var) {
+            // console.log(`${property}: ${env_vars[property]}`);
+            html_vars += envVarTemplateHTML(index, env_var.key, env_var.value);
+            index++;
+        });
+        $('#_nodejs_envars_list_container').html(html_vars);
+        $('#_nofilled_envars_nodejs_form').hide();
+        $('#_filled_envars_nodejs_form').show();
+        // if(!$('#_nodejs_envars_list_container').is(':visible')){
+        //     $('#_nodejs_envvars_collapse').trigger('click');
+        // }
+    }
+}
+function editNodeJSApp(app_key) {
+    $('#_nodejs_apps_loader_title').text('Loading application info, please wait...');
+    $('#_nodejs_app_form_type').val(app_key);
+    uchip.slideToggle('#nodejs_loader_window', '#nodejs_app_list', function () {
+        loadNodeJSAppInfo(app_key, function (resp_data) {
+            $('#_nodejs_form_title').text('{{langmod.LABNODEJS99}}');
+            editNodeJsAppWindow(resp_data.info);
+        }, function () {
+            slideToggle('#_nodejs_apps_list_container', '#_nodejs_apps_loader');
+        });
+    });
+
+}
+function nodeJSAppViewLogInForm() {
+    let key = $('#nodejs_app_quick_actions_container').data('key');
+    let name = $('#nodejs_app_quick_actions_container').data('name');
+    viewNodeJSAppLog(name, key);
+}
+function viewNodeJSAppLog(name, key) {
+    $('#_nodejs_app_logger_lines_qty').val(20);
+    $('#_nodejs_app_logger_refresh_btn').data('key', key);
+    $('#modal_nodejs_app_log_title').text(name + ' log');
+    $('#nodejs_app_log_loader').show();
+    $('#nodejs_app_log_wrapper').hide();
+    $('#modal_nodejs_app_log').modal('show');
+    requestAppLog(key, 20, function (resp) {
+        $('#nodejs_app_log_container').html(resp.log.map(function (log_line) {
+            return '<p>' + log_line + '</p>';
+        }).join(''));
+        $('#nodejs_app_log_loader').fadeOut('fast', function () {
+            $('#nodejs_app_log_wrapper').fadeIn('fast', function () {
+                $("#nodejs_app_log_container p").last().attr("tabindex", -1).focus();
+            });
+        });
+    }, function () {
+        $('#modal_nodejs_app_log').modal('hide');
+    });
+}
+function refeshNodeJSAppLog(elem) {
+    $('#nodejs_app_log_wrapper').fadeOut('fast', function () {
+        $('#nodejs_app_log_loader').fadeIn('fast');
+        let key = $(elem).data('key');
+        let lines = $('#_nodejs_app_logger_lines_qty').val();
+        requestAppLog(key, lines, function (resp) {
+            $('#nodejs_app_log_container').html(resp.log.map(function (log_line) {
+                return '<p>' + log_line + '</p>';
+            }).join(''));
+            $('#nodejs_app_log_loader').fadeOut('fast', function () {
+                $('#nodejs_app_log_wrapper').fadeIn('fast');
+            });
+        }, function () {
+            $('#modal_nodejs_app_log').modal('hide');
+        });
+    });
+}
+
+function confirmAppDeletion(elem, app_name, index) {
+    $('#confirm_app_delete_name').text(app_name)
+    $('#_nodejs_app_confirm_del_btn').unbind('click').click(function () {
+        let tr_delete = $('#_nodejs_apps_item_' + index);
+        tr_delete.addClass('deleting_tr');
+        tr_delete.find('.btn').prop('disabled', true);
+        function resetTR() {
+            tr_delete.removeClass('deleting_tr');
+            tr_delete.find('.btn').prop('disabled', false);
+        }
+        uchip.handleButton(elem, 'fa-trash');
+        $('#modal_app_delete_confirm').modal('hide');
+        let key = $(elem).data('key');
+        sendDeleteApplication(key, function () {
+            tr_delete.slideUp('fast', function () {
+                apps_table.row(this).remove().draw();
+            });
+            app_list.splice(index - 1, 1);
+            calculateQuota();
+            resetTR();
+        }, function () {
+            resetTR();
+            uchip.handleButton(elem, 'fa-trash', true);
+        });
+    });
+    $('#modal_app_delete_confirm').modal('show');
+}
+function sendDeleteApplication(app_key, success, cleaner) {
+    uchip.call('module=nodejs_manager&acc=delete_app', {
+        data: 'key_id=' + app_key,
+        callback: function (response) {
+            if (response.result == 'success') {
+                success(response);
+            } else {
+                let message_error = '{{langmod.LABNODEJS81}}';
+                noti_bubble('{{langmod.LABNODEJS82}}', message_error, 'error', true, false, '3000', true);
+                cleaner();
+            }
+        }
+    });
+}
+function loadNodeJSAppInfo(app_key, success, cleaner) {
+    uchip.call('module=nodejs_manager&acc=nodejs_app_info', {
+        data: 'key_id=' + app_key,
+        callback: function (response) {
+            if (response.result == 'success') {
+                success(response);
+            } else {
+                let message_error = '{{langmod.LABNODEJS81}}';
+                noti_bubble('{{langmod.LABNODEJS82}}', message_error, 'error', true, false, '3000', true);
+                cleaner();
+            }
+        }
+    });
+}
+function requestAppLog(key, lines, success, cleaner) {
+    uchip.call('module=nodejs_manager&acc=get_app_log', {
+        data: 'key=' + key + '&lines=' + lines,
+        callback: function (response) {
+            if (response.result == 'success') {
+                success(response);
+            } else {
+                let message_error = '{{langmod.LABNODEJS81}}';
+                if (response.hasOwnProperty('code')) {
+                    if (response.code == 1) {
+                        message_error = '{{langmod.LABNODEJS116}}';
+                    }
+                }
+                noti_bubble('{{langmod.LABNODEJS82}}', message_error, 'error', true, false, '3000', true);
+                cleaner();
+            }
+        }
+    });
+}
+{% include("/js/modules/nodejs_manager/file_explorer.js.twig") %}
+{% include("/js/modules/nodejs_manager/npm_engine.js.twig") %}
+{% include("/js/modules/nodejs_manager/apps_status.js.twig") %}
+{% include("/js/modules/nodejs_manager/apps_save_update.js.twig") %}

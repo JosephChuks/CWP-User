@@ -1,0 +1,1157 @@
+
+console.log();
+let uchip = null;
+let mailaccounts_list = JSON.parse('{{mod.mailaccounts_list|json_encode|raw}}');
+console.log(mailaccounts_list);
+let forwarders_list = JSON.parse('{{mod.forwarders_list|json_encode|raw}}');
+let forward_quota = JSON.parse('{{mod.fordwars_stats|json_encode|raw}}');
+let pipes_list = JSON.parse('{{mod.pipes_list|raw}}');
+function calculateQuota(){
+  let plan = $('#emaccount_plan').val();
+  $('#emaccountused').text(mailaccounts_list);
+  if(plan >= 0){
+    if(mailaccounts_list == plan){
+      $('#addemailbtn').addClass('disabled');
+      $('#addemailbtn').prop('disabled', true)
+    }else{
+      $('#addemailbtn').removeClass('disabled');
+      $('#addemailbtn').prop('disabled', false)
+    }
+    let percent = ((mailaccounts_list * 100) / plan).toFixed(0);
+    $('#stat-percent-accounts').html('&nbsp;' + percent + '%');
+    let barcolor = getBarColor(percent);
+    $('#baremailind').removeClass();
+    $('#baremailind').addClass(barcolor);
+    $('#baremailind').width(percent + '%');
+  }
+}
+function getBarColor(percent){
+  let classbar = '';
+  if (percent >=26 && percent <=50){
+    classbar = 'progress-bar progress-bar-success';
+  }else if(percent >=51 && percent <=75){
+    classbar = 'progress-bar progress-bar-warning';
+  }else if(percent >75){
+    classbar = 'progress-bar progress-bar-danger';
+  }else{
+    classbar = 'progress-bar';
+  }
+  return classbar;
+}
+function calculateQuotaForw(){
+  $('#forwardused').text(forward_quota.account);
+  let plan = forward_quota.pack;
+  if(plan >= 0){
+    if(forward_quota.account == plan){
+      $('#addemailbtn').addClass('disabled');
+      $('#addemailbtn').prop('disabled', true)
+    }else{
+      $('#addemailbtn').removeClass('disabled');
+      $('#addemailbtn').prop('disabled', false)
+    }
+    let percent = ((forward_quota.account* 100) / plan).toFixed(0);
+    $('#stat_percent_forw').text(percent + '%');
+    let barcolor = getBarColor(percent);
+    $('#barforwind').removeClass();
+    $('#barforwind').addClass(barcolor);
+    $('#barforwind').width(percent + '%');
+  }
+}
+let pipe_table = null;
+function pipeListTable(list){
+  pipes_list = list;
+  let content_html = '';
+  if(pipes_list.length > 0){
+    let table_html = '';
+    let index = 0;
+    pipes_list.forEach(function(pipe){
+      let button_state = '';
+      if(pipe.active == 1){
+          button_state = '<button type="button" class="btn btn-success btn-xs mr5 mb10" data-emailaddress="' + pipe.address + '" data-status="' + pipe.active + '" onclick="return activepipeTwice(this)" style="margin-left: 5px"  title="{{langmod.EMACTIVE}}"><i class="fa fa-check" title="{{langmod.EMACTIVE}}"></i> </button>';
+      }else{
+          button_state = '<button type="button" class="btn btn-warning btn-xs mr5 mb10" data-emailaddress="' + pipe.address + '" data-status="' + pipe.active + '" onclick="return activepipeTwice(this)" style="margin-left: 5px" title="{{langmod.EMSUSPENDED}}"><i class="fa fa-ban" title="{{langmod.EMSUSPENDED}}"></i></button>';
+      }
+      table_html += '<tr id="tr_pipe_' + index + '">' +
+                      '<td>' + (index + 1) + '</td>' +
+                      '<td>' + pipe.address + '</td>' +
+                      '<td>' + pipe.domain + '</td>' +
+                      '<td>' + pipe.php_path + '</td>' +
+                      '<td>' + pipe.script_path + '</td>' +
+                      '<td>' +
+                        '<div class="text-right">' +
+                          button_state +
+                          '<button type="button" class="btn btn-danger btn-xs mr5 mb10" id="delp_button_' + index + '"  onclick="return deletepipe(0,\'' + pipe.address + '\',\'' + pipe.domain + '\',' + index + ')" style="margin-left: 5px" title="{{langmod.EBTNDELETE}}">' +
+                            '<i class="fa fa-trash"></i>' +
+                          '</button>' +
+                        '</div>' +
+                      '</td>' +
+                    '</tr>';
+      index++;
+    });
+    content_html = '<table  class="table table-striped table-bordered table-hover dataTables-example dataTable" id="pipe_data_table" width="100%">' +
+                      '<thead>' +
+                        '<tr role="row">' +
+                            '<th class="per5">#</th>' +
+                            '<th>{{langmod.ETITLEFW}}</th>' +
+                            '<th>{{langmod.ETITLEDOMAIN}}</th>' +
+                            '<th>{{langmod.EMLABEL12}}</th>' +
+                            '<th>{{langmod.EMLABEL14}}</th>' +
+                            '<th>{{langmod.EACTION}}</th>' +
+                        '</tr>' +
+                      '</thead>' +
+                      '<tbody>' +
+                        table_html +
+                      '</tbody>' +
+                    '</table>';
+    $('#pipe_table_container').html(content_html);
+    $('#pipe_data_table').DataTable().destroy();
+    pipe_table = $('#pipe_data_table').DataTable();
+  }else{
+    content_html = '<div class="empty_list"><h4 class="text-success">No email pipes created</h4></div>';
+    $('#pipe_table_container').html(content_html);
+  }
+}
+$("#btn_pipeadd").click(function (){
+    //deletepipe
+    var sw = 0;
+    if($("#forw").val()==''){ sw = 1; $("#forw").css("border-color", "#A80705");}
+    if($("#domainforw").val()==''){ sw = 1; $("#domainforw").css("border-color", "#A80705");}
+    //if($("#phpversionfor").val()==''){ sw = 1; $("#phpversionfor").css("border-color", "#A80705");}
+    if($("#filepipe").val()==''){ sw = 1; $("#filepipe").css("border-color", "#A80705");}
+    if(sw==1){
+        noti_bubble('','{{langmod.EMLABEL15}}','error',false,false,'3000',true);
+        return false;
+    }else{
+        uchip.handleButton("#btn_pipeadd",'fa-plus');
+        // $("#btn_pipeadd").attr('disabled',true);
+        // $("#btn_pipeadd").html('<i class="fa fa-spinner fa-spin"></i>  {{langmod.EMLABEL13}}');
+        uchip.call('module=email_accounts&acc=addpipe', {
+          data: "forw=" + $("#forw").val() + "&domainforw=" + $("#domainforw").val() + "&phpversionfor=" + $("#phpversionfor").val() + "&filepipe=" + $("#filepipe").val(),
+          callback: function(response){
+            if(response.result == 'success'){
+              pipeListTable(response.list);
+              forward_quota.account++;
+              noti_bubble('','{{ langmod.EMLABEL16 }}','success',false,false,'3000',true);
+              calculateQuotaForw();
+              uchip.handleButton("#btn_pipeadd",'fa-plus',true);
+            }else{
+              noti_bubble('{{langmod.EMERROR}}','{{langmod.EMERROR}}','error',false,false,'3000',true);
+            }
+
+          }
+        });
+    }
+    return false;
+});
+let forwarders_table = null;
+function mailForwTable(list){
+  forwarders_list = list;
+  let content_html = '';
+  if(forwarders_list.length > 0){
+    let table_html = '';
+    let index = 0;
+    forwarders_list.forEach(function(forwarder){
+      let button_active = '';
+      if(forwarder.active == 1){
+          button_active = '<button type="button" class="btn btn-success btn-xs mr5 mb10" data-emailaddress="' + forwarder.address + '" data-status="' + forwarder.active + '" onclick="return forwardactiveTwice(this)" style="margin-left: 5px"  title="{{langmod.EMACTIVE}}"><i class="fa fa-check" title="{{langmod.EMACTIVE}}"></i></button>';
+      }else if(forwarder.active == 5){
+          button_active = '<button type="button" class="btn btn-warning btn-xs mr5 mb10" data-emailaddress="' + forwarder.address + '" data-status="' + forwarder.active + '" onclick="return forwardactiveTwice(this)" style="margin-left: 5px"  title="{{langmod.EMSUSPENDED}}"><i class="fa fa-ban" title="{{langmod.EMSUSPENDED}}"></i></button>';
+      }else{
+          button_active = '<button type="button" class="btn btn-warning btn-xs mr5 mb10" disabled  style="margin-left: 5px" title="{{langmod.EMSUSPENDED}}"><i class="fa fa-check" title="{{langmod.EMSUSPENDED}}"></i></button>';
+      }
+      table_html += '<tr id="trfw_' + index + '"  ' + (forwarder.address.charAt(0) == '@' ? ' class="catch-all-record" title="{{langmod.CATCHALLADDRESS}}" data-toggle="tooltip" data-placement="top" aria-hidden="true"' : '') + '>' +
+                      '<td class="">' + (index + 1) + '</td>' +
+                      '<td>' + (forwarder.address.charAt(0) == '@' ? '<i class="fa fa-asterisk" aria-hidden="true"></i>&nbsp;' : '') + forwarder.address + '</td>' +
+                      '<td align="center" id="tdfw_' + index + '" style="width:200px"><div>' + forwarder.goto + '</div></td>' +
+                      '<td align="center">' + forwarder.domain + '</td>' +
+                      '<td align="center">' +
+                        '<div class="text-right">' +
+                          '<button type="button" class="btn btn-primary btn-xs mr5 mb10" data-forward="' + forwarder.address + '" data-goto="' + forwarder.goto + '" data-idtr="' + index + '" onclick="return editforwar(this)" style="margin-left: 5px" title="{{langmod.EMLABEL7}}">' +
+                            '<i class="fa fa-pencil" title="{{langmod.EMLABEL7}}"></i>' +
+                          '</button>'+
+                          button_active +
+                          '<button type="button" class="btn btn-danger btn-xs mr5 mb10" id="delfm_button_' + index + '"  onclick="return forwardelete(0,\'' + forwarder.address + '\',' + index + ')" style="margin-left: 5px" title="{{langmod.EBTNDELETE}}">' +
+                            '<i class="fa fa-trash"></i>' +
+                          '</button>' +
+                        '</div>' +
+                      '</td>' +
+                    '</tr>';
+      index++;
+    });
+    let content_html = '<table  class="table table-striped table-bordered table-hover dataTable" id="table_forw_table" width="100%">' +
+                        '<thead>' +
+                        '<tr role="row">' +
+                            '<th class="per5">#</th>' +
+                            '<th>{{langmod.ETITLEFW}}</th>' +
+                            '<th style="width:200px">{{langmod.ETITLEFWTO}}</th>' +
+                            '<th>{{langmod.ETITLEDOMAIN}}</th>' +
+                            '<th style="width:100px">{{langmod.EACTION}}</th>' +
+                        '</tr>' +
+                        '</thead>' +
+                        '<tbody id="contenttrfo">' +
+                          table_html +
+                        '</tbody>' +
+                    '</table>';
+
+    $('#table_forw_container').html(content_html);
+    $('#table_forw_table').DataTable().destroy();
+    forwarders_table = $('#table_forw_table').DataTable();
+    $('[data-toggle="tooltip"]').tooltip()
+  }else{
+    content_html = '<div class="empty_list"><h4 class="text-success">No email Forwarders created</h4></div>';
+    $('#table_forw_container').html(content_html);
+  }
+}
+function activepipeTwice(elem){
+  let email = $(elem).data('emailaddress');
+  let active = $(elem).data('status');
+  let btn_icon = 'fa-check';
+  let to_switch = 'fa-ban';
+  let class_add = 'btn-warning';
+  let class_rem = 'btn-success';
+  if(active != 1){
+    btn_icon = 'fa-ban';
+    to_switch = 'fa-check';
+    class_rem = 'btn-warning';
+    class_add = 'btn-success';
+  }
+  uchip.handleButton(elem, btn_icon);
+  uchip.call('module=email_accounts&acc=changestpipe', {
+    data: "email=" + email + "&active=" + active,
+    callback: function(response){
+      if(response.hasOwnProperty('result') && response.result == 'success'){
+        let action_type = ''
+        let new_st = 0;
+        if(active == 1){
+          new_st = 5;
+          action_type = '{{langmod.EMLFORWARDDEACTIVE}}';
+        }else{
+          new_st = 1;
+          action_type = '{{langmod.EMLFORWARDACTIVE}}';
+        }
+        uchip.handleButton(elem, to_switch, true);
+        $(elem).data('status', new_st);
+        $(elem).removeClass(class_rem);
+        $(elem).addClass(class_add);
+        // switchEmailST(elem, response.response);
+        noti_bubble(action_type,'{{langmod.EMSUCCT}}','success',false,false,'3000',true);
+      }else{
+        uchip.handleButton(elem, btn_icon, true);
+        noti_bubble('An error occurred','Ups!','error',false,false,'3000',true);
+      }
+
+    }
+  });
+}
+function deletepipe(st,email,dom, index){
+    if(st==0){
+        var strheader = '<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{ langmod.EMLABEL6 }}</span></button><h4 class="modal-title">{{langmod.EWARNING}}</h4><small class="font-bold">{{langmod.EDELETEEMAIL}}</small>';
+        var strbody = '<p class="text-center">'+email+'</p>';
+        var strfooter = '<button type="button" class="btn btn-white" data-dismiss="modal">{{langmod.ENO}}</button><button type="button" class="btn btn-primary" id="btnyesdel" onclick="return deletepipe(1,\'' + email + '\',\'' + dom + '\',' + index + ')">{{langmod.EYES}}</button>';
+        $("#deletemodalmail .modal-header").html(strheader);
+        $("#deletemodalmail .modal-body").html(strbody);
+        $("#deletemodalmail .modal-footer").html(strfooter);
+        $("#deletemodalmail").modal('toggle');
+        return false;
+    }else{
+      uchip.handleButton('#delp_button_' + index, 'fa-trash');
+      $("#deletemodalmail").modal('hide');
+      let tr = $('#tr_pipe_' + index);
+      tr.addClass('deleting_tr');
+      uchip.call('module=email_accounts&acc=deletepipe', {
+        data: "email=" + email + "&domain=" + dom,
+        callback: function(response){
+          if(response.result == 'success'){
+            noti_bubble('{{langmod.EMLPIPEDELETED}}','{{langmod.EMSUCCT}}','success',false,false,'3000',true);
+            tr.slideUp('fast', function(){
+              pipe_table.row(this).remove().draw();
+            });
+
+            forward_quota.account--;
+            calculateQuotaForw();
+          }else{
+              noti_bubble('{{langmod.EMERROR}}','{{langmod.EMERROR}}','error',false,false,'3000',true);
+              uchip.handleButton('#delp_button_' + index, 'fa-trash', true);
+              tr.removeClass('deleting_tr');
+          }
+
+        }
+      });
+    }
+    return false;
+}
+function forwardelete(st,email,tr){
+    if(st==0){
+        var strheader = '<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{ langmod.EMLABEL6 }}</span></button><h4 class="modal-title">{{langmod.EALERTDELEFW}}</h4><small class="font-bold">{{langmod.DBDELETEUSER}}</small>';
+        var strbody = '<p class="text-center">' + email + '</p>';
+        var strfooter = '<button type="button" class="btn btn-white" data-dismiss="modal">{{langmod.ENO}}</button><button type="button" class="btn btn-primary" id="btnyesdel" onclick="return forwardelete(1,\''+email+'\',\''+tr+'\')">{{langmod.EYES}}</button>';
+
+        $("#deletemodalmail .modal-header").html(strheader);
+        $("#deletemodalmail .modal-body").html(strbody);
+        $("#deletemodalmail .modal-footer").html(strfooter);
+        $("#deletemodalmail").modal('toggle');
+        return false;
+    }else if(st==1){
+      $("#deletemodalmail").modal('hide');
+      let button = '#delfm_button_' + tr;
+      uchip.handleButton(button, 'fa-trash');
+      tr = $('#trfw_' + tr);
+      tr.addClass('deleting_tr');
+      uchip.call('module=email_accounts&acc=forwardelete', {
+        data: "email=" + email + "&goto="+$("#forwardersupd").val(),
+        callback: function(response){
+          if(response.result == 'success'){
+            noti_bubble('{{langmod.EMSUCCT}}','{{langmod.EMLFORWARDDELETED}}','success',false,false,'3000',true);
+            // $('#trfw_' + tr).slideUp();
+            tr.slideUp('fast', function(){
+              forwarders_table.row(this).remove().draw();
+            });
+            forward_quota.account--;
+            calculateQuotaForw();
+          }else{
+              uchip.handleButton(button, 'fa-trash', true);
+              tr.removeClass('deleting_tr');
+              noti_bubble('{{langmod.EMERROR}}','{{langmod.EMERROR}}','error',false,false,'3000',true);
+          }
+        }
+      });
+    }
+}
+let mail_accounts_table = null;
+function mailAccountsTable(list){
+  mailaccounts_list = list;
+  let content_html = '';
+  content_html = '<table class="table table-striped email-accounts-table">' +
+                  '<thead>' +
+                      '<tr>' +
+                        '<th class="per5">#</th>' +
+                        '<th>{{langmod.ETITLEEMAIL}}</th>' +
+                        '<th>{{langmod.ETITLEDOMAIN}}</th>' +
+                        '<th>{{langmod.EMLABEL10}}</th>' +
+                        '<th>{{langmod.ESPACE}}</th>' +
+                        '<th class="actions-td" style="width:160px">{{langmod.EACTION}}</th>' +
+                      '</tr>' +
+                  '</thead>' +
+                  '<tbody id="table_email_account">' +
+                  '</tbody>' +
+              '</table>';
+  // console.log('content_html', content_html);
+  $('#table_email_container').append(content_html);
+  $('.email-accounts-table').DataTable().destroy();
+  mail_accounts_table = $('.email-accounts-table').on('processing.dt', function (e, settings, processing) {
+    $('#DataTables_Table_0_processing').hide();
+    if (processing) {
+      $('#accounts_loader').fadeIn('fast');
+      // $('#DataTables_Table_0').fadeOut('fast', function(){
+      //   $('#accounts_loader').fadeIn('fast');
+      // });
+    } else {
+      $('#accounts_loader').fadeOut('fast');
+      // $('#accounts_loader').fadeOut('fast', function(){
+      //   $('#DataTables_Table_0').fadeIn('fast');
+      // });
+    }
+  }).DataTable({
+    serverSide: true,
+    processing: true,
+    ajax: {
+      url: './{{users}}/index.php?module=email_accounts&acc=listemail',
+      type: 'POST'
+    },
+    columnDefs: [
+        {
+          targets: -1,
+          orderable: false
+        }
+    ],
+    columns: [
+      { data: 'index' },
+      { data: 'email' },
+      { data: 'domain' },
+      { render: function ( data, type, row ){
+                  return (row.lastaccess != null ? row.lastaccess : 'Never');
+                }
+      },
+      { render: function ( data, type, row ){
+                  let percent_usage = 0;
+                  if(row.quota > 0){
+                    percent_usage = ((row.usade * 100) / row.quota);
+                    if(percent_usage > 100){
+                      percent_usage = 100;
+                    }
+                  }
+                  let barcolor = getBarColor(percent_usage);
+                  percent_usage = percent_usage % 1 == 0 ? percent_usage : percent_usage.toFixed(2);
+                  let disp_usage = Math.round(((row.usade/1024)/1024));
+                  disp_usage = disp_usage % 1 == 0 ? disp_usage : disp_usage.toFixed(2);
+                  let disp_quota = Math.round(((row.quota/1024)/1024));
+                  disp_quota = disp_quota % 1 == 0 ? disp_quota : disp_quota.toFixed(2);
+                  return '<a href="#" onclick="return ediquotaemail(\'' + row.email + '\',\'' + row.quota + '\')" class="text-center">' +
+                    '<i aria-hidden="true" class="fa fa-pencil-square-o"></i>' +
+                  '</a> ' +
+                    '<span>' + disp_usage + '/' + disp_quota + ' MB ' + percent_usage + '%</span>' +
+                  '<div class="progress progress-mini">' +
+                    '<div style="width: ' + percent_usage + '%;" class="' + barcolor + '" id="baremailind"></div>' +
+                  '</div>';
+                }
+      },
+      { render: function ( data, type, row ){
+                  let st_title = '{{ langmod.EMSUSPENDED }}';
+                  let btn_class = 'btn-success';
+                  let bt_icon = 'fa-check';
+                  if(row.active != 1){
+                    st_title = '{{ langmod.EMACTIVE }}';
+                    btn_class = 'btn-warning';
+                    bt_icon = 'fa-ban';
+                  }
+                  return '<button type="button" class="btn btn-warning btn-xs mr5 mb10" onclick="return autologing(\'' + row.token + '\')" title="{{langmod.EA_006}}" style="margin-right: 5px;margin-bottom:3px"><i class="fa fa-envelope-o" aria-hidden="true"></i></button>'+
+              '<span title="Config mail client" id="config_' + row.index + '" class="btn btn-info btn-xs mr5 mb10" onclick="showConfigMenu(this,\'config_' + row.index +  '\')" data-mailconfig=\'' + JSON.stringify(row) + '\' style="margin-bottom:3px">' +
+                    '<i class="fa fa-gear" aria-hidden="true"></i>' +
+                  '</span>' +
+                  '<button type="button" class="btn btn-primary btn-xs mr5 mb10" onclick="return emailchangepass(\'' + row.email + '\')" title="{{langmod.ECHANGEPASS}}" style="margin-left: 5px"><i class="fa fa-key" title="{{langmod.ECHANGEPASS}}"></i></button>' +
+                  '<button type="button" class="btn ' + btn_class + ' btn-xs mr5 mb10" data-status="' + row.active + '" data-emailaddress="' + row.email + '" onclick="emailactiveTwice(this)" title="' + st_title + '" style="margin-left: 5px">' +
+                    '<i class="fa ' + bt_icon + '"></i>' +
+                  '</button>' +
+                  '<button type="button" class="btn btn-danger btn-xs mr5 mb10" id="delem_button_' + row.index + '" onclick="return emaildelete(0,\'' + row.email + '\',' + row.index + ')" title="{{langmod.EBTNDELETE}}" style="margin-left: 5px"><i class="fa fa-trash" title="{{langmod.EBTNDELETE}}"></i></button>';
+                },
+          className: 'actions-td'
+        },
+      ],
+      deferRender: true
+  });
+}
+$("#btn-updatemodal").click(function (){
+    $("#alertdivforw").hide('blind');
+    if($("#forwardersupd").val()==''){
+        var msj='{{langmod.EFORWDI}}';
+        $("#alertdivforw").html('<div class="alert alert-danger fade in"><i class="glyphicon glyphicon-ban-circle alert-icon "></i> '+msj+'</div>');
+        $("#alertdivforw").show('blind');
+        return false;
+    }else{
+        btnporcess('off','btn-updatemodal','{{ langmod.EMLABEL9 }}');
+        uchip.call('module=email_accounts&acc=updateforwarders', {
+          data: "email="+$("#hiddenemail").val()+"&goto="+$("#forwardersupd").val(),
+          callback: function(response){
+            if(response.result == 'success'){
+                // $("#tdfw"+$("#idtrfw").val()).html($("#forwardersupd").val());
+                mailForwTable(response.list);
+                btnporcess('on','btn-updatemodal','{{ langmod.EBTNEDITMODAL }}');
+                $("#editforwarddomain").modal('hide');
+                noti_bubble('{{langmod.EMUPDOKFORW}}','{{langmod.EMSUCCT}}','success',false,false,'3000',true);
+            }else{
+                btnporcess('on','btn-updatemodal','{{ langmod.EBTNEDITMODAL }}');
+                noti_bubble('{{langmod.EERROR6}}','{{langmod.EMERROR}}','error',false,false,'3000',true);
+            }
+
+          }
+        });
+    }
+});
+function btnaddforwar(){
+    $("#alertforwar").hide();
+    if(($("#forwaraddres").val()=='') || ($("#domainforwar").val()=='') || ($("#forwarders").val()=='')){
+        noti_bubble('{{langmod.EFEILDR}}','{{langmod.EMERROR}}','error',false,false,'3000',true);
+        return false;
+    }else{
+        btnporcess('off','btn-addforwar','{{ langmod.EMLABEL9 }}');
+        uchip.call('module=email_accounts&acc=addforwar', {
+          data: "forwaraddres="+$("#forwaraddres").val()+"&domainforwar="+$("#domainforwar").val()+"&forwarders="+$("#forwarders").val(),
+          callback: function(response){
+            if(response.result != 'success'){
+              noti_bubble('{{langmod.EMERROR}}','{{langmod.EMERROR}}','error',false,false,'3000',true);
+              btnporcess('on','btn-addforwar','{{ langmod.EYES }}');
+              mailForwTable(response.list);
+            }else{
+              noti_bubble('{{langmod.EMLFORWARDCREATED}}','{{langmod.EMSUCCT}}','success',false,false,'3000',true);
+              mailForwTable(response.list);
+              forward_quota.account++;
+              calculateQuotaForw();
+              btnporcess('on','btn-addforwar','{{ langmod.EYES }}');
+              $("#addmailmodal").modal('hide');
+            }
+          }
+        });
+    }
+}
+function btnaddemail(){
+    $("#alertemail").hide('blind');
+    let quotamail = parseInt($("#quotamail").val());
+    if(($("#emailaddres").val()=='') || ($("#domain").val()=='') || ($("#pass").val()=='') || !quotamail === parseInt(quotamail, 10)){
+        if(!quotamail === parseInt(quotamail, 10)){
+          $("#quotamail").addClass('error');
+        }
+        noti_bubble('{{langmod.EFEILDR}}','{{langmod.EMERROR}}','error',false,false,'3000',true);
+        return false;
+    }else{
+        var pass=$("#pass").val();
+        pass=pass.replace('&','||@||');
+        pass=pass.replace('%','|/@/|');
+
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        btnporcess('off','btnaddemail','{{ langmod.EMLABEL9 }}');
+        uchip.call('module=email_accounts&acc=addemail', {
+          data: "email=" + $("#emailaddres").val() + "&domain=" + $("#domain").val() + "&pass=" + pass + "&quotamail=" + quotamail,
+          callback: function(response){
+            if(response.result == 'success'){
+              // mailAccountsTable(response.list);
+              mail_accounts_table.ajax.reload( function(response){
+                mailaccounts_list = response.recordsTotal;
+                calculateQuota();
+              }, false );
+              btnporcess('on','btnaddemail','{{ langmod.EADD }}');
+              noti_bubble('{{langmod.EMSUCCT}}','{{langmod.EMCREATOK}}','success',false,false,'3000',true);
+              $("#addmailmodal").modal('hide');
+            }else{
+              if((response.code == 4) || (response.code == 5) || (response.code == 6)){
+                  if(response.code == 4){ var msj='{{langmod.EERROR4}}';}
+                  if(response.code == 5){ var msj='{{langmod.EERROR5}}';}
+                  if(response.code == 6){ var msj='{{langmod.EERROR6}}';}
+                  noti_bubble(msj,'{{langmod.EMERROR}}','error',false,false,'3000',true);
+                  btnporcess('on','btnaddemail','{{ langmod.EADD }}');
+              }
+            }
+          }
+        });
+        return false;
+    }
+}
+mailAccountsTable(mailaccounts_list);
+mailForwTable(forwarders_list);
+pipeListTable(pipes_list);
+function forwardactiveTwice(elem){
+  let email = $(elem).data('emailaddress');
+  let st = $(elem).data('status');
+  let btn_icon = 'fa-check';
+  let to_switch = 'fa-ban';
+  let class_add = 'btn-warning';
+  let class_rem = 'btn-success';
+  if(st != 1){
+    btn_icon = 'fa-ban';
+    to_switch = 'fa-check';
+    class_rem = 'btn-warning';
+    class_add = 'btn-success';
+  }
+
+  uchip.handleButton(elem, btn_icon);
+  uchip.call('module=email_accounts&acc=changestforward', {
+    data: "email=" + email + "&st=" + st,
+    callback: function(response){
+      if(response.hasOwnProperty('result') && response.result == 'success'){
+        let action_type = ''
+        let new_st = 0;
+        if(st == 1){
+          new_st = 5;
+          action_type = '{{langmod.EMLFORWARDDEACTIVE}}';
+        }else{
+          new_st = 1;
+          action_type = '{{langmod.EMLFORWARDACTIVE}}';
+        }
+        uchip.handleButton(elem, to_switch, true);
+        $(elem).data('status', new_st);
+        $(elem).removeClass(class_rem);
+        $(elem).addClass(class_add);
+        // switchEmailST(elem, response.response);
+        noti_bubble(action_type,'{{langmod.EMSUCCT}}','success',false,false,'3000',true);
+      }else{
+        uchip.handleButton(elem, btn_icon, true);
+        noti_bubble('An error occurred','Ups!','error',false,false,'3000',true);
+      }
+    }
+  });
+}
+function emailactiveTwice(elem){
+  let email = $(elem).data('emailaddress');
+  let st = $(elem).data('status');
+  let btn_icon = 'fa-ban';
+  let to_switch = 5;
+  if(st != 1){
+    btn_icon = 'fa-check';
+    to_switch = 1;
+  }
+  uchip.handleButton(elem, btn_icon);
+  uchip.call('module=email_accounts&acc=changestemail', {
+    data: "email=" + email+"&st="+st,
+    callback: function(response){
+      if(response.result == 'success'){
+        if(st == 1){
+          action_type = '{{langmod.EDESACTIVEEMAIL}}';
+        }else{
+          action_type = '{{langmod.EACTIVEEMAIL}}';
+        }
+        switchEmailST(elem, to_switch);
+        noti_bubble(action_type,'{{langmod.EMSUCCT}}','success',false,false,'3000',true);
+      }else{
+        let errormess = '{{langmod.ERROSTMAIL}}';
+        if(response.hasOwnProperty('code') && response.code == 'emacc02'){
+          errormess = '{{langmod.ERROSTMAIL2}}';
+        }
+        noti_bubble(errormess,'{{langmod.EMERROR}}','error',false,false,'3000',true);
+      }
+      uchip.handleButton(elem, btn_icon, false);
+    }
+  });
+}
+function emaildelete(st,email,tr){
+    if(st==0){
+        var strheader = '<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{ langmod.EMLABEL6 }}</span></button><h4 class="modal-title">{{langmod.EWARNING}}</h4><small class="font-bold">{{langmod.EDELETEEMAIL}}</small>';
+        var strbody = '<p class="text-center">'+email+'</p>';
+        var strfooter = '<button type="button" class="btn btn-white" data-dismiss="modal">{{langmod.ENO}}</button><button type="button" class="btn btn-primary" id="btnyesdel" onclick="return emaildelete(1,\''+email+'\',\''+tr+'\')">{{langmod.EYES}}</button>';
+
+        $("#deletemodalmail .modal-header").html(strheader);
+        $("#deletemodalmail .modal-body").html(strbody);
+        $("#deletemodalmail .modal-footer").html(strfooter);
+        $("#deletemodalmail").modal('toggle');
+        return false;
+
+    }else{
+      $("#deletemodalmail").modal('hide');
+      let button = '#delem_button_' + tr;
+      uchip.handleButton(button, 'fa-trash');
+      tr = $('#mailaccount_line_' + tr);
+      tr.addClass('deleting_tr');
+      uchip.call('module=email_accounts&acc=emaildelete', {
+        data: "email=" + email + "&st=" + st,
+        callback: function(response){
+          if(response.result == 'success'){
+            noti_bubble('{{langmod.EMDELETEEMOK}}','{{langmod.EMSUCCT}}','success',false,false,'3000',true);
+            tr.slideUp('fast', function(){
+              mail_accounts_table.row(this).remove().draw();
+            });
+            mailaccounts_list--;
+            calculateQuota();
+          }else{
+            uchip.handleButton(button, 'fa-trash', true);
+            tr.removeClass('deleting_tr');
+            noti_bubble('{{langmod.EERROR2}}','{{langmod.EWARNING}}','error',false,false,'3000',true);
+          }
+        }
+      });
+        return false;
+    }
+    return false;
+}
+function autologing(token){
+    console.log(token);
+    var url = "./?module=email_accounts&acc=autologin";
+    var form = $('<form action="' + url + '" method="post" target="_blank">' +
+        '<input type="hidden" name="token" id="token" value="' + token + '" />' +
+        '</form>');
+    $('body').append(form);
+    form.submit();
+
+}
+function activepipe(email,active){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=email_accounts&acc=pipe&op=udp",
+        data:"email="+email+"&active="+active,
+        complete: function(datos){
+            //console.log(datos.responseText);
+            $('#dataTables-pipe').DataTable().ajax.reload( function ( json ) {
+
+            } );
+            noti_bubble('','{{langmod.EMLABEL16}}','success',false,false,'3000',true);
+            return false;
+        }
+    });
+}
+function updatelistemail(){
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=email_accounts&acc=updatelistemail",
+        complete: function (datos) {
+            $("#contenttr").html(datos.responseText);
+            return false;
+        }
+    });
+    return false;
+}
+function switchEmailST(elem, response){
+  let icon = $(elem).find('i');
+  $(elem).data('status', response);
+  if(response != 1){
+    $(elem).removeClass('btn-success');
+    $(elem).addClass('btn-warning');
+    icon.removeClass('fa-check');
+    icon.addClass('fa-ban');
+  }else{
+    $(elem).removeClass('btn-warning');
+    $(elem).addClass('btn-success');
+    icon.addClass('fa-check');
+    icon.removeClass('fa-ban');
+  }
+}
+function emailactive(email,st){
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=email_accounts&acc=changestemail",
+        data: "email=" + email+"&st="+st,
+        complete: function (datos) {
+            $('#dataTables-examplemail').DataTable().ajax.reload( function ( json ) {
+
+            } );
+            if(datos.responseText==5){ noti_bubble('{{langmod.EDESACTIVEEMAIL}}','{{langmod.EMSUCCT}}','success',false,false,'3000',true); }
+            if(datos.responseText==1){ noti_bubble('{{langmod.EACTIVEEMAIL}}','{{langmod.EMSUCCT}}','success',false,false,'3000',true); }
+            return false;
+        }
+    });
+}
+function btncancelemail(){
+    $("#addmailmodal").modal('hide');
+}
+function changerrandom(inputdiv, elem){
+    $(elem).hide();
+    $('.generator_loader').show();
+    var long = $(elem).parent().find("#lengthpass").val();
+    var typepass = $(elem).parent().find("#typepass").val();
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=email_accounts&acc=changerrandom&long="+long+"&typepass="+typepass,
+        complete: function(datos){
+            $('.generator_loader').hide();
+            $(elem).show();
+            $("#"+inputdiv).val(datos.responseText);
+            if(inputdiv == 'pass1email'){
+              $('#pass1email').pwstrength("forceUpdate");
+              $('#pass2email').val(datos.responseText);
+            }else if(inputdiv == 'pass'){
+              $('#pass').pwstrength("forceUpdate");
+            }
+            copyPass(inputdiv);
+            return false;
+        }
+    });
+    return false;
+}
+$('#modal-changepassemail').on('shown.bs.modal', function (e) {
+
+});
+$(document).ready(function() {
+  {% if mod.isie == 1 %}
+    uchip = new $.Uchip();
+  {% else %}
+    uchip = new Uchip();
+  {% endif %}
+  //
+  var options1 = {};
+  options1.ui = {
+      container: "#changepass_container",
+      showVerdictsInsideProgressBar: true,
+      viewports: {
+          progress: ".pwstrength_viewport_progress"
+      }
+  };
+  options1.common = {
+      debug: false,
+  };
+  $('#pass1email').pwstrength(options1);
+  var table = $('#dataTables-pipe').on( 'processing.dt', function ( e, settings, processing ) {
+    $('#dataTables-pipe_processing').css('display', 'none');
+    if (processing) {
+      $(this).hide();
+      $('#tab-3 .table-loader-cwp').show();
+    } else {
+      $('#tab-3 .table-loader-cwp').hide();
+      $(this).show();
+    }
+  }).DataTable({
+      "processing": true,
+      "bProcessing": true,
+      "bServerSide": true,
+      'iDisplayLength': 25,
+      "ajax": {
+          "url": "./{{users}}/index.php?module=email_accounts&acc=pipe&op=list",
+          "type": "POST"
+      },
+      responsive: true
+  });
+});
+$('#modal-changepassemail').on('hidden.bs.modal', function (e) {
+  $('#pass1email').val('');
+  $('#pass2email').val('');
+})
+function refreshList(){
+  $.ajax({
+      type: "POST",
+      url: "./{{users}}/index.php?module=email_accounts&acc=listemail",
+      complete: function(datos){
+          $('#DataTables_Table_0').DataTable().ajax.reload( function ( json ) {
+
+          } );
+
+          noti_bubble('{{langmod.EMSUCCT}}','{{langmod.EMCREATOK}}','success',false,false,'3000',true);
+          refrespanelnew('email_accounts');
+          btnporcess('on','btnaddemail','{{ langmod.EADD }}');
+          $("#addmailmodal").modal('hide');
+          return false;
+      }
+  });
+}
+function chancetabemail(sw){
+    $('.mail-tabs .nav-tabs a.active').removeClass('active');
+    if(sw==0){
+        $("#indemail").show();
+        $("#indforw").hide();
+    }else{
+        $("#indforw").show();
+        $("#indemail").hide();
+    }
+}
+$('#editforwarddomain').on('hidden.bs.modal', function (e) {
+  // $('#forwardersupd').tagsinput('destroy');
+
+})
+function editforwar(elem){
+    let forward = $(elem).data('forward');
+    let goto = $(elem).data('goto');
+    let idtr = $(elem).data('idtr');
+    var msj='<p><b>{{langmod.ETITLEFW}}:  </b> ' + forward + '</p><input type="hidden" id="hiddenemail" value="' + forward + '"><input type="hidden" id="idtrfw" value="' + idtr + '">';
+    $("#contentmodaludp").html(msj);
+    goto = goto.replace(' ', '');
+    $("#forwardersupd").val(goto);
+    $("#editforwarddomain").modal('toggle');
+    $('#forwardersupd').tagsinput({
+      tagClass: 'cwp-tags-input'
+    });
+    $('#forwardersupd').on('beforeItemAdd', function(event) {
+      if(!validateEmail(event.item)){
+        event.cancel = true;
+        $('#invalid_mail_alert').slideDown();
+        setTimeout(function(){
+          $('#invalid_mail_alert').slideUp();
+        }, 3500);
+      }
+      // event.item: contains the item
+      // event.cancel: set to true to prevent the item getting added
+    });
+    return false;
+}
+function forwardactive(email,st){
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=email_accounts&acc=changestforward",
+        data: "email=" + email+"&st="+st,
+        complete: function (datos) {
+            listforwar();
+            noti_bubble('{{langmod.EMSUCCT}}','{{langmod.EUPDFORW}}','success',false,false,'3000',true);
+            return false;
+        }
+    });
+}
+function ediquotaemail(email,quota){
+    $("#quotaemailmodal").val((quota/1024/1024));
+    $("#quotaemailtitle").html(email);
+    $("#quotaemailhidde").html(email);
+    $("#modal-updquotemail").modal('toggle');
+    return false;
+}
+function emailchangepass(email){
+    $("#labelemail").html(email);
+    $("#modal-changepassemail").modal('toggle');
+    $("#emailpass").val(email);
+    return false;
+}
+function addforwarbtn(){
+    var vheader='';
+    // var vbody='<div class="row"><div class="col-sm-3"><input id="forwaraddres" class="form-control" value="" placeholder="{{ langmod.EALIAS }}"></div><div class="col-sm-3"><select id="domainforwar" class="form-control"><option value="">{{ langmod.ECHOOSE }}</option>';
+    let vbody = '<div>' +
+                  '<div class="mail-add-row">' +
+                    '<div class="form-group mail-add-row-address">' +
+                      '<label>{{langmod.EEMAILH}}</label> ' +
+                      '<input type="text" placeholder="{{ langmod.EALIAS }}" id="forwaraddres" class="form-control">' +
+                    '</div>' +
+                    '<span class="mail-add-row-at">@</span>' +
+                    '<div class="form-group mail-add-row-domain">' +
+                      '<label>Domain</label>' +
+                      '<select id="domainforwar" class="form-control">' +
+                        '<option value="">{{ langmod.ECHOOSE }}</option>' +
+                        '{% for email2 in mod.email2 %}'+
+                          '{% if loop.index	 == 1 %}' +
+                              '<option value="{{ email2.domain }}" selected>{{ email2.domain }}</option>' +
+                          '{% else %} ' +
+                              '<option value="{{ email2.domain }}">{{ email2.domain }}</option>' +
+                          '{% endif %} ' +
+                        '{% endfor %}' +
+                      '</select>' +
+                    '</div>' +
+                  '</div>'+
+                  '<div>'+
+                    '<label class="control-label" for="">Redirects to:</label>' +
+                    '<input type="text" id="forwarders" class="form-control" placeholder="Email address..."></input> {{ langmod.ETITLEF3 }}' +
+                  '</div>' +
+                  '<div class="alert alert-danger alert-dismissable" id="invalid_mail_alert" style="display:none;">' +
+                      '<button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>' +
+                      'Please enter a valid email address.' +
+                  '</div>'+
+                '</div>';
+    // {% for email2 in mod.email2 %}
+    // vbody+='<option value="{{ email2.domain }}">@{{ email2.domain }}</option>';
+    // {% endfor %}
+    // vbody+='</select></div></div><div class="row"><div class="col-sm-12" style=" margin-top: 5px"><textarea id="forwarders" class="form-control" placeholder="email@email.com,email2@email2.com"></textarea> {{ langmod.ETITLEF3 }}</div></div>';
+    var vfooter='<button class="btn btn-default btn-xs mr5 mb10"  id="btncancelforwar" onclick="return btncancelforwar()">{{langmod.ECANDELDOMAIN}}</button>  <button class="btn btn-primary btn-xs mr5 mb10" id="btn-addforwar" onclick="return btnaddforwar()">{{langmod.EADD}}</button>';
+    $("#addmailmodal .modal-header").html('<h4>Add mail forwarder</h4>');
+    $("#addmailmodal .modal-body").html(vbody);
+    $("#addmailmodal .modal-footer").html(vfooter);
+    $("#addmailmodal").modal('toggle');
+    $('#forwarders').tagsinput({
+      tagClass: 'cwp-tags-input'
+    });
+    $('#forwarders').on('beforeItemAdd', function(event) {
+      if(!validateEmail(event.item)){
+        event.cancel = true;
+        $('#invalid_mail_alert').slideDown();
+        setTimeout(function(){
+          $('#invalid_mail_alert').slideUp();
+        }, 3500);
+      }
+      // event.item: contains the item
+      // event.cancel: set to true to prevent the item getting added
+    });
+    return false;
+}
+function validateEmail(email) {
+  var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  return re.test(email);
+}
+function listforwar(){
+
+}
+function btncancelforwar(){
+    $("#addmailmodal").modal('hide');
+    return false;
+}
+$("#addemailbtn").click(function (){
+    //let password_preset = $(this).data('pass');
+    let password_preset = generatePasswordRand(12,'num');
+    console.log(password_preset);
+    var headermod = '<h4>{{ langmod.EBNTADD }}</h4>';
+    let bodymod = '<div class="">' +
+                      '<div class="mail-add-row">' +
+                        '<div class="form-group mail-add-row-address">' +
+                          '<label>{{langmod.EEMAILH}}</label> ' +
+                          '<input type="text" placeholder="Enter email" id="emailaddres" class="form-control">' +
+                        '</div>' +
+                        '<span class="mail-add-row-at">@</span>' +
+                        '<div class="form-group mail-add-row-domain">' +
+                          '<label>Domain</label>' +
+                          '<select id="domain" class="form-control">' +
+                            '<option value="">{{ langmod.ECHOOSE }}</option>' +
+                            '{% for email2 in mod.email2 %}'+
+                              '{% if loop.index	 == 1 %}' +
+                                  '<option value="{{ email2.domain }}" selected>{{ email2.domain }}</option>' +
+                              '{% else %} ' +
+                                  '<option value="{{ email2.domain }}">{{ email2.domain }}</option>' +
+                              '{% endif %} ' +
+                            '{% endfor %}' +
+                          '</select>' +
+                        '</div>' +
+                      '</div>' +
+                      '<div class="mail-add-row">' +
+                        '<div class="form-group mail-add-row-address">' +
+                          '<label>{{langmod.EPASSW}}</label>' +
+                          '<input id="pass" class="form-control" type="text" value="' + password_preset + '" style="padding-right: 3rem;" placeholder="{{langmod.EPASSW}}">' +
+                          '<span class="mail-add-copy-button" onclick="copyPass(\'pass\')"><i class="fa fa-copy"></i></span>' +
+                        '</div>' +
+                        '<span class="mail-add-row-at">' +
+                          '&nbsp;' +
+                        '</span>' +
+                        '<div class="form-group mail-add-row-domain">' +
+                          '<label>{{langmod.EPASSW}} generator</label>' +
+                          '<div class="mail-password-generator-container">' +
+                            '<a href="#" onclick="return changerrandom(\'pass\', this)" id="generator_button" data-toggle="tooltip" data-placement="top" title="" data-original-title="Change suggested password">' +
+                              '<i class="fa fa-cog" style="font-size: 1.8rem;"></i>' +
+                            '</a>' +
+                            '<i class="fa fa-spinner fa-spin generator_loader" style="display:none;font-size: 1.8rem;"></i>' +
+                            '<div class="btn-group dropdown" id="show_options_button">' +
+                              '<button type="button" class="btn btn-default btn-xs" onclick="openPGOPT()">' +
+                                'Encrypted<span class="caret"></span>' +
+                              '</button>' +
+                              '<div class="mail-password-generator-options pgopt_container" id="pgopt_container">' +
+                                '<span class="mail-password-generator-options-title"><b>Options</b></span>' +
+                                '<span class="mail-password-generator-options-close" onclick="closePGOPT()"><i class="fa fa-window-close"></i></span>' +
+                                '<ul class="right animated fadeIn">' +
+                                  '<li>' +
+                                    '<select class="form-control" id="lengthpass" title="Length" style="margin-bottom: 5px;">' +
+                                      '<option value="7"> Length  7</option>' +
+                                      '<option value="8"> Length  8</option>' +
+                                      '<option value="9"> Length  9</option>' +
+                                      '<option value="10"> Length 10</option>' +
+                                      '<option value="11"> Length 11</option>' +
+                                      '<option value="12" selected=""> Length 12</option>' +
+                                      '<option value="13"> Length 13</option>' +
+                                      '<option value="14"> Length 14</option>' +
+                                      '<option value="15"> Length 15</option>' +
+                                    '</select>' +
+                                  '</li>' +
+                                  '<li>' +
+                                    '<select class="form-control" id="typepass" title="Type">' +
+                                      '<option value="1">Type Alphabetical</option>' +
+                                      '<option value="2" selected="">Type Alphanumeric</option>' +
+                                      '<option value="3">Type Alphanumerics + Symbols</option>' +
+                                    '</select>' +
+                                  '</li>' +
+                                '</ul>' +
+                              '</div>' +
+                            '</div>' +
+                          '</div>' +
+                          '<div class="alert alert-info mail-password-generator-copied" style="display:none">' +
+                              'Password copied to clipboard.' +
+                          '</div>' +
+                        '</div>' +
+                      '</div>' +
+                      '<div class="mail-add-row">' +
+                        '<div id="pwd-container" class="mail-add-row-address">' +
+                          '<div class="pwstrength_viewport_progress"></div>' +
+                        '</div>' +
+                        '<span class="mail-add-row-at">' +
+                          '&nbsp;' +
+                        '</span>' +
+                        '<div class="form-group mail-add-row-address">' +
+                          '<label>Quota {{ langmod.EMLABEL8 }}</label> ' +
+                          '<input type="text" id="quotamail" placeholder="Quota" class="form-control">' +
+                        '</div>' +
+                      '</div>' +
+                    '</div>';
+    var footermod = '<button class="btn btn-default btn-xs mr5 mb10"  id="btn-cancelemail"  onclick="return btncancelemail()">{{langmod.ECANDELDOMAIN}}</button>   <button class="btn btn-primary btn-xs mr5 mb10" id="btnaddemail" onclick="return btnaddemail()">{{langmod.EADD}}</button> ';
+    $("#addmailmodal .modal-header").html(headermod);
+    $("#addmailmodal .modal-body").html(bodymod);
+    $("#addmailmodal .modal-footer").html(footermod);
+
+    var options1 = {};
+    options1.ui = {
+        container: "#pwd-container",
+        showVerdictsInsideProgressBar: true,
+        viewports: {
+            progress: ".pwstrength_viewport_progress"
+        }
+    };
+    options1.common = {
+        debug: false,
+    };
+    $('#pass').pwstrength(options1);
+
+    $("#addmailmodal").modal('toggle');
+
+});
+function hideOnClickOutside(selector, second){
+  let forhide = false;
+  if(second === undefined){
+    second = '#show_options_button';
+    forhide = true;
+  }
+  function outsideClickListener(event){
+    $target = $(event.target);
+    if (!$target.closest(selector).length && !$target.closest(second).length  && $(selector).is(':visible')) {
+      if(forhide){
+        $(selector).hide();
+      }else{
+        $(selector).remove();
+      }
+
+        removeClickListener();
+    }
+  }
+
+  function removeClickListener(){
+    document.removeEventListener('click', outsideClickListener)
+  }
+
+  document.addEventListener('click', outsideClickListener)
+}
+function closePGOPT(){
+  $('.pgopt_container').slideUp();
+}
+function openPGOPT(){
+  if($('.pgopt_container').is(':visible')){
+    closePGOPT();
+  }else{
+    $('.pgopt_container').slideDown();
+    hideOnClickOutside('.pgopt_container');
+  }
+}
+function copyPass(elem){
+  let field = document.getElementById(elem);
+  field.select();
+  document.execCommand('copy');
+  $('.mail-password-generator-copied').slideDown();
+  setTimeout(function(){
+    $('.mail-password-generator-copied').slideUp();
+  }, 4500);
+}
+function showConfigMenu(elem, id_elem){
+  let elem_data = $(elem).data('mailconfig');
+  let html_config = '<div class="mail-config-menu ' + id_elem + '"><div class="mail-config-menu-container"><h3>Windows live mail configuration</h3><ul>' +
+                    '<li><a href="index.php?module=email_accounts&acc=configfile&domain=' + elem_data.domain + '&address=' + elem_data.email + '&type=imap&secure=1">IMAP over SSL/TLS</a></li>' +
+                    '<li><a href="index.php?module=email_accounts&acc=configfile&domain=' + elem_data.domain + '&address=' + elem_data.email + '&type=pop&secure=1">POP3 over SSL/TLS</a></li>' +
+                    '<li><a href="index.php?module=email_accounts&acc=configfile&domain=' + elem_data.domain + '&address=' + elem_data.email + '&type=imap&secure=0">IMAP</a></li> ' +
+                    '<li><a href="index.php?module=email_accounts&acc=configfile&domain=' + elem_data.domain + '&address=' + elem_data.email + '&type=pop&secure=0">POP3 (Post Office Protocol v3)</a></li>' +
+                    '</ul></div></div>';
+  $(elem).parent().prepend(html_config);
+  hideOnClickOutside('.' + id_elem, '#' + id_elem);
+}
+
+$("#domainforw").change(function (){
+    $.ajax({
+        type: "POST",
+        url: "./{{ users }}/index.php?module=email_accounts&op=typephp&acc=pipe",
+        data: "domain="+$("#domainforw").val(),
+        complete: function(datos){
+            return false;
+        }
+    });
+});
+
+$("#btn-savequotaemail").click(function () {
+    if($("#quotaemailmodal").val()==''){
+        noti_bubble('{{langmod.EMERROR}}','{{langmod.EMERROR2}}','error',false,true,'3000',true);
+        return false;
+    }else{
+        $("#btn-savequotaemail").attr('disabled',true);
+        $("#btn-savequotaemail").addClass('disabled');
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=email_accounts&acc=updquotaemail",
+            data: "email=" + $("#quotaemailtitle").html() + "&quota=" + (($("#quotaemailmodal").val()*1024)*1024),
+            complete: function (datos) {
+                refreshList();
+                $("#modal-updquotemail").modal('hide');
+                noti_bubble('{{langmod.EMSUCCT}}','{{langmod.EMUPDOK}}','success',false,false,'3000',true);
+                $("#btn-savequotaemail").attr('disabled',false);
+                $("#btn-savequotaemail").removeClass('disabled');
+                return false;
+            }
+        })
+    }
+});
+$("#btn-changpassemail").click(function (){
+    btnporcess('off','btn-changpassemail','{{ langmod.EMLABEL9 }}');
+    if(($("#pass1email").val()=='') && ($("#pass1email").val()=='')) {
+        noti_bubble('{{langmod.EMERROR}}','{{langmod.EFEILDR}}','error',false,true,'3000',true);
+        btnporcess('on','btn-changpassemail','{{ langmod.EBTCSAVE }}');
+        return false;
+    }else if( $("#pass1email").val() != $("#pass2email").val()){
+        noti_bubble('{{langmod.EMERROR}}','{{langmod.EERROR1}}','error',false,true,'3000',true);
+        btnporcess('on','btn-changpassemail','{{ langmod.EBTCSAVE }}');
+        return false;
+    }else{
+      uchip.call('module=email_accounts&acc=changpassemail', {
+        data: "email="+$("#emailpass").val()+"&pass1email="+ btoa($("#pass1email").val()),
+        callback: function(response){
+          if(response.result == 'success'){
+              $("#modal-changepassemail").modal('hide');
+              noti_bubble('{{langmod.EMSUCCT}}','{{langmod.EMCHANGEPASSOK}} <b>'+$("#emailpass").val()+'</b>','success',false,false,'3000',true);
+              btnporcess('on','btn-changpassemail','{{ langmod.EBTCSAVE }}');
+          }else{
+              if(response.code==7){var msj='{{langmod.ERROR7}}'}
+              if(response.code==8){var msj='{{langmod.ERROR8}}'}
+              noti_bubble('{{langmod.EMERROR}}',+msj,'error',false,false,'3000',true);
+              btnporcess('on','btn-changpassemail','{{ langmod.EBTCSAVE }}');
+              return false;
+          }
+        }
+      });
+        return false;
+    }
+});

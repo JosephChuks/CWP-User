@@ -1,0 +1,196 @@
+
+console.log();
+let fsl_list = JSON.parse('{{mod.fsl_account_list|json_encode|raw}}');
+let uchip = null;
+let fsl_table = null;
+$(document).ready(function() {
+    uchip = new Uchip();
+    list();
+});
+function list() {
+    $.ajax({
+        type: "POST",
+        url: "?module=files_system_lock&acc=listprotect",
+        contentType: "application/json",
+        complete: function (datos) {
+            var linejson = JSON.parse( datos.responseText );
+            //alert(linejson.aaData);
+            var str = linejson.aaData;
+            //console.log(Object.keys(str));
+            var trtable='';
+            $.each(str, function( index, value ) {
+                var domain = value.domain;
+                var type = value.type;
+                var path = value.path;
+                var st = value.st;
+                var code = value.code;
+                if (st == 0){
+                    var newst='<h2><span class="badge badge-warning"><i class="fa fa-lock"></i> {{ langmod.FPLABEL11 }}</span></h2>';
+                }else{
+                    var newst='<h3><span class="badge badge-default"><i class="fa fa-unlock"></i> {{ langmod.FPLABEL12 }}</span></h3>';
+                }
+                var addbtn='';
+                if(type=='file'){
+                    addbtn='<button type="button" class="btn btn-danger btn-xs mr5 mb10" id="delbtn_'+index+'" onclick="return deletedirproct(\''+Base64.encode(path)+'\','+index+',0)" title="{{ langmod.FPLABEL19 }}" style="margin-left: 5px"><i class="fa  fa-trash"></i></button>';
+                }
+                trtable+='<tr id="trfsl_'+index+'" role="row" class="gradeA odd">\n' +
+                    '<td class="td-table-domain">'+domain+'</td>\n' +
+                    '<td align="center" class="td-table-domain">'+type+'</td>\n' +
+                    '<td class="td-table-domain">'+path+'</td>\n' +
+                    '<td align="center" class="td-table-domain">'+newst+'</td>\n' +
+                    '<td align="center" class="td-table-domain">\n' +
+                    '<button type="button" class="btn btn-primary btn-xs mr5 mb10" id="stbtn_'+index+'" onclick="return changest(\''+Base64.encode(path)+'\','+index+')" title="{{ langmod.FPLABEL19 }}" style="margin-left: 5px"><i class="fa fa-recycle"></i></button>' +addbtn+
+                    '</td>\n' +
+                    '</tr>';
+
+                //alert( index + ": " + value +" "+value.domain);
+            });
+            $('#tbfsl').DataTable().destroy();
+            $("#table_tbody_fsl").html(trtable);
+            $('#tbfsl').DataTable();
+            $("#table_fsl_container").hide();
+            return false;
+        }
+    });
+}
+function sendPath(){
+    var path =Base64.encode($("#pathdomain").val());
+    var name =$("#desc").val();
+    if (path==''){
+        noti_bubble('Cannot lock home directory','','error',false,false,'3000',true);
+        return false;
+    }else{
+        $(".btn-save-fsl").attr('disabled',true);
+        $(".btn-save-fsl").addClass('disabled');
+        var text=$("#sendPath").text();
+        $(".btn-save-fsl").html('<i class="fa fa-spinner fa-spin"></i> '+text);
+        uchip.call('module=files_system_lock&acc=savefiles', {
+            data: 'path='+path+"&name="+name,
+            callback: function(response){
+                list();
+                cancelForm();
+                $(".btn-save-fsl").attr('disabled',fale);
+                $(".btn-save-fsl").removeClass('disabled');
+                $(".btn-save-fsl").html(text);hhh,
+            }
+        });
+    }
+}
+function displaynewForm(){
+    $('#fsl_list_wrapper').slideUp('fast', function(){
+        $('#fsl_form').slideDown('fast');
+    });
+}
+function cancelForm(){
+    $('#fsl_form').slideUp('fast', function(){
+        $('#directoryfsl').val('public_html');
+        $('#fsl_list_wrapper').slideDown('fast');
+    });
+}
+function changest(path,indice){
+    $("#stbtn_"+indice).attr('disabled',true);
+    $("#stbtn_"+indice).addClass('disabled');
+    $("#stbtn_"+indice).html('<i class="fa fa-recycle fa-spin"></i>');
+    $.ajax({
+        type: "POST",
+        data: "path="+path,
+        url: "?module=files_system_lock&acc=changest",
+        complete: function (datos) {
+            noti_bubble('Action executed successfully','','success',false,false,'3000',true);
+            //console.log(datos);
+            list();
+        }
+    });
+}
+function showExplorer(){
+    $('#dir_explorer_domain .modal-body').html('<div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>');
+    $('#dir_explorer_domain').modal('show');
+    callDirList($('#dirsel').text());
+}
+function callDirList(directory){
+    uchip.handleButton('#sel_path_btn', 'fa-thumb-tack');
+    $('#dir_explorer_domain .modal-body').html('<div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>');
+    uchip.call('module=files_system_lock&acc=dirlist', {
+        data: 'basedir=' + directory,
+        callback: function(response){
+            directory = directory.charAt(directory.length-1) == '/' ? directory : directory + '/';
+            renderDirSelector(directory, response);
+            uchip.handleButton('#sel_path_btn', 'fa-thumb-tack', true);
+        }
+    });
+}
+function renderDirSelector(base, dirs){
+    let dirs_html = '';
+    dirs.forEach((dir) => {
+        dirs_html += '<div class="dir-item" data-dir="' + dir + '"><div class="row">' +
+            '<div class="col-md-12">' +
+            '<i class="fa fa-folder-o" aria-hidden="true"></i>' +
+            dir +
+            '</div>' +
+            '</div></div>';
+    });
+    let html = '<div id="dir_list" class="container-fluid" style="display:none">' +
+        '<div class="row">' +
+        '<div class="col-md-12 current-path-div">' +
+        '<label class="form-label">Cuerent path</label>' +
+        '<input type="text" id="current_path_dirsel" class="form-control" value="' + base + '" readonly>' +
+        '</div>' +
+        '</div>' +
+        dirs_html +
+        '</div>';
+    $('#dir_explorer_domain .modal-body').html(html);
+    $('.dir-item').mouseover(function() {
+        $(this).find('.fa').removeClass('fa-folder-o').addClass('fa-folder-open-o');
+    })
+        .mouseout(function() {
+            $(this).find('.fa').removeClass('fa-folder-open-o').addClass('fa-folder-o');
+        }).click(function(){
+        let curpath = $('#current_path_dirsel').val();
+        let dir = $(this).data('dir');
+        if(dir == '..'){
+            let pieces = curpath.split('/');
+            pieces.pop();
+            pieces.pop();
+            dir = pieces.join('/')
+        }else{
+            dir = curpath + dir;
+        }
+        callDirList(dir);
+    });
+    $('#dir_list').slideDown('fast');
+}
+function selCurrentPath(){
+    let curpath = $('#current_path_dirsel').val();
+    $('.dir-sel-btn').attr('data-original-title',curpath);
+    //$('#dirsel').text(curpath);
+    $('#pathdomain').val(curpath);
+    $('#dir_explorer_domain').modal('hide');
+}
+function deletedirproct(path,id,st){
+    if(st==0){
+        $("#pathidden").val(path);
+        $("#idhidden").val(id);
+        var pathhtml=Base64.decode(path);
+        $("#modalDelete .modal-body").html("<p align='center'>"+pathhtml+"</p>");
+        $("#modalDelete").modal('toggle');
+    }else if(st==1){
+        $("#btnyesdel").addClass('disabled');
+        $("#btnyesdel").attr('disabled',true);
+        var text=$("#btnyesdel").text();
+        $("#btnyesdel").html('<i class="fa fa-spinner fa-spin"></i> '+text);
+        uchip.call('module=files_system_lock&acc=delete', {
+            data: 'path=' + $("#pathidden").val(),
+            callback: function(response){
+                console.log(response);
+                $("#trfsl_"+$("#idhidden").val()).hide('blind');
+                $("#modalDelete").modal('toggle');
+                $("#btnyesdel").removeClass('disabled');
+                $("#btnyesdel").attr('disabled',false);
+                $("#btnyesdel").html(text);
+                return false;
+            }
+        });
+        return false;
+    }
+    return false;
+}

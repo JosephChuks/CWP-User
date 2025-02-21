@@ -1,0 +1,171 @@
+let ost_table = null;
+let ost_list = null;
+function ostTable(list){
+    ost_list = list;
+    if(ost_list.length > 0){
+        let html_content = '';
+        let index = 0;
+        ost_list.forEach(function(installation){
+            let insturl = installation.hasOwnProperty('url') ? installation.url : 'http://' + installation.domain;
+            let dbinf = '';
+            if(installation.hasOwnProperty('db_result') && installation.db_result.result != 'success'){
+                let dbtitle = '{{langmod.ADDDBNOT}}: ' + handleDBError(installation.db_result.code);
+
+                dbinf = '<span class="fa-stack fa-xs" title="' + dbtitle + '" data-toggle="tooltip" data-placement="top" aria-hidden="true">' +
+                    '<i class="fa fa-circle fa-stack-2x"></i>' +
+                    '<i class="fa fa-info fa-stack-1x fa-inverse"></i>' +
+                    '</span>';
+            }
+            html_content += '<tr id="tdost_' + index + '">' +
+                '<td>' + installation.domain + '<br>' +
+                '<a href="' + insturl + '" target="_blank">' + insturl + '</a></td>' +
+                '<td><div class="addon-td-item">' + installation.path + '</div></td>' +
+                '<td><div class="addon-td-item">' + installation.version + '</div></td>' +
+                '<td>' +
+                '<div class="database-info-td">' +
+                '<div><b>{{langmod.ADDSHORTDB}}: </b> ' + installation.ostbd + '<br><b>{{langmod.ADDSHORTUDB}}: </b>' + installation.ostuserdb + '</div>' +
+                dbinf +
+                '</div>' +
+                '</td>' +
+                '<td>' +
+                '<div class="addon-td-item text-center"><button title="{{langmod.ADDDWP3}}" data-traddon="#tdost_' + index + '" data-type="osticket" data-installation=\'' + JSON.stringify(installation) + '\' data-toggle="tooltip" data-placement="top" aria-hidden="true" class="btn btn-danger btn-xs btn-delete" onclick="return deleteAddon(this, 0)">' +
+                '<i aria-hidden="true" class="fa fa-trash"></i>' +
+                '</button></div>' +
+                '</td>' +
+                '</tr>';
+            index++;
+        });
+        let table_html = '<table class="table table-striped ost-table">' +
+            '<thead>' +
+            '<tr>' +
+            '<th>{{langmod.ADDDOMLAB}}</th>' +
+            '<th>{{langmod.ADDPATHLAB}}</th>' +
+            '<th>{{langmod.ADDVERLAB}}</th>' +
+            '<th>{{langmod.ADDBDUDB}}</th>' +
+            '<th class="text-center"></th>' +
+            '</tr>' +
+            '</thead>' +
+            '<tbody id="trpaneljl">' +
+            html_content +
+            '</tbody>' +
+            '</table>';
+        $('#table_ost_container').html(table_html);
+        $('.ost-table').DataTable().destroy();
+        ost_table = $('.ost-table').DataTable();
+    }else{
+        $('#table_ost_container').html('<div class="empty_list"><h4 class="text-success">Thre\'s not osTicket installations</h4></div>');
+    }
+    $('[data-toggle="tooltip"]').tooltip();
+}
+function ostInit(){
+    if(ost_list == null){
+        ostReList();
+    }
+}
+function ostReList(){
+    $('#table_ost_container').html(loader);
+    getList('osticket', function(response){
+        ostTable(response);
+    });
+}
+function cancelost(idCollapse){
+    uchip.slideToggle('#ost_list','#ost_form', function(){
+
+    });
+    $('#ostdomain').val('');
+    $('#ostpach').val('ost');
+    $('#ostadminemail').val('');
+    $('#ostadminpass').val('');
+    $('#ostadminpass').pwstrength('forceUpdate');
+    $('#ostpassbd').val('');
+    $('#ostpassbd').pwstrength('forceUpdate');
+    $('#ostbd').val('ost{{mod.extra_data.randbd}}');
+    $('#ostuserdb').val('ost{{mod.extra_data.randbd}}');
+    uchip.validator('.reqost', true);
+    cancelGeneral(idCollapse);
+}
+function addost(){
+    if(uchip.validator('.reqost')){
+        let osturl = $("#osturl").val();
+        let ostdomain = $("#ostdomain").val();
+        let ostbd = $("#ostbd").val();
+        let ostuserdb = $("#ostuserdb").val();
+        let ostpassbd = $("#ostpassbd").val();
+        let ostpach = $("#ostpach").val();
+        let ostadminemail = $("#ostadminemail").val();
+        let ostadminpass = $("#ostadminpass").val();
+        let ostfolderadmin= $("#ostfolderadmin").val();
+        let ostadminuser= $("#ostadminuser").val();
+        let dompath =  $('#ostdomain option:selected').data('path');
+        let domssl =  $('#ostdomain option:selected').data('ssl');
+        let data = 'ostadminuser='+ostadminuser+'&ostfolderadmin='+ostfolderadmin+'&osturl=' + osturl + '&ostdomain=' + ostdomain + '&ostbd=' + ostbd + '&ostuserdb=' + ostuserdb + '&ostpassbd=' + Base64.encode(ostpassbd) +
+            '&ostpach=' + ostpach + '&ostadminemail=' + ostadminemail + '&ostadminpass=' + Base64.encode(ostadminpass) + '&dompath=' + dompath + '&domssl=' + domssl;
+        let details = [
+            {
+                title : '{{langmod.ADDDOMLAB}}',
+                value : ostdomain
+            },
+            {
+                title : '{{langmod.ADDURLLAB}}',
+                value : (domssl == 1 ? 'http' : 'http') + '://' + ostdomain + '/' + ostpach
+            },
+            {
+                title : '{{langmod.ADDPATHLAB}}',
+                value : dompath + '/' + ostpach
+            },
+            {
+                title : '{{langmod.ADDPS03}}',
+                value : ostadminemail
+            },
+            {
+                title : '{{langmod.ADDDWP20}}',
+                value : ostbd
+            },
+            {
+                title : '{{langmod.ADDDBUSERLAB}}',
+                value : ostuserdb
+            }
+        ];
+        confirmInstallation({
+            type: 'osticket',
+            script: 'osticket',
+            data : data,
+            wholepath: dompath + '/' + ostpach,
+            callback: function(response){
+                if(response.hasOwnProperty('result') && response.result == 'success'){
+                    if(response.db_result.result != 'success'){
+                        noti_bubble('{{langmod.ADDINSTALLDET}} ' + handleDBError(response.db_result.code),'{{langmod.ADDATENTION}}!','warning',false,false,'6500',true);
+                    }else{
+                        noti_bubble('{{langmod.ADDINSTALLSUCC}}','{{langmod.SUCCESS}}','success',false,false,'3000',true);
+                    }
+                }else{
+                    noti_bubble('{{langmod.ADDERRORGEN}}','{{langmod.FERROR}}','error',false,false,'3000',true);
+                }
+                var variableHTML='';
+                var modulin='ost';
+                if($("#instaled_"+modulin).html()==undefined){
+                    variableHTML+='<div class="panel panel-default" id="instaled_'+modulin+'">'+
+                        ' <div class="panel-heading white-bg script-container-title">'+
+                        '<a class="accordion-toggle" style="width: 100%" data-toggle="collapse"  ' +
+                        'aria-expanded="true" aria-controls="panel_'+modulin+'_container" ' +
+                        'data-parent="#accordion1" data-target="#panel_'+modulin+'_container">'+
+                        '<h4 class="panel-title"><i class="more-less glyphicon-plus font-weight-bolder"></i></h4>' +
+                        '<h4 class="panel-title">osTicket Installations</h4></a></div>' +
+                        '<div id="panel_'+modulin+'_container"  class="panel-collapse collapse">' +
+                        '<div class="panel-body" id="table_'+modulin+'_container"><div class="table_cron_loader"><span>' +
+                        '<i class="fa fa-circle-o-notch fa-spin"></i></span></div></div></div></div>'
+                    $( "#accordion1" ).append( variableHTML );
+                    $(".accordion-toggle").click(function(){
+                        $("#"+$(this).prop('data-target')).slideToggle('slow');
+                    });
+                }
+                $("#instaledEmpty").hide();
+                ostTable(response.list);
+                cancelost();
+            },
+            details: details
+        });
+    }else{
+        noti_bubble('{{langmod.ADDREQFIELDS}}','{{langmod.FERROR}}','error',false,false,'3000',true);
+    }
+}

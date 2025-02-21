@@ -1,0 +1,141 @@
+    var table;
+    {% if mod.name =='phpini_editor' %}
+
+        //validatetypephp();
+    {% endif %}
+    {% if mod.name =='phpselector' %}
+        //changephp();
+    {% endif %}
+    {% if mod.name =='mysql_manager' %}
+        var table = $('.dataTables-example').DataTable({
+            pageLength: {{ confi.LISTROW }},
+            responsive: true,
+            dom: '<"html5buttons"B>lTfgitp',
+            buttons: [
+
+            ]
+        });
+    {% endif %}
+    {% if mod.name =='vdomaincache' and mod.license == 1 %}
+        loaderdatatable();
+    {% endif %}
+    {% if mod.name =='redirect' and mod.license == 1 %}
+
+    {% endif %}
+    {% if mod.name =='reseller' %}
+        // ini_list_accounts(1);
+        // ini_detailreseller();
+        //search_packages();
+    {% endif %}
+    {% if mod.name =='ftp_accounts' %}
+        var table = $('.dataTables-example').DataTable({
+            pageLength: {{ confi.LISTROW }},
+            responsive: true,
+            dom: '<"html5buttons"B>frltip',
+            buttons: [
+
+            ]
+        });
+    {% endif %}
+    {% if mod.name =='mail_autoreply' %}
+        var table = $('.dataTables-example').DataTable({
+            pageLength: {{ confi.LISTROW }},
+            responsive: true,
+            dom: '<"html5buttons"B>frltip',
+            buttons: [
+
+            ]
+        });
+        $('#start_date').datepicker({
+            todayBtn: "linked",
+            keyboardNavigation: false,
+            forceParse: false,
+            calendarWeeks: true,
+            autoclose: true
+        });
+        $('#data_2 .input-group.date').datepicker({
+            todayBtn: "linked",
+            keyboardNavigation: false,
+            forceParse: false,
+            calendarWeeks: true,
+            autoclose: true
+        });
+
+        $('.clockpicker').clockpicker();
+        $('.i-checks').iCheck({
+            checkboxClass: 'icheckbox_square-green',
+            radioClass: 'iradio_square-green'
+        });
+    {% endif %}
+    {% if mod.name =='domains' %}
+        var table = $('.dataTables-example').DataTable({
+        pageLength: {{ confi.LISTROW }},
+        responsive: true,
+        dom: '<"html5buttons"B>frltip',
+        buttons: [
+
+        ]
+    });
+    {% endif %}
+    {% if mod.name =='spamexperts' %}
+    var table = $('.dataTables-example').DataTable({
+        pageLength: {{ confi.LISTROW }},
+        responsive: true,
+        dom: '<"html5buttons"B>frltip',
+        buttons: [
+
+        ]
+    });
+    {% endif %}
+    {% if mod.name =='subdomains' %}
+        var table = $('.dataTables-example').DataTable({
+            pageLength: {{ confi.LISTROW }},
+            responsive: true,
+            dom: '<"html5buttons"B>frltip',
+            buttons: [
+
+            ]
+        });
+    {% endif %}
+
+    {% if mod.name =='backups' %}
+
+    {% endif %}
+    {% if mod.name =='crontab' %}
+        track_errors();
+    {% endif %}
+
+    $("#top-search").on("keyup", function() {
+        var value = $(this).val().toLowerCase();
+        if(value != ''){
+            $('.searchmenu').addClass('active');
+            $('.searchmenu ul').addClass('in');
+            $('.searchmenu ul').css('height','auto');
+            $("div.float-e-margins").show();
+            //$('.ibox-content').css('display','block');
+        }else{
+            $('.searchmenu').removeClass('active');
+            $('.searchmenu ul').removeClass('in');
+            $('.searchmenu ul').css('height','0px');
+            $("div.float-e-margins").show();
+        }
+        $("#side-menu li.searchmenu, #side-menu li.search").filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+        });
+        $("div.ibox-content div a").filter(function() {
+            $(this).parent().toggle($(this).text().toLowerCase().indexOf(value) > -1);
+        });
+        $("div.float-e-margins div.ibox-content").each(function(){
+            var bandera=0;
+            $(this).find(".col-md-3").each(function(){
+                //console.log($(this).text());
+                if(!$(this).is(':hidden') && $(this).text()!=''){
+                    bandera=1;
+                }
+            });
+            //console.log(bandera);
+            if(bandera==0){
+                $(this).parent().hide();
+            }
+        });
+    });

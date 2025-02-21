@@ -1,0 +1,256 @@
+
+console.log();
+let uchip = null;
+
+$(document).ready(function() {
+    uchip = new Uchip();
+    listrediretmod();
+});
+$("#domain").change(function () {
+    let domainR =  $("#domain").val();
+    $('#dirsel').html('<i class="fa fa-spinner fa-spin"></i>');
+    uchip.call('module=redirect&acc=checkpath', {
+        data: 'domain=' + domainR,
+        callback: function(response){
+            if(response.status=='OK'){
+                if (domainR!='alldomains'){
+                    $(".redirection").removeClass('disabled');
+                    $(".redirection").attr('disabled',false);
+                }else{
+                    $(".redirection").addClass('disabled');
+                    $(".redirection").attr('disabled',true);
+                }
+                $('#dirsel').html(response.rest);
+            }
+        }
+    });
+});
+
+function listrediretmod(){
+    $('#tabRedirect').DataTable( {
+        serverSide: true,
+        processing: true,
+        "type": "POST",
+        "ajax": "./{{ users }}/index.php?module=redirect&acc=list",
+        "columns": [
+            { render: function ( obj, type, row ){
+                //return row.doname;
+                    var alldomain ='alldomain';
+                    if(row.doname!='|@|'){ return row.doname; }else{ return alldomain;}
+            } },
+            {
+                render: function ( obj, type, row ){  if(row.path!=''){ return '<a href="http://'+row.doname+row.path+'" target="_blank">'+row.path+'</a>'; }else{ return '';}}
+                //"data": "path"
+            },
+            { render: function ( obj, type, row ){  return '<div class="text-center">- - -</div>';} },
+            { "data": "redirect" },
+            {render: function ( obj, type, row ){ if(row.type=='permanent'){ return '<div class="text-center">301</div>'; }else{ return '<div class="text-center">302</div>';} }},
+            { "data": "type" },
+            {
+                render: function ( obj, type, row ){ if(row.redirection=='redirectwithout'){ return '<div class="text-center"><i class="fa fa-check " style="color: green"></i></div>'; }else{ return '';} }
+            },
+            {
+                render: function ( obj, type, row ){ if(row.wildCard==1){ return '<div class="text-center"><i class="fa fa-check" style="color: green"></i></div>'; }else{ return '<div class="text-center">---</div>';} }
+                //"data": "wildCard"
+            },
+            { render: function ( obj, type, row ){
+                    var domian=row.domain;
+                    var hashdomain = domian.replace(".", "");
+                    return '<div class="text-center"><button type="button" class="btn btn-secundary btn-sm text-center"  onclick="return viewhtaccess(\''+domian+'\')"><i class="fa fa-search"></i></button> <button type="button" class="btn btn-warning btn-sm text-center" id="'+hashdomain+'" onclick="return deteleRedirect(0,\''+domian+'\',\''+hashdomain+'\')">{{langmod.RDLABEL34}}</button></div>';
+                }
+            }
+        ]
+    });
+    return false;
+}
+function showNewRediretForm(){
+    uchip.slideToggle('#form_redirect','#tbl_list');
+    $("#domain").addClass('disabled');
+    $("#domain").attr('disabled',true);
+    $("#domain").html('<i class="fa fa-spinner fa-spin"></i>');
+    $("#dirsel").html('/');
+    uchip.call('module=redirect&acc=searchdomain', {
+        callback: function(response){
+            //console.log(response);
+            if(response.status=='OK'){
+                let arraydomain =response.rest;
+                let op='<option selected="" value="alldomains">{{ langmod.RDLABEL42 }}</option>';
+                arraydomain.forEach(function (domain) {
+                    op+='<option  value="'+domain+'">'+domain+'</option>';
+                });
+                $(".redirection").addClass('disabled');
+                $(".redirection").attr('disabled',true);
+                $("#domain").html(op);
+                $("#domain").removeClass('disabled');
+                $("#domain").attr('disabled',false);
+            }else{
+                noti_bubble('{{ langmod.RDLABEL22 }}','{{ langmod.RDLABEL21 }}','error',false,false,'3000',true);
+                $("#domain").removeClass('disabled');
+                $("#domain").attr('disabled',false);
+            }
+        }
+    });
+    //return false;
+}
+function cancelNewForm(){
+    uchip.slideToggle('#tbl_list','#form_redirect', function(){
+
+    });
+}
+function saveNewRedirect(){
+    $("#bp-mysql").css({'background-color':'#FFFFFF'});
+    let type = $('#type').val();
+    let domain = $('#domain').val();
+    let path = $('#path').val();
+    let redirect = Base64.encode($('#redirect').val());
+    let WildCardRedirect = 0;
+    if(!uchip.validator('.typeForm')){
+        
+        return false;
+    }else{
+        $(".btnsave").addClass('disabled');
+        $(".btnsave").attr('disabled',true);
+        if( $('#WildCardRedirect').is(':checked') ) { WildCardRedirect = 1;}else{ WildCardRedirect = 0;}
+
+        let redirection = $('input[name=redirection]:checked', '#myForm').val();
+        let new_domain_data = 'type=' + type + '&domain=' + domain + '&path=' + path + '&redirect=' + redirect+ '&redirection=' + redirection+"&wildCard="+WildCardRedirect;
+
+        uchip.call('module=redirect&acc=addreg', {
+            data: new_domain_data,
+            callback: function(response){
+                $('#tabRedirect').DataTable().destroy();
+                listrediretmod();
+                cancelNewForm();
+                $(".btnsave").removeClass('disabled');
+                $(".btnsave").attr('disabled',false);
+                $("#path").val('');
+                $('#redirect').val('');
+            }
+        });
+    }
+}
+function deteleRedirect(st,domain,sha){
+    if(st==0){
+        var domainTitle='';
+        if (domain=='alldomains'){ domainTitle='{{ langmod.RDLABEL44 }}';}else{domainTitle= domain;}
+        var strheader = '<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button><h4 class="modal-title">{{ langmod.RDLABEL35 }}</h4><small class="font-bold">{{ langmod.RDLABEL36 }}</small>';
+        var strbody = '<p class="text-center">'+domainTitle+'</p>';
+        var strfooter = '<button type="button" class="btn btn-white" data-dismiss="modal">{{ langmod.RDLABEL37 }}</button><button type="button" class="btn btn-primary" id="btnyesdel" onclick="return deteleRedirect(1,\''+domain+'\',\''+sha+'\')">{{ langmod.RDLABEL38 }}</button>';
+
+        $("#deletemodal .modal-header").html(strheader);
+        $("#deletemodal .modal-body").html(strbody);
+        $("#deletemodal .modal-footer").html(strfooter);
+        $("#deletemodal").modal('toggle');
+        return false;
+    }else{
+        $("#deletemodal").modal('hide');
+        var textbtn=$("#"+sha).text();
+        $("#"+sha).attr('disabled',true);
+        $("#"+sha).addClass('disabled');
+        $("#"+sha).html('<i class="fa fa-spinner fa-spin"></i> '+textbtn);
+        uchip.call('module=redirect&acc=delete', {
+            data: "domain=" + domain + "&st=" + st,
+            callback: function(response){
+                console.log(response);
+                if(response.status == 'OK'){
+                    $('#tabRedirect').DataTable().destroy();
+                    listrediretmod();
+                    noti_bubble('{{ langmod.RDLABEL40 }}','{{ langmod.RDLABEL39 }}','success',false,false,'3000',true);
+                }else{
+                    noti_bubble('{{ langmod.RDLABEL41 }}','{{ langmod.RDLABEL35 }}','error',false,false,'3000',true);
+                }
+            }
+        });
+        return false;
+    }
+}
+function validatedata(id){
+    if(!uchip.validator('#'+id)){
+        $(".btnsave").addClass('disabled');
+        $(".btnsave").attr('disabled',true);
+    }else{
+        $(".btnsave").removeClass('disabled');
+        $(".btnsave").attr('disabled',false);
+    }
+}
+function showExplorer(){
+    let domainR =  $("#domain").val();
+    $('#dir_explorer .modal-body').html('<div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>');
+    $('#dir_explorer').modal('show');
+    callDirList($('#dirsel').text());
+}
+function selCurrentPath(){
+    let curpath = $('#current_path_dirsel').val();
+    $('.dir-sel-btn').attr('data-original-title',curpath);
+    $('#dirsel').text(curpath);
+    $('#dir_explorer').modal('hide');
+}
+function callDirList(directory){
+    uchip.handleButton('#sel_path_btn', 'fa-thumb-tack');
+    $('#dir_explorer .modal-body').html('<div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>');
+    uchip.call('module=redirect&acc=dirlist', {
+        data: 'basedir=' + directory,
+        callback: function(response){
+            directory = directory.charAt(directory.length-1) == '/' ? directory : directory + '/';
+            renderDirSelector(directory, response);
+            uchip.handleButton('#sel_path_btn', 'fa-thumb-tack', true);
+        }
+    });
+}
+function renderDirSelector(base, dirs){
+    let dirs_html = '';
+    dirs.forEach((dir) => {
+        dirs_html += '<div class="dir-item" data-dir="' + dir + '"><div class="row">' +
+            '<div class="col-md-12">' +
+            '<i class="fa fa-folder-o" aria-hidden="true"></i>' +
+            dir +
+            '</div>' +
+            '</div></div>';
+});
+    let html = '<div id="dir_list" class="container-fluid" style="display:none">' +
+        '<div class="row">' +
+        '<div class="col-md-12 current-path-div">' +
+        '<label class="form-label">Cuerent path</label>' +
+        '<input type="text" id="current_path_dirsel" class="form-control" value="' + base + '" readonly>' +
+        '</div>' +
+        '</div>' +
+        dirs_html +
+        '</div>';
+    $('#dir_explorer .modal-body').html(html);
+    $('.dir-item').mouseover(function() {
+        $(this).find('.fa').removeClass('fa-folder-o').addClass('fa-folder-open-o');
+    })
+        .mouseout(function() {
+            $(this).find('.fa').removeClass('fa-folder-open-o').addClass('fa-folder-o');
+        }).click(function(){
+        let curpath = $('#current_path_dirsel').val();
+        let dir = $(this).data('dir');
+        if(dir == '..'){
+            let pieces = curpath.split('/');
+            pieces.pop();
+            pieces.pop();
+            dir = pieces.join('/')
+        }else{
+            dir = curpath + dir;
+        }
+        callDirList(dir);
+    });
+    $('#dir_list').slideDown('fast');
+}
+function viewhtaccess(domain) {
+    $("#deletemodal .modal-dialog").removeClass('modal-sm');
+    $("#deletemodal .modal-dialog").removeClass('modal-lg');
+    $("#deletemodal .modal-header").html('{{ langmod.RDLABEL43 }}:');
+    $("#deletemodal .modal-footer").html('<button type="button" class="btn btn-white" data-dismiss="modal">{{ langmod.RDLABEL15 }}</button>');
+    $("#deletemodal .modal-body").html('<i class="fa fa-spinner fa-spin fa-2x align-center"></i>');
+    $("#deletemodal").modal('toggle');
+    uchip.call('module=redirect&acc=viewhtaccess', {
+        data: 'domain=' + domain,
+        callback: function(response){
+            let content = response.rest;
+            $("#deletemodal .modal-header").html('{{ langmod.RDLABEL43 }}: '+content.path);
+            $("#deletemodal .modal-body").html(content.cat);
+        }
+    });
+    return false;
+}

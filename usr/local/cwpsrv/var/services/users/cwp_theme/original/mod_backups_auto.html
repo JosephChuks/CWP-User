@@ -1,0 +1,187 @@
+{% if mod.license != 1 %}
+  <div class="notpro-message bg-warning">
+    <h2><i class="fa fa-ban"></i> This feature is available just for pro license.</h2>
+  </div>
+{% endif %}
+<div class="panel-body autobackup-panel {% if mod.license != 1 %} not-pro{% endif %}">
+  <div class="checkbox checkbox-primary">
+    <input type="checkbox" name="autobackup_active" {% if mod.autobackup_config.autobackup_active == 1 %}checked{% endif %} onchange="activateAutomatic(this)" class="checkbox checkbox-danger auto-backup-input" value="1" id="autobackup_active">
+    <label for="autobackup_active">
+      {{langmod.BCAUTOMATICACT}}
+    </label>
+  </div>
+  <div class="row autobackup-configurations{% if mod.autobackup_config.autobackup_active == 1 or mod.ispro == 0%} active-autobackup{% endif %}{% if mod.autobackup_config.auto_location_ftp == 1 %} max-height{% endif %}" id="autobackup_configurations">
+    <!-- <label for="emaddress_backup">{{langmod.BCAUTOMFREQ}}</label> -->
+    <div class="col-md-4 autobackup-configurations-freq autobackup-configurations-box">
+      <h3 class="autobackup-configurations-heading">{{langmod.BCAUTOMFREQ}}</h3>
+      <div class="checkbox checkbox-primary">
+        <input type="checkbox" name="auto_freq_daily" {% if mod.autobackup_config.auto_freq_daily == 1 %}checked{% endif %} class="checkbox checkbox-danger auto-backup-input" value="1" id="auto_freq_daily">
+        <label for="auto_freq_daily">
+          {{langmod.BCAUTOMFREQD}}
+        </label>
+      </div>
+      <div class="checkbox checkbox-primary">
+        <input type="checkbox" name="auto_freq_weekly" {% if mod.autobackup_config.auto_freq_weekly == 1 %}checked{% endif %} class="checkbox checkbox-danger auto-backup-input" value="1" id="auto_freq_weekly">
+        <label for="auto_freq_weekly">
+          {{langmod.BCAUTOMFREQW}}
+        </label>
+      </div>
+      <div class="checkbox checkbox-primary">
+        <input type="checkbox" name="auto_freq_monthly" {% if mod.autobackup_config.auto_freq_monthly == 1 %}checked{% endif %} class="checkbox checkbox-danger auto-backup-input" value="1" id="auto_freq_monthly">
+        <label for="auto_freq_monthly">
+          {{langmod.BCAUTOMFREQM}}
+        </label>
+      </div>
+    </div>
+    <div class="col-md-4 autobackup-configurations-options autobackup-configurations-box">
+      <h3 class="autobackup-configurations-heading">{{langmod.BCAUTOMWTOINC}}</h3>
+      <div class="checkbox checkbox-primary option-all-included">
+        <input type="checkbox" name="auto_opt_whole" {% if mod.autobackup_config.auto_opt_whole == 1 %}checked{% endif %} onchange="automAllOpt(this)" class="checkbox checkbox-danger auto-backup-input" value="1" id="auto_opt_whole">
+        <label for="auto_opt_whole">
+          {{langmod.BCAUTOMWHACC}}
+        </label>
+      </div>
+      <div class="checkbox checkbox-primary">
+        <input type="checkbox" name="auto_opt_home" {% if mod.autobackup_config.auto_opt_home == 1 %}checked{% endif %} onchange="updateOptions(this)" class="checkbox checkbox-danger opt-checkbox auto-backup-input" value="1" id="auto_opt_home">
+        <label for="auto_opt_home">
+          {{langmod.BCHOMEDIR}}
+        </label>
+      </div>
+      <div class="checkbox checkbox-primary">
+        <input type="checkbox" name="auto_opt_mysql" {% if mod.autobackup_config.auto_opt_mysql == 1 %}checked{% endif %} onchange="updateOptions(this)" class="checkbox checkbox-danger opt-checkbox auto-backup-input" value="1" id="auto_opt_mysql">
+        <label for="auto_opt_mysql">
+          {{langmod.BDALLDB}}
+        </label>
+      </div>
+      <div class="checkbox checkbox-primary">
+        <input type="checkbox" name="auto_opt_email" {% if mod.autobackup_config.auto_opt_email == 1 %}checked{% endif %} onchange="updateOptions(this)" class="checkbox checkbox-danger opt-checkbox auto-backup-input" value="1" id="auto_opt_email">
+        <label for="auto_opt_email">
+          {{langmod.DBALLEMAIL}}
+        </label>
+      </div>
+      <div class="checkbox checkbox-primary">
+        <input type="checkbox" name="auto_opt_ssl" {% if mod.autobackup_config.auto_opt_ssl == 1 %}checked{% endif %} onchange="updateOptions(this)" class="checkbox checkbox-danger opt-checkbox auto-backup-input" value="1" id="auto_opt_ssl">
+        <label for="auto_opt_ssl">
+          {{langmod.BDALLSSLBA}}
+        </label>
+      </div>
+    </div>
+    <div class="col-md-4 autobackup-configurations-notify">
+      <h3 class="autobackup-configurations-heading">{{langmod.BCAUTOMNOTTIT}}</h3>
+      <div class="checkbox checkbox-primary">
+        <input type="checkbox" name="auto_notify_complete" {% if mod.autobackup_config.auto_notify_complete == 1 %}checked{% endif %} class="checkbox checkbox-danger auto-backup-input" value="1" id="auto_notify_complete">
+        <label for="auto_notify_complete">
+          {{langmod.BCAUTOMNOTCOMP}}
+        </label>
+      </div>
+      <div class="checkbox checkbox-primary">
+        <input type="checkbox" name="auto_notify_error" {% if mod.autobackup_config.auto_notify_error == 1 %}checked{% endif %} class="checkbox checkbox-danger auto-backup-input" value="1" id="auto_notify_error">
+        <label for="auto_notify_error">
+          {{langmod.BCAUTOMNOTERR}}
+        </label>
+      </div>
+      <div class="checkbox checkbox-primary">
+        <input type="checkbox" name="auto_notify_visual" {% if mod.autobackup_config.auto_notify_visual == 1 %}checked{% endif %} class="checkbox checkbox-danger auto-backup-input" value="1" id="auto_notify_visual">
+        <label for="auto_notify_visual">
+          {{langmod.BCAUTOMNOTVIS}}
+        </label>
+      </div>
+      <div class="form-group" style="margin-bottom:0px;">
+        <label for="emaddress_backup_autom">{{langmod.DBEMAIL}}</label>
+        <input type="text" class="form-control auto-backup-input email-required" data-reqemail="true" data-required="true" id="emaddress_backup_autom" value="{{mod.autobackup_config.emaddress_backup_autom}}">
+      </div>
+    </div>
+  </div>
+  <div class="row" style="margin-top: 10px;">
+    <div class="col-md-12">
+      <h3 class="autobackup-configurations-heading autobackup-configurations-heading-location">{{langmod.BCAUTOMLOCA1}}</h3>
+    </div>
+    <div class="col-md-4 autobackup-with-info">
+      <div class="radio radio-primary">
+        <input type="radio" name="auto_backup_location" onchange="changeBackupLocation()" {% if mod.autobackup_config.auto_location_local == 1 %}checked{% endif %} class="radio radio-danger auto-backup-input" value="1" id="auto_location_local">
+        <label for="auto_location_local">
+          {{langmod.BCAUTOMLOCA2}}
+        </label>
+      </div>
+      <span class="fa-stack fa-xs" data-toggle="tooltip" data-placement="top" title="{{langmod.BCAUTOMLOCA4}}">
+        <i class="fa fa-circle fa-stack-2x"></i>
+        <i class="fa fa-info fa-stack-1x fa-inverse"></i>
+      </span>
+    </div>
+    <div class="col-md-4">
+      <div class="radio radio-primary">
+        <input type="radio" name="auto_backup_location" onchange="changeBackupLocation()" {% if mod.autobackup_config.auto_location_ftp == 1 %}checked{% endif %} class="radio radio-danger auto-backup-input" value="1" id="auto_location_ftp">
+        <label for="auto_location_ftp">
+          {{langmod.BCAUTOMLOCA3}}
+        </label>
+      </div>
+    </div>
+  </div>
+  <div class="row" id="backup_ftp_configuration" {% if mod.autobackup_config.auto_location_ftp == 1 %}style="display:block"{% endif %}>
+    <div class="col-md-4 ftpmb" id="backup_ftp_user_field">
+      <div class="form-group">
+        <label for="backup_ftp_user">{{langmod.BCAUTOMFTP1}}</label>
+        <div class="input-group">
+          <span class="input-group-addon"><i class="fa fa-user"></i></span>
+          <input id="backup_ftp_user" type="text" class="form-control auto-backup-input ftp_config" data-errorplace="#backup_ftp_user_field" data-required="true" placeholder="" value="{{mod.autobackup_config.backup_ftp_user}}">
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 ftpmb" id="backup_ftp_pass_field">
+      <div class="form-group">
+        <label for="backup_ftp_pass">{{langmod.BCAUTOMFTP2}}</label>
+        <div class="input-group">
+          <span class="input-group-addon"><i class="fa fa-lock"></i></span>
+          <input id="backup_ftp_pass" type="text" class="form-control auto-backup-input ftp_config" data-errorplace="#backup_ftp_pass_field" data-required="true" placeholder="" value="{{mod.autobackup_config.backup_ftp_pass}}">
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 ftpmb" id="backup_ftp_server_field">
+      <div class="form-group">
+        <label for="backup_ftp_server">{{langmod.BCAUTOMFTP3}}</label>
+        <div class="input-group">
+          <span class="input-group-addon"><i class="fa fa-sitemap" aria-hidden="true"></i></span>
+          <input id="backup_ftp_server" type="text" class="form-control auto-backup-input ftp_config" data-errorplace="#backup_ftp_server_field" data-required="true" placeholder="" value="{{mod.autobackup_config.backup_ftp_server}}">
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2 ftpmb" id="backup_ftp_port_field">
+      <div class="form-group">
+        <label for="backup_ftp_port">{{langmod.BCAUTOMFTP4}}</label>
+        <div class="input-group">
+          <span class="input-group-addon"><i class="fa fa-at" aria-hidden="true"></i></span>
+          <input id="backup_ftp_port" type="text" class="form-control auto-backup-input ftp_config" data-errorplace="#backup_ftp_port_field" data-required="true" placeholder="" value="{{mod.autobackup_config.backup_ftp_port}}">
+        </div>
+      </div>
+    </div>
+    <div class="clearfix">
+
+    </div>
+    <div class="col-md-4" id="backup_ftp_directory_field">
+      <div class="form-group">
+        <label for="backup_ftp_directory">{{langmod.BCAUTOMFTP6}}</label>
+        <div class="input-group">
+          <span class="input-group-addon"><i class="fa fa-folder-open" aria-hidden="true"></i></span>
+          <input id="backup_ftp_directory" type="text" class="form-control auto-backup-input ftp_config" data-errorplace="#backup_ftp_directory_field" data-required="true" placeholder="" value="{{mod.autobackup_config.backup_ftp_directory}}">
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="form-group">
+        <label for="backup_ftp_protocol">{{langmod.BCAUTOMFTP5}}</label>
+        <select class="form-control auto-backup-input auto-backup-input-select" id="backup_ftp_protocol" name="">
+          <option value="FTP">FTP</option>
+          <option value="SFTP" disabled>SFTP ({{langmod.BCCOMINGSSON}})</option>
+        </select>
+      </div>
+    </div>
+    <div class="col-md-3" style="padding-top: 2.5rem;">
+      <button type="button" class="btn btn-primary" name="button" onclick="testFTPConnection(this)"><i class="fa fa-plug" aria-hidden="true"></i> {{langmod.BCAUTOMFTP7}}</button>
+    </div>
+  </div>
+  <div class="row autobackup-configurations-footer">
+    <div class="col-md-12 text-right">
+      <button type="button" class="btn btn-success" name="button" onclick="saveAutoBackup(this)"><i class="fa fa-floppy-o" aria-hidden="true"></i> {{langmod.BCAUTOMFTP8}}</button>
+    </div>
+  </div>
+</div>

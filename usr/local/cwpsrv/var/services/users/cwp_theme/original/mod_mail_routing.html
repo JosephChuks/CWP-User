@@ -1,0 +1,175 @@
+<style media="screen">
+  .mail_routing_wrapper {
+    margin-top: 2rem;
+  }
+
+  .mail_routing_wrapper table {
+    margin-bottom: 0px;
+  }
+
+  .info-container {
+    display: flex;
+    align-items: center;
+  }
+
+  .icon-info {
+    margin-right: 1rem;
+  }
+
+  .line-info {
+    height: 3rem;
+    margin-right: 5px;
+  }
+
+  .line-info::before {
+    content: '';
+    position: absolute;
+    width: inherit;
+    height: inherit;
+    margin-left: -5px;
+  }
+
+  .line-warning::before {
+    border-left: 2px solid #cc802d;
+  }
+
+  .line-success::before {
+    border-left: 2px solid #109d9e;
+  }
+
+  .routing_type .caret {
+    margin-top: 0.8rem;
+  }
+
+  .routing_type .btn-default {
+    width: 14rem;
+    text-align: left;
+  }
+</style>
+<div class="row  border-bottom white-bg dashboard-header">
+  {% if mod.fsl == 1 %}
+  {% set stflalert ='block' %}
+  {% else %}
+  {% set stflalert ='none' %}
+  {% endif %}
+  <div class="row  alert alert-warning col-lg-12" style="margin-left: 5px; padding-right: 5px;display:{{stflalert}}"
+    id="alertfl">
+    <strong>{{langene.GALARTFILEBLOCK}}</strong>
+  </div>
+  <div class="col-lg-10">
+    <h2>{{langmod.MRTITLE1}} ({{users}})</h2>
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="?">Home</a></li>
+      <li class="breadcrumb-item active"><strong>{{langmod.MRTITLE1}}</strong></li>
+    </ol>
+  </div>
+</div>
+<div class="row mail_routing_wrapper">
+  <div class="col-lg-9">
+    <div class="row">
+      <div class="col-lg-12">
+        <div class="ibox">
+          <div class="ibox-title">
+            <h5>{{langmod.MRCONFTITLE}}</h5>
+          </div>
+          <div class="ibox-content">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th width="50">
+                    #
+                  </th>
+                  <th>{{langmod.MRDOMAINS}}</th>
+                  <th width="100">{{langmod.MRMAILCHANGE}}</th>
+                  <th width="180">{{langmod.MRACTION}}</th>
+                </tr>
+              </thead>
+              <tbody id="listtr">
+                {% if mod.emailr|length>0 %}
+                {% set barprog =1 %}
+                {% for emailr in mod.emailr %}
+                <tr>
+                  <td>
+                    {{barprog}}
+                  </td>
+                  <td>{{emailr.domain}}</td>
+                  <td>
+                    <div class="dropdown routing_type">
+                      <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">
+                        {% if emailr.active ==1 %}
+                        {% set opt_selected = langmod.MRLABEL1 %}
+                        {% set st_sel = 0 %}
+                        {% else %}
+                        {% set opt_selected = langmod.MRLABEL2 %}
+                        {% set st_sel = 1 %}
+                        {% endif %}
+                        <span id="opt_selected_{{barprog}}" data-selected="{{st_sel}}">
+                          {{opt_selected}}
+                        </span>
+                        <span class="caret pull-right"></span></button>
+                      <ul class="dropdown-menu">
+                        <li><a href="javascript:void(0)"
+                            onclick="setOptSelected('{{langmod.MRLABEL1}}',{{barprog}},0)">{{langmod.MRLABEL1}}</a></li>
+                        <li><a href="javascript:void(0)"
+                            onclick="setOptSelected('{{langmod.MRLABEL2}}',{{barprog}},1)">{{langmod.MRLABEL2}}</a></li>
+                      </ul>
+                    </div>
+                  </td>
+                  <td>
+                    <button type="button" class="btn btn-warning btn-xs mr5 mb10 btnchangest"
+                      title="{{langmod.MRBTNCHANGE}}" data-domain="{{emailr.domain}}" data-index="{{barprog}}"
+                      onclick="setOption(this)">
+                      <i class="fa fa-floppy-o" aria-hidden="true"></i> {{langmod.MRBTNCHANGE}}
+                    </button>
+                    <button type="button" class="btn btn-default btn-xs mr5 mb10 btnstatusdomiain"
+                      title="{{langmod.MRBTNSTATUS}}" data-domain="{{emailr.domain}}" data-index="{{barprog}}"
+                      onclick="statusdomiain('{{emailr.domain}}',this)">
+                      <i class="fa fa-stethoscope" aria-hidden="true"></i> {{langmod.MRBTNSTATUS}}
+                    </button>
+                  </td>
+                </tr>
+                {% set barprog = barprog+1 %}
+                {% endfor %}
+                {% else %}
+
+                {% endif %}
+
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-12">
+        <div class="ibox">
+          <div class="ibox-title">
+            <h5>{{langmod.MRINFOTITLE}}</h5>
+          </div>
+          <div class="ibox-content">
+            <div class="bg-info info-container p-xs b-r-sm" style="margin-bottom:1rem;">
+              <div class="icon-info">
+                <span class="fa-stack">
+                  <i class="fa fa-circle fa-stack-2x"></i>
+                  <i class="fa fa-info fa-stack-1x" style="color: #23c6c8;"></i>
+                </span>
+              </div>
+              <span class="line-info line-success"></span>
+              <h4 class="title-info">{{langmod.MRTITLE2}}</h4>
+            </div>
+            <div class="bg-warning info-container p-xs b-r-sm">
+              <div class="icon-info">
+                <span class="fa-stack">
+                  <i class="fa fa-circle fa-stack-2x"></i>
+                  <i class="fa fa-exclamation fa-stack-1x" style="color: #f8ac59;"></i>
+                </span>
+              </div>
+              <span class="line-info line-warning"></span>
+              <h4 class="title-info">{{langmod.MRTITLE3}}</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% include 'sidebar.html' %}
+</div>
+{% include 'footer.html' %}

@@ -1,0 +1,187 @@
+
+
+
+console.log();
+
+$(document).ready(function() {
+  {% if mod.isie == 1 %}
+    uchip = new $.Uchip();
+  {% else %}
+    uchip = new Uchip();
+  {% endif %}
+  loadTotal();
+  loadUsageFiles('', '#files_usage');
+});
+String.prototype.replaceAll = function(search, replacement) {
+    var target = this;
+    return target.replace(new RegExp(search, 'g'), replacement);
+};
+function reSortFiles(){
+  renderFiles(original_files,'#files_usage')
+}
+function sortDirectory(directory){
+  let type = $('#sort_field').length > 0 ? $('#sort_field').val() : 'name';
+  let direction = $('#sort_direction').length > 0 ? $('#sort_direction').val() : 'asc';
+  function compare_size(a, b){
+    // a should come before b in the sorted order
+    if(a.size < b.size){
+      return direction == 'asc' ? -1 : 1;
+      // a should come after b in the sorted order
+    }else if(a.size > b.size){
+      return direction == 'asc' ? 1 : -1;
+    // a and b are the same
+    }else{
+      return 0;
+    }
+  }
+  function compare_path(a, b){
+    // a should come before b in the sorted order
+    if(a.path < b.path){
+      return direction == 'asc' ? -1 : 1;
+      // a should come after b in the sorted order
+    }else if(a.path > b.path){
+      return direction == 'asc' ? 1 : -1;
+    // a and b are the same
+    }else{
+      return 0;
+    }
+  }
+  if(type == 'name'){
+    directory.sort(compare_path);
+  }else{
+    directory.sort(compare_size);
+  }
+
+  return directory;
+}
+let original_files = null;
+function loadUsageFiles(folder_name, container){
+  uchip.call('module=disk_usage&acc=load_directory', {
+    data: 'folder_name=' + folder_name,
+    callback: function(resp){
+      if(resp.result == 'success'){
+        renderFiles(resp.directory, container)
+      }
+    }
+  });
+}
+function renderFiles(directory_param, container){
+  let html_files = '';
+  let main_dir = '';
+  let sorter = '';
+  files_directory = sortDirectory(directory_param);
+  files_directory.forEach(function(directory){
+    if(directory.ismain !== true){
+      let onclick = '';
+      let class_item = 'no-cursor';
+      let icons = '<i class="fa fa-dot-circle-o" aria-hidden="true"></i> ';
+      if(directory.haschild === true){
+        onclick = 'onclick="displayFolder(this)"';
+        icons = '<i class="fa fa-caret-right" aria-hidden="true"></i> ' +
+                '<i class="fa fa-caret-down" aria-hidden="true"></i> ';
+        class_item = 'normal-item';
+      }
+      html_files += '<li class="directory-item ' + class_item + '" data-path="/' + directory.path + '" data-key="' + directory.keypath + '">' +
+                      '<a href="javascript:void(0)" ' + onclick + '>' +
+                        '<div class="directory-item-root">' +
+                          '<div class="directory-item-path">' +
+                            icons +
+                            directory.path +
+                          '</div>' +
+                          '<div class="directory-item-size">' + uchip.humanFileSize(directory.size * 1024, true) + '</div>' +
+                        '</div>' +
+                      '</a>' +
+                    '</li>';
+    }else if(container == '#files_usage'){
+      original_files = directory_param;
+      sorter = '<div class="sort-ui">' +
+                  '<label class="sort-ui-control">{{langmod.DUSAGELAB2}}</label>' +
+                  '<div class="sort-ui-control">' +
+                    '<select class="form-control" id="sort_field" onchange="reSortFiles()">' +
+                      '<option value="name">{{langmod.DUSAGELAB3}}</option>' +
+                      '<option value="size">{{langmod.DUSAGELAB4}}</option>' +
+                    '</select>' +
+                  '</div>' +
+                  '<div class="sort-ui-control">' +
+                    '<select class="form-control" id="sort_direction" onchange="reSortFiles()">' +
+                      '<option value="asc">asc</option>' +
+                      '<option value="desc">desc</option>' +
+                    '</select>' +
+                  '</div>' +
+                '</div>';
+      main_dir = '<li class="directory-item main-directory">' +
+                      '<div class="directory-item-root">' +
+                        '<div class="directory-item-path total"><i class="fa fa-home" aria-hidden="true"></i> ' + directory.path + '</div>' +
+                        '<div class="directory-item-size total">{{langmod.DUSAGELAB5}}: ' + uchip.humanFileSize(directory.size * 1024, true) + '</div>' +
+                      '</div>' +
+                    '</li>'
+    }
+  });
+  if($('#sort_field').length == 0){
+    $('#sort_controls').html(sorter);
+  }
+  $(container).html('<ul class="directory-items">' + main_dir + html_files + '</ul>');
+}
+function displayFolder(elem){
+  let parent = $(elem).parent();
+  let keyid = parent.data('key');
+  let folder = parent.data('path');
+  if(parent.find('.subdirectories-items').length < 1){
+    parent.append('<div class="subdirectories-items" id="' + keyid + '"><div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div></div>');
+    loadUsageFiles(folder, '#' + keyid);
+  }
+  let div_sub = $('#' + keyid);
+  if(div_sub.is(':visible')){
+    div_sub.slideUp('fast');
+    parent.find('.directory-item-root div').removeClass('opened');
+    parent.removeClass('opened');
+  }else{
+    parent.find('.directory-item-root:visible div').addClass('opened');
+    div_sub.slideDown('fast');
+    parent.addClass('opened');
+  }
+}
+function loadTotal(){
+  uchip.call('module=disk_usage&acc=load_total', {
+    callback: function(res){
+      if(res.result == 'success'){
+        let limit = res.usage.home.limit;
+        let homedir = res.usage.home.home;
+        let mysql_usage = res.usage.mysql;
+        let mail_usage = res.usage.email;
+        let total_usage = homedir + mysql_usage + mail_usage;
+        let homedir_percent = limit != -1 ? (homedir * 100) / limit : 0;
+        let mysql_percent = limit != -1 ? (mysql_usage * 100) / limit : 0;
+        let mail_percent = limit != -1 ? (mail_usage * 100) / limit : 0;
+        let total_percent = limit != -1 ? (total_usage * 100) / limit : 0;
+        let limit_total = limit != -1 ? uchip.humanFileSize(limit, true) : '<span class="unlimited-space">&infin;</span>'
+        let html = '<div>' +
+                    '<h5 class="no-margins">{{langmod.DUSAGELAB6}}</h5><small>' + uchip.humanFileSize(homedir, true) + ' / ' + limit_total + '</small>' +
+                    '<div class="stat-percent">' + homedir_percent.toFixed(2) + '%</div>' +
+                    '<div class="backup-stat-progress progress progress-mini">' +
+                      '<div style="width: ' + homedir_percent + '%;" class="' + uchip.getBarColor(homedir_percent) + '"></div>' +
+                    '</div>' +
+                    '<hr class="backup-stat-separator">' +
+                    '<h5 class="no-margins">MySQL</h5><small>' + uchip.humanFileSize(mysql_usage, true) + ' / ' + limit_total + '</small>' +
+                    '<div class="stat-percent">' + mysql_percent.toFixed(2) + '%</div>' +
+                    '<div class="backup-stat-progress progress progress-mini">' +
+                      '<div style="width: ' + mysql_percent + '%;" class="' + uchip.getBarColor(mysql_percent) + '"></div>' +
+                    '</div>' +
+                    '<hr class="backup-stat-separator">' +
+                    '<h5 class="no-margins">{{langmod.DUSAGELAB7}}</h5><small>' + uchip.humanFileSize(mail_usage, true) + ' / ' + limit_total + '</small>' +
+                    '<div class="stat-percent">' + mail_percent.toFixed(2) + '%</div>' +
+                    '<div class="backup-stat-progress progress progress-mini">' +
+                      '<div style="width: ' + mail_percent + '%;" class="' + uchip.getBarColor(mail_percent) + '"></div>' +
+                    '</div>' +
+                    '<hr class="total-separator">' +
+                    '<h4 class="no-margins total-title">{{langmod.DUSAGELAB5}}</h4><small class="total-amount-small">' + uchip.humanFileSize(total_usage, true) + ' / ' + limit_total + '</small>' +
+                    '<div class="stat-percent total-amount-percent">' + total_percent.toFixed(2) + '%</div>' +
+                    '<div class="backup-stat-progress progress progress-mini">' +
+                      '<div style="width: ' + total_percent + '%;" class="' + uchip.getBarColor(total_percent) + '"></div>' +
+                    '</div>' +
+                  '</div>';
+        $('#total_usage').html(html);
+      }
+    }
+  });
+}

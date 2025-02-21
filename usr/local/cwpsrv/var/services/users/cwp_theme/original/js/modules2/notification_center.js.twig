@@ -1,0 +1,21 @@
+function changestnot(elem){
+    $.ajax({
+        type: "POST",
+        url: "./{{ users }}/index.php?module=notification_center&acc=changestnot",
+        data: "elem="+elem,
+        complete: function (datos) {
+
+        }
+    });
+}
+$("#btnsavenoti").click(function (){
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=notification_center&acc=save",
+        data:"emailaccount="+$("#emailaccount").val(),
+        complete: function(datos){
+            noti_bubble('{{langmod.NSEXITALLCHENGE}}','{{langmod.NSACCSUCCESS}}','success',false,false,'3000',false);
+            return false;
+        }
+    });
+});

@@ -1,0 +1,163 @@
+let own_table = null;
+let own_list = null;
+function ownTable(list){
+    own_list = list;
+    if(own_list.length > 0){
+        let html_content = '';
+        let index = 0;
+        own_list.forEach(function(installation){
+            let insturl = installation.hasOwnProperty('url') ? installation.url : 'http://' + installation.domain;
+            let dbinf = '';
+            if(installation.hasOwnProperty('db_result') && installation.db_result.result != 'success'){
+                let dbtitle = '{{langmod.ADDDBNOT}}: ' + handleDBError(installation.db_result.code);
+
+                dbinf = '<span class="fa-stack fa-xs" title="' + dbtitle + '" data-toggle="tooltip" data-placement="top" aria-hidden="true">' +
+                    '<i class="fa fa-circle fa-stack-2x"></i>' +
+                    '<i class="fa fa-info fa-stack-1x fa-inverse"></i>' +
+                    '</span>';
+            }
+            html_content += '<tr id="tdown_' + index + '">' +
+                '<td>' + installation.domain + '<br>' +
+                '<a href="' + insturl + '" target="_blank">' + insturl + '</a></td>' +
+                '<td><div class="addon-td-item">' + installation.path + '</div></td>' +
+                '<td><div class="addon-td-item">' + installation.version + '</div></td>' +
+                '<td>' +
+                '<div class="database-info-td">' +
+                '<div><b>{{langmod.ADDSHORTDB}}: </b> ' + installation.ownbd + '<br><b>{{langmod.ADDSHORTUDB}}: </b>' + installation.ownuserdb + '</div>' +
+                dbinf +
+                '</div>' +
+                '</td>' +
+                '<td>' +
+                '<div class="addon-td-item text-center"><button title="{{langmod.ADDDWP3}}" data-traddon="#tdown_' + index + '" data-type="own" data-installation=\'' + JSON.stringify(installation) + '\' data-toggle="tooltip" data-placement="top" aria-hidden="true" class="btn btn-danger btn-xs btn-delete" onclick="return deleteAddon(this, 0)">' +
+                '<i aria-hidden="true" class="fa fa-trash"></i>' +
+                '</button></div>' +
+                '</td>' +
+                '</tr>';
+            index++;
+        });
+        let table_html = '<table class="table table-striped own-table">' +
+            '<thead>' +
+            '<tr>' +
+            '<th>{{langmod.ADDDOMLAB}}</th>' +
+            '<th>{{langmod.ADDPATHLAB}}</th>' +
+            '<th>{{langmod.ADDVERLAB}}</th>' +
+            '<th>{{langmod.ADDBDUDB}}</th>' +
+            '<th class="text-center"></th>' +
+            '</tr>' +
+            '</thead>' +
+            '<tbody id="trpaneljl">' +
+            html_content +
+            '</tbody>' +
+            '</table>';
+        $('#table_own_container').html(table_html);
+        $('.own-table').DataTable().destroy();
+        own_table = $('.own-table').DataTable();
+    }else{
+        $('#table_own_container').html('<div class="empty_list"><h4 class="text-success">Thre\'s not OwnCloud installations</h4></div>');
+    }
+    $('[data-toggle="tooltip"]').tooltip();
+}
+function ownInit(){
+    if(own_list == null){
+        ownReList();
+    }
+}
+function ownReList(){
+    $('#table_own_container').html(loader);
+    getList('own', function(response){
+        ownTable(response);
+    });
+}
+function cancelOwn(idCollapse){
+    uchip.slideToggle('#own_list','#own_form', function(){
+
+    });
+    $('#owndomain').val('');
+    $('#ownpach').val('own');
+    $('#ownpassbd').val('');
+    $('#ownpassbd').pwstrength('forceUpdate');
+    $('#ownbd').val('own{{mod.extra_data.randbd}}');
+    $('#ownuserdb').val('own{{mod.extra_data.randbd}}');
+    uchip.validator('.reqown', true);
+    cancelGeneral(idCollapse);
+}
+function addOwn(){
+    if(uchip.validator('.reqown')){
+        let psurl = $("#ownurl").val();
+        let psdomain = $("#owndomain").val();
+        let psbd = $("#ownbd").val();
+        let psuserdb = $("#ownuserdb").val();
+        let psuseradmin = $("#ownuseradmin").val();
+        let psuserpass = $("#ownuserpass").val();
+        let psuseremail = $("#ownuseremail").val();
+        let pspassbd = $("#ownpassbd").val();
+        let pspach = $("#ownpach").val();
+        let dompath =  $('#owndomain option:selected').data('path');
+        let domssl =  $('#owndomain option:selected').data('ssl');
+        let data = 'ownuseremail='+psuseremail+'&ownuserpass='+psuserpass+'&ownuseradmin='+psuseradmin+'&ownurl=' + psurl + '&owndomain=' + psdomain + '&ownbd=' + psbd + '&ownuserdb=' + psuserdb + '&ownpassbd=' + pspassbd +
+            '&ownpach=' + pspach + '&dompath=' + dompath + '&domssl=' + domssl;
+        let details = [
+            {
+                title : '{{langmod.ADDDOMLAB}}',
+                value : psdomain
+            },
+            {
+                title : '{{langmod.ADDURLLAB}}',
+                value : (domssl == 1 ? 'https' : 'http') + '://' + psdomain + '/' + pspach
+            },
+            {
+                title : '{{langmod.ADDPATHLAB}}',
+                value : dompath + '/' + pspach
+            },
+            {
+                title : '{{langmod.ADDDWP20}}',
+                value : psbd
+            },
+            {
+                title : '{{langmod.ADDDBUSERLAB}}',
+                value : psuserdb
+            }
+        ];
+        confirmInstallation({
+            type: 'own',
+            script: 'OwnCloud',
+            data : data,
+            wholepath: dompath + '/' + pspach,
+            callback: function(response){
+                if(response.hasOwnProperty('result') && response.result == 'success'){
+                    if(response.db_result.result != 'success'){
+                        noti_bubble('{{langmod.ADDINSTALLDET}} ' + handleDBError(response.db_result.code),'{{langmod.ADDATENTION}}!','warning',false,false,'6500',true);
+                    }else{
+                        noti_bubble('{{langmod.ADDINSTALLSUCC}}','{{langmod.SUCCESS}}','success',false,false,'3000',true);
+                    }
+                }else{
+                    noti_bubble('{{langmod.ADDERRORGEN}}','{{langmod.FERROR}}','error',false,false,'3000',true);
+                }
+                var variableHTML='';
+                var modulin='own';
+                if($("#instaled_"+modulin).html()==undefined){
+                    variableHTML+='<div class="panel panel-default" id="instaled_'+modulin+'">'+
+                        ' <div class="panel-heading white-bg script-container-title">'+
+                        '<a class="accordion-toggle" style="width: 100%" data-toggle="collapse"  ' +
+                        'aria-expanded="true" aria-controls="panel_'+modulin+'_container" ' +
+                        'data-parent="#accordion1" data-target="#panel_'+modulin+'_container">'+
+                        '<h4 class="panel-title"><i class="more-less glyphicon-plus font-weight-bolder"></i></h4>' +
+                        '<h4 class="panel-title">owncloud Installations</h4></a></div>' +
+                        '<div id="panel_'+modulin+'_container"  class="panel-collapse collapse">' +
+                        '<div class="panel-body" id="table_'+modulin+'_container"><div class="table_cron_loader"><span>' +
+                        '<i class="fa fa-circle-o-notch fa-spin"></i></span></div></div></div></div>'
+                    $( "#accordion1" ).append( variableHTML );
+                    $(".accordion-toggle").click(function(){
+                        $("#"+$(this).prop('data-target')).slideToggle('slow');
+                    });
+                }
+                $("#instaledEmpty").hide();
+                ownTable(response.list);
+                cancelOwn('own');
+            },
+            details: details
+        });
+    }else{
+        noti_bubble('{{langmod.ADDREQFIELDS}}','{{langmod.FERROR}}','error',false,false,'3000',true);
+    }
+}

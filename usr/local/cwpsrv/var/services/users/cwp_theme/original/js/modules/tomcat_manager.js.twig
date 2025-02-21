@@ -1,0 +1,355 @@
+
+console.log();
+let uchip = null;
+let apps_table = null;
+let app_list = JSON.parse('{{mod.app_list|json_encode|raw}}');
+let domain_list = JSON.parse('{{mod.domain_list|json_encode|raw}}');
+let version_list = JSON.parse('{{mod.version_list|json_encode|raw}}');
+$(document).ready(function () {
+    {% if mod.isie == 1 %}
+    uchip = new $.Uchip();
+    {% else %}
+    uchip = new Uchip();
+    {% endif %}
+    //domain_list = domains.sort(sortDomainToList);
+    //renderDomainSelect();
+    renderTomcatManagerAppList();
+    //renderTomcatManagerList();
+    // emptyEnvVarsAppRender();
+});
+function renderTomcatManagerAppList() {
+    let html_list = '';
+    if (app_list.length > 0) {
+        let html_content = '';
+        index = 1;
+        app_list.forEach(function (app) {
+            let status_btn = '<button id="_tomcat_apps_status_btn_' + index + '" title="{{langmod.LABTOMCAT102}}" data-status="running" onclick="tomcatAppStatus(this, ' + index + ')" data-toggle="tooltip" data-placement="top" class="btn btn-danger btn-xs btn-status_main"><i class="fa fa-stop"></i></button>';
+            let status_class = 'text-running';
+            let btn_restart = '';
+            if (app.status != 'running') {
+                status_class = 'text-danger';
+                btn_restart = 'style="display:none"';
+                status_btn = '<button id="_tomcat_apps_status_btn_' + index + '" title="{{langmod.LABTOMCAT101}}" data-status="stoped" onclick="tomcatAppStatus(this, ' + index + ')" data-toggle="tooltip" data-placement="top" class="btn btn-primary btn-xs btn-status_main"><i class="fa fa-play"></i></button>';
+            }
+            html_content += '<tr class="app-tr-' + app.key + '" id="_tomcat_apps_item_' + index + '" data-key="' + app.key + '" data-cwpkey="' + app.cwp_key + '">' +
+                '<td>' + app.name + '</td>' +
+                '<td><a target="_blank" href="' + (app.uri_secured ? 'https' : 'http') + '://' + app.url + '">' + app.url + '</a></td>' +
+                '<td class="status-app-container">' +
+                '<i class="fa fa-circle ' + status_class + '" aria-hidden="true"></i> ' +
+                '<span>' + app.status + '</span>' +
+                '</td>' +
+                '<td class="text-right">' + app.sessions + '</td>' +
+                '<td>' +
+                '<div class="tomcat-apps-actions">' +
+                '<button title="{{langmod.LABTOMCAT99}}" data-toggle="tooltip" data-placement="top" onclick="editTomcatManagerApp(\'' + app.cwp_key + '\')" class="btn btn-success btn-xs"><i class="fa fa-cogs"></i></button>' +
+                status_btn +
+                '<button ' + btn_restart + ' id="_tomcat_apps_restart_btn_' + index + '" onclick="restartApplication(this, ' + index + ')" title="Restart application" data-toggle="tooltip" data-placement="top" class="btn btn-default btn-xs btn-restart-app"><i class="fa fa-refresh"></i></button>' +
+                '<button class="btn btn-default btn-xs" title="Expire sessions" data-toggle="tooltip" data-placement="top" onclick="showModalKillSessionsTomCat(\'' + app.name + '\', \'' + app.cwp_key + '\')"><i class="fa fa-users"></i></button>' +
+                '<button class="btn btn-warning btn-xs" title="Delete application" data-toggle="tooltip" data-cwpkey="' + app.cwp_key + '" data-placement="top" onclick="confirmAppDeletion(this, \'' + app.name + '\',' + index + ')"><i class="fa fa-trash"></i></button>' +
+                '</div>' +
+                '</td>' +
+                '</tr>';
+            index++;
+        });
+        html_list = '<table style="margin-bottom:" class="table tomcat_apps_table table-striped table-bordered table-hover">' +
+            '<thead>' +
+            '<tr role="row">' +
+            '<th>App name</th>' +
+            '<th>Domain</th>' +
+            '<th style="width:85px">Status</th>' +
+            '<th style="width:85px">Sessions</th>' +
+            '<th style="width:155px">Actions</th>' +
+            '</tr>' +
+            '</thead>' +
+            '<tbody id="contenttr">' +
+            html_content +
+            '</tbody>' +
+            '</table>';
+        $('#table_tomcat_apps_container').html(html_list);
+        apps_table = $('.tomcat_apps_table').DataTable({
+            "autoWidth": false
+        });
+    } else {
+        html_list = '<div class="tomcat-empty-list-version">' +
+            '<h4>{{langmod.LABTOMCAT129}}</h4>' +
+            '</div>';
+        $('#table_tomcat_apps_container').html(html_list);
+    }
+    $('[data-toggle="tooltip"]').tooltip();
+}
+function tomcatAppStatus(elem, index) {
+    let status = $(elem).data('status');
+    let action = 'stop';
+    let curr_ico = 'fa-stop';
+    let next_ico = 'fa-play';
+    let curr_btn = 'btn-primary';
+    let next_btn = 'btn-danger';
+    let next_status = 'stoped';
+    let next_title = '{{langmod.LABTOMCAT142}}';
+    let message = 'stoped';
+    if (status !== 'running') {
+        action = 'start';
+        next_ico = 'fa-stop';
+        curr_ico = 'fa-play';
+        next_btn = 'btn-primary';
+        curr_btn = 'btn-danger';
+        next_status = 'running';
+        next_title = '{{langmod.LABTOMCAT102}}';
+        message = '{{langmod.LABTOMCAT143}}';
+    }
+    let tr_app = $('#_tomcat_apps_item_' + index);
+    tr_app.addClass('deleting_tr');
+    tr_app.find('.btn').prop('disabled', true);
+    function resetTR() {
+        tr_app.removeClass('deleting_tr');
+        tr_app.find('.btn').prop('disabled', false);
+    }
+    let app_key = tr_app.data('key');
+    let cwp_key = tr_app.data('cwpkey');
+    uchip.handleButton(elem, curr_ico);
+    handleAppStatus(action + '&cwp_key=' + cwp_key, function (resp_data) {
+        if ((action == 'stop' && resp_data.app_status === 'stopped') || (action == 'start' && resp_data.app_status === 'running')) {
+            $(elem).addClass(next_btn).removeClass(curr_btn);
+            $(elem).data('status', next_status);
+            $(elem).attr('title', next_title);
+            $(elem).attr('data-original-title', next_title);
+            updateStatusAppTr(app_key, resp_data.app_status);
+            noti_bubble('{{langmod.LABTOMCAT103}} ' + message + ' {{langmod.LABTOMCAT104}}', '{{langmod.LABTOMCAT83}}', 'success', true, false, '5500', true);
+            uchip.handleButton(elem, next_ico, true);
+        } else {
+            let mess = action == 'stop' ? '{{langmod.LABTOMCAT141}}' : '{{langmod.LABTOMCAT105}}';
+            noti_bubble(mess, '{{langmod.LABTOMCAT82}}', 'error', true, false, '3000', true);
+            uchip.handleButton(elem, curr_ico, true);
+        }
+        resetTR();
+    }, function () {
+        resetTR();
+        uchip.handleButton(elem, curr_ico, true);
+    });
+}
+function showTomcatManagerForm() {
+    $('#_tomcat_form_title').text('{{langmod.LABTOMCAT95}}');
+    uchip.slideToggle('#tomcat_form_window', '#tomcat_app_list', function () {
+        $('#_tomcat_app_form_type').val('new');
+        renderDomainSelect();
+    });
+}
+function cancelTomcatManagerForm() {
+    uchip.slideToggle('#tomcat_app_list', '#tomcat_form_window', function () {
+        $('#tomcat_url_selector_domain').val('');
+        $('#tomcat_form_window .error-field').removeClass('error-field');
+        $('#tomcat_url_selector_domain').trigger('change');
+
+        $('#tomcat_deploy_type_xml .file-path-selector').data('pathfile', '');
+        $('#tomcat_deploy_type_xml .file-path-selector').data('pathdir', '');
+        $('#tomcat_deploy_type_xml .file-path-selector').find('.path-selected').text('Nothing selected.');
+        $('#tomcat_deploy_type_war .file-path-selector').data('pathfile', '');
+        $('#tomcat_deploy_type_war .file-path-selector').data('pathdir', '');
+        $('#tomcat_deploy_type_war .file-path-selector').find('.path-selected').text('Nothing selected.');
+        $('#tomcat_app_quick_actions_container').hide();
+        $('#tomcat_app_quick_actions_container').removeClass('is-running');
+        $('#_tomcat_app_deploy_type_').val('upload_file');
+        $('#_tomcat_app_war_file_').val('');
+        $('.item-hide-on-edit').show();
+        $('.hide-deploy-type').hide();
+    });
+}
+function changedDeploymentType(elem, val) {
+    let to_show = '#tomcat_deploy_type_upload';
+    let deploy_type = $(elem).val();
+    if (deploy_type == 'xml_configuration') {
+        to_show = '#tomcat_deploy_type_xml';
+    } else if (deploy_type == 'war_local_file') {
+        to_show = '#tomcat_deploy_type_war';
+    }
+    $('.tomcat-deploy-type input').removeClass('error-field');
+    $('.tomcat-deploy-type:visible').slideUp('fast', function () {
+        $(to_show).find('input').val(val !== undefined ? val : '')
+        $(to_show).slideDown('fast');
+    });
+
+}
+function sortDomainToList(a, b) {
+    if (a.domain < b.domain) {
+        return -1;
+    }
+    if (a.domain > b.domain) {
+        return 1;
+    }
+    return 0;
+}
+function renderDomainSelect() {
+    let html_select = '<select class="tomcat-req" data-required="true" id="tomcat_url_selector_domain">' +
+        '<option value="">{{langmod.LABTOMCAT119}}</option>';
+    // let found = false;
+    domain_list.sort(sortDomainToList).forEach(function (dom) {
+        let found_domain = app_list.find(function (app) {
+            return app.url == dom.domain_label;
+        });
+        if (found_domain === undefined) {
+            html_select += '<option value="' + dom.domain_label + '">' + dom.domain_label + '</option>';
+        }
+    });
+    html_select += '</select>';
+    $('#tomcat_url_selector_select').html(html_select);
+    $("#tomcat_url_selector_domain").select2({
+        placeholder: "{{langmod.LABTOMCAT119}}",
+        allowClear: true
+    }).on('select2:select', function (e) {
+        let data = e.params.data;
+        $('#_tomcat_form_domain_selected_').val(data.text);
+    });
+}
+function editTomcatManagerAppWindow(app_data) {
+    // renderDomainForApps(app_data.user);
+    //$('#_tomcat_form_domain_selected_').val(app_data.url);
+    $('#_tomcat_form_title').text('{{langmod.LABTOMCAT99}} ' + app_data.name);
+    $('#tomcat_url_selector_domain').val(app_data.url);
+    $('#tomcat_url_selector_domain').trigger('change');
+    $('.item-hide-on-edit').hide();
+    if (app_data.status === 'running') {
+        $('#tomcat_app_quick_actions_container').addClass('is-running');
+    }
+    $('#tomcat_app_quick_actions_container').data('key', app_data.key);
+    $('#tomcat_app_quick_actions_container').data('name', app_data.name);
+    $('#tomcat_app_quick_actions_container').data('cwp-key', app_data.cwp_key);
+    $('#tomcat_app_quick_actions_container').show();
+    //$('#_tomcat_app_form_tomcat_select').val(app_data.version);
+    //$('#_tomcat_app_start_file').val(app_data.extra_info.startup_file);
+    //renderEnvVars(app_data.extra_info.env_vars);
+    uchip.slideToggle('#tomcat_form_window', '#tomcat_loader_window');
+}
+function editTomcatManagerApp(app_key) {
+    $('#_tomcat_apps_loader_title').text('Loading application info, please wait...');
+    $('#_tomcat_app_form_type').val(app_key);
+    uchip.slideToggle('#tomcat_loader_window', '#tomcat_app_list', function () {
+        loadTomcatManagerAppInfo(app_key, function (resp_data) {
+            editTomcatManagerAppWindow(resp_data.info);
+        }, function () {
+            uchip.slideToggle('#tomcat_app_list', '#tomcat_loader_window');
+        });
+    });
+
+}
+function showModalKillSessionsTomCat(name, cwp_key) {
+    $('#_modal_tomcat_sessions_appname_').text(name);
+    $('#_modal_tomcat_sessions_time_').val('30');
+    $('#_modal_tomcat_sessions_').modal('show');
+    $('#_btn_kill_sessions_modal_').unbind('click').click(function () {
+        clickKillSessionsBtn($(this), cwp_key);
+    });
+}
+function clickKillSessionsBtn(btn, cwp_key) {
+    uchip.handleButton(btn, 'fa-check');
+    let minutes = $('#_modal_tomcat_sessions_time_').val();
+    sendKillSessionsApp(cwp_key, minutes, function () {
+        noti_bubble('{{langmod.LABTOMCAT137}}', '{{langmod.LABTOMCAT83}}', 'success', true, false, '5500', true);
+        $('#_modal_tomcat_sessions_').modal('hide');
+        uchip.handleButton(btn, 'fa-check', true);
+    }, function () {
+        uchip.handleButton(btn, 'fa-check', true);
+    });
+}
+function confirmAppDeletion(elem, app_name, index) {
+    $('#confirm_app_delete_name').text(app_name)
+    $('#_tomcat_app_confirm_del_btn').unbind('click').click(function () {
+        let tr_delete = $('#_tomcat_apps_item_' + index);
+        tr_delete.addClass('deleting_tr');
+        tr_delete.find('.btn').prop('disabled', true);
+        function resetTR() {
+            tr_delete.removeClass('deleting_tr');
+            tr_delete.find('.btn').prop('disabled', false);
+        }
+        uchip.handleButton(elem, 'fa-trash');
+        $('#modal_app_delete_confirm').modal('hide');
+        let key = $(elem).data('cwpkey');
+        sendDeleteApplication(key, function () {
+            tr_delete.slideUp('fast', function () {
+                apps_table.row(this).remove().draw();
+            });
+            noti_bubble('{{langmod.LABTOMCAT147}}', '{{langmod.LABTOMCAT83}}', 'success', true, false, '5500', true);
+            app_list.splice(index - 1, 1);
+            calculateQuota();
+            resetTR();
+        }, function () {
+            resetTR();
+            uchip.handleButton(elem, 'fa-trash', true);
+        });
+    });
+    $('#modal_app_delete_confirm').modal('show');
+}
+function sendDeleteApplication(app_key, success, cleaner) {
+    uchip.call('module=tomcat_manager&acc=delete_app', {
+        data: 'cwp_key=' + app_key,
+        callback: function (response) {
+            if (response.result == 'success') {
+                success(response);
+            } else {
+                let message_error = '{{langmod.LABTOMCAT81}}';
+                noti_bubble('{{langmod.LABTOMCAT82}}', message_error, 'error', true, false, '3000', true);
+                cleaner();
+            }
+        }
+    });
+}
+function loadTomcatManagerAppInfo(app_key, success, cleaner) {
+    uchip.call('module=tomcat_manager&acc=tomcat_app_info', {
+        data: 'cwp_key=' + app_key,
+        callback: function (response) {
+            if (response.result == 'success') {
+                success(response);
+            } else {
+                let message_error = '{{langmod.LABTOMCAT81}}';
+                noti_bubble('{{langmod.LABTOMCAT82}}', message_error, 'error', true, false, '3000', true);
+                cleaner();
+            }
+        }
+    });
+}
+function requestAppLog(key, lines, success, cleaner) {
+    uchip.call('module=tomcat_manager&acc=get_app_log', {
+        data: 'key=' + key + '&lines=' + lines,
+        callback: function (response) {
+            if (response.hasOwnProperty('result') && response.result == 'success') {
+                success(response);
+            } else {
+                let message_error = '{{langmod.LABTOMCAT81}}';
+                if (response.hasOwnProperty('code')) {
+                    if (response.code == 1) {
+                        message_error = '{{langmod.LABTOMCAT116}}';
+                    }
+                }
+                noti_bubble('{{langmod.LABTOMCAT82}}', message_error, 'error', true, false, '3000', true);
+                cleaner();
+            }
+        }
+    });
+}
+function sendKillSessionsApp(cwp_key, minutes, success, cleaner) {
+    uchip.call('module=tomcat_manager&acc=kill_sessions', {
+        data: 'minutes=' + minutes + '&cwp_key=' + cwp_key,
+        callback: function (response) {
+            if (response.hasOwnProperty('result') && response.result == 'success') {
+                success(response);
+            } else {
+                let message_error = '{{langmod.LABTOMCAT81}}';
+                if (resp_data.hasOwnProperty('code')) {
+                    if (resp_data.code == 2) {
+                        message_error = '{{langmod.LABTOMCAT138}}';
+                    } else if (resp_data.code == 1) {
+                        message_error = '{{langmod.LABTOMCAT139}}';
+                    } else if (resp_data.code == 3) {
+                        message_error = '{{langmod.LABTOMCAT140}}';
+                    } else if (resp_data.code == 4) {
+                        message_error = resp_data.message;
+                    }
+                }
+                noti_bubble('{{langmod.LABTOMCAT82}}', message_error, 'error', true, false, '3000', true);
+                cleaner();
+            }
+        }
+    });
+}
+{% include("/js/modules/tomcat_manager/file_explorer.js.twig") %}
+{% include("/js/modules/tomcat_manager/apps_status.js.twig") %}
+{% include("/js/modules/tomcat_manager/apps_save_update.js.twig") %}

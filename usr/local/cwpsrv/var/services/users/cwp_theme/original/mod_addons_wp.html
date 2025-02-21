@@ -1,0 +1,228 @@
+<div id="tab_swwp" class="tab-pane fade {{dicwp}} ">
+  <!--<div class="script-container" id="wp_list">
+    <div class="panel panel-default" style="margin-bottom: 0px;">
+      <div class="panel-heading white-bg script-container-title">
+        <h4 class="panel-title">{{langmod.ADDWPINS}}</h4>
+        <span class="btn-primary btn-xs btn pull-right" onclick="addonsChangeView('#wp_form','#wp_list')">
+          <i class="fa fa-plus"></i> {{langmod.ADDWPNEW}}
+        </span>
+      </div>
+      <div class="panel-body" id="table_wp_container">
+        <div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+      </div>
+    </div>
+  </div>-->
+  <div class="script-container" id="wp_form">
+    <div class="panel panel-default" id="wptap1">
+      <div class="panel-heading white-bg script-container-title">
+        <h4 class="panel-title">{{langmod.ADDDWP4}}</h4>
+        <div class="">
+          <span class="btn-success btn-xs btn" onclick="installWP()"><i class="fa fa-download" aria-hidden="true"></i> {{langmod.ADDDDP24}}</span>
+          <span class="btn-warning btn-xs btn" onclick="cancelWP()"><i class="fa fa-ban"></i> {{langmod.ADDCANCELLAB}}</span>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="form-group row">
+          <div class="col-sm-6 addon-row-label">
+            <b>{{langmod.ADDDWP7}}</b>
+            <p class="margin-bottom-none small">{{langmod.ADDDWP8}}</p>
+          </div>
+          <div class="col-sm-4">
+            <select  class="form-control reqwp" data-required="true" id="wpdomain">
+              <option value="">{{langmod.ADDDWP9}}</option>
+              {% for domains in mod.domains %}
+              <option data-path="{{domains.path}}" data-ssl="{{domains.ssl}}" value="{{domains.domain}}">{{domains.domain}}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="form-group row">
+          <div class="col-sm-6 addon-row-label">
+            <b>{{langmod.ADDDWP10}}</b>
+            <p class="margin-bottom-none small">{{langmod.ADDDWP11}}</p>
+          </div>
+          <div class="col-sm-4">
+            <input type="text" class="form-control" id="wppach" value="wp">
+          </div>
+        </div>
+        <div class="form-group row">
+          <div class="col-sm-6 addon-row-label">
+            <b>{{langmod.ADDDWP28}}</b>
+            <p class="margin-bottom-none small">{{langmod.ADDDWP29}}</p>
+          </div>
+          <div class="col-sm-4">
+            <input type="text" class="form-control reqwp" data-required="true" id="wpsitetitle" placeholder="{{langmod.ADDDWP39}}">
+          </div>
+        </div>
+        <div class="form-group row">
+          <div class="col-sm-6 addon-row-label">
+            <b>{{langmod.ADDDWP30}}</b>
+            <p class="margin-bottom-none small">{{langmod.ADDDWP31}}</p>
+          </div>
+          <div class="col-sm-4">
+            <input type="text" class="form-control reqwp" data-required="true" id="wpsitedesc" placeholder="{{langmod.ADDDWP37}}">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel panel-default" id="wptab3">
+      <div class="panel-heading white-bg">
+        <h4 class="panel-title margin-top-none">{{langmod.ADDDWP32}}</h4>
+      </div>
+      <div class="panel-body">
+        <div class="form-group row">
+          <div class="col-sm-6 addon-row-label">
+            <b>{{langmod.ADDDWP33}}</b>
+            <p class="margin-bottom-none small">{{langmod.ADDDWP34}}</p>
+          </div>
+          <div class="col-sm-4">
+            <input type="text" class="form-control reqwp" data-required="true" id="wpadminuser" placeholder="{{langmod.ADDDWP38}}">
+          </div>
+        </div>
+        <div class="form-group row">
+          <div class="col-sm-6 addon-row-label">
+            <b>{{langmod.ADDDWP35}}</b>
+            <p class="margin-bottom-none small">{{langmod.ADDDWP36}}</p>
+          </div>
+          <div class="col-sm-6 pass_form_div">
+            <div class="pass_container">
+              <input type="text" class="form-control reqwp" data-required="true" id="wpadminpass" maxlength="20" value="{{mod.passrand}}" placeholder="{{langmod.ADDDWP40}}">
+              <div class="pwstrength_viewport_progress1"></div>
+            </div>
+            <div>
+              <span class="btn btn-default" title="{{langmod.ADDCOPYPASS}}" data-toggle="tooltip" data-placement="top" aria-hidden="true" onclick="copyPass('wpadminpass')"><i class="fa fa-copy"></i></span>
+              <span class="btn btn-default" title="{{langmod.ADDGENRPASS}}" data-toggle="tooltip" data-placement="top" aria-hidden="true" onclick="generateNewPass(this)"><i class="fa fa-key" aria-hidden="true"></i></span>
+              <div class="btn-group dropdown show_options_wp">
+                <button type="button" class="btn btn-default" title="{{langmod.ADDCHOPTPAS}}" onclick="openPGOPT('#pass_wpad1', '.show_options_wp')">{{langmod.FTPENCRYTED}}<span class="caret" style="margin-left:10px"></span></button>
+                <div class="general-password-generator-options mysql_generator" id="pass_wpad1" style="display: none;z-index: 20;box-shadow: 3px 7px 10px -6px #777;">
+                  <ul class="right animated fadeIn">
+                    <li>
+                      <select class="form-control pwlength" id="lengthpass2" title="{{langmod.FTPLENGTH}}" style="margin-bottom: 5px;">
+                        <option value="7"> {{langmod.FTPLENGTH}}  7</option>
+                        <option value="8"> {{langmod.FTPLENGTH}}  8</option>
+                        <option value="9"> {{langmod.FTPLENGTH}}  9</option>
+                        <option value="10"> {{langmod.FTPLENGTH}} 10</option>
+                        <option value="11"> {{langmod.FTPLENGTH}} 11</option>
+                        <option value="12" selected=""> {{langmod.FTPLENGTH}} 12</option>
+                        <option value="13"> {{langmod.FTPLENGTH}} 13</option>
+                        <option value="14"> {{langmod.FTPLENGTH}} 14</option>
+                        <option value="15"> {{langmod.FTPLENGTH}} 15</option>
+                      </select>
+                    </li>
+                    <li>
+                      <select class="form-control pwtype" id="typepass2" title="Type">
+                        <option value="alf">{{langmod.FTPTYPE}} {{langmod.FTPALF}}</option>
+                        <option value="num" selected="">{{langmod.FTPTYPE}} {{langmod.FTPALFNUM}}</option>
+                        <option value="def">{{langmod.FTPTYPE}} {{langmod.FTPALFNUMSIG}}</option>
+                      </select>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group row">
+          <div class="col-sm-6 addon-row-label">
+            <b>{{langmod.ADDDWP41}}</b>
+            <p class="margin-bottom-none small">{{langmod.ADDDWP42}}</p>
+          </div>
+          <div class="col-sm-4">
+            <input type="text" class="form-control reqwp" data-required="true" id="wpadminemail" placeholder="{{langmod.ADDDWP43}}">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel panel-default" id="wptab3">
+      <div class="panel-heading white-bg">
+        <h4 class="panel-title margin-top-none">{{langmod.ADDDWP12}}</h4>
+      </div>
+      <div class="panel-body">
+        <div class="form-group row">
+          <div class="col-sm-6 addon-row-label">
+            <b>{{langmod.ADDDWP13}}</b>
+          </div>
+          <div class="col-sm-4">
+            <select  class="form-control reqwp" data-required="true" id="wplang">
+              <option value="fr">{{langmod.ADDDWP14}}</option>
+              <option value="en" selected>{{langmod.ADDDWP15}}</option>
+              <option value="it">{{langmod.ADDDDP16}}</option>
+              <option value="es">{{langmod.ADDDDP17}}</option>
+              <option value="ru">{{langmod.ADDDDP18}}</option>
+              <option value="de">{{langmod.ADDDDP45}}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel panel-default" id="wptab4">
+      <!-- Start .panel -->
+      <div class="panel-heading white-bg">
+        <h4 class="panel-title margin-top-none">{{langmod.ADDDWP19}}</h4>
+      </div>
+      <div class="panel-body">
+        <div class="form-group row">
+          <div class="col-sm-6 addon-row-label">
+            <b>{{langmod.ADDDWP20}} </b>
+          </div>
+          <div class="col-sm-4">
+            <input type="text" class="form-control reqwp" data-required="true" id="wpbd" maxlength="7" value="wp{{mod.extra_data.randbd}}">
+          </div>
+        </div>
+        <div class="form-group row">
+          <div class="col-sm-6 addon-row-label">
+            <b>{{langmod.ADDDWP22}}</b>
+          </div>
+          <div class="col-sm-4">
+            <input type="text" class="form-control reqwp" data-required="true" id="wpuserdb" maxlength="7" value="wp{{mod.extra_data.randbd}}">
+          </div>
+        </div>
+        <div class="form-group row">
+          <div class="col-sm-6 addon-row-label">
+            <b>{{langmod.ADDDWP23}}</b>
+          </div>
+          <div class="col-sm-6 pass_form_div">
+            <div class="pass_container">
+              <input type="text" class="form-control reqwp" data-required="true" id="wppassbd" maxlength="20"  value="{{mod.passrand}}" placeholder="{{langmod.ADDDWP25}}">
+              <div class="pwstrength_viewport_progress"></div>
+            </div>
+            <div>
+              <span class="btn btn-default" title="{{langmod.ADDCOPYPASS}}" data-toggle="tooltip" data-placement="top" aria-hidden="true" onclick="copyPass('wppassbd')"><i class="fa fa-copy"></i></span>
+              <span id="gendbpass" class="btn btn-default" title="{{langmod.ADDGENRPASS}}" data-toggle="tooltip" data-placement="top" aria-hidden="true" onclick="generateNewPass(this)"><i class="fa fa-key" aria-hidden="true"></i></span>
+              <div class="btn-group dropdown show_options_wp">
+                <button type="button" class="btn btn-default" title="{{langmod.ADDCHOPTPAS}}" onclick="openPGOPT('#pass_wpad2', '.show_options_wp')">{{langmod.FTPENCRYTED}}<span class="caret" style="margin-left:10px"></span></button>
+                <div class="general-password-generator-options mysql_generator" id="pass_wpad2" style="display: none;z-index: 20;box-shadow: 3px 7px 10px -6px #777;">
+                  <ul class="right animated fadeIn">
+                    <li>
+                      <select class="form-control pwlength" id="lengthpass2" title="{{langmod.FTPLENGTH}}" style="margin-bottom: 5px;">
+                        <option value="7"> {{langmod.FTPLENGTH}}  7</option>
+                        <option value="8"> {{langmod.FTPLENGTH}}  8</option>
+                        <option value="9"> {{langmod.FTPLENGTH}}  9</option>
+                        <option value="10"> {{langmod.FTPLENGTH}} 10</option>
+                        <option value="11"> {{langmod.FTPLENGTH}} 11</option>
+                        <option value="12" selected=""> {{langmod.FTPLENGTH}} 12</option>
+                        <option value="13"> {{langmod.FTPLENGTH}} 13</option>
+                        <option value="14"> {{langmod.FTPLENGTH}} 14</option>
+                        <option value="15"> {{langmod.FTPLENGTH}} 15</option>
+                      </select>
+                    </li>
+                    <li>
+                      <select class="form-control pwtype" id="typepass2" title="Type">
+                        <option value="alf">{{langmod.FTPTYPE}} {{langmod.FTPALF}}</option>
+                        <option value="num" selected="">{{langmod.FTPTYPE}} {{langmod.FTPALFNUM}}</option>
+                        <option value="def">{{langmod.FTPTYPE}} {{langmod.FTPALFNUMSIG}}</option>
+                      </select>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Start .THEMELY -->
+    {% include 'mod_themely.html' %}
+    <!-- End .THEMELY -->
+  </div>
+</div>

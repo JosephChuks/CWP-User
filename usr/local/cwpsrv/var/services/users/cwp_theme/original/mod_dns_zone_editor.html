@@ -1,0 +1,138 @@
+<div class="row  border-bottom white-bg dashboard-header">
+    {% if mod.fsl == 1 %}
+    {% set stflalert ='block' %}
+    {% else %}
+    {% set stflalert ='none' %}
+    {% endif %}
+    <div class="row  alert alert-warning col-lg-12" style="margin-left: 5px; padding-right: 5px;display:{{stflalert}}" id="alertfl">
+        <strong>{{langene.GALARTFILEBLOCK}}</strong>
+    </div>
+    <div class="col-lg-10">
+        <h2>{{langmod.DNSTITLE}} ({{users}})</h2>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="?">Home</a></li>
+            <li class="breadcrumb-item active"><strong>{{langmod.DNSTITLE}}</strong></li>
+        </ol>
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-9">
+        <div class="row" style="margin-top:2rem;">
+            <div class="col-lg-8">
+                <div class="col-lg-12">
+                    <div class="ibox">
+                        <div class="ibox-title">
+                            <h5>{{langmod.DNSTITLE}}</h5>
+                        </div>
+                        <div class="ibox-content">
+                            <div class="row">
+                                <div class="col-sm-9">
+                                  <label for="domainsel">{{langmod.DNSTITLEDOMAIN}}</label>
+                                  <select id="domainsel" class="form-control">
+                                      <option value="">{{langmod.DNSTITLEDOMAIN}}</option>
+                                      {% for email2 in mod.email2 %}
+                                      <option value="{{email2.domain}}">{{email2.domain}}</option>
+                                      {% endfor %}
+                                  </select>
+                                </div>
+                                <div class="col-sm-3">
+                                  <label for="" style="display:block;">&nbsp;</label>
+                                    <div id="divloader" style="display:none;">
+                                      <div style="display:flex;">
+                                        <i class="fa fa-spinner fa-spin fa-1x"></i>    Loading...!
+                                      </div>
+                                    </div>
+                                    <div class="btn-group" style="margin-top:3px;">
+                                        <button data-toggle="dropdown" style="display: none" class="btn btn-primary  btn-xs mr5 mb10 dropdown-toggle" id="btnaddreg">{{langmod.DNSTYPEREG}}</button>
+                                        <ul class="dropdown-menu" id="uladdreg">
+                                            <li><a class="dropdown-item" href="#" onclick="return openmodalreg('A')">A -IPv4 Address</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="return openmodalreg('AAAA')">AAAA -IPv6 Address</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="return openmodalreg('AFSDB')">AFSDB</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="return openmodalreg('CAA')">CAA</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="return openmodalreg('CNAME')">CNAME - Name Alias</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="return openmodalreg('DNAME')">DNAME</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="return openmodalreg('HINFO')">HINFO</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="return openmodalreg('MX')">MX Mail Server</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="return openmodalreg('NS')">NS</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="return openmodalreg('PTR')">PTR</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="return openmodalreg('RP')">RP</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="return openmodalreg('SRV')">SRV</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="return openmodalreg('TLSA')">TLSA</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="return openmodalreg('TXT')">TXT Text</a></li>
+                                        </ul>
+                                        <div  id="divbtn-test" style="display: block; margin-left: 15px">
+                                            <button type="button" id="btn-test" style="display: none" class="btn btn-info btn-xs mr5 mb10">{{langmod.DNSVALIDE}}</button>  <samp id="restbind"></samp>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-12" id="dns_form" tabindex="2" style="display:none;">
+                  <div class="ibox">
+                    <div class="ibox-title">
+                        <h4 id="new_item_title"></h4>
+                    </div>
+                    <div class="ibox-content" id="new_item_form">
+
+                    </div>
+                  </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="col-lg-12">
+                    <div class="ibox">
+                        <div class="ibox-title">
+                            <h5>{{langmod.DNSTITLE}}</h5>
+                        </div>
+                        <div class="ibox-content">
+                            {{langmod.DNSLEYEND}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12">
+            <div class="col-lg-12" id="dns_records" style="display:none;">
+                <div class="ibox">
+                    <div class="ibox-title" style="display: none">
+                        <h4 id="ttitletype"></h4>
+                            <div class="col-lg-12 text-right" id="divbtn-test" style="display: block">
+                                <button type="button" id="btn-test" style="display: none" class="btn btn-info btn-xs mr5 mb10">{{langmod.DNSVALIDE}}</button>  <samp id="restbind"></samp>
+                            </div>
+                    </div>
+
+                    <div class="ibox-title">
+                        <h4>{{langmod.DNSREGUSER}}</h4>
+                    </div>
+                    <div class="ibox-content">
+                        <div class="slimScrollDiv" style="position: relative; overflow: hidden; width: 100%; height: auto;"><div class="table-responsive" style="overflow: hidden; width: 100%; height: auto;">
+                            <table class="table table-hover" id="table_records_dns">
+                                <thead>
+                                    <tr>
+                                        <th class="per28">{{langmod.DNSNOAME}}</th>
+                                        <th>{{langmod.DNSTYPE}}</th>
+                                        <th class="per15">{{langmod.DNSPRIOR}}</th>
+                                        <th width="300">{{langmod.DNSREG}}</th>
+                                        <th class="per15" style="width:100px;">{{langmod.DNSACTION}}</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="trnew">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="slimScrollBar ui-draggable" style="background: rgb(243, 243, 243); height: 5px; position: absolute; bottom: 3px; opacity: 0.4; display: none; border-radius: 5px; z-index: 99; width: 742px; left: 0px;"></div>
+                        <div class="slimScrollRail" style="width: 100%; height: 5px; position: absolute; bottom: 3px; display: none; border-radius: 5px; background: rgb(51, 51, 51); opacity: 0.3; z-index: 90;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+          </div>
+        </div>
+    </div>
+    {% include 'sidebar.html' %}
+ 
+</div>
+{% include 'footer.html' %}

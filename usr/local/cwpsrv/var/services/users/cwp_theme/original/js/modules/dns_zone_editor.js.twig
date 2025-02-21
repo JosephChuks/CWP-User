@@ -1,0 +1,792 @@
+
+console.log();
+function ValidateIPaddressLocal(ipaddress){
+  var ipformat = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+  // (?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]
+  if(ipaddress.match(ipformat)){
+    return true;
+  }else{
+    return false;
+  }
+}
+
+function CheckIsValidDomain(domain){
+  return domain != '';
+}
+function populateOnEdit(edit){
+  let regname = edit.type2;
+  if(regname == 'TXT'){
+    $("#namereg_" + regname).val(edit.name);
+    $("#cachereg_" + regname).val(edit.cache);
+    $("#valuereg_" + regname).val(edit.value);
+  }else if(regname == 'AFSDB'){
+    $("#afsdbaddress").val(edit.name);
+    $("#afsdbtl").val(edit.priory);
+    $("#afsdbsersub").val(edit.service);
+    $("#afsdbserver").val(edit.value);
+  }else if(regname == 'DNAME'){
+    $("#danmename").val(edit.name);
+    $("#danmepunta").val(edit.value);
+    $("#danmeprio").val(edit.cache);
+  }else if(regname == 'HINFO'){
+    $("#hinfohost").val(edit.name);
+    $("#hinfotl").val(edit.priory);
+    let trozos = edit.value.split(' ');
+    $("#hinfohosttype").val(trozos[0]);
+    $("#hinfoos").val(trozos[1]);
+  }else if(regname == 'PTR'){
+    $("#ptrname").val(edit.name);
+    $("#ptrapunta").val(edit.value);
+    $("#ptrprio").val(edit.cache);
+  }else if(regname == 'MX'){
+    $("#mxname").val(edit.name);
+    $("#mxcache").val($.isNumeric(edit.cache) ? edit.cache : '');
+    $("#mxprio").val(edit.priory);
+    $("#mxvalue").val(edit.value);
+  }else if(regname == 'CAA'){
+    $("#namereg_" + regname).val(edit.name);
+    let trozos = edit.priory.split(' ');
+    $('#flag_CAA').val(trozos[0]);
+    $('#tag_CAA').val(trozos[1]);
+    $('#valuereg_CAA').val(edit.value);
+  }else if(regname == 'TLSA'){
+    $("#tlsaport").val(edit.port);
+    $("#tlsatransport").val(edit.protocol);
+    $("#tlsaDomain").val(edit.domain);
+    $("#tlsusage").val(edit.usage);
+    $("#tlsaselector").val(edit.selector);
+    $("#tlsamatchin").val(edit.match);
+    $("#tlsahash").val(edit.hex);
+    $("#tlsattl").val(edit.ttl);
+  } else if(regname == 'NS'){
+    $("#nsname").val(edit.name);
+    $("#nsapunta").val(edit.value);
+    $("#nsprio").val(edit.cache)
+  }else if(regname == 'RP'){
+    $("#rphost").val(edit.name);
+    $("#rpemail").val(edit.value);
+    $("#rpcache").val(edit.ttl);
+    $("#rptxtrecord").val(edit.textrecord);
+  }else if(regname == 'SRV'){
+    // let slices1 = edit.name.split('.');
+    $("#srvname").val(edit.name);
+    $("#srvsymb").val(edit.sym);
+    $("#srvprotocol").val(edit.protocol);
+    // slices1 = edit.value.split('||');
+    $("#srvprio").val(edit.priory);
+    $("#srvweight").val(edit.weight);
+    $("#srvport").val(edit.port);
+    $("#srvtarget").val(edit.target);
+    $("#srvttl").val(edit.ttl);
+  }else{
+    $("#namereg_" + regname).val(edit.name);
+    $("#cachereg_" + regname).val($.isNumeric(edit.cache) ? edit.cache : '');
+    $("#valuereg_" + regname).val(edit.value);
+  }
+}
+function editrecord(domain, elem){
+  let record_data = $(elem).data('record');
+  openmodalreg(record_data.type2, record_data);
+}
+function valideEmailAddress(address){
+    var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(String(address).toLowerCase());
+}
+function base64Encode(str) {
+    var CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    var out = "", i = 0, len = str.length, c1, c2, c3;
+    while (i < len) {
+        c1 = str.charCodeAt(i++) & 0xff;
+        if (i == len) {
+            out += CHARS.charAt(c1 >> 2);
+            out += CHARS.charAt((c1 & 0x3) << 4);
+            out += "==";
+            break;
+        }
+        c2 = str.charCodeAt(i++);
+        if (i == len) {
+            out += CHARS.charAt(c1 >> 2);
+            out += CHARS.charAt(((c1 & 0x3)<< 4) | ((c2 & 0xF0) >> 4));
+            out += CHARS.charAt((c2 & 0xF) << 2);
+            out += "=";
+            break;
+        }
+        c3 = str.charCodeAt(i++);
+        out += CHARS.charAt(c1 >> 2);
+        out += CHARS.charAt(((c1 & 0x3) << 4) | ((c2 & 0xF0) >> 4));
+        out += CHARS.charAt(((c2 & 0xF) << 2) | ((c3 & 0xC0) >> 6));
+        out += CHARS.charAt(c3 & 0x3F);
+    }
+    return out;
+}
+function validform(regname){
+  var reg=regname;
+  var domainsel=$("#domainsel").val();
+  if(regname=='TXT'){
+    let name_txt = $('#namereg_TXT').val();
+    let value_txt = base64Encode($('#valuereg_TXT').val());
+    let cache_txt = $('#cachereg_TXT').val();
+    if((name_txt=='')||(value_txt=='')){
+        if(name_txt==''){$("#namereg_TXT").css("border-color", "#A80705");}
+        if(value_txt==''){$("#valuereg_TXT").css("border-color", "#A80705");}
+        noti_bubble('{{langmod.DNSMSJ1}}','{{langmod.DNSERROR}}','error',false,false,'3000',true);
+        return false;
+    }
+    if(cache_txt == ''){
+      cache_txt = '14400';
+    }
+    if(value_txt.charAt(value_txt.length-1) != '"'){
+      value_txt += '"';
+    }
+    if(value_txt.charAt(0) != '"'){
+      value_txt = '"' + value_txt;
+    }
+    var data = "domain=" + domainsel + "&cachereg=" + cache_txt + "&namereg=" + name_txt + "&valuereg=" + value_txt + "&reg=" + regname;
+  }else if(regname=='AFSDB'){
+      var afsdbaddress = $("#afsdbaddress").val();
+      var afsdbtl = $("#afsdbtl").val();
+      var afsdbsersub = $("#afsdbsersub").val();
+      var afsdbserver = $("#afsdbserver").val();
+      if((afsdbaddress=='')||(afsdbserver=='')){
+          if(afsdbaddress==''){$("#afsdbaddress").css("border-color", "#A80705");}
+          if(afsdbserver==''){$("#afsdbserver").css("border-color", "#A80705");}
+          noti_bubble('{{langmod.DNSMSJ1}}','{{langmod.DNSERROR}}','error',false,false,'3000',true);
+          return false;
+      }
+      // if(afsdbaddress.charAt(afsdbaddress.length-1) != '.'){
+      //   afsdbaddress += '.';
+      // }
+      var data = "domain="+domainsel+"&afsdbaddress="+afsdbaddress+"&afsdbtl="+afsdbtl+"&afsdbsersub="+afsdbsersub+"&afsdbserver="+afsdbserver+"&reg="+regname;
+  }else if(regname=='DNAME'){
+      var danmename = $("#danmename").val();
+      var danmepunta = $("#danmepunta").val();
+      var danmeprio = $("#danmeprio").val();
+
+      if((danmename=='')||!CheckIsValidDomain(danmepunta)||(danmeprio=='')){
+          if(danmename==''){$("#danmename").css("border-color", "#A80705");}
+          if(!CheckIsValidDomain(danmepunta)){$("#danmepunta").css("border-color", "#A80705");}
+          if(danmeprio==''){$("#danmeprio").css("border-color", "#A80705");}
+          noti_bubble('{{langmod.DNSMSJ1}}','{{langmod.DNSERROR}}','error',false,false,'3000',true);
+          return false;
+      }
+      // if(danmename.charAt(danmename.length-1) != '.'){
+      //   danmename += '.';
+      // }
+      if(danmepunta.charAt(danmepunta.length-1) != '.'){
+        danmepunta += '.';
+      }
+      var data = "domain="+domainsel+"&danmename="+danmename+"&danmepunta="+danmepunta+"&danmeprio="+danmeprio+"&reg="+regname;
+  }else if(regname=='HINFO'){
+      var hinfohost = $("#hinfohost").val();
+      var hinfotl = $("#hinfotl").val();
+      var hinfohosttype = $("#hinfohosttype").val();
+      var hinfoos = $("#hinfoos").val();
+
+      if((hinfohost=='')||(hinfotl=='')||(hinfohosttype=='')||(hinfoos=='')){
+          if(hinfohost==''){$("#hinfohost").css("border-color", "#A80705");}
+          if(hinfotl==''){$("#hinfotl").css("border-color", "#A80705");}
+          if(hinfohosttype==''){$("#hinfohosttype").css("border-color", "#A80705");}
+          if(hinfoos==''){$("#hinfoos").css("border-color", "#A80705");}
+          noti_bubble('{{langmod.DNSMSJ1}}','{{langmod.DNSERROR}}','error',false,false,'3000',true);
+          return false;
+      }
+      // if(hinfohost.charAt(hinfohost.length-1) != '.'){
+      //   hinfohost += '.';
+      // }
+      var data = "domain="+domainsel+"&hinfohost="+hinfohost+"&hinfotl="+hinfotl+"&hinfohosttype="+hinfohosttype+"&hinfoos="+hinfoos+"&reg="+regname;
+  }else if(regname=='PTR'){
+      var ptrname = $("#ptrname").val();
+      var ptrapunta = $("#ptrapunta").val();
+      var ptrprio = $("#ptrprio").val();
+
+      if((ptrname=='')||!CheckIsValidDomain(ptrapunta)||(ptrprio=='')){
+          if(ptrname==''){$("#ptrname").css("border-color", "#A80705");}
+          if(!CheckIsValidDomain(ptrapunta)){$("#ptrapunta").css("border-color", "#A80705");}
+          if(ptrprio==''){$("#ptrprio").css("border-color", "#A80705");}
+          noti_bubble('{{langmod.DNSMSJ1}}','{{langmod.DNSERROR}}','error',false,false,'3000',true);
+          return false;
+      }//
+      // if(ptrname.charAt(ptrname.length-1) != '.'){
+      //   ptrname += '.';
+      // }
+      if(ptrapunta.charAt(ptrapunta.length-1) != '.'){
+        ptrapunta += '.';
+      }
+      var data = "domain="+domainsel+"&ptrname="+ptrname+"&ptrapunta="+ptrapunta+"&ptrprio="+ptrprio+"&reg="+regname;
+  }else if(regname=='MX'){
+      var mxname = $("#mxname").val();
+      var mxcache = $("#mxcache").val();
+      var mxprio = $("#mxprio").val();
+      var mxvalue = $("#mxvalue").val();
+      var data = "domain="+domainsel+"&mxname="+mxname+"&mxcache="+mxcache+"&mxprio="+mxprio+"&mxvalue="+mxvalue+"&reg="+regname;
+      if((mxname=='')||(mxprio=='')|| !CheckIsValidDomain(mxvalue)){
+          if(mxname==''){$("#mxname").css("border-color", "#A80705");}
+          if(mxprio==''){$("#mxprio").css("border-color", "#A80705");}
+          if(!CheckIsValidDomain(mxvalue)){$("#mxvalue").css("border-color", "#A80705");}
+          noti_bubble('{{langmod.DNSMSJ1}}','{{langmod.DNSERROR}}','error',false,false,'3000',true);
+          return false;
+      }
+      if(mxvalue.charAt(mxvalue.length-1) != '.'){
+        mxvalue += '.';
+      }
+      var data = "domain="+domainsel+"&mxname="+mxname+"&mxcache="+mxcache+"&mxprio="+mxprio+"&mxvalue="+mxvalue+"&reg="+regname;
+  }else if(regname=='TLSA'){
+      var tlsaport = $("#tlsaport").val();
+      var tlsatransport = $("#tlsatransport").val();
+      var tlsaDomain = $("#tlsaDomain").val();
+      var tlsusage = $("#tlsusage").val();
+      var tlsaselector = $("#tlsaselector").val();
+      var tlsamatchin = $("#tlsamatchin").val();
+      var tlsahash = $("#tlsahash").val();
+      var tlsattl = $("#tlsattl").val();
+      if((tlsaport=='')||(tlsatransport=='')||!CheckIsValidDomain(tlsaDomain)||(tlsusage=='')||(tlsaselector=='')||(tlsamatchin=='')||(tlsahash=='')){
+          if(tlsaport==''){$("#tlsaport").css("border-color", "#A80705");}
+          if(tlsatransport==''){$("#tlsatransport").css("border-color", "#A80705");}
+          if(!CheckIsValidDomain(tlsaDomain)){$("#tlsaDomain").css("border-color", "#A80705");}
+          if(tlsusage==''){$("#tlsusage").css("border-color", "#A80705");}
+          if(tlsaselector==''){$("#tlsaselector").css("border-color", "#A80705");}
+          if(tlsamatchin==''){$("#tlsamatchin").css("border-color", "#A80705");}
+          if(tlsahash==''){$("#tlsahash").css("border-color", "#A80705");}
+          noti_bubble('{{langmod.DNSMSJ1}}','{{langmod.DNSERROR}}','error',false,false,'3000',true);
+          return false;
+      }
+      if(tlsaDomain.charAt(tlsaDomain.length-1) != '.'){
+        tlsaDomain += '.';
+      }
+      var data = "domain="+domainsel+"&tlsaport="+tlsaport+"&tlsatransport="+tlsatransport+"&tlsaDomain="+tlsaDomain+"&tlsusage="+tlsusage+"&tlsaselector="+tlsaselector+"&reg="+regname+"&tlsamatchin="+tlsamatchin+"&tlsahash="+tlsahash+"&tlsattl="+tlsattl;
+  }else if(regname=='NS'){
+      var nsname = $("#nsname").val();
+      var nsapunta = $("#nsapunta").val();
+      var nsprio = $("#nsprio").val();
+
+      if((nsname=='')||(nsapunta=='')||(nsprio=='')){
+          if(nsname==''){$("#nsname").css("border-color", "#A80705");}
+          if(nsapunta==''){$("#nsapunta").css("border-color", "#A80705");}
+          if(nsprio==''){$("#nsprio").css("border-color", "#A80705");}
+          noti_bubble('{{langmod.DNSMSJ1}}','{{langmod.DNSERROR}}','error',false,false,'3000',true);
+          return false;
+      }
+      // if(nsname.charAt(nsname.length-1) != '.'){
+      //   nsname += '.';
+      // }
+      // if(nsapunta.charAt(nsapunta.length-1) != '.'){
+      //   nsapunta += '.';
+      // }
+      var data = "domain="+domainsel+"&nsname="+nsname+"&nsapunta="+nsapunta+"&nsprio="+nsprio+"&reg="+regname;
+  }else if(regname=='CNAME'){
+    var namereg=$("#namereg_"+reg).val();
+    var cachereg=$("#cachereg_"+reg).val();
+    var valuereg=$("#valuereg_"+reg).val();
+    if((namereg=='')|| !CheckIsValidDomain(valuereg)){
+        if(namereg==''){$("#namereg_"+reg).css("border-color", "#A80705");}
+        if(!CheckIsValidDomain(valuereg)){$("#valuereg_"+reg).css("border-color", "#A80705");}
+        noti_bubble('{{langmod.DNSMSJ1}}','{{langmod.DNSERROR}}','error',false,false,'3000',true);
+        return false;
+    }
+    // if(namereg.charAt(namereg.length-1) != '.'){
+    //   namereg += '.';
+    // }
+    if(valuereg.charAt(valuereg.length-1) != '.'){
+      valuereg += '.';
+    }
+    var data = "domain="+domainsel+"&namereg="+namereg+"&valuereg="+valuereg+"&cachereg="+cachereg+"&reg="+reg;
+  }else if(regname=='CAA'){
+      var namereg_CAA = $("#namereg_CAA").val();
+      var flag_CAA = $("#flag_CAA").val();
+      var tag_CAA = $("#tag_CAA").val();
+      var valuereg_CAA = $("#valuereg_CAA").val();
+      if((namereg_CAA == '') || (flag_CAA == '') || (tag_CAA == '') || (valuereg_CAA == '')){
+        if(namereg_CAA == ''){$("#namereg_CAA").css("border-color", "#A80705");}
+        if(flag_CAA == ''){$("#flag_CAA").css("border-color", "#A80705");}
+        if(tag_CAA == ''){$("#tag_CAA").css("border-color", "#A80705");}
+        if(valuereg_CAA == ''){$("#valuereg_CAA").css("border-color", "#A80705");}
+      }
+      // if(namereg_CAA.charAt(namereg_CAA.length-1) != '.'){
+      //   namereg_CAA += '.';
+      // }
+      var data = "domain="+domainsel+"&namereg=" +namereg_CAA + "&valuereg=" + valuereg_CAA + "&flag="+flag_CAA+"&tag="+tag_CAA+"&reg="+regname;
+  }else if(regname=='RP'){
+      var rphost = $("#rphost").val();
+      var rpcache = $("#rpcache").val();
+      var email = $("#rpemail").val();
+      var rptxtrecord = $('#rptxtrecord').val();
+      if(rpemail == '' || rptxtrecord == '' ||(rpcache=='')||(!valideEmailAddress(email))){
+          if(rphost == ''){$("#rphost").css("border-color", "#A80705");}
+          if(rpcache==''){$("#rpcache").css("border-color", "#A80705");}
+          if(rptxtrecord==''){$("#rptxtrecord").css("border-color", "#A80705");}
+          if(!valideEmailAddress(email)){$("#rpemail").css("border-color", "#A80705");}
+          noti_bubble('{{langmod.DNSMSJ1}}','{{langmod.DNSERROR}}','error',false,false,'3000',true);
+          return false;
+      }else{
+        // if(rphost.charAt(rphost.length-1) != '.'){
+        //   rphost += '.';
+        // }
+        let email_slices = email.split('@');
+        // let username_slices = email_slices[0].replace(/./g, String.fromCharCode(92) + '.');
+        let username_slices = email_slices[0].split('.');
+        let username = '';
+        username_slices.forEach(function(slice){
+          username += slice + String.fromCharCode(92) + '.';
+        });
+        username = username.slice(0, -2);
+        let domain_email = email_slices[1];
+        email = username + '.' + domain_email + '.';
+      }
+      var data = "domain="+domainsel+"&rphost="+rphost+"&rpcache="+rpcache+"&rpemail="+email+"&reg="+regname+"&rptxtrecord=" +rptxtrecord;
+  }else if(regname=='SRV'){
+    let valid = true;
+    $('#new_item_form input').each(function(){
+      if($(this).val() == ''){
+        valid = false;
+        $(this).css("border-color", "#A80705");
+      }
+    });
+    var srvtarget=$("#srvtarget").val();
+    if(!CheckIsValidDomain(srvtarget)){
+      valid = false;
+      $("#srvtarget").css("border-color", "#A80705");
+    }
+    if(!valid){
+      noti_bubble('{{langmod.DNSMSJ1}}','{{langmod.DNSERROR}}','error',false,false,'3000',true);
+      return false;
+    }else{
+      var srvname=$("#srvname").val();
+      var srvsymb=$("#srvsymb").val();
+      var srvprotocol=$("#srvprotocol").val();
+      var srvprio=$("#srvprio").val();
+      var srvweight=$("#srvweight").val();
+      var srvport=$("#srvport").val();
+
+      var srvttl=$("#srvttl").val();
+      // if(srvname.charAt(srvname.length-1) != '.'){
+      //   srvname += '.';
+      // }
+      if(srvtarget.charAt(srvtarget.length-1) != '.'){
+        srvtarget += '.';
+      }
+      var data = "domain="+domainsel+"&srvname="+srvname+"&srvsymb="+srvsymb+"&srvprotocol="+srvprotocol+"&srvprio="+srvprio+"&srvweight="+srvweight+"&srvport="+srvport+"&srvtarget="+srvtarget+"&srvttl="+srvttl+"&reg="+regname;
+      // var data = "domain="+domainsel+"&rphost="+rphost+"&rpcache="+rpcache+"&email="+email+"&reg="+regname;
+    }
+  }else{
+      var namereg=$("#namereg_"+reg).val();
+      var cachereg=$("#cachereg_"+reg).val();
+      var valuereg=$("#valuereg_"+reg).val();
+
+      //var domainsel=$("#domainsel_"+reg).val();
+      var flag=$("#flag_"+reg).val();
+      var tag=$("#tag_"+reg).val();
+
+      if((namereg=='')|| valuereg == ''){
+          if(namereg==''){$("#namereg").css("border-color", "#A80705");}
+          if(valuereg==''){$("#valuereg").css("border-color", "#A80705");}
+          noti_bubble('{{langmod.DNSMSJ1}}','{{langmod.DNSERROR}}','error',false,false,'3000',true);
+          return false;
+      }
+      // if(namereg.charAt(namereg.length-1) != '.'){
+      //   namereg += '.';
+      // }
+      var data = "domain="+domainsel+"&namereg="+namereg+"&valuereg="+valuereg+"&cachereg="+cachereg+"&reg="+reg+"&flag="+flag+"&tag="+tag;
+  }
+  return data;
+}
+function addregdns(regname){
+    var reg=regname;
+    var domainsel=$("#domainsel").val();
+    let data = validform(regname);
+    if(data === false){
+      return false;
+    }
+    $('#dns_save_mk').addClass('disabled');
+    $('#dns_save_mk').prop('disabled',true);
+    $('#dns_save_cancel').addClass('disabled');
+    $('#dns_save_mk i').remove();
+    $('#dns_save_mk').prepend('<i class="fa fa-spinner fa-spin"></i>');
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=dns_zone_editor&acc=addregdns",
+        data:data,
+        complete: function(datos){
+            //console.log(datos.responseText);
+            $.ajax({
+                type: "POST",
+                url: "./{{users}}/index.php?module=dns_zone_editor&acc=restbind",
+                data:"domain="+$("#domainsel").val(),
+                complete: function(datos){
+                    //console.log(datos.responseText);
+                    if(datos.responseText==1){
+                        $("#namereg").val('');
+                        $("#cachereg").val('');
+                        $("#valuereg").val('');
+                        //$("#addregdns").removeClass('disabled');
+                        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+                        $.ajax({
+                            type: "POST",
+                            url: "./{{users}}/index.php?module=dns_zone_editor&acc=paserrecord",
+                            data:"domain="+$("#domainsel").val(),
+                            complete: function(datos){
+                                noti_bubble('{{langmod.DNSZONEOK}}','{{langmod.DNSSUCCT}}','success',false,false,'3000',true);
+                                $('#table_records_dns').dataTable().fnClearTable();
+                                $('#table_records_dns').DataTable().destroy();
+                                $("#trnew").html(datos.responseText);
+                                if($('.ns_record').length < 2){
+                                  $('.ns_record').find('.btn-danger').remove();
+                                }
+                                dns_table = $('#table_records_dns').dataTable();
+                                $("#table3").show('blind');
+                                canceldnsform();
+                                return false;
+                            }
+                        });
+                    }else{
+                        noti_bubble('{{langmod.DNSZONEOFF}}','{{langmod.DNSERROR}}','error',false,false,'3000',true);
+                        canceldnsform();
+                    }
+                    return false;
+                }
+            });
+            return false;
+        }
+    });
+}
+function deleterecord(st,domain,line,tr){
+    if(st==0){
+        var strheader = '<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{ langmod.SSLCLOSE }}</span></button><h4 class="modal-title">{{langmod.DNSWARNING}}</h4><small class="font-bold">{{langmod.DNSDELETEFILE}}</small>';
+        var strbody = '<p class="text-center" style="margin-bottom:0px;">'+domain+'</p>';
+        var strfooter = '<button type="button" class="btn btn-white" data-dismiss="modal">{{langmod.DNSNO}}</button><button type="button" class="btn btn-primary" id="btnyesdel" onclick="return deleterecord(1,\''+domain+'\','+line+','+tr+')">{{langmod.DNSYES}}</button>';
+
+        $("#deletemodal .modal-header").html(strheader);
+        $("#deletemodal .modal-body").css('padding','10px');
+        $("#deletemodal .modal-body").html(strbody);
+        $("#deletemodal .modal-footer").html(strfooter);
+        $("#deletemodal").modal('toggle');
+        return false;
+    }
+    if(st==1){
+        $("#btnyesdel").addClass('disabled');
+        $("#btnyesdel").attr('disabled',true);
+        $("#btnyesdel").html('<i class="fa fa-spinner fa-spin"></i>   '+$("#btnyesdel").text());
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=dns_zone_editor&acc=deleteregzone",
+            data:"domain="+domain+"&line="+line,
+            complete: function(datos){
+                //alert(datos.responseText);}
+                if(datos.responseText == 1){
+                  if($('#line_editing').val() == line){
+                    canceldnsform();
+                  }
+                  noti_bubble('{{langmod.DNSDELETEOK}}','{{langmod.DNSSUCCT}}','success',false,false,'3000',true);
+                  $("#"+tr).hide();
+                  $("#"+tr).remove();
+                  if($('.ns_record').length < 2){
+                    $('.ns_record').find('.btn-danger').remove();
+                  }
+                }else{
+                  noti_bubble('{{langmod.DNSUNKNERROR}}','{{langmod.DNSERROR}}','error',false,false,'3000',true);
+                }
+                $("#btnyesdel").removeClass('disabled');
+                $("#btnyesdel").attr('disabled',false);
+                $("#btnyesdel").html($("#btnyesdel").text());
+                $("#deletemodal").modal('hide');
+            }
+        });
+    }
+}
+function editdnsrecord(domain, reg, line){
+  let data = validform(reg);
+  if(data === false){
+    return false;
+  }
+  $('#dns_save_mk').addClass('disabled');
+  $('#dns_save_cancel').addClass('disabled');
+  $('#dns_save_mk i').remove();
+  $('#dns_save_mk').prop('disabled',true);
+  $('#dns_save_mk').prepend('<i class="fa fa-spinner fa-spin"></i>');
+  $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+  $.ajax({
+      type: "POST",
+      url: "./{{users}}/index.php?module=dns_zone_editor&acc=editdnsrecord",
+      data:"domain=" + domain + "&line=" + line + "&" + data,
+      complete: function(datos){
+        if(datos.responseText == 1){
+          $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+          $.ajax({
+              type: "POST",
+              url: "./{{users}}/index.php?module=dns_zone_editor&acc=paserrecord",
+              data:"domain="+$("#domainsel").val(),
+              complete: function(datos){
+                  noti_bubble('{{langmod.DNSZONEOK}}','{{langmod.DNSSUCCT}}','success',false,false,'3000',true);
+                  $('#table_records_dns').dataTable().fnClearTable();
+                  $('#table_records_dns').DataTable().destroy();
+                  $("#trnew").html(datos.responseText);
+                  if($('.ns_record').length < 2){
+                    $('.ns_record').find('.btn-danger').remove();
+                  }
+                  dns_table = $('#table_records_dns').dataTable();
+                  $("#table3").show('blind');
+                  // $(".btn-reg").removeClass('disabled');
+                  // $(".btn-reg").attr('disabled',false);
+                  // $("#btn-"+reg.toLowerCase()).html(contbtn);
+                  // $("#modal-"+reg).modal('hide');
+                  canceldnsform();
+                  return false;
+              }
+          });
+        }else{
+          noti_bubble('{{langmod.DNSUNKNERROR}}','{{langmod.DNSERROR}}','error',false,false,'3000',true);
+        }
+      }
+  });
+}
+function btnsrvreg(){
+    var reg=$("#typeregihide").val();
+    var srvname=$("#srvname").val();
+    var srvsymb=$("#srvsymb").val();
+    var srvprotocol=$("#srvprotocol").val();
+    var srvprio=$("#srvprio").val();
+    var srvweight=$("#srvweight").val();
+    var srvport=$("#srvport").val();
+    var srvtarget=$("#srvtarget").val();
+    var srvttl=$("#srvttl").val();
+    var domainsel=$("#domainsel_SRV").val();
+    if((srvsymb=='')||(srvprotocol=='')||(srvprio=='')||(srvweight=='')||(srvport=='')||(srvtarget=='')||(srvttl=='')){
+        if(srvsymb==''){$("#srvsymb").css("border-color", "#A80705");}
+        if(srvprotocol==''){$("#srvprotocol").css("border-color", "#A80705");}
+        if(srvprio==''){$("#srvprio").css("border-color", "#A80705");}
+        if(srvweight==''){$("#srvweight").css("border-color", "#A80705");}
+        if(srvport==''){$("#srvport").css("border-color", "#A80705");}
+        if(srvtarget==''){$("#srvtarget").css("border-color", "#A80705");}
+        if(srvttl==''){$("#srvttl").css("border-color", "#A80705");}
+        noti_bubble('{{langmod.DNSMSJ1}}','{{langmod.DNSERROR}}','error',false,false,'3000',true);
+        return false;
+    }else{
+        $("#btn-srvreg").addClass('disabled');
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=dns_zone_editor&acc=addregdns",
+            data:"domain="+domainsel+"&srvname="+srvname+"&srvsymb="+srvsymb+"&srvprotocol="+srvprotocol+"&srvprio="+srvprio+"&srvweight="+srvweight+"&srvport="+srvport+"&srvtarget="+srvtarget+"&srvttl="+srvttl+"&reg="+reg,
+            complete: function(datos){
+                $("#trnew").html(datos.responseText);
+                $("#srvname").val('');
+                $("#srvsymb").val('');
+                $("#srvprotocol").val('');
+                $("#srvprio").val('');
+                $("#srvweight").val('');
+                $("#srvport").val('');
+                $("#srvtarget").val('');
+                $("#srvttl").val('');
+                $.ajax({
+                    type: "POST",
+                    url: "./{{users}}/index.php?module=dns_zone_editor&acc=restbind",
+                    data:"domain="+$("#domainsel").val(),
+                    complete: function(datos){
+                        if(datos.responseText==1){
+                            $("#namereg").val('');
+                            $("#cachereg").val('');
+                            $("#valuereg").val('');
+                            $("#btn-srvreg").removeClass('disabled');
+                            $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+                            $.ajax({
+                                type: "POST",
+                                url: "./{{users}}/index.php?module=dns_zone_editor&acc=paserrecord",
+                                data:"domain="+$("#domainsel").val(),
+                                complete: function(datos){
+                                    noti_bubble('{{langmod.DNSZONEOK}}','{{langmod.DNSSUCCT}}','success',false,false,'3000',true);
+                                    $("#btn-srvreg").removeClass('disabled');
+                                    $('#table_records_dns').dataTable().fnClearTable();
+                                    $('#table_records_dns').DataTable().destroy();
+                                    $("#trnew").html(datos.responseText);
+                                    if($('.ns_record').length < 2){
+                                      $('.ns_record').find('.btn-danger').remove();
+                                    }
+                                    dns_table = $('#table_records_dns').dataTable();
+                                    $("#table3").show('blind');
+
+                                    return false;
+                                }
+                            });
+                        }else{
+                            noti_bubble('{{langmod.DNSZONEOFF}}','{{langmod.DNSERROR}}','error',false,false,'3000',true);
+                            $("#btn-srvreg").removeClass('disabled');
+                            $("#divbtn-test").show();
+                            $("#divbtn-addregdns").hide();
+                        }
+                        return false;
+                    }
+                });
+                return false;
+            }
+        });
+    }
+}
+function canceldnsform(){
+  $('#dns_form').slideUp();
+}
+function openmodalreg(reg, edit){
+    $("#domainsel_"+reg).val($("#domainsel").val());
+    // $("#modal-"+reg).modal('toggle');
+    let record_form = $("#modal-"+reg).find('.modal-body').html();
+    if(edit == undefined){
+      record_form += '<div class="row" style="margin-top:20px;">'+
+                        '<div class="col-md-12" style="text-align:center;">' +
+                          '<button class="btn btn-primary" id="dns_save_mk" onclick="addregdns(\'' + reg + '\')"><i class="fa fa-save"></i> {{langmod.DNSLABEL30}}</button>&nbsp;' +
+                          '<span class="btn btn-danger" id="dns_save_cancel" onclick="canceldnsform()"><i class="fa fa-ban"></i> {{langmod.DNSCANCEL}}</span>' +
+                        '</div>' +
+                      '</div>';
+    }else{
+      record_form += '<div class="row" style="margin-top:20px;">'+
+                        '<div class="col-md-12" style="text-align:center;">' +
+                          '<input type="hidden" id="line_editing" value="' + edit.line + '">' +
+                          '<button class="btn btn-primary" id="dns_save_mk" onclick="editdnsrecord(\'' + $("#domainsel").val() + '\',\'' + reg + '\',' + edit.line + ')"><i class="fa fa-save"></i> {{langmod.DNSLABEL30}}</button>&nbsp;' +
+                          '<span class="btn btn-danger" id="dns_save_cancel" onclick="canceldnsform()"><i class="fa fa-ban"></i> {{langmod.DNSCANCEL}}</span>' +
+                        '</div>' +
+                      '</div>';
+    }
+
+    $('#new_item_form').html(record_form);
+    // Cab JM
+    $("#aipv4").show();
+
+    if(edit == undefined){
+      $('#new_item_title').text('{{langmod.DNSLABEL27}} ' + reg + ' {{langmod.DNSLABEL28}}.');
+    }else{
+      $('#new_item_title').text('{{langmod.DNSLABEL29}} ' + reg + ' {{langmod.DNSLABEL29}}.');
+      populateOnEdit(edit);
+      $('html,body').animate({scrollTop: $('#dns_form').offset().top}, 200, function() {});
+    }
+    $('#dns_form').slideDown();
+
+    $("#typeregihide").val(reg);
+    if(reg == 'TXT'){ $("#txt").show();  }
+    return false;
+}
+let dns_table = null;
+function executeChange(){
+    $("#table3").hide('blind');
+    $("#btn-test").hide();
+    $("#btnaddreg").hide();
+    var domain=$("#domainsel").val();
+    if($("#domainsel").val()!=''){
+        $("#typyrecords").attr('disabled', false);
+        $("#divloader").show();
+        $('#dns_records').slideUp();
+        $('#dns_form').slideUp();
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=dns_zone_editor&acc=paserrecord",
+            data:"domain="+domain,
+            complete: function(datos){
+                //alert(datos.responseText);
+                $('#table_records_dns').dataTable().fnClearTable();
+                $('#table_records_dns').DataTable().destroy();
+                $("#trnew").html(datos.responseText);
+                if($('.ns_record').length < 2){
+                    $('.ns_record').find('.btn-danger').remove();
+                }
+                dns_table = $('#table_records_dns').dataTable();
+                $("#table3").show('blind');
+                // $("#btnaddreg").show();
+                //$("#uladdreg").show();
+                $("#divloader").hide();
+                $("#btnaddreg").show();
+                $('#dns_records').slideDown();
+                return false;
+            }
+        });
+    }else{
+        $("#typyrecords").attr('disabled', true);
+        $("#table3").hide('blind');
+        $("#btn-test").hide();
+        $("#aipv4").hide();
+        $("#mx").hide();
+        $("#txt").hide();
+        $("#btnaddreg").hide();
+        $('#dns_records').slideUp();
+        $('#dns_form').slideUp();
+        //$("#uladdreg").hide();
+    }
+    return false;
+}
+$("#domainsel").change(function (){
+    executeChange();
+});
+$("#btn-dnscanceltxt").click(function () {
+    $("#txt").toggle('blind');
+    return false;
+});
+$("#btn-dnscancelmx").click(function () {
+    $("#mx").toggle('blind');
+    return false;
+});
+$(document).ready(function(){
+    executeChange();
+});
+$("#typyrecords").change(function(){
+    if($("#typyrecords").val()==''){
+        $("#aipv4").hide('blind');
+        $("#mx").hide('blind');
+        $("#txt").hide('blind');
+        $("#srvr").hide();
+    }
+    if($("#typyrecords").val()=='A'){
+        $("#cachereg").attr('disabled', false);
+        $("#mx").hide();
+        $("#txt").hide();
+        $("#srvr").hide();
+        $("#aipv4").show('blind');
+        $("#ttitletype").html('{{langmod.DNSBTNADDRA}}');
+        $("#namebox3").html('{{langmod.DNSDIRECT}} {{langmod.DNSIP4}}');
+        $("#addregdns").html('{{langmod.DNSBTNADDRA}}');
+        $("#aipv4").show('blind');
+        $("#typeregihide").val($("#typyrecords").val());
+    }
+    if($("#typyrecords").val()=='AAAA'){
+        $("#cachereg").attr('disabled', false);
+        $("#mx").hide();
+        $("#txt").hide();
+        $("#srvr").hide();
+        $("#aipv4").show('blind');
+        $("#ttitletype").html('{{langmod.DNSBTNADDR4A}}');
+        $("#namebox3").html('{{langmod.DNSDIRECT}} {{langmod.DNSIP6}}');
+        $("#addregdns").html('{{langmod.DNSBTNADDR4A}}');
+        $("#aipv4").show('blind');
+        $("#typeregihide").val($("#typyrecords").val());
+    }
+    if($("#typyrecords").val()=='CNAME'){
+        $("#cachereg").attr('disabled', true);
+        $("#mx").hide();
+        $("#txt").hide();
+        $("#srvr").hide();
+        $("#aipv4").show('blind');
+        $("#ttitletype").html('{{langmod.DNSBTNADDCN}}');
+        $("#namebox3").html('{{langmod.DNSTITCNAME}}');
+        $("#addregdns").html('{{langmod.DNSBTNADDCN}}');
+        $("#aipv4").show('blind');
+        $("#typeregihide").val($("#typyrecords").val());
+    }
+    if($("#typyrecords").val()=='MX'){
+        $("#aipv4").hide();
+        $("#txt").hide();
+        $("#srvr").hide();
+        $("#mx").show('blind');
+        $("#typeregihide").val($("#typyrecords").val());
+    }
+    if($("#typyrecords").val()=='TXT'){
+        $("#aipv4").hide();
+        $("#mx").hide();
+        $("#srvr").hide();
+        $("#txt").show('blind');
+        $("#typeregihide").val($("#typyrecords").val());
+    }
+    if($("#typyrecords").val()=='SRV'){
+        $("#aipv4").hide();
+        $("#mx").hide();
+        $("#txt").hide();
+        $("#srvr").show('blind');
+        $("#typeregihide").val($("#typyrecords").val());
+    }
+});

@@ -1,0 +1,82 @@
+{% set modsec = mod.init_info.modsec %}
+<div>
+  <div class="tabs-container gen-tabs-container">
+      <div class="maintabs-container">
+        <div class="maintabs-wrapper">
+          <ul class="nav nav-tabs">
+            <li class="active"><a data-toggle="tab" href="#mini_dashboard" aria-expanded="true" id="mini_dashboard_tab"
+                class="dashboard_tab"> Reseller Dashboard</a></li>
+            <li><a data-toggle="tab" href="#accounts" aria-expanded="true" id="accounts_tab" class="accounts_tab">
+                {{langmod.RSLABEL1}}</a></li>
+            <li class=""><a data-toggle="tab" href="#packages" aria-expanded="false" id="packages_tab"
+                class="packages_tab">{{langmod.RSLABEL2}}</a></li>
+              {% if ("res_feactures" in rmenu )or(swmenu==1) %}
+            <li class=""><a data-toggle="tab" href="#features" aria-expanded="false" id="features_tab"
+                class="features_tab">{{langmod.RSLABEL3}}</a></li>
+              {% endif %}
+              {% if ("res_nameserver" in rmenu )or(swmenu==1) %}
+            <li class=""><a data-toggle="tab" href="#nameservers" aria-expanded="false" id="nameservers_tab"
+                class="nameservers_tab">{{langmod.RSLABEL5}}</a></li>
+              {% endif %}
+              {% if ("res_branding" in rmenu )or(swmenu==1) %}
+            <li class=""><a data-toggle="tab" href="#branding" aria-expanded="false" id="branding_tab"
+                class="branding_tab">{{langmod.RSLABEL6}}</a></li>
+              {% endif %}
+            {% if ("res_api" in rmenu )or(swmenu==1) %}
+                <li class=""><a data-toggle="tab" href="#apimanager" aria-expanded="false" id="apimanager_tab"
+                    class="apimanager_tab">{{langmod.RSJSLAB4}}</a></li>
+            {% endif %}
+            {% if modsec == 1 %}
+              {% if ("res_modsecurity" in rmenu )or(swmenu==1) %}
+                <li class=""><a data-toggle="tab" href="#modsecurity" aria-expanded="false" id="modsecurity_tab"
+                    class="modsecurity_tab">{{langmod.RSJSLAB29}}</a></li>
+              {% endif %}
+            {% endif %}
+              {% if ("res_firewall" in rmenu )or(swmenu==1) %}
+                <li class=""><a data-toggle="tab" href="#firewall" aria-expanded="false" id="firewall_tab"
+                    class="firewall_tab">{{langmod.RSJSLAB30}}</a></li>
+              {% endif %}
+          </ul>
+        </div>
+        <div class="maintabs-scrollers">
+          <i class="fa fa-chevron-left" id="_tab_scroller_btn_left" aria-hidden="true"></i>
+          <i class="fa fa-chevron-right" id="_tab_scroller_btn_right" aria-hidden="true"></i>
+        </div>
+      </div>
+      <div class="tab-content">
+          <div id="mini_dashboard" class="tab-pane active">
+            {% include 'mod_reseller_statstab.html' %}
+          </div>
+          <div id="accounts" class="tab-pane">
+            {% include 'mod_reseller_accounts.html' %}
+          </div>
+          <div id="packages" class="tab-pane">
+            {% include 'mod_reseller_packages.html' %}
+          </div>
+          <div id="features" class="tab-pane">
+            {% include 'mod_reseller_features.html' %}
+          </div>
+          <div id="nameservers" class="tab-pane">
+            {% include 'mod_reseller_nameservers.html' %}
+          </div>
+          <div id="branding" class="tab-pane">
+            {% include 'mod_reseller_branding.html' %}
+          </div>
+          {% if ("res_api" in rmenu )or(swmenu==1) %}
+          <div id="apimanager" class="tab-pane">
+              {% include 'mod_reseller_apimanager.html' %}
+          </div>
+          {% endif %}
+          {% if modsec == 1 %}
+          <div id="modsecurity" class="tab-pane">
+              {% include 'mod_reseller_modsecurity.html' %}
+          </div>
+          {% endif %}
+          {% if ("res_firewall" in rmenu )or(swmenu==1) %}
+          <div id="firewall" class="tab-pane">
+              {% include 'mod_reseller_firewall.html' %}
+          </div>
+          {% endif %}
+      </div>
+  </div>
+</div>

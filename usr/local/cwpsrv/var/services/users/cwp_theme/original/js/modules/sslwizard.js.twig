@@ -1,0 +1,438 @@
+
+console.log();
+let ssl_list = JSON.parse('{{mod.ssl_list|raw}}');
+let ssl_table = null;
+$(document).ready(function() {
+  {% if mod.isie == 1 %}
+    uchip = new $.Uchip();
+  {% else %}
+    uchip = new Uchip();
+  {% endif %}
+  $('[data-toggle="tooltip"]').tooltip()
+  $('#countryName').select2();
+  lisSSL(ssl_list);
+  $('#countryName').on('select2:select', function (e) {
+    var data = e.params.data;
+    if(data.id != ''){
+      $('#select2-countryName-container').addClass('val-selected');
+    }else{
+      $('#select2-countryName-container').removeClass('val-selected');
+    }
+  });
+  initDomTags('#commonName');
+  initDomTags('#domain_install');
+});
+function installSSL(){
+  if(uchip.validator('.reqinstall')){
+    uchip.handleButton('.btninstall-gen', 'fa-cogs');
+    uchip.handleButton('.btninsatll-cnl', 'fa-ban');
+    uchip.call('module=sslwizard&acc=preinstall', {
+      data:'cert=' + Base64.encode($('#certificate_install').val()) + '&priv=' + Base64.encode($('#privkey_install').val()) + '&bundle=' + Base64.encode($('#bundle_install').val()),
+      callback: function(response){
+        if(response.result == 'success'){
+          renderPreInstallInfo(response.ssl_data);
+          $('#preinstall_info').modal('show');
+        }else{
+          let message = '{{langmod.SSLWLABEL15}}';
+          if(response.hasOwnProperty('code') && response.code == '1'){
+            message = '{{langmod.SSLWLABEL63}}';
+          }
+          noti_bubble(message,'{{langmod.SSLWLABEL14}}','error',false,false,'3000',true);
+        }
+        uchip.handleButton('.btninstall-gen', 'fa-cogs', true);
+        uchip.handleButton('.btninsatll-cnl', 'fa-ban', true);
+      }
+    });
+  }
+}
+function renderPreInstallInfo(data){
+  let domains = data.instalables.filter(function(dom){
+    return dom.hasOwnProperty('is_domain') && dom.is_domain == '1';
+  });
+  let sub_domains = data.instalables.filter(function(dom){
+    return dom.hasOwnProperty('is_sub') && dom.is_sub == '1';
+  });
+  let sans = data.instalables.filter(function(dom){
+    return dom.hasOwnProperty('is_san') && dom.is_san == '1';
+  });
+  let html = '<h3><i class="fa fa-globe" aria-hidden="true"></i> <b>{{langmod.SSLWLABEL21}}:</b> ' + data.commonName + '</h3>' +
+            '<h4><i class="fa fa-calendar" aria-hidden="true"></i> <b>{{langmod.SSLWLABEL73}}:</b> ' + moment.unix(data.validfrom).format("DD MMM, YYYY") + '</h4>' +
+            '<h4><i class="fa fa-calendar" aria-hidden="true"></i> <b>{{langmod.SSLWLABEL74}}:</b> ' + moment.unix(data.validto).format("DD MMM, YYYY") + '</h4>' +
+            '<h4><i class="fa fa-lock" aria-hidden="true"></i> <b>{{langmod.SSLWLABEL77}}:</b> ' + data.issuer + '</h4>';
+  if(domains.length > 0){
+    let dom_html = domains.map(function(dom){
+      return '<div class="checkbox" style="padding-top:0px;">' +
+              '<input type="checkbox" class="dom-to-install" data-type="domain" checked id="dom_' + dom.domain + '" value="' + dom.domain + '">' +
+              '<label for="dom_' + dom.domain + '">' + dom.domain + '</label>' +
+            '</div>';
+    })
+    html += '<h4 data-toggle="collapse" data-target="#div_domains" class="ssl-info-title"><i class="fa fa-angle-right" aria-hidden="true"></i> ' +
+              '<b>{{langmod.SSLWLABEL82}} (' + dom_html.length + ')</b></h4>' +
+              '<div id="div_domains" class="collapse in item-install-container">' + dom_html.join('') + '</div>';
+  }
+  if(sub_domains.length > 0){
+    let dom_html = sub_domains.map(function(dom){
+      return '<div class="checkbox" style="padding-top:0px;">' +
+              '<input type="checkbox" class="subdom-to-install" data-parent="' + dom.parent + '" data-type="sub_domain" checked id="dom_' + dom.domain + '" value="' + dom.domain + '">' +
+              '<label for="dom_' + dom.domain + '">' + dom.domain + '</label>' +
+            '</div>';
+    })
+    html += '<h4 data-toggle="collapse" data-target="#div_subdomains" class="ssl-info-title"><i class="fa fa-angle-right" aria-hidden="true"></i> ' +
+              '<b>{{langmod.SSLWLABEL83}} (' + dom_html.length + ')</b></h4>' +
+              '<div id="div_subdomains" class="collapse item-install-container">' + dom_html.join('') + '</div>';
+  }
+  if(sans.length > 0){
+    let dom_html = sans.map(function(dom){
+      return '<div class="checkbox" style="padding-top:0px;">' +
+              '<input type="checkbox" class="san-to-install" data-parent="' + dom.parent + '" data-type="san" checked id="dom_' + dom.domain + '" value="' + dom.domain + '">' +
+              '<label for="dom_' + dom.domain + '">' + dom.domain + '</label>' +
+            '</div>';
+    })
+    html += '<h4 data-toggle="collapse" data-target="#div_servsans" class="ssl-info-title"><i class="fa fa-angle-right" aria-hidden="true"></i> ' +
+              '<b>{{langmod.SSLWLABEL84}} (' + dom_html.length + ')</b></h4>' +
+              '<div id="div_servsans" class="collapse item-install-container">' + dom_html.join('') + '</div>';
+  }
+  html += '<div class="install-btn-wrapper">' +
+            '<button class="btn btn-success btn-xs" onclick="continueInstall()"><i class="fa fa-lock" aria-hidden="true"></i> {{langmod.SSLWLABEL18}}</button>' +
+            '<button class="btn btn-warning btn-xs" data-dismiss="modal"><i class="fa fa-ban" aria-hidden="true"></i> {{langmod.SSLWLABEL7}}</button>' +
+          '</div>';
+  $("#preinstall_info_body").html(html);
+}
+
+function getToInstall(selector){
+  let toinstall = [];
+  $(selector).each(function(){
+    if($(this).is(':checked')){
+      let type = $(this).data('type');
+      let item = {
+        domain: $(this).val(),
+        type: type
+      };
+      if(type != 'domain'){
+        item.parent = $(this).data('parent');
+      }
+      toinstall.push(item);
+    }
+  });
+  return toinstall;
+}
+function continueInstall(){
+  let toinstall = [];
+  let domains = getToInstall('.dom-to-install');
+  let subdomains = getToInstall('.subdom-to-install');
+  toinstall = toinstall.concat(getToInstall('.dom-to-install'), getToInstall('.subdom-to-install'), getToInstall('.san-to-install'));
+  if(toinstall.length > 0){
+    $('#preinstall_info').modal('hide');
+    uchip.handleButton('.btninstall-gen', 'fa-cogs');
+    uchip.handleButton('.btninsatll-cnl', 'fa-ban');
+    $('#install_form_wrapper').fadeOut('fast', function(){
+      $('#installing_loader_wrapper').fadeIn('fast');
+    });
+    let data = 'cert=' + Base64.encode($('#certificate_install').val()) + '&priv=' + Base64.encode($('#privkey_install').val()) +
+              '&bundle=' + Base64.encode($('#bundle_install').val()) + '&services=' + JSON.stringify(toinstall);
+    uchip.call('module=sslwizard&acc=mkinstall', {
+      data: data,
+      callback: function(response){
+        if(response && response.hasOwnProperty('result') && response.result == 'success'){
+          cancelInstall();
+          noti_bubble('{{langmod.SSLWLABEL68}}','{{langmod.SSLWLABEL12}}','success',false,false,'3000',true);
+        }else{
+          let message = '{{langmod.SSLWLABEL15}}';
+          if(response.hasOwnProperty('code') && response.code == '1'){
+            message = '{{langmod.SSLWLABEL63}}';
+          }
+          noti_bubble(message,'{{langmod.SSLWLABEL14}}','error',false,false,'3000',true);
+          $('#installing_loader_wrapper').fadeOut('fast', function(){
+            $('#install_form_wrapper').fadeIn('fast');
+          });
+        }
+        uchip.handleButton('.btninstall-gen', 'fa-cogs', true);
+        uchip.handleButton('.btninsatll-cnl', 'fa-ban', true);
+      }
+    });
+  }else{
+    noti_bubble('{{langmod.SSLWLABEL65}}','{{langmod.SSLWLABEL10}}','error',false,false,'3000',true);
+  }
+
+}
+function initDomTags(selector){
+  $(selector).tagsinput({
+    tagClass: 'cwp-tags-input'
+  });
+  $(selector).on('beforeItemAdd', function(event) {
+    if(!validSSLDomain(event.item)){
+      event.cancel = true;
+      noti_bubble('{{langmod.SSLWLABEL11}}','{{langmod.SSLWLABEL10}}','error',false,false,'4500',true);
+    }
+  });
+}
+function lisSSL(list){
+  ssl_list = list;
+  let table_content = '';
+  let index = 0;
+  if(ssl_list.length > 0){
+    let html_content = '';
+    let index = 0;
+    ssl_list.forEach(function(ssl){
+      let extra_san = '<span style="font-weight:600">{{langmod.SSLWLABEL70}}</span>';
+      let expiration = '-';
+      if(ssl.hasOwnProperty('san') && ssl.san.length > 0){
+        extra_san = ssl.san.map(function(san){
+          return '<span class="label label-primary">' + san + '</span>';
+        }).join(' ')
+      }
+
+      html_content += '<tr id="trssl_' + index + '">' +
+                        '<td>' +
+                          // '<a class="btn btn-xs btn-primary mr5" style="margin-right: 5px;" onclick="return infomodal(' +  ssl.domain + ',0)"><i class="fa fa-info"></i> </a>' +
+                          ssl.domain +
+                          ' [<a href="https://' + ssl.domain + '" class="ssl-go-link" target="_blank">{{langmod.SSLWLABEL52}}</a>]' +
+                        '</td>' +
+                        '<td class="ssl-extra-san">' + ssl.issuer + '</td>' +
+                        '<td>' + extra_san + '</td>' +
+                        '<td>' + ssl.until + '</td>' +
+                        '<td >' +
+                          '<div class="domain-actions-wrapper">' +
+                            '<div class="dropdown" data-toggle="tooltip" data-placement="top" title="{{langmod.SSLWLABEL44}}">' +
+                              '<button class="btn btn-primary btn-xs dropdown-toggle" type="button" data-toggle="dropdown"><i class="fa fa-flask" aria-hidden="true"></i> {{langmod.SSLWLABEL85}}' +
+                              '<span class="caret"></span></button>' +
+                              '<ul class="dropdown-menu" style="left:-10rem;">' +
+                                '<li><a target="_blank" href="https://www.sslshopper.com/ssl-checker.html?hostname=' +  ssl.domain + '">SSL Shopper</a></li>' +
+                                '<li><a target="_blank" href="https://www.geocerts.com/ssl_checker?domain=' +  ssl.domain + '&port=443">GeoCerts</a></li>' +
+                                '<li><a target="_blank" href="https://www.ssllabs.com/ssltest/analyze.html?d=' +  ssl.domain + '">Qualys SSL Labs</a></li>' +
+                                '<li><a target="_blank" href="https://www.sslcerty.com/certificate?h=' +  ssl.domain + '">SSLCerty</a></li>' +
+                              '</ul>' +
+                            '</div>' +
+                            '<div class="dropdown" data-toggle="tooltip" data-placement="top" title="{{langmod.SSLWLABEL45}}">' +
+                              '<button class="btn btn-success btn-xs dropdown-toggle" id="info_btn_' + index + '" type="button" data-toggle="dropdown"><i class="fa fa-info" aria-hidden="true"></i> {{langmod.SSLWLABEL86}}' +
+                              '<span class="caret"></span></button>' +
+                              '<ul class="dropdown-menu" style="left:-10rem;">' +
+                                '<li><a href="javascript:void(0)" onclick="return infomodal(' + index + ',\'' +  ssl.domain + '\',\'info\')">{{langmod.SSLWLABEL45}}</a></li>' +
+                                '<li><a href="javascript:void(0)" onclick="return infomodal(' + index + ',\'' +  ssl.domain + '\',\'cert\',\'SSLCertificateFile\')">SSLCertificateFile</a></li>' +
+                                '<li><a href="javascript:void(0)" onclick="return infomodal(' + index + ',\'' +  ssl.domain + '\',\'key\',\'SSLCertificateKeyFile\')">SSLCertificateKeyFile</a></li>' +
+                                '<li><a href="javascript:void(0)" onclick="return infomodal(' + index + ',\'' +  ssl.domain + '\',\'bundle\',\'SSLCertificateChainFile\')">SSLCertificateChainFile</a></li>' +
+                              '</ul>' +
+                            '</div>' +
+                            '<button title="{{langmod.SSLWLABEL46}}" class="btn btn-danger btn-xs" data-san=\'' + (ssl.hasOwnProperty('san') ? JSON.stringify(ssl.san) : '[]') + '\' id="btn_del_' + index + '" data-toggle="tooltip" data-placement="top" title="{{langmod.SSLWLABEL46}}" onclick="return deletessl(0,\'' + ssl.domain + '\',' + index + ')"><i class="fa fa-trash" aria-hidden="true"></i> {{langmod.SSLWLABEL46}}</button>' +
+                          '</div>' +
+                        '</td>' +
+                      '</tr>';
+      index++;
+    });
+    let table_html = '<table class="table table-striped" id="ssl_table">' +
+                        '<thead>' +
+                        '<tr>' +
+                          '<th>{{langmod.SSLWLABEL47}}</th>' +
+                          '<th>{{langmod.SSLWLABEL48}}</th>' +
+                          '<th>{{langmod.SSLWLABEL87}}</th>' +
+                          '<th width="90">{{langmod.SSLWLABEL49}}</th>' +
+                          '<th width="260">{{langmod.SSLWLABEL50}}</th>' +
+                        '</tr>' +
+                        '</thead>' +
+                        '<tbody id="sslbody">' +
+                          html_content +
+                        '</tbody>' +
+                      '</table>';
+    $('#table_ssl_wrapper').html(table_html);
+    $('#ssl_table').DataTable().destroy();
+    ssl_table = $('#ssl_table').dataTable();
+    $('[data-toggle="tooltip"]').tooltip();
+  }else{
+    $('#table_ssl_wrapper').html('<div class="empty_list"><h4 class="text-success">{{langmod.SSLWLABEL88}}</h4></div>');
+  }
+}
+function deletessl(st, domain, index){
+  if(st == 0){
+    let san = $('#btn_del_' + index).data('san');
+    let strbody = '<p>{{langmod.SSLWLABEL54}}:<br>' +
+                  '<strong id="descron">' + domain + '</strong>';
+    if(san.length > 0){
+      strbody += '<br><br>{{langmod.SSLWLABEL56}}:<br><b>' + san.join('<br />') + '</b><br>';
+    }
+    strbody += '<br>{{langmod.SSLWLABEL57}}</p>';
+    let strfooter = '<button type="button" class="btn btn-white" data-dismiss="modal">{{ langmod.SSLCLOSE }}</button>' +
+                    '<button type="button" class="btn btn-primary" id="btnyesdel" onclick="return deletessl(1,\''+domain+'\',' + index + ')">{{langmod.SSLWLABEL58}}</button>';
+    $('#deleteletsencrypt .modal-body').html(strbody);
+    $('#deleteletsencrypt .modal-footer').html(strfooter);
+    $('#deleteletsencrypt').modal('toggle');
+    return false;
+  }else{
+    $('#deleteletsencrypt').modal('hide');
+    uchip.handleButton('#btn_del_' + index,'fa-trash');
+    let tr = $('#trssl_' + index);
+    tr.find('.btn').prop('disabled', true).addClass('disabled');
+    tr.addClass('deleting_tr');
+    uchip.call('module=letsencrypt&acc=deletessl', {
+      data:'domain=' + domain,
+      callback: function(response){
+        if(response.result == 'success'){
+          tr.slideUp('fast', function(){
+            ssl_table.row(this).remove().draw();
+          });
+          noti_bubble('{{langmod.SSLWLABEL69}}','{{langmod.SSLWLABEL15}}','success',false,false,'3000',true);
+          //cancelInstallation(response.nossl);
+        }else{
+          tr.find('.btn').prop('disabled', false).removeClass('disabled');
+          tr.removeClass('deleting_tr');
+          uchip.handleButton('#btn_del_' + index,'fa-trash', true);
+          noti_bubble('{{langmod.SSLWLABEL15}}','{{langmod.SSLWLABEL14}}','error',false,false,'3000',true);
+        }
+      }
+    });
+  }
+}
+function showInstallForm(){
+  uchip.slideToggle('#ssl_install_wrapper','#ssl_list_wrapper');
+}
+function cancelInstall(){
+  uchip.slideToggle('#ssl_list_wrapper', '#ssl_install_wrapper', function(){
+    $('#installing_loader_wrapper').hide();
+    $('#install_form_wrapper').show();
+    $('#certificate_install').val('');
+    $('#privkey_install').val('');
+    $('#bundle_install').val('');
+    uchip.validator('.reqinstall', true);
+  });
+}
+function renderInfo(response){
+  let html_info = '<strong>{{langmod.SSLWLABEL71}}:</strong> <span class="domain">' + response.subject + '</span><br />';
+  if(response.aliases.length > 0){
+    html_info += '<strong>{{langmod.SSLWLABEL72}}: </strong >' + response.aliases.map(function(san){
+      return san.replace('DNS:','');
+    }).join(', ') + '<br />';
+  }
+  let issuers = response.issuer.map(function(issuer){
+    return issuer.param + '=' + issuer.value;
+  }).join(', ');
+  html_info += '<strong>{{langmod.SSLWLABEL73}}:</strong> ' + response.valid_from + '<br />' +
+                '<strong>{{langmod.SSLWLABEL74}}:</strong> ' + response.valid_until + '<br />' +
+                '<strong>{{langmod.SSLWLABEL75}}:</strong> ' + response.signature + '<br />' +
+                '<strong>{{langmod.SSLWLABEL76}}:</strong> ' + response.public_key + '<br />' +
+                '<strong>{{langmod.SSLWLABEL77}}:</strong> ' + issuers + '<br />';
+  if(response.self_signed == true){
+    html_info += '<div style="color:#FF0000"><strong>{{langmod.SSLWLABEL78}}</strong></div>';
+  }
+  if(response.is_expired == true){
+    html_info += '<div style="color:#FF0000"><strong>{{langmod.SSLWLABEL79}}</strong></div>';
+  }
+  return '<div class="info_certificate_body">' + html_info + '</div>';
+}
+function renderFileHTML(response, title, domain, type){
+  return '<div class="file-content-ssl">' +
+            '<div class="file-content-ssl-header"><h4>' + title + ' (' + domain + '.' + type + ')</h4>' +
+              '<div><span class="text-success copied-message">{{langmod.SSLWLABEL80}}</span><span class="copy-file" onclick="copyFileContent()" data-toggle="tooltip" data-placement="top" title="{{langmod.SSLWLABEL81}}"><i class="fa fa-copy"></i></span></div>' +
+            '</div>' +
+            '<textarea class="form-control" readonly id="file_content">' + response.result + '</textarea>' +
+          '</div>';
+}
+function copyFileContent(){
+  $('#file_content').show();
+  var copyText = document.getElementById('file_content');
+  copyText.select();
+  document.execCommand("copy");
+  noti_bubble('{{langmod.SSLWLABEL32}}','','success',false,false,'3000',true);
+}
+function infomodal(index, domain, type, title){
+  uchip.handleButton('#info_btn_' + index, 'fa-info');
+  uchip.call('module=letsencrypt&acc=infomodal', {
+    data:'domain=' + domain + '&type=' + type,
+    callback: function(response){
+      if(type == 'info'){
+        $('#modalinfo_twice .modal-body').html(renderInfo(response));
+      }else{
+        $('#modalinfo_twice .modal-body').html(renderFileHTML(response, title, domain, type));
+      }
+      $('#modalinfo_twice').modal('toggle');
+      setTimeout(function(){
+        $('[data-toggle="tooltip"]').tooltip();
+      }, 100);
+      uchip.handleButton('#info_btn_' + index, 'fa-info', true);
+    }
+  });
+}
+function emailCSR(elem){
+  if($(elem).is(':checked')){
+    $('#email_send_csr').slideDown();
+  }else{
+    $('#email_send_csr').slideUp();
+    uchip.validator('#emailAddressSend', true);
+  }
+}
+function showNewCSR(){
+  uchip.slideToggle('#ssl_csr_wrapper','#ssl_list_wrapper');
+}
+function cancelNewCSR(){
+  uchip.slideToggle('#ssl_list_wrapper','#ssl_csr_wrapper', function(){
+    cleanFormCSR();
+  });
+}
+function cleanFormCSR(){
+  $('.reqcsr').val('');
+  $('#countryName').val(null).trigger('change');
+  $("#commonName").tagsinput('removeAll');
+}
+function handleReload(bind){
+  window.onbeforeunload = bind === true ? function(e) {
+    return 'Are you sure you want to leave? You are in the middle of something.';
+  } : null;
+}
+function validSSLDomain(domain) {
+  // console.log('domain', domain);
+  // let re = /^(\*\.)?([\w\d]+\.)+[\w\d]+$/;
+  //let re = /^(\*\.)?(?!:\/\/)(?!.{256,})(([a-z0-9][a-z0-9_-]*?\.)+?[a-z]{2,6}?)$/i;
+  let re = /^(\*\.)?(?!:\/\/)(?!.{256,})(([a-z0-9][a-z0-9_-]*?\.)+?[a-z]{2,10}?)$/i;
+  return re.test(domain);
+}
+function copyCSR(elem){
+  let field = document.getElementById(elem);
+  field.select();
+  document.execCommand('copy');
+  noti_bubble('{{langmod.SSLWLABEL32}}','','success',false,false,'3000',true);
+}
+function copiedCSR(elem){
+  if($(elem).is(':checked')){
+    $('#copied_csr_btn').prop('disabled', false);
+    $('#copied_csr_btn').removeClass('disabled');
+    handleReload(false);
+  }else{
+    $('#copied_csr_btn').prop('disabled', true);
+    $('#copied_csr_btn').addClass('disabled');
+    handleReload(true);
+  }
+}
+function genCSRContinue(){
+  uchip.slideToggle('#ssl_list_wrapper','#ssl_csr_generated', function(){
+    cleanFormCSR();
+    $('#copied_csr_check').prop('checked', false);
+  });
+}
+function processNewCSR(){
+  let valid_email_send = !($('#emailsend').is(':checked') && !uchip.validator('#emailAddressSend'));
+  if(uchip.validator('.reqcsr') && valid_email_send){
+    let data = '';
+    $('.reqcsr').each(function(){
+      data += $(this).attr('id') + '=' + $(this).val() + '&';
+    });
+    uchip.handleButton('.btncsr-gen', 'fa-cogs');
+    uchip.handleButton('.btncsr-cnl', 'fa-ban');
+    data += 'key_size=' + $('#key_size').val() + '&emailsend=' + ($('#emailsend').is(':checked') ? '1' : '0') + '&email_receiver=' + $('#emailAddressSend').val();
+    uchip.call('module=sslwizard&acc=generatecsr', {
+      data: data,
+      callback: function(response){
+        if(response.result == 'success'){
+          noti_bubble('{{langmod.SSLWLABEL13}}','{{langmod.SSLWLABEL12}}','success',false,false,'3000',true);
+          uchip.slideToggle('#ssl_csr_generated', '#ssl_csr_wrapper', function(){
+            $('#csr_csr').val(response.csr);
+            $('#csr_priv').val(response.priv);
+            handleReload(true);
+          });
+        }else{
+          let message = '{{langmod.SSLWLABEL15}}';
+          noti_bubble(message,'{{langmod.SSLWLABEL14}}','error',false,false,'3000',true);
+        }
+        uchip.handleButton('.btncsr-gen', 'fa-cogs', true);
+        uchip.handleButton('.btncsr-cnl', 'fa-ban', true);
+      }
+    });
+  }
+}

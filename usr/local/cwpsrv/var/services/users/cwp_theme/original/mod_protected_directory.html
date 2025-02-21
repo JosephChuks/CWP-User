@@ -1,0 +1,259 @@
+<div class="row  border-bottom white-bg dashboard-header">
+    {% if mod.fsl == 1 %}
+    {% set stflalert ='block' %}
+    {% else %}
+    {% set stflalert ='none' %}
+    {% endif %}
+    <div class="row  alert alert-warning col-lg-12" style="margin-left: 5px; padding-right: 5px;display:{{stflalert}}"
+        id="alertfl">
+        <strong>{{langene.GALARTFILEBLOCK}}</strong>
+    </div>
+    <div class="col-lg-10">
+        <h2>{{langmod.PDTITLE}} ({{users}})</h2>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="?">Home</a></li>
+            <li class="breadcrumb-item active"><strong>{{langmod.PDTITLE}}</strong></li>
+        </ol>
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-9">
+        <br>
+        <div class="row">
+            <div class="col-lg-9">
+                <div class="ibox-title">
+                    <div id="divaddform" style="display: none;" class="col-lg-12">
+                        <div class="panel panel-default" id="supr0"> <!-- Start .panel -->
+                            <div class="panel-heading white-bg">
+                                <h4 class="panel-title">{{langmod.NEWDP}}</h4>
+                            </div>
+                            <div class="panel-body">
+                                <div class="slimScrollDiv">
+                                    <div class="">
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <strong>{{langmod.DIRPD}}</strong>
+                                            </div>
+                                        </div>
+                                        <div class="row" style="margin-top:15px">
+                                            <!--<div class="col-md-6">
+                                                <strong>{{langmod.NAMEDIRDP}}: </strong>
+                                            </div>-->
+                                            <div class="col-md-4">
+                                                <strong>{{langmod.USERDP}}</strong>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <strong>{{langmod.PASSDP}}</strong>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <strong>{{langmod.PASSDP}}</strong>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <!--<div class="col-md-6">
+                                                <input type="text" class="form-control" id="namedp">
+                                            </div>-->
+                                            <div class="col-md-4">
+                                                <input class="form-control" type="text" id="useradd">
+                                                <input type="hidden" id="hiddenvalue" value="">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <input class="form-control" type="password" id="pass1dp"
+                                                    placeholder="Write your password">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <input class="form-control" type="password" id="pass2dp"
+                                                    placeholder="Confirm your password">
+                                            </div>
+                                        </div>
+
+
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="row" style="margin-left: 10px;margin-top: 25px">
+                                                    <div class="radio-custom radio-inline" style="margin-left: 10px">
+                                                        <input type="radio" name="radio1" value="0" checked="checked"
+                                                            onclick="return changeradio(0)">
+                                                        <label for="radio4">{{langmod.MANUALDP}}</label>
+                                                    </div>
+                                                    <div class="radio-custom radio-inline" style="margin-left: 10px">
+                                                        <input type="radio" name="radio1" value="1"
+                                                            onclick="return changeradio(1)">
+                                                        <label for="radio14">{{langmod.EXPLORET}}</label>
+                                                    </div>
+                                                </div>
+                                                <div class="row" style="margin-top: 15px; margin-left: 10px"
+                                                    id="manual">
+                                                    <!--<div class="form-group">-->
+                                                    <div class="col-lg-3">/home/{{users}}/</div>
+                                                    <div class="col-lg-8">
+                                                        <input type="text" class="form-control" id="path1">
+                                                    </div>
+                                                    <!--</div>-->
+                                                </div>
+                                                <div class="row"
+                                                    style="margin-top: 15px; margin-left: 10px; display: none"
+                                                    id="exploret">
+                                                    <div class="row" style="margin-top: 5px; margin-left: 3px"
+                                                        id="pathview">
+                                                        /home/{{users}}/
+                                                    </div>
+                                                    <div class="row" style="margin-top: 5px; margin-left: 8px"
+                                                        id="divconte">
+                                                        {% if mod.dirs|length > 0 %}
+                                                        <table>
+                                                            {% for var in mod.dirs %}
+                                                            <tr>
+                                                                <td style="padding-left: 15px">
+                                                                    <i class="fa fa-folder" style="color:#f1cf54"></i>
+                                                                    <a href="#"
+                                                                        onclick="return searchdir('{{var.path}}/')">{{var.name}}
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                            {% endfor %}
+                                                        </table>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-lg-12 text-right" style="margin-top: 15px">
+                                                <button type="button" class="btn btn-success btn-xs mr5 mb10"
+                                                    id="btn-protege" onclick="return savedp()">{{langmod.PROT}}</button>
+                                                <button type="button" class="btn btn-default btn-xs mr5 mb10"
+                                                    id="btn-cancel"
+                                                    onclick="return newdirprotec()">{{langmod.CANCE}}</button>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    <div class="slimScrollBar ui-draggable"
+                                        style="background: rgb(243, 243, 243); height: 5px; position: absolute; bottom: 3px; opacity: 0.4; display: none; border-radius: 5px; z-index: 99; width: 940px; left: 0px;">
+                                    </div>
+                                    <div class="slimScrollRail"
+                                        style="width: 100%; height: 5px; position: absolute; bottom: 3px; display: none; border-radius: 5px; background: rgb(51, 51, 51); opacity: 0.3; z-index: 90;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-12 text-right" id="divbtn-add">
+                        <button type="button" class="btn btn-success btn-xs mr5 mb10" style="margin-bottom: 15px"
+                            onclick="return newdirprotec()">{{langmod.BTNADD}}</button>
+                    </div>
+                    {% if mod.dirprot|length > 0 %}
+                    <br>
+                    <div class="table-responsive col-lg-12" style="overflow: hidden; height: auto" id="tableredg">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th class="per5">#</th>
+                                    <!--th>{{langmod.NAMEDP}}</th>-->
+                                    <th>{{langmod.DIRECTOR}}</th>
+                                    <th>{{langmod.USERDP}}</th>
+                                    <th>{{langmod.ACCION}}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablebodydp">
+                                {% set array = 1 %}
+                                {% for var1 in mod.dirprot %}
+                                <tr>
+                                    <td>
+                                        {{array}}
+                                    </td>
+                                    <td>{{var1.dir}} </td>
+                                    <td>
+                                        <div class="row">
+                                            {% for user in var1.users %}
+                                            <div class="col-md-8">{{user}}</div>
+                                            <div class="col-md-4"><button type="button"
+                                                    style="margin-left: 2px; margin-top: 2px"
+                                                    class="btn btn-danger btn-xs mr5 mb10" title="Delete user"
+                                                    data-line="1_1" data-database="clusterc_lvh955"
+                                                    data-host="localhost" data-user="clusterc_lvh955"
+                                                    onclick="deleteUser(0,'{{var1.dir}}','{{user}}')"><i
+                                                        class="fa fa-trash" aria-hidden="true"></i></button></div>
+                                            {% endfor %}
+                                        </div>
+                                    </td>
+                                    <td style="text-align:center">
+                                        <button type="button" class="btn btn-outline btn-primary btn-xs"
+                                            onclick="addUToDP('{{var1.dir}}')"><i class="fa fa-plus"></i> Add New
+                                            User</button>
+                                        <button type="button" style="margin-left: 2px; margin-top: 2px"
+                                            class="btn btn-danger btn-xs mr5 mb10" title="Delete user" data-line="1_1"
+                                            data-database="clusterc_lvh955" data-host="localhost"
+                                            data-user="clusterc_lvh955" onclick="deleteDP(0,'{{var1.dir}}')"><i
+                                                class="fa fa-trash" aria-hidden="true"></i></button>
+                                    </td>
+                                </tr>
+                                {% set array = array+1 %}
+                                {% endfor %}
+                            </tbody>
+                        </table><br><br>
+
+
+                    </div>
+                    {% else %}
+                    <div class="table-responsive col-lg-12" style="overflow: hidden; height: auto" id="tableredg">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th class="per5">#</th>
+                                    <!--th>{{langmod.NAMEDP}}</th>-->
+                                    <th>{{langmod.DIRECTOR}}</th>
+                                    <th>{{langmod.USERDP}}</th>
+                                    <th>{{langmod.ACCION}}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablebodydp">
+                                <tr>
+                                    <td colspan="6" class="text-center">No Records</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+                    <div class="table-responsive" style="overflow: hidden; width: 100%; height: auto;">
+
+                    </div>
+                </div>
+
+            </div>
+            <div class="col-lg-3">
+                <div class="ibox ">
+                    <div class="ibox-content">
+                        <div class="jumbotron">
+                            <h1>{{langmod.PDTITLE1}}</h1>
+                            <p>{{langmod.DPDESCR1}}</p>
+                            <br>
+                            <p>{{langmod.DPDESCR2}}</p>
+                            <br>
+                            <p>{{langmod.DPDESCR3}}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'sidebar.html' %}
+</div>
+<div class="modal" id="dpModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content animated fadeIn">
+            <div class="modal-header">
+
+            </div>
+            <div class="modal-body small-pad-modal">
+
+            </div>
+            <div class="modal-footer">
+
+            </div>
+        </div>
+    </div>
+</div>
+{% include 'footer.html' %}

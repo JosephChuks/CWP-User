@@ -1,0 +1,197 @@
+function ShowDeleteConfirmModal(elem, index) {
+    let db_name = $(elem).data('name')
+    let db_user = $(elem).data('user')
+    $('#_mongo_db_deleting_index_').val(index);
+    $('#_mongodb_database_to_remove_').text(db_name);
+    $('#_mongo_delete_confirm_modal_').modal('show');
+}
+function MongolistDatabases() {
+    let html_list = '';
+    if (database_list.length > 0) {
+        let html_content = '';
+        index = 0;
+        database_list.forEach(function (db) {
+            let html_users = '';
+            if (db.users.length > 0) {
+                db.users.forEach(function (user, uindex) {
+                    // let footprint = index + '_' + uindex;
+                    let footprint = db.name + '_' + user.uname;
+                    html_users += renderUserDBItem(user, db.name, db.users.length, footprint, uindex);
+                });
+            } else {
+                html_users = '<div class="mongo-userdb-not-users"><h5>{{langmod.LABMON55}}</h5></div>';
+            }
+
+            html_users += '<div class="mongodb-users-display-control"' + (db.users.length > 2 ? '' : ' style="display:none"') + '>' +
+                                '<button class="btn btn-xs btn-default vmore-users-btn" onclick="showMoreOrLessUsers(this)">{{langmod.LABMON56}}</button>' +
+                                '<button class="btn btn-xs btn-default vless-users-btn" onclick="showMoreOrLessUsers(this,true)">{{langmod.LABMON57}}</button>' +
+                            '</div>';
+            html_content += '<tr id="_mongo_db_item_' + index + '" data-name="' + db.name + '">' +
+                                '<td>' + db.name + '</td>' +
+                                '<td style="width:40rem" class="mongo-userdb-items">' +
+                                    html_users +
+                                '</td>' +
+                                '<td style="width:100px">' +
+                                    '<div class="mongo-db-actions">' +
+                                        '<button title="{{langmod.LABMON58}}" data-dbname="' + db.name + '" data-owner="' + db.system_user + '" data-toggle="tooltip" data-placement="top" onclick="AddMongoDBUser(this, ' + index + ')" class="btn btn-success btn-md"><i class="fa fa-user"></i></button>' +
+                                        '<button class="btn btn-warning btn-md btn-delete-mongodb" data-name="' + db.name + '" data-user="' + db.system_user + '" title="{{langmod.LABMON59}}" data-toggle="tooltip" data-placement="top" onclick="ShowDeleteConfirmModal(this,' + index + ')"><i class="fa fa-trash"></i></button>' +
+                                    '</div>'
+                                '</td>' +
+                            '</tr>';
+            index++;
+        });
+        html_list = '<table class="table mongo_db_table table-striped table-bordered table-hover">' +
+                        '<thead>' +
+                            '<tr role="row">' +
+                                '<th>{{langmod.LABMON61}}</th>' +
+                                '<th>{{langmod.LABMON63}}</th>' +
+                                '<th>{{langmod.LABMON64}}</th>' +
+                            '</tr>' +
+                        '</thead>' +
+                        '<tbody id="contenttr">' +
+                            html_content +
+                        '</tbody>' +
+                    '</table>';
+        $('#_mongo_database_table_wrapper_').html(html_list);
+        mongo_db_table = $('.mongo_db_table').DataTable({
+            "bAutoWidth": false,
+            scrollX: false,
+        });
+    } else {
+        html_list = '<div class="mongodb-empty-list-database">' +
+            '<h4>{{langmod.LABMON65}}</h4>' +
+            '</div>';
+        $('#_mongo_database_table_wrapper_').html(html_list);
+    }
+    $('[data-toggle="tooltip"]').tooltip();
+}
+function MongoAddDBForm() {
+    $('#_mongo_new_db_user_modal_').modal('show');
+}
+function MongoDeletionConfirmed() {
+    $('#_mongo_delete_confirm_modal_').modal('hide');
+    let db_index = $('#_mongo_db_deleting_index_').val();
+    let tr_deleting = $('#_mongo_db_item_' + db_index);
+    tr_deleting.addClass('deleting_tr');
+    tr_deleting.find('.btn-success').prop('disabled', true);
+    let btn_delete = tr_deleting.find('.btn-delete-mongodb');
+    let db_data = {
+        name: btn_delete.data('name'),
+        user: btn_delete.data('user'),
+    }
+    uchip.handleButton(btn_delete, 'fa-trash');
+    sendMongoDBDeletion(db_data, function () {
+        tr_deleting.slideUp('fast', function () {
+            mongo_db_table.row(this).remove().draw();
+        });
+        database_list.splice(db_index, 1);
+        calculateQuota();
+        noti_bubble('{{langmod.LABMON22}}', '{{langmod.LABMON18}}', 'success', false, false, '3000', true);
+    }, function () {
+        tr_deleting.removeClass('deleting_tr');
+        tr_deleting.find('.btn-success').prop('disabled', false);
+        uchip.handleButton(btn_delete, 'fa-trash', true)
+    });
+
+}
+function MongoGetDBData() {
+    let valid = true;
+    let user = $('#_mongo_db_user_select_').val();
+    if (user == '') {
+        valid = false;
+        $('.select2-container .select2-choice').addClass('error-field');
+    } else {
+        $('.select2-container .select2-choice').removeClass('error-field');
+    }
+    let db_name = $('#_mongo_db_name_input_').val();
+    if (/^[A-Za-z0-9\_\-]+$/.test(db_name) === false) {
+        valid = false;
+        $('#_mongo_db_name_input_').addClass('error-field');
+    } else {
+        $('#_mongo_db_name_input_').removeClass('error-field');
+    }
+
+    return valid === true ? {
+        'name': db_name,
+        'user': '{{users}}'
+    } : false;
+}
+function updateDBTable(db_data) {
+    database_list.push({
+        name: db_data.user + '_' + db_data.name,
+        system_user: db_data.user,
+        users: []
+    });
+    MongolistDatabases();
+}
+function saveMongoForm() {
+    let db_data = MongoGetDBData();
+    if (db_data) {
+        $('.btn-cancel-form').prop('disabled', true);
+        uchip.handleButton('.btn-save-mongo-db', 'fa-floppy-o');
+        function cleaner() {
+            $('.btn-cancel-form').prop('disabled', false);
+            uchip.handleButton('.btn-save-mongo-db', 'fa-floppy-o', false);
+        }
+        sendSaveMongoDB(db_data, function () {
+            noti_bubble('{{langmod.LABMON19}}', '{{langmod.LABMON18}}', 'success', false, false, '3500', true);
+            cleaner();
+            updateDBTable(db_data);
+            cancelForm();
+            $('#_mongo_new_db_user_modal_').modal('hide');
+            calculateQuota();
+        }, function () {
+            cleaner();
+        });
+    } else {
+        noti_bubble('{{langmod.LABMON21}}', '{{langmod.LABMON20}}', 'error', false, false, '3500', true);
+    }
+}
+function sendSaveMongoDB(db_data, success, cleaner) {
+    uchip.call('module=mongodb_manager&acc=save_mongo_db', {
+        data: 'name=' + db_data.name + '&user={{users}}',
+        callback: function (response) {
+            if (response.hasOwnProperty('result') && response.result === 'success') {
+                success(response);
+            } else {
+                let message_error = '{{langmod.LABMON23}}';
+                if (response.hasOwnProperty('code')) {
+                    if (response.code == 1) {
+                        message_error = '{{langmod.LABMON24}}';
+                    } else if (response.code == 2) {
+                        message_error = '{{langmod.LABMON25}}';
+                    } else if (response.code == 3) {
+                        message_error = '{{langmod.LABMON26}}';
+                    } else if (response.code == 4) {
+                        message_error = '{{langmod.LABMON27}}';
+                    } else if (response.code == 5) {
+                        message_error = 'Mongo Database quota exceeded.';
+                    }
+                }
+                noti_bubble(message_error, '{{langmod.LABMON20}}', 'error', false, false, '4000', true);
+                cleaner();
+            }
+        }
+    });
+}
+function sendMongoDBDeletion(db_data, success, cleaner) {
+    uchip.call('module=mongodb_manager&acc=delete_mongo_db', {
+        data: 'name=' + db_data.name,
+        callback: function (response) {
+            if (response.hasOwnProperty('result') && response.result === 'success') {
+                success(response);
+            } else {
+                let message_error = '{{langmod.LABMON23}}';
+                if (response.hasOwnProperty('code')) {
+                    if (response.code == 2) {
+                        message_error = '{{langmod.LABMON28}}';
+                    } else if (response.code == 1) {
+                        message_error = '{{langmod.LABMON29}}';
+                    }
+                }
+                noti_bubble(message_error, '{{langmod.LABMON20}}', 'error', false, false, '4000', true);
+                cleaner();
+            }
+        }
+    });
+}

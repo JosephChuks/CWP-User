@@ -1,0 +1,159 @@
+
+bindNotiFunctionally();
+$('#get_next_noti_page').click(function(event){
+  let page = $(this).data('page');
+  {% if mod.isie == 1 %}
+    uhcipajax = new $.Uchip();
+  {% else %}
+    uhcipajax = new Uchip();
+  {% endif %}
+  let btnpage = $(this);
+  $('#get_next_noti_page').hide();
+  $('#loader_noti_page').show();
+  uhcipajax.call('module=notification_center&acc=getpage', {
+    data: 'page=' + page,
+    callback: function(response){
+      $('#loader_noti_page').hide();
+      if(response.status == 'OK'){
+        if(response.notifications.length > 0){
+          $('#get_next_noti_page').show();
+          $('#get_next_noti_page').data('page', parseInt(response.page) + 1);
+          renderNotifications(response.notifications);
+        }
+      }
+    }
+  });
+  event.stopPropagation();
+});
+function renderNotifications(notifications){
+  let html_notis = '';
+  notifications.forEach(function(notify){
+    let unreadclass = '';
+    if (notify.st != 2 ){
+      unreadclass = 'unread';
+    }
+    let title = '';
+    let icon = '';
+    if (notify.type == 'websitechange'){
+      icon = 'fa-globe';
+      title = notify.childs.length + ' ' + '{{langene.NCLABELWEB}}';
+    }else if(notify.type == 'emailquota' ){
+      icon = 'fa-envelope-o';
+      title = notify.childs.length + ' ' + '{{langene.NCLABELEMQE}}';
+    }else if(notify.type == 'diskusage'){
+      icon = 'fa-hdd-o';
+      title = notify.childs.length + ' ' + '{{langene.NCLABELDQA}}';
+    }else if(notify.type == 'bwquota'){
+      icon = 'fa-tachometer';
+      title = notify.childs.length + ' ' + '{{langene.NCLABELBWQA}}';
+    }
+    html_notis += '<li>' +
+                  '<a href="#" class="dropdown-item with-subnotify new-loaded">' +
+                    '<div>' +
+                      '<i class="fa ' + icon + '"></i> <span class="title-notify ' + unreadclass + '">' + title + '</span>' +
+                      '<span class="pull-right text-muted small date-info" data-date="' + notify.date + '"></span>' +
+                    '</div>' +
+                  '</a>' +
+                  '<ul class="sub-notify">';
+    notify.childs.forEach(function(subnotify){
+      let subcontent = '';
+      let usage = 0;
+      let quotalimit = 0;
+      let percent = 0;
+      if(notify.type == 'websitechange'){
+        subcontent = '<div class="sub-notify-item websitechange" data-st="' + subnotify.st + '" id="subnoti_' + subnotify.id + ' " data-notiid="' + subnotify.id + '">' +
+                        '<span>{{langene.NCLABELDOM}}: <b>' + subnotify.data.domain + '</b></span>' +
+                        '<span>{{langene.NCLABELMOAT}}: <b>' + subnotify.data.updated_at + '</b></span>' +
+                      '</div>';
+      }else if(notify.type == 'emailquota'){
+        usage = (parseFloat(subnotify.data.current) / 1024 / 1024).toFixed(2);
+        quotalimit = (parseFloat(subnotify.data.quota) / 1024 / 1024).toFixed(2);
+        percent = ((parseFloat(subnotify.data.current) * 100) / parseFloat(subnotify.data.quota)).toFixed(2);
+        subcontent = '<div class="sub-notify-item emailquota" data-st="' + subnotify.st + '" id="subnoti_' + subnotify.id + ' " data-notiid="' + subnotify.id + '">' +
+                      '<span>{{langene.NCLABELACC}}: <b>' + subnotify.data.email_account + '</b></span>' +
+                      '<span>{{langene.NCLABELUSA}}: <b>' + percent + '%</b> - <b>' + usage + 'MB</b> {{langene.NCLABELOF}} <b>' + quotalimit + 'MB</b></span>' +
+                    '</div>';
+      }else if(notify.type == 'diskusage'){
+        usage = parseFloat(subnotify.data.used).toFixed(2);
+        quota = parseFloat(subnotify.data.quota).toFixed(2);
+        subcontent = '<div class="sub-notify-item diskusage" data-st="' + subnotify.st + '" id="subnoti_' + subnotify.id + ' " data-notiid="' + subnotify.id + '">' +
+                      '<span>{{langene.NCLABELUSA}}: <b>' + subnotify.data.percent + '%</b> - <b>' + usage + 'MB</b> {{langene.NCLABELOF}} <b>' + quota + 'MB</b></span>' +
+                    '</div>';
+      }else if(notify.type == 'bwquota'){
+        usage = parseFloat(subnotify.data.used).toFixed(2);
+        quota = parseFloat(subnotify.data.quota).toFixed(2);
+        subcontent = '<div class="sub-notify-item diskusage" data-st="' + subnotify.st + '" id="subnoti_' + subnotify.id + ' " data-notiid="' + subnotify.id + '">' +
+                      '<span>{{langene.NCLABELUSA}}: <b>' + subnotify.data.percent + '%</b> - <b>' + usage + 'MB</b> {{langene.NCLABELOF}} <b>' + quota + 'MB</b></span>' +
+                    '</div>';
+      }
+      html_notis += '<li>'+
+                      subcontent +
+                    '</li>'+
+                    '<li class="dropdown-divider"></li>';
+
+    });
+    html_notis += '</ul>' +
+                  '</li>' +
+                  '<li class="dropdown-divider"></li>';
+  });
+  $('#li_load_more_notis').before(html_notis);
+  bindNotiFunctionally('with-subnotify.new-loaded');
+  dateNotiConverter();
+  $('.with-subnotify.new-loaded').removeClass('new-loaded');
+}
+function updateNotificationsView(toupdate, notify){
+  {% if mod.isie == 1 %}
+    uhcipajax = new $.Uchip();
+  {% else %}
+    uhcipajax = new Uchip();
+  {% endif %}
+  uhcipajax.call('module=notification_center&acc=updatenotifications', {
+    data: 'notifications=' + JSON.stringify(toupdate),
+    callback: function(response){
+      notify.find('.title-notify').removeClass('unread');
+      let unreadqty = parseInt($('#unread_amount').text());
+      if(unreadqty - 1  > 0){
+        $('#unread_amount').text(unreadqty - 1);
+      }else{
+        $('#unread_amount').hide();
+      }
+      toupdate.forEach(function(item){
+        $('#subnoti_' +  item).data('st', 2);
+      });
+    }
+  });
+}
+dateNotiConverter();
+function dateNotiConverter(){
+  $('.date-info').each(function(){
+    $(this).text(moment.unix($(this).data('date')).fromNow());
+    $(this).removeClass('date-info');
+  });
+}
+function bindNotiFunctionally(extra_class){
+  extra_class = (extra_class === undefined) ? 'with-subnotify' : extra_class;
+  $('ul.cwp-notifications .dropdown-item.' + extra_class).on('click', function(event){
+    let subnotify = $(this).parent().find('.sub-notify');
+    if(subnotify.is(':visible')){
+      subnotify.slideUp('fast');
+    }else{
+      let toupdate = [];
+      subnotify.slideDown('fast');
+      subnotify.find('.sub-notify-item').each(function(){
+        let st = $(this).data('st');
+        if(st != 2){
+          toupdate.push($(this).data('notiid'));
+        }
+      });
+      let notify = $(this);
+      if(toupdate.length > 0){
+        setTimeout(function(){
+          if(subnotify.is(':visible')){
+            updateNotificationsView(toupdate, notify);
+          }
+        },2500);
+      }
+    }
+    event.stopPropagation();
+  });
+}

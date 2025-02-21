@@ -1,0 +1,185 @@
+
+console.log();
+let ps_table = null;
+let ps_list = null;
+function psTable(list){
+  ps_list = list;
+  if(ps_list.length > 0){
+    let html_content = '';
+    let index = 0;
+    ps_list.forEach(function(installation){
+      let insturl = installation.hasOwnProperty('url') ? installation.url : 'http://' + installation.domain;
+      let dbinf = '';
+      if(installation.hasOwnProperty('db_result') && installation.db_result.result != 'success'){
+        let dbtitle = '{{langmod.ADDDBNOT}}: ' + handleDBError(installation.db_result.code);
+
+        dbinf = '<span class="fa-stack fa-xs" title="' + dbtitle + '" data-toggle="tooltip" data-placement="top" aria-hidden="true">' +
+                  '<i class="fa fa-circle fa-stack-2x"></i>' +
+                  '<i class="fa fa-info fa-stack-1x fa-inverse"></i>' +
+                '</span>';
+      }
+      html_content += '<tr id="tdps_' + index + '">' +
+                        '<td>' + installation.domain + '<br>' +
+                          '<a href="' + insturl + '" target="_blank">' + insturl + '</a></td>' +
+                        '<td><div class="addon-td-item">' + installation.path + '</div></td>' +
+                        '<td><div class="addon-td-item">' + installation.version + '</div></td>' +
+                        '<td><div class="addon-td-item">' + installation.lang + '</div></td>' +
+                        '<td>' +
+                          '<div class="database-info-td">' +
+                            '<div><b>{{langmod.ADDSHORTDB}}: </b> ' + installation.psbd + '<br><b>{{langmod.ADDSHORTUDB}}: </b>' + installation.psuserdb + '</div>' +
+                            dbinf +
+                          '</div>' +
+                        '</td>' +
+                        '<td>' +
+                          '<div class="addon-td-item text-center"><button title="{{langmod.ADDDWP3}}" data-traddon="#tdps_' + index + '" data-type="prestashop" data-installation=\'' + JSON.stringify(installation) + '\' data-toggle="tooltip" data-placement="top" aria-hidden="true" class="btn btn-danger btn-xs btn-delete" onclick="return deleteAddon(this, 0)">' +
+                            '<i aria-hidden="true" class="fa fa-trash"></i>' +
+                          '</button></div>' +
+                        '</td>' +
+                      '</tr>';
+      index++;
+    });
+    let table_html = '<table class="table table-striped ps-table">' +
+                      '<thead>' +
+                        '<tr>' +
+                          '<th>{{langmod.ADDDOMLAB}}</th>' +
+                          '<th>{{langmod.ADDPATHLAB}}</th>' +
+                          '<th>{{langmod.ADDVERLAB}}</th>' +
+                          '<th>{{langmod.ADDLANGLAB}}</th>' +
+                          '<th>{{langmod.ADDBDUDB}}</th>' +
+                          '<th class="text-center"></th>' +
+                        '</tr>' +
+                      '</thead>' +
+                      '<tbody id="trpaneljl">' +
+                        html_content +
+                      '</tbody>' +
+                    '</table>';
+    $('#table_ps_container').html(table_html);
+    $('.ps-table').DataTable().destroy();
+    ps_table = $('.ps-table').DataTable();
+  }else{
+    $('#table_ps_container').html('<div class="empty_list"><h4 class="text-success">Thre\'s not Prestashop installations</h4></div>');
+  }
+  $('[data-toggle="tooltip"]').tooltip();
+}
+function psInit(){
+  if(ps_list == null){
+    psReList();
+  }
+}
+function psReList(){
+  $('#table_ps_container').html(loader);
+  getList('prestashop', function(response){
+    psTable(response);
+  });
+}
+function cancelPS(idCollapse){
+  uchip.slideToggle('#ps_list','#ps_form', function(){
+
+  });
+  $('#psdomain').val('');
+  $('#pspach').val('ps');
+  $('#psadminemail').val('');
+  $('#psadminpass').val('');
+  $('#psadminpass').pwstrength('forceUpdate');
+  $('#pspassbd').val('');
+  $('#pspassbd').pwstrength('forceUpdate');
+  $('#pslang').val('en');
+  $('#psversion').val('1.7');
+  $('#psbd').val('ps{{mod.extra_data.randbd}}');
+  $('#psuserdb').val('ps{{mod.extra_data.randbd}}');
+  uchip.validator('.reqps', true);
+  cancelGeneral(idCollapse);
+}
+function addPrestaShop(){
+  if(uchip.validator('.reqps')){
+    let psurl = $("#psurl").val();
+    let psdomain = $("#psdomain").val();
+    let pslang = $("#pslang").val();
+    let psbd = $("#psbd").val();
+    let psuserdb = $("#psuserdb").val();
+    let pspassbd = $("#pspassbd").val();
+    let pspach = $("#pspach").val();
+    let psversion = $("#psversion").val();
+    let psadminemail = $("#psadminemail").val();
+    let psadminpass = $("#psadminpass").val();
+    let dompath =  $('#psdomain option:selected').data('path');
+    let domssl =  $('#psdomain option:selected').data('ssl');
+    let data = 'psurl=' + psurl + '&psdomain=' + psdomain + '&pslang=' + pslang + '&psbd=' + psbd + '&psuserdb=' + psuserdb + '&pspassbd=' + Base64.encode(pspassbd) +
+                '&pspach=' + pspach + '&psversion=' + psversion + '&psadminemail=' + psadminemail + '&psadminpass=' + Base64.encode(psadminpass) + '&dompath=' + dompath + '&domssl=' + domssl;
+    let details = [
+      {
+        title : '{{langmod.ADDDOMLAB}}',
+        value : psdomain
+      },
+      {
+        title : '{{langmod.ADDURLLAB}}',
+        value : (domssl == 1 ? 'https' : 'http') + '://' + psdomain + '/' + pspach
+      },
+      {
+        title : '{{langmod.ADDPATHLAB}}',
+        value : dompath + '/' + pspach
+      },
+      {
+        title : '{{langmod.ADDPS03}}',
+        value : psadminemail
+      },
+      {
+        title : '{{langmod.ADDVERLAB}}',
+        value : psversion
+      },
+      {
+        title : '{{langmod.ADDLANGLAB}}',
+        value : pslang
+      },
+      {
+        title : '{{langmod.ADDDWP20}}',
+        value : psbd
+      },
+      {
+        title : '{{langmod.ADDDBUSERLAB}}',
+        value : psuserdb
+      }
+    ];
+    confirmInstallation({
+      type: 'prestashop',
+      script: 'Prestashop',
+      data : data,
+      wholepath: dompath + '/' + pspach,
+      callback: function(response){
+        if(response.hasOwnProperty('result') && response.result == 'success'){
+          if(response.db_result.result != 'success'){
+            noti_bubble('{{langmod.ADDINSTALLDET}} ' + handleDBError(response.db_result.code),'{{langmod.ADDATENTION}}!','warning',false,false,'6500',true);
+          }else{
+            noti_bubble('{{langmod.ADDINSTALLSUCC}}','{{langmod.SUCCESS}}','success',false,false,'3000',true);
+          }
+        }else{
+          noti_bubble('{{langmod.ADDERRORGEN}}','{{langmod.FERROR}}','error',false,false,'3000',true);
+        }
+        var variableHTML='';
+        var modulin='ps';
+        if($("#instaled_"+modulin).html()==undefined){
+          variableHTML+='<div class="panel panel-default" id="instaled_'+modulin+'">'+
+                  ' <div class="panel-heading white-bg script-container-title">'+
+                  '<a class="accordion-toggle" style="width: 100%" data-toggle="collapse"  ' +
+                  'aria-expanded="true" aria-controls="panel_'+modulin+'_container" ' +
+                  'data-parent="#accordion1" data-target="#panel_'+modulin+'_container">'+
+                  '<h4 class="panel-title"><i class="more-less glyphicon-plus font-weight-bolder"></i></h4>' +
+                  '<h4 class="panel-title">Prestashop Installations</h4></a></div>' +
+                  '<div id="panel_'+modulin+'_container"  class="panel-collapse collapse">' +
+                  '<div class="panel-body" id="table_'+modulin+'_container"><div class="table_cron_loader"><span>' +
+                  '<i class="fa fa-circle-o-notch fa-spin"></i></span></div></div></div></div>'
+          $( "#accordion1" ).append( variableHTML );
+          $(".accordion-toggle").click(function(){
+            $("#"+$(this).prop('data-target')).slideToggle('slow');
+          });
+        }
+        $("#instaledEmpty").hide();
+        psTable(response.list);
+        cancelPS();
+      },
+      details: details
+    });
+  }else{
+    noti_bubble('{{langmod.ADDREQFIELDS}}','{{langmod.FERROR}}','error',false,false,'3000',true);
+  }
+}

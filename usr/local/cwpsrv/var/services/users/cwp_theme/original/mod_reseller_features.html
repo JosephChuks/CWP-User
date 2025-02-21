@@ -1,0 +1,80 @@
+<div class="ibox" id="features_list_wrapper">
+  <div class="ibox-title">
+    <h4>{{langmod.RSFEATLAB4}}</h4>
+    {% if mod.licenseReseller != 0 %}
+      <button id="btn_add_feature" style="display:none" onclick="showNewFeatForm()" class="btn btn-xs btn-success"><i class="fa fa-plus"></i> {{langmod.RSFEATLAB1}}</button>
+    {% endif %}
+  </div>
+  <div class="ibox-content" id="features_wrapper">
+    <div class="table_cron_loader" id="loader_features"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+  </div>
+</div>
+<div class="ibox" id="add_new_feature_container">
+  <div class="ibox-title">
+    <h4 id="pack_form_title">
+      {{langmod.RSFEATLAB2}}
+    </h4>
+    <input type="hidden" id="is_editing" value="0">
+    <!-- <a href="#" id="btnaddaccount" title="{{langmod.RSLABEL76}}">
+        <i class="fa fa-plus-circle fa-2x" style="color: #36a116"></i>
+    </a> -->
+    <div class="actions-btn text-right">
+      <button onclick="saveFeatSettings()" class="sv-feat-btn btn btn-w-m btn-sm btn-success btn-save-webdisk"><i class="fa fa-floppy-o" aria-hidden="true"></i> {{langmod.RSLABEL35}}</button>
+      <button onclick="cancelNewFeat()" class="cnl-feat-btn btn btn-w-m btn-sm btn-warning btn-cancel-webdisk"><i class="fa fa-ban" aria-hidden="true"></i> {{langmod.RSLABEL42}}</button>
+    </div>
+  </div>
+  <div class="ibox-content">
+    <div class="row">
+      <label class="col-md-2 control-label" for="">{{langmod.RSFEATLAB3}}:</label>
+      <div class="col-md-6">
+        <select class="form-control" data-required="true" onchange="featPackChange(this)" id="packagessel">
+
+        </select>
+      </div>
+    </div>
+    <div class="row wizard-big">
+      <input type="hidden" id="pack_feat_edit" value="">
+      <label class="col-md-12 control-label" for=""><span id="verb_feat"></span> {{langmod.RSLABEL106}}: <span id="tit_pack_feat"></span></label>
+      <div class="col-md-12">
+        <span class="error-field dualselect-error">{{langmod.RSLABEL107}}</span>
+        <select class="form-control dual_select" multiple="" id="opmodules">
+
+        </select>
+        <span class="error-field dualselect-error">{{langmod.RSLABEL107}}</span>
+      </div>
+    </div>
+  </div>
+  <div class="ibox-footer features-ibox-footer">
+    <p class="sub-info-table-features">{{langmod.RSLABEL80}}</p>
+    <div class="text-right">
+      <button onclick="saveFeatSettings()" class="sv-feat-btn btn btn-w-m btn-sm btn-success btn-save-webdisk">
+        <i class="fa fa-floppy-o" aria-hidden="true"></i> {{langmod.RSLABEL35}}
+      </button>
+      <button onclick="cancelNewFeat()" class="cnl-feat-btn btn btn-w-m btn-sm btn-warning btn-cancel-webdisk">
+        <i class="fa fa-ban" aria-hidden="true"></i> {{langmod.RSLABEL42}}
+      </button>
+    </div>
+  </div>
+</div>
+<div class="modal" id="delete_featpack_modal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-sm" style="width:300px">
+    <div class="modal-content animated fadeIn">
+      <div class="modal-header" style="padding: 10px;">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">×</span>
+          <span class="sr-only">{{langene.MDCLOSE}}</span>
+        </button>
+        <h4 class="modal-title" style="font-size:2rem">{{langmod.RSLABEL98}}</h4>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <!-- <p>You are about to delete the FTP user: <br>
+        <strong id="descron">sanitarios@testcecilio.com</strong>
+        <br>Are you sure you want to continue?</p> -->
+      </div>
+      <div class="modal-footer">
+        <!-- <button type="button" class="btn btn-white" data-dismiss="modal">NO</button>
+        <button type="button" class="btn btn-primary" onclick="ftpdelete(1,'sanitarios','testcecilio.com',0)">YES</button>-->
+      </div>
+    </div>
+  </div>
+</div>

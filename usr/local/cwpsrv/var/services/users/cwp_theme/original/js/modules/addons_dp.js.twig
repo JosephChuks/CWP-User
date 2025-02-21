@@ -1,0 +1,169 @@
+
+console.log();
+let dplist = null;
+let dp_table = null;
+function cancelDp(idCollapse){
+  uchip.slideToggle('#dp_list','#dp_form', function(){
+
+  });
+  $('#dppach').val('dp');
+  $('#dpdomain').val('');
+  $('#dpadminuser').val('admin');
+  $('#pdadminemail').val('');
+  $('#pdadminpass').val('');
+  $('#pdadminpass').pwstrength('forceUpdate');
+  $('#dpbd').val('dp{{mod.extra_data.randbd}}');
+  $('#dpuserdb').val('dp{{mod.extra_data.randbd}}');
+  $('#dppassbd').val('');
+  $('#dppassbd').pwstrength('forceUpdate');
+  uchip.validator('.reqdp', true);
+  cancelGeneral(idCollapse);
+}
+function dpInit(){
+  if(dplist == null){
+    dpReList();
+  }
+}
+function dpReList(){
+  $('#table_dp_container').html(loader);
+  getList('drupal', function(response){
+    dpTable(response);
+  });
+}
+function dpTable(list){
+  dplist = list;
+  if(dplist.length > 0){
+    let html_content = '';
+    let index = 0;
+    dplist.forEach(function(installation){
+      let admin_info = '<div class="addon-td-item">{{langmod.ADDNOTINFOLAB}}</div>';
+      if(installation.hasOwnProperty('admin_info')){
+        admin_info = '<div class="addon-td-item">{{langmod.ADDSHORTUDB}}: ' + installation.admin_info.admin + '</div>';
+      }
+      let insturl = installation.hasOwnProperty('url') ? installation.url : 'http://' + installation.domain;
+      html_content += '<tr id="tddp_' + index + '">' +
+                        '<td>' + installation.domain + '<br>' +
+                          '<a href="' + insturl + '" target="_blank">' + insturl + '</a></td>' +
+                        '<td><div class="addon-td-item">' + installation.path + '</div></td>' +
+                        '<td>' + admin_info + '</td>' +
+                        '<td>' +
+                          '<b>{{langmod.ADDSHORTDB}}: </b> ' + installation.dbdp + '<br><b>{{langmod.ADDSHORTUDB}}: </b>' + installation.userbddp +
+                        '</td>' +
+                        '<td>' +
+                          '<div class="addon-td-item text-center">' +
+                            '<button title="{{langmod.ADDDWP3}}" data-toggle="tooltip" data-placement="top" data-traddon="#tddp_' + index + '" data-type="drupal" data-installation=\'' + JSON.stringify(installation) + '\' aria-hidden="true" class="btn btn-danger btn-xs btn-delete" onclick="return deleteAddon(this, 0)">' +
+                            '<i aria-hidden="true" class="fa fa-trash"></i>' +
+                          '</button></div>' +
+                        '</td>' +
+                      '</tr>';
+      index++;
+    });
+    let table_html = '<table class="table table-striped drupal-table">' +
+                      '<thead>' +
+                        '<tr>' +
+                          '<th>{{langmod.ADDDOMLAB}}</th>' +
+                          '<th>{{langmod.ADDPATHLAB}}</th>' +
+                          '<th>{{langmod.ADDDPADMIN}}</th>' +
+                          '<th>{{langmod.ADDBDUDB}}</th>' +
+                          '<th class="text-center"></th>' +
+                        '</tr>' +
+                      '</thead>' +
+                      '<tbody id="trpaneljl">' +
+                        html_content +
+                      '</tbody>' +
+                    '</table>';
+    $('#table_dp_container').html(table_html);
+    $('.drupal-table').DataTable().destroy();
+    dp_table = $('.drupal-table').DataTable();
+  }else{
+    $('#table_dp_container').html('<div class="empty_list"><h4 class="text-success">{{langmod.ADDNOTDP}}</h4></div>');
+  }
+}
+function addDP(){
+  if(uchip.validator('.reqdp')){
+    let dpdomain = $("#dpdomain").val();
+    let dpbd = $("#dpbd").val();
+    let dpuserdb = $("#dpuserdb").val();
+    let dppassbd = $("#dppassbd").val();
+    let dpadminuser = $("#dpadminuser").val();
+    let pdadminemail = $("#pdadminemail").val();
+    let pdadminpass = $("#pdadminpass").val();
+    let dppach = $("#dppach").val();
+    let dompath =  $('#dpdomain option:selected').data('path');
+    let domssl =  $('#dpdomain option:selected').data('ssl');
+    let details = [
+      {
+        title : '{{langmod.ADDDOMLAB}}',
+        value : dpdomain
+      },
+      {
+        title : '{{langmod.ADDURLLAB}}',
+        value : (domssl == 1 ? 'https' : 'http') + '://' + dpdomain + '/' + dppach
+      },
+      {
+        title : '{{langmod.ADDPATHLAB}}',
+        value : dompath + '/' + dppach
+      },
+      {
+        title : '{{langmod.ADDADMINUSER}}',
+        value : dpadminuser
+      },
+      {
+        title : '{{langmod.ADDPS03}}',
+        value : pdadminemail
+      },
+      {
+        title : '{{langmod.ADDDWP20}}',
+        value : dpbd
+      },
+      {
+        title : '{{langmod.ADDDBUSERLAB}}',
+        value : dpuserdb
+      }
+    ];
+    let data = 'dpdomain=' + dpdomain+ '&dpbd=' + dpbd+ '&dpuserdb=' + dpuserdb+ '&dppassbd=' + Base64.encode(dppassbd) +
+              '&dpadminuser=' + dpadminuser + '&pdadminemail=' + pdadminemail+ '&pdadminpass=' + Base64.encode(pdadminpass) + '&dppach=' + dppach+ '&dompath=' + dompath+ '&domssl=' + domssl;
+    confirmInstallation({
+      type: 'drupal',
+      script: 'Drupal',
+      data : data,
+      wholepath: dompath + '/' + dppach,
+      callback: function(response){
+        if(response.hasOwnProperty('result') && response.result == 'success'){
+          noti_bubble('{{langmod.ADDINSTALLSUCC}}','{{langmod.SUCCESS}}','success',false,false,'3000',true);
+          var variableHTML='';
+          var modulin='dp';
+          if($("#instaled_"+modulin).html()==undefined){
+            variableHTML+='<div class="panel panel-default" id="instaled_'+modulin+'">'+
+                    ' <div class="panel-heading white-bg script-container-title">'+
+                    '<a class="accordion-toggle" style="width: 100%" data-toggle="collapse"  ' +
+                    'aria-expanded="true" aria-controls="panel_'+modulin+'_container" ' +
+                    'data-parent="#accordion1" data-target="#panel_'+modulin+'_container">'+
+                    '<h4 class="panel-title"><i class="more-less glyphicon-plus font-weight-bolder"></i></h4>' +
+                    '<h4 class="panel-title">Drupal Installations</h4></a></div>' +
+                    '<div id="panel_'+modulin+'_container"  class="panel-collapse collapse">' +
+                    '<div class="panel-body" id="table_'+modulin+'_container"><div class="table_cron_loader"><span>' +
+                    '<i class="fa fa-circle-o-notch fa-spin"></i></span></div></div></div></div>'
+            $( "#accordion1" ).append( variableHTML );
+            $(".accordion-toggle").click(function(){
+              $("#"+$(this).prop('data-target')).slideToggle('slow');
+            });
+          }
+          $("#instaledEmpty").hide();
+          dpTable(response.list);
+          cancelDp('dp');
+        }else{
+          if(!response.hasOwnProperty('result') || !response.db_result.hasOwnProperty('code') || response.db_result.code == 1000){
+            noti_bubble('{{langmod.ADDERRORGEN}}','{{langmod.FERROR}}','error',false,false,'3000',true);
+          }else{
+            let mysql_mess = handleDBError(response.db_result.code);
+            noti_bubble('{{langmod.ADDDPDBERROR}} ' + mysql_mess,'{{langmod.FERROR}}','error',false,false,'6000',true);
+          }
+        }
+      },
+      details: details
+    });
+  }else{
+    noti_bubble('{{langmod.ADDREQFIELDS}}','{{langmod.FERROR}}','error',false,false,'3000',true);
+  }
+}

@@ -1,0 +1,59 @@
+<div class="ibox">
+    <div class="ibox-title">
+        <h4>{{langmod.RSLABEL120}}</h4>
+    </div>
+    <div class="ibox-content">
+      <div class="table_cron_loader" id="loader_branding"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+      <div id="branding_wrapper">
+        <div class="row">
+            <div class="col-lg-4">
+                <h5>{{langmod.RSBRLAB1}}</h5>
+                <form action="./{{ users }}/index.php?module=reseller&acc=brandinguploadfile" class="dropzone dz-clickable" id="dropzone-form" style="display: {{mod.divdropzoneForm}}" enctype="multipart/form-data" method="post">
+                    <div class="dz-default dz-message" style="padding-top: 15px">
+                        <span><strong>{{langmod.RSBRLAB2}}</strong><p align="center" style="padding-top: 35px"> ({{langmod.RSBRLAB3}})</span>
+                    </div>
+                </form>
+                <img alt="" id="imgreseller" src="{{mod.logoreseller}}" width="200" style="display: {{mod.divimgreseller}}"/></a>
+                <div id="divdeletes">
+                    <button class="btn btn-danger btn-xs tip opdelimnres0" onclick="return delimgreseller(0)"><i class="fa fa-trash"></i></button>
+                    <button class="btn btn-primary btn-sm opdelimnres1" onclick="return delimgreseller(1)" style="display: none" id="btndelimgresell"><i class="fa fa fa-check"></i></button>
+                    <button class="btn btn-default btn-sm opdelimnres1" onclick="return delimgreseller(2)" style="display: none" id="btncancelimgresell"><i class="fa fa fa-times"></i></button>
+                    <button class="btn btn-default btn-sm" disabled style="display: none" id="loader_img_del"><i class="fa fa-spinner fa-spin fa-3x"></i></button>
+                </div>
+            </div>
+            <!--div class="col-lg-4">
+                <h5>2. Edit the text for the login</h5>
+            </div-->
+            <div class="col-lg-4">
+              <h5>{{langmod.RSBRLAB4}}
+                <span class="fa-stack fa-sm branding-info" data-toggle="tooltip" title="{{langmod.RSBRLAB5}}" data-placement="top">
+                  <i class="fa fa-circle fa-stack-2x"></i>
+                  <i class="fa fa-info fa-stack-1x fa-inverse"></i>
+                </span>
+              </h5>
+              <input type="text" id="footertext" class="form-control">
+              <h5>{{langmod.RSBRLAB6}}</h5>
+              <input type="text" id="titletext" class="form-control">
+              <h5>{{langmod.RSBRLAB7}}
+                <span class="fa-stack fa-sm branding-info" data-toggle="tooltip" title="{{langmod.RSBRLAB8}}" data-placement="top">
+                  <i class="fa fa-circle fa-stack-2x"></i>
+                  <i class="fa fa-info fa-stack-1x fa-inverse"></i>
+                </span>
+              </h5>
+              <input type="text" id="bckfromname" class="form-control">
+              <div class="">
+                <h5>{{langmod.RSBRLAB9}}
+                  <span class="fa-stack fa-sm branding-info" data-toggle="tooltip" data-placement="top" title="{{langmod.RSBRLAB10}}">
+                    <i class="fa fa-circle fa-stack-2x"></i>
+                    <i class="fa fa-info fa-stack-1x fa-inverse"></i>
+                  </span>
+                </h5>
+                <input type="text" id="bckfromemail" data-required="true" data-maybempty="true" data-reqemail="true" class="form-control">
+              </div>
+              <button class="btn btn-success btn-sm" style="width: 100%;margin-top:5px" id="btnsavebranding"><i class="fa fa-floppy-o"></i> {{langmod.RSLABEL35}}</button>
+            </div>
+
+        </div>
+      </div>
+    </div>
+</div>

@@ -1,0 +1,262 @@
+
+console.log();
+let uchip = null;
+function opendirdiv(div,path, elem){
+    uchip.placeLoader(elem, 'fa-folder');
+    uchip.call('module=phpselector&acc=opendirdiv', {
+      data: 'path='+path+'&domain='+$('#domainphp').val(),
+      callback: function(response){
+        let html_content = '{{ langmod.SPHPLABEL10 }}';
+        if(response.tree != 'none' && response.tree != undefined){
+          html_content = response.tree;
+        }
+        $('#' + div).html(html_content);
+        $('[data-toggle="tooltip"]').tooltip();
+        $('#' + div).slideDown('fast');
+        uchip.placeLoader(elem, 'fa-folder', true);
+      }
+    });
+    return false;
+}
+function handleSelDomainUI(){
+  $("#labeltypephp").html('<i class="fa fa-circle-o-notch fa-spin phpsel-min-loader"></i>');
+  $("#verphpdiv").html('<i class="fa fa-circle-o-notch fa-spin phpsel-min-loader"></i>');
+  $("#idnixdiv").html('<i class="fa fa-circle-o-notch fa-spin phpsel-min-loader"></i>');
+  $("#idnixdiver").html('<i class="fa fa-circle-o-notch fa-spin phpsel-min-loader"></i>');
+  $("#idapacdiver").html('<i class="fa fa-circle-o-notch fa-spin phpsel-min-loader"></i>');
+  $("#idapacdiv").html('<i class="fa fa-circle-o-notch fa-spin phpsel-min-loader"></i>');
+  $("#domainphp").attr('disabled',true);
+  $("#domainphp").addClass('disabled');
+  $("#verphp").attr('disabled',true);
+  $("#verphp").addClass('disabled');
+
+  $("#updateversionfpm").attr('disabled',true);
+  $("#updateversionfpm").addClass('disabled');
+
+  $("#loader_domain").show();
+  $("#exploret").hide();
+  $("#contverphp").html('<i class="fa fa-circle-o-notch fa-spin fa-2x"></i>');
+}
+$(document).ready(function(){
+  {% if mod.isie == 1 %}
+    uchip = new $.Uchip();
+  {% else %}
+    uchip = new Uchip();
+  {% endif %}
+});
+function updateVersionPHP(elem){
+    uchip.handleButton(elem, 'fa-refesh');
+    //var verphp= $('input:radio[name=php-fpm]:checked').val();
+    var verphp = $('#verphp').val();
+    var domain = $('#domainphp').val();
+    uchip.call('module=phpselector&acc=updatephpfpm', {
+      data: 'domain=' + domain + '&ver=' + verphp,
+      callback: function(response){
+        $('#verphpdiv').html(response.verphp);
+        $('#labeltypephp').html(response.php);
+        $('#verphpdiv').html(response.verphpcwp);
+        noti_bubble('{{langmod.SPHPLABEL4}}','{{langmod.SPHPLABEL3}}','success',false,false,'3000',true);
+        uchip.handleButton(elem, 'fa-refesh', true);
+      }
+    });
+    return false;
+};
+let phpver = JSON.parse('{{mod.phpver|json_encode|raw}}');
+let phpcgi = JSON.parse('{{mod.phpcgi|json_encode|raw}}');
+let phpfpm = JSON.parse('{{mod.phpfpm|json_encode|raw}}');
+function changeDomainSelect(){
+  last_clicked = null;
+  handleSelDomainUI();
+  uchip.call('module=phpselector&acc=changedomainphp', {
+    data: 'domain=' + $('#domainphp').val() + '&typephp=' + $('#phptypehidden').val() + '&path=' + $('#pathselect').val(),
+    callback: function(response){
+      $("#phptypehidden").val(response.rp.php);
+      $("#labeltypephp").html(response.rp.php);
+      $("#verphpdiv").html(response.rp.ver);
+      $("#idapacdiv").html('');
+      if(response.rp.php == 'php'){
+        var pref = 'php';
+      }else if(response.rp.php == 'php-cgi'){
+        var pref = 'php';
+      }else if(response.rp.php == 'php-fpm'){
+        var pref = 'php-fpm';
+      }
+      var selvalue = pref + response.rp.ver;
+      //alert(selvalue);
+      $("#verphp option[value='" + selvalue + "']").attr("selected",true);
+
+      if(response.rp.apache == '1'){
+        $("#idapacdiv").html('{{langmod.SPHPLABEL1}}');
+        $("#idapacdiver").html('2.4');
+      }else{
+        $("#idapacdiv").html('{{langmod.SPHPLABEL35}}');
+        $("#idapacdiver").html('s/n');
+      }
+      if(response.rp.nginx == '1'){
+        $("#idnixdiv").html('{{langmod.SPHPLABEL1}}');
+        $("#idnixdiver").html('1.6');
+      }else{
+        $("#idnixdiv").html('{{langmod.SPHPLABEL35}}');
+        $("#idnixdiver").html('s/n');
+      }
+      $("#contverphp").html(response.contverphp);
+      //$("#divcontenedor").html(obj.html);
+
+      $("#domainphp").attr('disabled',false);
+      $("#domainphp").removeClass('disabled');
+      $("#verphp").attr('disabled',false);
+      $("#verphp").removeClass('disabled');
+
+      $("#updateversionfpm").attr('disabled',false);
+      $("#updateversionfpm").removeClass('disabled');
+      let options = '';
+      phpver.forEach(function(ver){
+        options += '<option value="php' + ver + '">' + ver + ' (Default)</option>';
+      });
+      phpcgi.forEach(function(ver){
+        options += '<option value="php' + ver + '">' + ver + ' (Selector CGI)</option>';
+      });
+      // phpfpm.forEach(function(ver){
+      //   options += '<option value="php-fpm' + ver + '">' + ver + ' (Selector FPM)</option>';
+      // });
+      let exploret = '<div class="row" style="">' +
+                        '<div class="col-md-12 directory_title"><label class="form-label">{{langmod.SPHPSELDIR}}</label></div>' +
+                        '<div class="col-md-7">' +
+                          '<label class="form-label">{{ langmod.SPHPLABEL11 }}</label>' +
+                          '<input type="text" class="form-control" id="pathselect" value="' + response.path + '">' +
+                        '</div>' +
+                        '<div class="col-md-3 applycgibtn">' +
+                          '<label class="form-label">{{langmod.SPHPSELVER}}</label>' +
+                          '<select class="form-control" id="verphpdirectory">' +
+                            '<option value="">{{langmod.SPHPLABEL40}}</option>' +
+                            options +
+                          '</select>' +
+                        '</div>' +
+                        '<div class="col-md-2 applycgibtn">' +
+                          '<label class="form-label" style="display:block;">&nbsp;</label>' +
+                          '<button class="btn btn-success btn-xs" id="btnapplycgi" onclick="return btnapplycgi(this)"><i class="fa fa-check-circle-o" aria-hidden="true"></i> {{ langmod.SPHPLABEL12 }}</button>' +
+                        '</div>' +
+                      '</div>' +
+                      '<div class="row" style="margin-top:2rem">' +
+                        '<div class="col-md-7">' +
+                          '<div class="ex1">' +
+                            '<h4><i class="fa fa-list"></i> {{langmod.SPHPDIRLIST}}</h4>' +
+                            '<hr class="line_exploret">' +
+                            response.exploret +
+                          '</div>' +
+                        '</div>' +
+                        '<div class="col-md-5">' +
+                          '<p>' +
+                            '<i class="fa fa-folder" style="color:#F8C54D"></i> {{ langmod.SPHPLABEL13 }}' +
+                          '</p>' +
+                          '<p>' +
+                            '<i class="fa fa-folder" style="color:#189FF8"></i>  {{ langmod.SPHPLABEL14 }}' +
+                          '</p>' +
+                          '<p>' +
+                            '<i class="fa fa-comment-o" style="color:#189FF8" aria-hidden="true"></i>  {{ langmod.SPHPLABELNEWT }}' +
+                          '</p>' +
+                          '<p>' +
+                            '<i class="fa fa-info"></i> {{ langmod.SPHPLABEL15 }}' +
+                          '</p>' +
+                          '<p>' +
+                            '<i class="fa  fa-info-circle"></i> {{ langmod.SPHPLABEL16 }}' +
+                          '</p>' +
+                        '</div>'
+      $("#exploret").html(exploret);
+      $("#verphpdirectory option[value='" + selvalue + "']").attr("selected",true);
+      $('[data-toggle="tooltip"]').tooltip();
+      if(response.rp.php == 'php-fpm'){
+        $("#exploret").hide();
+      }else{
+        $("#exploret").show();
+      }
+      $("#loader_domain").hide();
+    }
+  });
+  return;
+}
+function toggleDeletion(namedir){
+  let toshow = '#btndeldir' + namedir;
+  let tohide = '#btnconfirm' + namedir;
+  if($('#btndeldir' + namedir).is(':visible')){
+    toshow = '#btnconfirm' + namedir;
+    tohide = '#btndeldir' + namedir;
+  }
+  $(tohide).toggle('slide', 250, function(){
+    $(toshow).toggle('slide', 250);
+  });
+}
+let last_clicked = null;
+String.prototype.replaceAll = function(search, replacement) {
+    var target = this;
+    return target.split(search).join(replacement);
+};
+function btnapplycgi(elem){
+    var verphp = $('#verphpdirectory').val();
+    if(verphp == undefined || verphp == ''){
+        noti_bubble('{{langmod.SPHPLABEL19}}','{{langmod.SPHPLABEL17}}','error',false,false,'3000',true);
+        return false;
+    }
+    if($("#pathselect").val() == ''){
+        noti_bubble('{{langmod.SPHPLABEL18}}','{{langmod.SPHPLABEL17}}','error',false,false,'3000',true);
+        return false;
+    }
+    uchip.handleButton(elem, 'fa-check-circle-o');
+    uchip.call('module=phpselector&acc=btnapplycgi', {
+      data: 'domain=' + $('#domainphp').val() + '&ver=' + verphp + '&path=' + $('#pathselect').val(),
+      callback: function(response){
+        if(response.result == 'success'){
+            // last_clicked
+            $('#dir_exploret_' + last_clicked).find('.fa-folder').css('color', '#189FF8');
+            $('#btndeldir' + last_clicked).html(response.btn.replaceAll('{IDDIR}', last_clicked));
+            if(!$('#btndeldir' + last_clicked).is(':visible')){
+              $('#btndeldir' + last_clicked).fadeIn();
+            }
+            $('[data-toggle="tooltip"]').tooltip();
+            noti_bubble('{{langmod.SPHPLABEL4}}','{{langmod.SPHPLABEL3}}','success',false,false,'3000',true);
+        }else{
+            noti_bubble('{{langmod.SPHPLABEL20}}','{{langmod.SPHPLABEL17}}','error',false,false,'6000',true);
+        }
+        uchip.handleButton(elem, 'fa-check-circle-o', true);
+      }
+    });
+    return false;
+}
+
+function markpath(path,namemark){
+    last_clicked = namemark;
+    $("#pathselect").val(Base64.decode(path));
+    $("#namemark").val(namemark);
+    return false;
+}
+function deleteversionphpgci(path,namedir,st){
+    if(st == 0){
+      toggleDeletion(namedir);
+    }else if(st == 1){
+      uchip.handleButton('#btnyes' + namedir, 'fa-trash');
+      uchip.handleButton('#btncancel' + namedir, 'fa-ban');
+      uchip.handleButton('#folder' + namedir, 'fa-folder');
+      uchip.call('module=phpselector&acc=deleteversionphpgci', {
+        data: 'domain=' + $('#domainphp').val() + '&path=' + path + '&namedir=' + namedir,
+        callback: function(response){
+          if(response.result == 'success'){
+            $('#folder' + namedir).css('color', '#F8C54D');
+            $('#btnconfirm' + namedir).toggle('slide', 250, function(){
+              $('#btndeldir' + namedir).html('');
+              // $('#btndeldir' + namedir).show();
+            });
+            noti_bubble('{{langmod.SPHPLABEL4}}','{{langmod.SPHPLABEL3}}','success',false,false,'3000',true);
+          }else{
+            noti_bubble('{{langmod.SPHPLABEL20}}','{{langmod.SPHPLABEL17}}','error',false,false,'3000',true);
+          }
+          uchip.handleButton('#btnyes' + namedir, 'fa-trash', true);
+          uchip.handleButton('#btncancel' + namedir, 'fa-ban', true);
+          uchip.handleButton('#folder' + namedir, 'fa-folder', true);
+        }
+      });
+    }else{
+      toggleDeletion(namedir);
+    }
+    return false;
+
+}

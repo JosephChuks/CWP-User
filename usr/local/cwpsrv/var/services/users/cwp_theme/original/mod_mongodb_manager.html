@@ -1,0 +1,30 @@
+<style>
+    {% include 'modules/mongodb_manager/styles.css' %}
+</style>
+<div class="row  border-bottom white-bg dashboard-header">
+    {% if mod.fsl == 1 %}
+    <div class="row  alert alert-warning col-lg-12" style="margin-left: 5px; padding-right: 5px;display:{{stflalert}}"
+        id="alertfl">
+        <strong>{{langene.GALARTFILEBLOCK}}</strong>
+    </div>
+    {% endif %}
+    <div class="col-lg-10">
+        <h2>{{langmod.DTITLE}} ({{users}})</h2>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="?">Home</a></li>
+            <li class="breadcrumb-item active"><strong>MongoDB Manager</strong></li>
+        </ol>
+    </div>
+</div>
+<div class="row mongodb-main-wrapper">
+    <div class="col-lg-12">
+        <div class="row">
+            {% if mod.mod_installed == 1 and mod.usr_config.user_enabled == 1 %}
+                {% include 'modules/mongodb_manager/dashboard.html' %}
+            {% else %}
+                {% include 'modules/mongodb_manager/not_available.html' %}
+            {% endif %}
+        </div> 
+    </div> 
+</div> 
+{% include 'modules/mongodb_manager/modals.html' %}

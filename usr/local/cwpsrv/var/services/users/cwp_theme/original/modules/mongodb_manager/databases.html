@@ -1,0 +1,19 @@
+<div id="_mongo_database_tab_" class="tab-pane fade in active">
+    <div class="ibox">
+        <div class="ibox-title">
+            <h4>Mongo Database List</h4>
+                {% if (mod.mongodb_qty < mod.mongodb_quota) or (mod.mongodb_quota==-1) %} 
+                    {% set swver='' %} 
+                {% else %} 
+                    {% set swver='disabled' %} 
+                {% endif %} 
+                <button onclick="MongoAddDBForm()" id="btn_add_mongodb_database_" {{swver}} style="font-size:90%" class="btn btn-success">
+                    <i class="fa fa-plus"></i>
+                    {{langmod.LABMON6}}
+                </button>
+        </div>
+        <div class="ibox-content" id="_mongo_database_table_wrapper_">
+            <div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+        </div>
+    </div>
+</div>

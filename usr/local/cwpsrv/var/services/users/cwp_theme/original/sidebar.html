@@ -1,0 +1,287 @@
+<style media="screen">
+    .statistic-box {
+        margin-top: 0px !important;
+    }
+
+    .graph-stats-wrapper {
+        padding-top: 0px;
+        padding-bottom: 15px !important;
+    }
+
+    .list-group-item {
+        display: flex;
+        justify-content: space-around;
+    }
+
+    .list-group-item .label.label-success {
+        width: 11rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+    }
+
+    .last-access-date {
+        font-size: 1.2rem;
+    }
+
+    .infinite-sign {
+        font-size: 2.2rem;
+        position: absolute;
+        margin-top: -6px;
+        font-weight: 500;
+    }
+
+    .list-group .list-group-item:last-child {
+        border-bottom: 1px solid #e7eaec;
+    }
+
+    .server-status small {
+        font-size: 80%;
+        padding-top: 8px;
+        display: block;
+    }
+</style>
+<div class="col-lg-3" style="margin-bottom: 30px">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="ibox">
+                <div class="ibox-title">
+                    <h5>
+                        <i class="fa fa-info-circle" aria-hidden="true"></i>
+                        General Information
+                    </h5>
+                </div>
+                <div
+                    class="ibox-content"
+                    style="padding-bottom: 15px; padding-top: 5px"
+                >
+                    <div class="row" style="margin-top: 0px">
+                        <div class="col-md-12 server-status">
+                            <style>
+                                .sidemenu {
+                                    border-bottom: 1px solid #ddd;
+                                    padding-bottom: 2px;
+                                }
+
+                                .sidemenu small {
+                                    font-size: 12px;
+                                }
+                            </style>
+                            <div class="sidemenu">
+                                <h4>
+                                    Current User:
+                                    <small>{{users}}</small>
+                                </h4>
+                            </div>
+                            <div class="sidemenu">
+                                <h4>
+                                    Primary Domain:
+                                    <small id="primarydomain">
+                                        <a
+                                            href="http://{{mod.domain_username}}"
+                                            target="_blank"
+                                            style="
+                                                display: flex;
+                                                align-items: center;
+                                                font-weight: 500;
+                                                gap: 3px;
+                                            "
+                                            ><i
+                                                class="fas fa-unlock"
+                                                style="color: red"
+                                            ></i>
+                                            {{mod.domain_username}}
+                                            <i
+                                                class="fas fa-external-link-alt"
+                                                style="margin-left: 5px"
+                                            ></i
+                                        ></a>
+                                    </small>
+                                </h4>
+                            </div>
+                            <div class="sidemenu">
+                                <h4>
+                                    Home Directory:
+                                    <small>/home/{{users}}</small>
+                                </h4>
+                            </div>
+                            <div class="sidemenu">
+                                <h4>
+                                    Server IP Address:
+                                    <small>{{settings.ipserver}}</small>
+                                </h4>
+                            </div>
+                            <div class="sidemenu">
+                                <h4>
+                                    Server Time:
+                                    <small>{{settings.timerdate}}</small>
+                                </h4>
+                            </div>
+                            <div class="sidemenu">
+                                <h4>
+                                    Nameservers:
+                                    <small
+                                        ><b>ns1:</b> {{dnsname.ns1}}<br /><b
+                                            >ns2:</b
+                                        >
+                                        {{dnsname.ns2}}</small
+                                    >
+                                </h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12">
+            <div class="ibox">
+                <div class="ibox-title">
+                    <h5>
+                        <h5>
+                            <i class="fa fa-line-chart"></i>
+                            {{langmod.PLANSTATUS}}
+                        </h5>
+                    </h5>
+                </div>
+                <div class="ibox-content graph-stats-wrapper">
+                    <div class="statistic-box">
+                        <div class="row text-center" style="margin-top: 0px">
+                            <div class="col-lg-4">
+                                <canvas
+                                    id="doughnutChart2"
+                                    width="80"
+                                    height="80"
+                                    style="margin: 18px auto 0"
+                                ></canvas>
+                                {% set
+                                mysqlbar=(100/mod.mysqlpack.package)*mod.mysqlpack.used
+                                %}
+                                <h5>
+                                    {{langene.PGMYSQL}} {{mod.mysqlpack.used}} /
+                                    {% if mod.mysqlpack.package != '-1' %}
+                                    {{mod.mysqlpack.package}} {% else %}
+                                    <span class="infinite-sign">&infin;</span>
+                                    {% endif %}
+                                </h5>
+                            </div>
+                            <div class="col-lg-4">
+                                <canvas
+                                    id="doughnutChart"
+                                    width="80"
+                                    height="80"
+                                    style="margin: 18px auto 0"
+                                ></canvas>
+                                <h5>
+                                    {{langene.PGEMAIL}} {{mod.email_accounts}} /
+                                    {% if mod.email_pack != '-1' %}
+                                    {{mod.email_pack}} {% else %}
+                                    <span class="infinite-sign">&infin;</span>
+                                    {% endif %}
+                                </h5>
+                            </div>
+                            <div class="col-lg-4">
+                                <canvas
+                                    id="doughnutChart3"
+                                    width="80"
+                                    height="80"
+                                    style="margin: 18px auto 0"
+                                ></canvas>
+                                <h5>
+                                    Addon {{langene.PGDOMAINS}}
+                                    {{mod.domain_accounts}}/ {% if
+                                    mod.domain_pack != '-1' %}
+                                    {{mod.domain_pack}} {% else %}
+                                    <span class="infinite-sign">&infin;</span>
+                                    {% endif %}
+                                </h5>
+                            </div>
+                            <div class="col-lg-4">
+                                <canvas
+                                    id="doughnutChart5"
+                                    width="80"
+                                    height="80"
+                                    style="margin: 18px auto 0"
+                                ></canvas>
+                                <h5>
+                                    {{langene.PGSUBDOMAIN}}
+                                    {{mod.subdomain_accounts}} / {% if
+                                    mod.subdomain_pack != '-1' %}
+                                    {{mod.subdomain_pack}} {% else %}
+                                    <span class="infinite-sign">&infin;</span>
+                                    {% endif %}
+                                </h5>
+                            </div>
+                            <div class="col-lg-4">
+                                <canvas
+                                    id="doughnutChart4"
+                                    width="80"
+                                    height="80"
+                                    style="margin: 18px auto 0"
+                                ></canvas>
+                                <h5>
+                                    {{langene.PGFTP}} {{mod.ftp_accounts}} / {%
+                                    if mod.ftp_pack != '-1' %} {{mod.ftp_pack}}
+                                    {% else %}
+                                    <span class="infinite-sign">&infin;</span>
+                                    {% endif %}
+                                </h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12">
+            <div class="ibox">
+                <div class="ibox-title">
+                    <h5>
+                        <i class="fa fa-users" aria-hidden="true"></i>
+                        {{langene.GNLABLE7}}
+                    </h5>
+                </div>
+                <div class="ibox-content">
+                    <ul class="list-group clear-list m-t">
+                        {% for var in mod.lastaccess %}
+                        <li class="list-group-item">
+                            <div class="label label-success">
+                                <span>{{var.ip}}</span>
+                                {% if var.flag!='' %}
+                                <img
+                                    src="{{url}}/img/flags/16/{{var.flag}}.png"
+                                    class="pull-right"
+                                    alt="{{var.city}}/{{var.country}}"
+                                    title="{{var.city}}/{{var.flag}}"
+                                />
+                                {% endif %}
+                            </div>
+                            <span class="fab fa-{{var.os}}"></span>
+                            <span class="last-access-date"
+                                >{{var.date|date("d/m/Y H:i")}}</span
+                            >
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var domain =
+        '<a href="https://{{mod.domain_username}}" target="_blank" style="display:flex;align-items:center;font-weight:500;gap:3px"><i class="fas fa-lock" style="color:green"></i> {{mod.domain_username}} <i class="fas fa-external-link-alt" style="margin-left:5px"></i></a>';
+
+    document.addEventListener("DOMContentLoaded", function () {
+        fetch("./{{users}}/index.php?module=validate_ssl")
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.status) {
+                    document.getElementById("primarydomain").innerHTML = domain;
+                }
+            })
+            .catch((error) =>
+                console.error("Error fetching HTTPS check:", error)
+            );
+    });
+</script>

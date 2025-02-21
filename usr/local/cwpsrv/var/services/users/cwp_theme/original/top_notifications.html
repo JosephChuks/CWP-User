@@ -1,0 +1,100 @@
+{% if mod.visual_notifications_data.active == 1 %}
+<li class="dropdown">
+  {% if mod.visual_notifications_data.notifications|length > 0 %}
+    <ul class="dropdown-menu dropdown-alerts cwp-notifications">
+      {% for notify in mod.visual_notifications_data.notifications %}
+        {% set unreadclass = '' %}
+        {% if notify.st != 2 %}
+          {% set unreadclass = 'unread' %}
+        {% endif %}
+        {% if notify.type == 'websitechange' %}
+          {% set icon = 'fa-globe' %}
+          {% set title = notify.childs|length ~ ' ' ~ langene.NCLABELWEB %}
+        {% elseif notify.type == 'unusual_login' %}
+          {% set icon = 'fa-user-secret' %}
+          {% set title = notify.childs|length ~ ' ' ~ langene.NCLABELUNTIT %}
+        {% elseif notify.type == 'emailquota' %}
+          {% set icon = 'fa-envelope-o' %}
+          {% set title = notify.childs|length ~ ' ' ~ langene.NCLABELEMQE %}
+        {% elseif notify.type == 'diskusage' %}
+          {% set icon = 'fa-hdd-o' %}
+          {% set title = notify.childs|length ~ ' ' ~ langene.NCLABELDQA %}
+        {% elseif notify.type == 'bwquota' %}
+          {% set icon = 'fa-tachometer' %}
+          {% set title = notify.childs|length ~ ' ' ~ langene.NCLABELBWQA %}
+        {% elseif notify.type == 'passchange' %}
+          {% set icon = 'fa-lock' %}
+          {% set title = langene.NCLABELPACCCH2 %}
+        {% endif %}
+        <li>
+            <a href="#" class="dropdown-item with-subnotify">
+                <div>
+                    <i class="fa {{icon}}"></i> <span class="title-notify {{unreadclass}}">{{title}}</span>
+                    <span class="pull-right text-muted small date-info" data-date="{{notify.date}}"></span>
+                </div>
+            </a>
+            <ul class="sub-notify">
+            {% for subnotify in notify.childs %}
+              <li>
+                  {% if notify.type == 'websitechange' %}
+                    <div class="sub-notify-item websitechange" data-st="{{subnotify.st}}" id="subnoti_{{subnotify.id}}" data-notiid="{{subnotify.id}}">
+                      <span>{{langene.NCLABELDOM}}: <b>{{subnotify.data.domain}}</b></span>
+                      <span>{{langene.NCLABELMOAT}}: <b>{{subnotify.data.updated_at}}</b></span>
+                    </div>
+                  {% elseif notify.type == 'emailquota' %}
+                    {% set usage = (subnotify.data.current / 1024 / 1024)|number_format(2, '.', ',')  %}
+                    {% set quotalimit = (subnotify.data.quota / 1024 / 1024)|number_format(2, '.', ',')  %}
+                    {% set percent = ((subnotify.data.current * 100) / subnotify.data.quota)|number_format(2, '.', ',')  %}
+                    <div class="sub-notify-item emailquota" data-st="{{subnotify.st}}" id="subnoti_{{subnotify.id}}" data-notiid="{{subnotify.id}}">
+                      <span>{{langene.NCLABELACC}}: <b>{{subnotify.data.email_account}}</b></span>
+                      <span>{{langene.NCLABELUSA}}: <b>{{percent}}%</b> - <b>{{usage}}MB</b> {{langene.NCLABELOF}} <b>{{quotalimit}}MB</b></span>
+                    </div>
+                  {% elseif notify.type == 'diskusage' %}
+                    {% set usage = subnotify.data.used|number_format(2, '.', ',')  %}
+                    {% set quota = subnotify.data.quota|number_format(2, '.', ',')  %}
+                    <div class="sub-notify-item diskusage" data-st="{{subnotify.st}}" id="subnoti_{{subnotify.id}}" data-notiid="{{subnotify.id}}">
+                      <span>{{langene.NCLABELUSA}}: <b>{{subnotify.data.percent}}%</b> - <b>{{usage}}MB</b> {{langene.NCLABELOF}} <b>{{quota}}MB</b></span>
+                    </div>
+                  {% elseif notify.type == 'unusual_login' %}
+                    <div class="sub-notify-item diskusage" data-st="{{subnotify.st}}" id="subnoti_{{subnotify.id}}" data-notiid="{{subnotify.id}}">
+                      <span>IP: <b>{{subnotify.data.ip}}%</b></span>
+                    </div>
+                  {% elseif notify.type == 'bwquota' %}
+                    {% set usage = subnotify.data.used|number_format(2, '.', ',')  %}
+                    {% set quota = subnotify.data.quota|number_format(2, '.', ',')  %}
+                    <div class="sub-notify-item diskusage" data-st="{{subnotify.st}}" id="subnoti_{{subnotify.id}}" data-notiid="{{subnotify.id}}">
+                      <span>{{langene.NCLABELUSA}}: <b>{{subnotify.data.percent}}%</b> - <b>{{usage}}MB</b> {{langene.NCLABELOF}} <b>{{quota}}MB</b></span>
+                    </div>
+                  {% elseif notify.type == 'passchange' %}
+                    <div class="sub-notify-item diskusage" data-st="{{subnotify.st}}" id="subnoti_{{subnotify.id}}" data-notiid="{{subnotify.id}}">
+                      <span>{{langene.NCLABELPCIP}}: <b>{{subnotify.data.ip}}</b></span>
+                    </div>
+                  {% endif %}
+              </li>
+              <li class="dropdown-divider"></li>
+            {% endfor %}
+            </ul>
+        </li>
+        <li class="dropdown-divider"></li>
+      {% endfor %}
+      <li id="li_load_more_notis">
+          <div class="text-center link-block">
+              <a href="javascript:void(0)" id="get_next_noti_page" class="dropdown-item" data-page="{{mod.visual_notifications_data.page + 1}}">
+                  <strong>{{langene.NCLABELLOMN}}</strong>
+                  <i class="fa fa-angle-right"></i>
+              </a>
+              <div id="loader_noti_page">
+                <i class="fa fa-circle-o-notch fa-spin fa-2x fa-fw"></i>
+              </div>
+          </div>
+      </li>
+    </ul>
+  {% endif %}
+  <a class="dropdown-toggle count-info" data-toggle="dropdown" href="#">
+      <i class="fa fa-bell"></i>
+      {% if mod.visual_notifications_data.unreads > 0 %}
+        <span class="label label-primary" id="unread_amount">{{mod.visual_notifications_data.unreads}}</span>
+      {% endif %}
+  </a>
+</li>
+{% endif %}

@@ -1,0 +1,124 @@
+//****** *****///
+function domaindelete(st,domain){
+    $("#id2divdomain").hide();
+    btnporcess('off','btnyesdel','{{ langmod.DONLABEL10 }}');
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=domains&acc=verifsubdomain",
+        data:"domain="+domain,
+        complete: function(datos){
+            if(datos.responseText==0){
+                if(st==0){
+                    var strheader = '<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{ langmod.DOMLABEL3 }}</span></button><h4 class="modal-title">{{ langmod.DOMLABEL6 }}</h4><small class="font-bold">{{langmod.DDLETEDOMAIN}}</small>';
+                    var strbody = '<p class="text-center">'+domain+'</p>';
+                    var strfooter = '<button type="button" class="btn btn-white" data-dismiss="modal">{{ langmod.DCANDELDOMAIN }}</button><button type="button" class="btn btn-primary" id="btnyesdel" onclick="return domaindelete(1,\''+domain+'\')">{{langmod.DYES}}</button>';
+                    $("#deletemodal .modal-footer").html(strfooter);
+                    $("#deletemodal .modal-body").html(strbody);
+                    $("#deletemodal .modal-header").html(strheader);
+                    btnporcess('on','btnyesdel','{{ langmod.DYES }}');
+                    $("#deletemodal").modal('toggle');
+                    return false;
+                }else if(st==1){
+                    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+                    $.ajax({
+                        type: "POST",
+                        url: "./{{users}}/index.php?module=domains&acc=domaindelete",
+                        data:"domain="+domain,
+                        complete: function(datos){
+                            domainrefres();
+                            refrespanelnew('domains');
+                            noti_bubble('{{langmod.DSUCCT}}','{{langmod.DDELDOMAINALERT}}','success',false,false,'3000',true);
+                            btnporcess('on','btnyesdel','{{ langmod.DYES }}');
+                            $("#deletemodal").modal('hide');
+                            return false;
+                        }
+                    });
+                }
+                return false;
+            }else{
+                noti_bubble('{{langmod.DDELDOMAINALERTSUB}}','','error',false,false,'3000',true);
+                btnporcess('on','btnyesdel','{{ langmod.DYES }}');
+                return false;
+            }
+            return false;
+        }
+    });
+}
+function btn_save_domain(){
+    btnporcess('off','btn_save_domain','{{ langmod.DONLABEL10 }}');
+    if($("#newdomain").val()=='' || $("#pathdomain").val()==''){
+        noti_bubble('{{langmod.DDATEALL}}','{{langmod.DERROR}}','error',false,false,'3000',true);
+        btnporcess('on','btn_save_domain','{{ langmod.DBNTADD }}');
+        return false;
+    }else{
+        if ($('#autossl').prop('checked')){ var autossl=1; } else{ var autossl=0; }
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=domains&acc=btn_save_domain",
+            data: "newdomain="+$("#newdomain").val()+"&pathdomain="+$("#pathdomain").val()+"&autossl="+autossl,
+            complete: function(datos){
+                //alert(datos.responseText);
+                if(datos.responseText!='OK'){
+                    noti_bubble(datos.responseText,'{{langmod.DERROR}}','error',false,false,'3000',true);
+                    btnporcess('on','btn_save_domain','{{ langmod.DBNTADD }}');
+                }else{
+                    $("#newdomain").val('');
+                    $("#pathdomain").val('/public_html/');
+                    domainrefres();
+                    refrespanelnew('domains');
+                    noti_bubble('{{langmod.DDOMAINEXIT}}','{{langmod.DSUCCT}}','success',false,false,'3000',true);
+                    btnporcess('on','btn_save_domain','{{ langmod.DBNTADD }}');
+                    canceladd();
+                }
+                return false;
+            }
+        });
+    }
+}
+function btnadddomain(){
+    var headervar='<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{ langmod.DOMLABLE3 }}</span></button><h4 class="modal-title">{{ langmod.DBNTADD }}</h4>';
+    var bodyvar='<div class="row"><div class="col-sm-3"><b>{{ langmod.DDOMAIN }}:</b></div><div class="col-sm-5"><input type="text" class="form-control" style="padding:3px 0px;" id="newdomain" onkeyup="return newdomainkeyup()"></div></div><div class="row" style="padding-top: 5px"><div class="col-sm-3" style="padding-top: 3px"><b>{{ langmod.DPATH }}:</b> /home/{{ users }}</div><div class="col-sm-5"><input type="text" class="form-control" style="padding:3px 0px;" id="pathdomain" value="/public_html/"></div></div><div class="row" style="padding-top: 5px"><div class="col-sm-3" style="padding-top: 3px"><b>{{ langmod.DONLABEL8 }}</b></div><div class="col-sm-5"><input type="checkbox" class="form-controla" style="padding:3px 0px;" id="autossl"></div></div><p class="text-center"  style="padding-top: 15px"><b>{{ langmod.DONLABEL7 }}</b></p>';
+    var btnvar='<button type="button" class="btn btn-white" data-dismiss="modal">{{ langmod.DCANDELDOMAIN }}</button> <button type="button" class="btn btn-primary" onclick="return btn_save_domain()" id="btn_save_domain">{{ langmod.DBNTADD }}</button>';
+    $("#addmodal .modal-header").html(headervar);
+    $("#addmodal .modal-body").html(bodyvar);
+    $("#addmodal .modal-footer").html(btnvar);
+    $("#addmodal").modal('toggle');
+}
+function domainrefres(){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=domains&acc=domainrefres",
+        complete: function(datos){
+            $('.dataTables-example').DataTable().destroy();
+            $("#contenttr").html(datos.responseText);
+            $('.dataTables-example').DataTable();
+            return false;
+        }
+    });
+}
+function canceladd(){
+    $("#addmodal").modal('hide');
+}
+function newdomainkeyup(){
+    var expreg = /^[a-zA-Z0-9]+([(\.|\/|\-)]?[a-zA-Z0-9_]+)*$/i;
+    var resp=expreg.test($("#newdomain").val());
+    if(resp==false){
+        noti_bubble('{{langmod.ERRORFORM}}','{{langmod.DERROR}}','error',false,false,'3000',true);
+        //$("#btn_save_domain").hide();
+        $("#btn_save_domain").addClass('disabled');
+        $("#btn_save_domain").attr('disabled',true);
+    }else{
+        //$("#btn_save_domain").show();
+        //$("#alertftp").hide('blind');
+        //$("#alertftp").html('');
+        //$("#btn_save_domain").show();
+        $("#btn_save_domain").removeClass('disabled');
+        $("#btn_save_domain").attr('disabled',false);
+        var path='/public_html/';
+        var newpath=$("#newdomain").val();
+        $("#pathdomain").val(path+newpath);
+    }
+};

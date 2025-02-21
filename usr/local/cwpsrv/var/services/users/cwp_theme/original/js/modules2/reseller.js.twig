@@ -1,0 +1,1056 @@
+function check_domain(){
+    $(".checkdom").attr('disabled',true);
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=reseller&op=accounts&acc=check_domain",
+        data:"domain="+$("#domainadd").val(),
+        complete: function(datos){
+            //console.log(datos.responseText);
+            if(datos.responseText==1){
+                $("#domainadd").attr('disabled',false);
+                $("#domainadd").css('border', 'solid 1px red');
+                noti_bubble('{{langmod.RSLABEL29}}','{{langmod.RSLABEL28}}','error',false,false,'4000',true);
+                $("#validate_domain").val('');
+            }else if(datos.responseText==2){
+                $("#domainadd").attr('disabled',false);
+                $("#domainadd").css('border', 'solid 1px red');
+                noti_bubble('{{langmod.RSLABEL30}}','{{langmod.RSLABEL28}}','error',false,false,'4000',true);
+                $("#validate_domain").val('');
+            }else{
+                $("#domainadd").css('border', 'solid 1px green');
+                $(".checkdom").attr('disabled',false);
+                $("#validate_domain").val(1);
+            }
+        }
+    });
+}
+function changepackage(id,pack,st){
+    if(st==0){
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=reseller&op=accounts&acc=change_pack",
+            data:"id="+id+"&pack="+pack,
+            complete: function(datos){
+                $("#divpack"+id).html('<select id="selpack'+id+'" class="form-control">'+datos.responseText+'</select>  <a href="#" onclick="return changepackage('+id+','+pack+',1)"><i class="fa fa-check-circle"></i></a>  <a href="#" class="color-green" onclick="return changepackage('+id+','+pack+',2)"><i class="fa fa-times-circle"></i></a>');
+                $("#divpack"+id).toggle('blind');
+            }
+        });
+        return false;
+    }else if(st==1){
+        var idsel = $("#selpack"+id).val();
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=reseller&op=accounts&acc=update&type=package",
+            data:"id="+id+"&pack="+idsel,
+            complete: function(datos){
+                //alert(datos.responseText);
+                var name = $('#selpack'+id+' option:selected').text();
+                $("#packname"+id).html(name);
+                $("#divpack"+id).hide('blind');
+                return false;
+            }
+        });
+    }else{
+        $("#divpack"+id).hide();
+        return false;
+    }
+
+}
+function check_user(){
+    $(".checkdom").attr('disabled',true);
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=reseller&op=accounts&acc=check_user",
+        data:"username="+$("#username").val(),
+        complete: function(datos){
+            if(datos.responseText==1){
+                $("#username").attr('disabled',false);
+                $("#username").css('border', 'solid 1px red');
+                noti_bubble('{{langmod.RSLABEL29}}','{{langmod.RSLABEL28}}','error',false,false,'4000',true);
+                $("#validate_user").val('');
+                if($("#validate_domain").val()==1){$("#domainadd").attr('disabled',false);}
+            }else if(datos.responseText==2){
+                $("#username").attr('disabled',false);
+                $("#username").css('border', 'solid 1px red');
+                noti_bubble('{{langmod.RSLABEL30}}','{{langmod.RSLABEL28}}','error',false,false,'4000',true);
+                $("#validate_user").val('');
+                if($("#validate_domain").val()==1){$("#domainadd").attr('disabled',false);}
+            }else{
+                $("#username").css('border', 'solid 1px green');
+                $(".checkdom").attr('disabled',false);
+                $("#validate_user").val(1);
+                if($("#validate_domain").val()==1){$("#domainadd").attr('disabled',false);}
+            }
+        }
+    });
+}
+function deletepackage(id,st){
+    if(st==0){
+        $(".btnnor"+id).hide();
+        $(".btnconf"+id).show();
+        return false
+    }
+    if(st==1){
+        $("#tr_packages").html('<tr><td align="center" colspan="12"> <i class="fa fa-spinner fa-spin fa-3x"></i></td></tr>');
+        $.ajax({
+            type: "POST",
+            url: "./{{ users }}/index.php?module=reseller&op=packages&acc=del",
+            data: "id="+id,
+            complete: function(datos){
+                if(datos.responseText==0){
+                    noti_bubble('{{langmod.RSLABEL33}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+                    $("#tr_packages").html('<tr><td align="center" colspan="12"> <i class="fa fa-spinner fa-spin fa-3x"></i></td></tr>');
+                    $.ajax({
+                        type: "POST",
+                        url: "./{{ users }}/index.php?module=reseller&op=packages&acc=list",
+                        complete: function(datos){
+                            $("#tr_packages").html(datos.responseText);
+                            return false;
+                        }
+                    });
+                    return false;
+                }else if(datos.responseText==2){
+                    noti_bubble('{{langmod.RSLABEL34}}','{{langmod.RSLABEL28}}','error',false,false,'4000',true);
+                    $("#tr_packages").html('<tr><td align="center" colspan="12"> <i class="fa fa-spinner fa-spin fa-3x"></i></td></tr>');
+                    $.ajax({
+                        type: "POST",
+                        url: "./{{ users }}/index.php?module=reseller&op=packages&acc=list",
+                        complete: function(datos){
+                            $("#tr_packages").html(datos.responseText);
+                            return false;
+                        }
+                    });
+                    return false;
+                }else{
+                    $("#tr_packages").html('<tr><td align="center" colspan="12"> <i class="fa fa-spinner fa-spin fa-3x"></i></td></tr>');
+                    $.ajax({
+                        type: "POST",
+                        url: "./{{ users }}/index.php?module=reseller&op=packages&acc=list",
+                        complete: function(datos){
+                            $("#tr_packages").html(datos.responseText);
+                            return false;
+                        }
+                    });
+                }
+            }
+        });
+        return false
+    }
+    if(st==2){
+        $(".btnconf"+id).hide();
+        $(".btnnor"+id).show();
+        return false
+    }
+}
+function editpackage(id){
+    $.ajax({
+        type: "POST",
+        url: "./{{ users }}/index.php?module=reseller&op=packages&acc=edit",
+        data: "id="+id,
+        complete: function(datos){
+            if(datos.responseText!=0){
+                var obj = jQuery.parseJSON( datos.responseText );
+                $("#package_name").val(obj.package_name);
+                $("#disk_quota").val(obj.disk_quota);
+                $("#bandwidth").val(obj.bandwidth);
+                $("#ftp_accounts").val(obj.ftp_accounts);
+                $("#email_accounts").val(obj.email_accounts);
+                $("#email_lists").val(obj.email_lists);
+                $("#databases").val(obj.databases);
+                $("#sub_domains").val(obj.sub_domains);
+                $("#parked_domains").val(obj.parked_domains);
+                $("#addons_domains").val(obj.addons_domains);
+                $("#hourly_emails").val(obj.hourly_emails);
+                $("#modeedit").val(obj.id);
+                $("#modal-addpackages .modal-title").html('{{ langmod.RSLABEL36 }}'); // title
+                $("#modal-addpackages .modal-footer").html('<button type="button" class="btn btn-default" data-dismiss="modal">{{ langene.MDCLOSE }}</button>\n' +
+                    '                <button type="button" class="btn btn-success checkdom" id="btnsavepackages" onclick="return savepackages()"  >{{ langmod.RSLABEL35 }}</button>'); //
+                $("#modal-addpackages").modal('toggle');
+                return false;
+            }else{
+                noti_bubble('{{langmod.RSLABEL33}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+                return false;
+            }
+        }
+    });
+    return false
+}
+function savepackages(){
+    if($("#package_name").val()==''){ $("#package_name").css('border', 'solid 1px red'); noti_bubble('{{langmod.RSLABEL32}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true); return false;}
+    $("#btnsavepackages").attr('disabled',true);
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=reseller&op=packages&acc=save",
+        data:"package_name="+$("#package_name").val()+"&disk_quota="+$("#disk_quota").val()+"&bandwidth="+$("#bandwidth").val()+"&ftp_accounts="+$("#ftp_accounts").val()+"&email_accounts="+$("#email_accounts").val()+"&email_lists="+$("#email_lists").val()+"&databases="+$("#databases").val()+"&sub_domains="+$("#sub_domains").val()+"&parked_domains="+$("#parked_domains").val()+"&addons_domains="+$("#addons_domains").val()+"&hourly_emails="+$("#hourly_emails").val()+"&id="+$("#modeedit").val(),
+        complete: function(datos){
+            //console.log(datos.responseText);
+            if(datos.responseText==1){
+                $("#tr_packages").html('<tr><td align="center" colspan="12"> <i class="fa fa-spinner fa-spin fa-3x"></i></td></tr>');
+                $.ajax({
+                    type: "POST",
+                    url: "./{{ users }}/index.php?module=reseller&op=packages&acc=list",
+                    complete: function(datos){
+                        $("#btncreatepackages").attr('disabled',false);
+                        $("#modal-addpackages").modal('toggle');
+                        $("#tr_packages").html(datos.responseText);
+                        return false;
+                    }
+                });
+            }else{
+                noti_bubble('{{langmod.RSLABEL33}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+                return false;
+            }
+            return false;
+        }
+    });
+}
+function search_packages(){
+    $("#package_account").html('<option >{{ langmog.RSLABEL37 }}</option>');
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=reseller&op=accounts&acc=search_packages",
+        complete: function(datos){
+            $("#package_account").html(datos.responseText);
+            return false;
+        }
+    });
+    return false;
+}
+function packageaccount(){
+    if($("#package_account").val()!=''){
+        if($("#domainadd").val()!=''){
+            if($("#username").val()!=''){
+                $("#btncreateaccounts").attr('disabled',false);
+                $("#btncreateaccounts").removeClass('disabled');
+            }else{
+                $("#btncreateaccounts").attr('disabled',true);
+                $("#btncreateaccounts").addClass('disabled');
+            }
+        }else{
+            $("#btncreateaccounts").attr('disabled',true);
+            $("#btncreateaccounts").addClass('disabled');
+        }
+    }else{
+        $("#btncreateaccounts").attr('disabled',true);
+        $("#btncreateaccounts").addClass('disabled');
+    }
+}
+function deleteaccount(id,st){
+    if(st==0){
+        $(".clsactnr"+id).hide();
+        $(".clsactbt"+id).show();
+        return false
+    }
+    if(st==1){
+        $("#iconcondel"+id).html('<i class="fa fa fa-spinner fa-spin"></i>');
+        $.ajax({
+            type: "POST",
+            url: "./{{ users }}/index.php?module=reseller&op=accounts&acc=deleteaccount",
+            data: "username="+id,
+            complete: function(datos){
+                console.log(datos.responseText);
+                ini_list_accounts(0);
+                ini_detailreseller();
+                return false;
+            }
+        });
+        return false
+    }
+    if(st==2){
+        $(".clsactbt"+id).hide();
+        $(".clsactnr"+id).show();
+        return false
+    }
+}
+function changeemail(id){
+    $("#changeemail"+id).html('ddd');
+    $("#divemail"+id).toggle('blind');
+    return false;
+}
+function changest(user,id){
+    $("#st"+id).attr('disabled',true);
+    $("#st"+id).html('<i class="fa fa-spinner fa-spin"></i>');
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{ users }}/index.php?module=reseller&op=accounts&acc=update&type=status",
+        data: "username="+user,
+        complete: function(datos){
+            ini_list_accounts(0);
+        }
+    });
+    return false;
+}
+function saveemail(id){
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=reseller&op=accounts&acc=update&type=email",
+        data: "email="+$("#changeemail"+id).val()+"&id="+id,
+        complete: function(datos){
+            if(datos.responseText==1){
+                $("#email"+id).html($("#changeemail"+id).val());
+                $("#divemail"+id).toggle('blind');
+                return false;
+            }else{
+                noti_bubble('{{langmod.RSLABEL33}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+                return false;
+            }
+        }
+    });
+}
+function ini_list_accounts(st){
+    $("#tr_accounts").html('<tr><td align="center" colspan="7"> <i class="fa fa-spinner fa-spin fa-3x"></i></td></tr>');
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{ users }}/index.php?module=reseller&op=accounts&acc=list",
+        complete: function(datos){
+            console.log(datos.responseText);
+            $("#tr_accounts").html(datos.responseText);
+            if(st==1){
+                $('.dataTables-example').DataTable({
+                    pageLength: 25,
+                    responsive: true,
+                    dom: '<"html5buttons"B>lTfgitp',
+                    buttons: [
+
+                    ]
+                });
+            }
+
+        }
+    });
+}
+function changebackup(id){
+    $("#backup"+id).attr('disabled',true);
+    $("#backup"+id).html('<i class="fa fa-spinner fa-spin"></i>');
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{ users }}/index.php?module=reseller&op=accounts&acc=update&type=backup",
+        data: "id="+id,
+        complete: function(datos){
+            ini_list_accounts(0);
+        }
+    });
+}
+function reseller_changepass(account){
+    $("#mytitleresseller").html('{{langmod.RSLABEL47}}  ('+account+')');
+    $("#subaccount").val(account);
+    $("#modal-reseller_pass").modal('toggle');
+    return false;
+}
+function newvalidpassreseller(pass1,pass2){
+    var expreg =/^[a-zA-Z0-9\_\.\-\/]+$/i;
+    var sw1=0;
+    var sw2=0;
+    if(pass1!=""){
+        //var resp=expreg.test(pass1);
+        var resp = true;
+        if(resp==false){
+            noti_bubble('{{langmod.ERROR1}}','{{langmod.RSLABEL58}}','error',true,false,'3000',true);
+            sw1=1;
+        }else{
+            sw1=3;
+        }
+    }
+    if(pass2!=""){
+        //var resp=expreg.test(pass2);
+        var resp = true;
+        if(resp==false){
+            noti_bubble('{{langmod.ERROR1}}','{{langmod.RSLABEL58}}','error',true,false,'3000',true);
+            sw2=1;
+            $("#btn-resellsubmit").hide();
+        }else{
+            sw2=3;
+        }
+    }
+    if((pass1==pass2)&&(sw1 + sw2)==6) { $("#btn-resellsubmit").show(); }else{ $("#btn-resellsubmit").hide(); }
+}
+function createaccount(){
+    var namebtn =$("#btncreateaccounts").text();
+    $("#btncreateaccounts").attr('disabled',true);
+    $("#btncreateaccounts").addClass('disabled');
+    $("#btncreateaccounts").html('<i class="fa fa-spinner fa-spin"></i>'+namebtn);
+    if($("#backup").attr('checked')){ var backup = 1;}else{ var backup = 0;}
+    if($("#autossl").attr('checked')){ var autossl = 1;}else{ var autossl = 0;}
+    if(($("#domainadd").val()=='')||($("#username").val()=='')||($("#emailadd").val()=='')||($("#package_account").val()=='')||($("#password").val()=='')){
+        noti_bubble('{{langmod.RSLABEL33}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+        $("#btncreateaccounts").html(namebtn);
+        return false;
+    }
+
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    var pass = Base64.encode($("#password").val());
+    var date = "domain="+$("#domainadd").val()+"&username="+$("#username").val()+"&password="+pass+"&email="+$("#emailadd").val()+"&package="+$("#package_account").val()+"&backup="+backup+"&autossl="+autossl;
+    $.ajax({
+        type: "POST",
+        url: "./{{ users }}/index.php?module=reseller&op=accounts&acc=add",
+        data: date,
+        complete: function(datos){
+            //console.log(datos.responseText);
+            if(datos.responseText==1){
+                ini_list_accounts(0);
+                ini_detailreseller();
+                $("#modal-addaccount").modal('toggle');
+                return false;
+            }else{
+                noti_bubble(datos.responseText,'{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+                $("#btncreateaccounts").attr('disabled',false);
+                $("#btncreateaccounts").removeClass('disabled');
+                $("#btncreateaccounts").html(namebtn);
+            }
+            return false;
+        }
+    });
+}
+function domain_reseller(){
+    var string = $("#domainadd").val();
+    if((string=='www.')||(string=='WWW.')){
+        $("#domainadd").val('');
+        $("#username").val('');
+        noti_bubble('{{langmod.RSLABEL28}}','{{langmod.RSLABEL59}}','error',true,false,'3000',true);
+        return false;
+    }
+    var regex = /-|_|\./gi;
+    var respst = string.replace(regex, '');
+    var resplo=respst.toLowerCase()
+    $("#username").val(resplo.substr(0, 8));
+}
+function newpassreseller(username){
+    var pass1 =Base64.encode($("#resellerpass1").val());
+    var pass2 =Base64.encode($("#resellerpass2").val());
+    var useraccount = $("#subaccount").val();
+    if((pass1!='')&&(pass2!='')){
+        if($("#resellerpass1").val()==$("#resellerpass2").val()){
+            var contbtn = $("#btn-resellsubmit").text();
+            $("#btn-resellsubmit").attr('disabled',true);
+            $("#btn-resellsubmit").addClass('disabled');
+            $("#btn-resellsubmit").html('<i class="fa fa-spinner fa-spin"></i> '+contbtn);
+            $.ajax({
+                type: "POST",
+                //url: "./{{users}}/index.php?acc=newpass",
+                url: "./{{ users }}/index.php?module=reseller&op=accounts&acc=newpass",
+                data:"pass1="+pass1+"&pass2="+pass2+"&useraccount="+useraccount,
+                complete: function(datos){
+                    console.log(datos.responseText);
+                    $("#btn-resellsubmit").attr('disabled',false);
+                    $("#btn-resellsubmit").removeClass('disabled');
+                    $("#btn-resellsubmit").html(contbtn);
+
+                    $("#modal-reseller_pass").modal('toggle');
+                    $("#resellerpass1").val('');
+                    $("#resellerpass2").val('');
+                    return false;
+                }
+            });
+        }else{
+            noti_bubble('{{langmod.RSLABEL28}}','{{langmod.RSLABEL59}}','error',true,false,'3000',true);
+        }
+    }else{
+        noti_bubble('{{langmod.RSLABEL28}}','{{langmod.RSLABEL59}}','error',true,false,'3000',true);
+    }
+    return false;
+}
+function deletepackmod(id,st){
+    if(st==0){
+        $(".clsnormod"+id).hide();
+        $(".clsdelmod"+id).show();
+    }
+    if(st==1){
+        $.ajax({
+            type: "POST",
+            url: "./{{ users }}/index.php?module=reseller&op=features&acc=del",
+            data:"id="+id,
+            complete: function(datos){
+                //console.log(datos.responseText);
+                $("#trfealist"+id).hide();
+                return false;
+            }
+        });
+    }
+    if(st==2){
+        $(".clsdelmod"+id).hide();
+        $(".clsnormod"+id).show();
+    }
+    return false;
+}
+function editpackmod(id){
+    $("#bntedifeac"+id).html('<i class="fa fa-spinner fa-spin"></i>');
+    $.ajax({
+        type: "POST",
+        url: "./{{ users }}/index.php?module=reseller&op=features&acc=edit",
+        data:"id="+id,
+        complete: function(datos){
+            $("#divsavebtn").removeClass('col-lg-12');
+            $("#divsavebtn").addClass('col-lg-6');
+            $("#btncalcel").show();
+            //console.log(datos.responseText);
+            var obj = jQuery.parseJSON( datos.responseText );
+            $("#idhiddemod").val(id);
+            $("#packagessel").attr('disabled',true);
+            $("#packagessel option[value="+ id +"]").attr("selected",true);
+            $("#bootstrap-duallistbox-nonselected-list_").html(obj.disp);
+            $("#bootstrap-duallistbox-selected-list_").html(obj.upd);
+            $('.dual_select').bootstrapDualListbox({
+                selectorMinimalHeight: 160
+            });
+            $("#bntedifeac"+id).html('<i class="fa fa-file-code-o"></i>');
+            return false;
+        }
+    });
+    return false;
+}
+function delnns(id,st){
+    if(st==0){ $(".clsnorns"+id).hide(); $(".clsdelns"+id).show(); }
+    if(st==1){
+        $("#icondelns"+id).addClass('disabled');
+        $("#icondelns"+id).attr('disabled',true);
+        $("#icondelns"+id).html('<i class="fa fa-spinner fa-spin"></i>');
+        $.ajax({
+            type: "POST",
+            url: "./{{ users }}/index.php?module=reseller&op=nameserver&acc=del",
+            data:"id="+id,
+            complete: function(datos){
+                $(".clsdelns"+id).hide('blind');
+                $(".clsnorns"+id).hide('blind');
+                $("#nsp"+id).hide('blind');
+
+                return false;
+            }
+        });
+    }
+    if(st==2){ $(".clsdelns"+id).hide(); $(".clsnorns"+id).show(); }
+}
+function main_nameserver(){
+    if($("#main_nameserver").prop('checked')){
+        $("#ns1").attr('disabled',true);
+        $("#ns2").attr('disabled',true);
+        $("#ns3").attr('disabled',true);
+        $("#ns4").attr('disabled',true);
+        $("#ns5").attr('disabled',true);
+        $("#domainnameserver1").attr('disabled',true);
+        $("#domainnameserver2").attr('disabled',true);
+        $("#domainnameserver3").attr('disabled',true);
+        $("#domainnameserver4").attr('disabled',true);
+        $("#domainnameserver5").attr('disabled',true);
+    }else{
+        $("#ns1").attr('disabled',false);
+        $("#ns2").attr('disabled',false);
+        $("#ns3").attr('disabled',false);
+        $("#ns4").attr('disabled',false);
+        $("#ns5").attr('disabled',false);
+        $("#domainnameserver1").attr('disabled',false);
+        $("#domainnameserver2").attr('disabled',false);
+        $("#domainnameserver3").attr('disabled',false);
+        $("#domainnameserver4").attr('disabled',false);
+        $("#domainnameserver5").attr('disabled',false);
+    }
+}
+function btnnotalert(){
+    var datajs=$("#returajax").val();
+    var obj = jQuery.parseJSON( datajs );
+    $("#ns1p").html(obj.ns1+' ('+obj.ip1+')');
+    $("#ns2p").html(obj.ns2+' ('+obj.ip2+')');
+    $("#alertdiv").hide('blind');
+    noti_bubble('{{langmod.RSLABEL66}}','{{langmod.RSLABEL64}}','success',false,false,'6000',true);
+    $("#bntaddns").attr('disabled',false);
+    $("#bntaddns").removeClass('disabled');
+    $("#bntaddns").html('{{langmod.RSLABEL72}}');
+    return false;
+}
+function delimgreseller(st){
+    if(st==0){
+        $(".opdelimnres0").hide();
+        $(".opdelimnres1").show();
+        return false;
+    }
+    if(st==1){
+        $("#btndelimgresell").addClass('disabled');
+        $("#btndelimgresell").attr('disabled',true);
+        $("#btndelimgresell").html('<i class="fa fa-spinner fa-spin"></i>');
+        $("#btncancelimgresell").hide();
+        $.ajax({
+            type: "POST",
+            url: "./{{ users }}/index.php?module=reseller&op=branding&acc=del",
+            complete: function(datos){
+                $("#imgreseller").hide();
+                $("#dropzoneForm").show('blind');
+                $("#btndelimgresell").hide();
+                $("#logomenu").attr('src','{{url}}/img/cwp_logo.png');
+                return false;
+            }
+        });
+        return false;
+    }
+    if(st==2){
+        $(".opdelimnres1").hide();
+        $(".opdelimnres0").show();
+        return false;
+    }
+}
+function branding(){
+    $.ajax({
+        type: "POST",
+        url: "./{{ users }}/index.php?module=reseller&op=branding&acc=list",
+        complete: function(datos){
+            //console.log(datos.responseText);
+            var obj = jQuery.parseJSON( datos.responseText );
+            $("#footertext").val(obj.text_footer);
+            if(obj.img!=''){
+                $("#imgreseller").attr("src","http://"+obj.img);
+                $("#dropzoneForm").hide();
+                $("#imgreseller").show();
+            }else{
+                $("#imgreseller").hide();
+                $("#dropzoneForm").show();
+                $("#imgreseller").attr("src","");
+            }
+            return false;
+        }
+    });
+    return false;
+}
+function changednszonebtn(){
+    var datajs=$("#returajax").val();
+    var obj = jQuery.parseJSON( datajs );
+    $.ajax({
+        type: "POST",
+        url: "./{{ users }}/index.php?module=reseller&op=nameserver&acc=upgrade",
+        data: "jsondata="+datajs,
+        complete: function(datos){
+            $("#alertdiv").hide('blind');
+            $("#bntaddns").removeClass('disabled');
+            $("#bntaddns").attr('disabled',false);
+            $("#bntaddns").html('{{ langmod.RSLABEL72 }}');
+            return false;
+        }
+    });
+    return false;
+}
+function ini_detailreseller(){
+    //alert();
+    $(".alldetails").html('<i class="fa fa-spinner fa-spin"></i>');
+    $.ajax({
+        type: "POST",
+        url: "./{{ users }}/index.php?module=reseller&op=details",
+        complete: function(datos){
+            var obj = jQuery.parseJSON( datos.responseText );
+            //console.log(datos.responseText);
+            var trozbandw=obj.bandwidth;
+            var tz = trozbandw.split("|");
+            if(tz[1]>1024){
+                var unid='GB';
+                var usade=(tz[0]/1024);
+                if(tz[1]=='1.0E+24'){
+                    var bw='&infin;';
+                }else{
+                    var bw=(tz[1]/1024);
+                    bw=bw.toFixed(2);
+                }
+
+            }else{var unid='MB'; var usade=tz[0]; var bw=tz[1];}
+            var graf='<div style="height: 10px;margin-bottom: '+tz[2]+'px;overflow: hidden;background-color: #f5f5f5;border-radius: 4px;-webkit-box-shadow: inset 0 1px 2px rgba(0,0,0,.1); box-shadow: inset 0 1px 2px rgba(0,0,0,.1);"><div style="width: '+tz[2]+'%" aria-valuemax="100" aria-valuemin="0" aria-valuenow="'+tz[2]+'" role="progressbar" class="progress-bar"><span class="sr-only">'+tz[2]+'%</span></div></div>'+usade.toFixed(2)+' '+unid+' / '+bw+' '+unid;
+            $("#ind_package_name").html(obj.package_name);
+            $("#ind_disk").html(obj.quota);
+            $("#ind_bandw").html(graf);
+            $("#ind_ftp").html(obj.ftp_accounts);
+            $("#ind_email").html(obj.email_accounts);
+            $("#ind_emaillist").html(obj.email_lists);
+            $("#ind_subdomain").html(obj.sub_domains);
+            $("#ind_parkdomain").html(obj.parked_domains);
+            $("#ind_domain").html(obj.addons_domains);
+            $("#ind_databases").html(obj.databases);
+            $("#ind_account").html(obj.accounts);
+            if(obj.st==1){$("#btnaddaccount").show();}else{$("#btnaddaccount").hide();}
+            if(obj.imgdiv==1){
+                $("#dropzoneForm").hide();
+                $("#imgreseller").show();
+                $("#divdeletes").show();
+            }else{
+                $("#imgreseller").hide();
+                $("#divdeletes").hide();
+                $("#dropzoneForm").show();
+            }
+            return false;
+        }
+    });
+}
+function reemplogo(){
+    $("#logomenu").attr('src','https://{{mod.domain_username}}/reseller/img/logoreseller.png');
+    $("#imgreseller").attr('src','https://{{mod.domain_username}}/reseller/img/logoreseller.png');
+    $("#dropzoneForm").hide();
+    $("#imgreseller").show('blind');
+    $("#divdeletes").show();
+}
+function generate_pass(longitud,id){
+    var caracteres = "abcdefghijkmnpqrtuvwxyz!@*()/|ABCDEFGHIJKLMNPQRTUVWXYZ2346789";
+    var contraseña = "";
+    for (i=0; i<longitud; i++) contraseña += caracteres.charAt(Math.floor(Math.random()*caracteres.length));
+    $("#"+id).val(contraseña);
+}
+function autologin(t,u,r){
+    $("#tokenuser").val(t);
+    $("#userRes").val(r);
+    $('#autologinuser').attr("action", u);
+    $("#autologinuser").submit();
+    return false;
+}
+
+
+$("#btncalcel").click(function (){
+    $("#packagessel option[value=x]").attr("selected",true);
+    $("#btncalcel").hide();
+    $("#divsavebtn").removeClass('col-lg-6');
+    $("#divsavebtn").addClass('col-lg-12');
+    $("#idhiddemod").val('');
+    $("#packagessel").attr('disabled',false);
+    $("#bootstrap-duallistbox-selected-list_").html('');
+
+});
+$(".accounts_tab").click(function (){
+    $("#tr_accounts").html('<tr><td align="center" colspan="7"> <i class="fa fa-spinner fa-spin fa-3x"></i></td></tr>');
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{ users }}/index.php?module=reseller&op=accounts&acc=list",
+        complete: function(datos){
+            $("#tr_accounts").html(datos.responseText);
+        }
+    });
+});
+$(".packages_tab").click(function (){
+    $("#tr_packages").html('<tr><td align="center" colspan="12"> <i class="fa fa-spinner fa-spin fa-3x"></i></td></tr>');
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{ users }}/index.php?module=reseller&op=packages&acc=list",
+        complete: function(datos){
+            $("#tr_packages").html(datos.responseText);
+        }
+    });
+});
+$(".features_tab").click(function (){
+    $.ajax({
+        type: "POST",
+        url: "./{{ users }}/index.php?module=reseller&op=features&acc=list",
+        complete: function(datos){
+            //alert(datos.responseText);
+            var obj = jQuery.parseJSON( datos.responseText );
+            $("#packagessel").html(obj.pack);
+            $("#opmodules").html(obj.modpack);
+            //$("#bootstrap-duallistbox-nonselected-list_").html(obj.modpack);
+            $("#trlismod").html(obj.listmodpack);
+            $('.dual_select').bootstrapDualListbox({
+                selectorMinimalHeight: 160
+            });
+
+        }
+    });
+});
+$(".nameservers_tab").click(function (){
+    $.ajax({
+        type: "POST",
+        url: "./{{ users }}/index.php?module=reseller&op=nameserver&acc=list",
+        complete: function(datos){
+            console.log(datos.responseText);
+            if(datos.responseText!=0){
+                var obj = jQuery.parseJSON( datos.responseText );
+                $("#domainnameserver1").html(obj.domains);
+                $("#domainnameserver2").html(obj.domains); //dividns1
+                $("#domainnameserver3").html(obj.domains);
+                $("#domainnameserver4").html(obj.domains);
+                $("#domainnameserver5").html(obj.domains);
+                if(obj.reg1==undefined){var vns1 ='';var vip1 ='';}else{var vns1 =obj.reg1;var vip1 =obj.ip1;}
+                if(obj.reg2==undefined){var vns2 ='';var vip2 ='';}else{var vns2 =obj.reg2;var vip2 =obj.ip2;}
+                if(obj.reg3==undefined){var vns3 ='';var vip3 ='';}else{var vns3 =obj.reg3;var vip1 =obj.ip3;}
+                if(obj.reg4==undefined){var vns4 ='';var vip4 ='';}else{var vns4 =obj.reg4;var vip1 =obj.ip4;}
+                if(obj.reg5==undefined){var vns5 ='';var vip5 ='';}else{var vns5 =obj.reg5;var vip1 =obj.ip5;}
+                $("#ns1p").html(obj.ns1+'.'+vns1+'  ('+obj.ip1+')');
+                $("#ns2p").html(obj.ns2+'.'+vns2+'  ('+obj.ip2+')');
+                if(vns3==''){ $("#ns3p").html('');}else{$("#ns3p").html(obj.ns3+'.'+vns3+'  ('+vip3+')');}
+                if(vns4==''){ $("#ns4p").html('');}else{$("#ns4p").html(obj.ns4+'.'+vns4+'  ('+vip4+')');}
+                if(vns5==''){ $("#ns5p").html('');}else{$("#ns5p").html(obj.ns5+'.'+vns5+'  ('+vip5+')');}
+
+                if(obj.custom=='off'){
+                    $("#main_nameserver").attr('checked',true);
+                    $("#ns1").attr('disabled',true);
+                    $("#ns2").attr('disabled',true);
+                    $("#ns3").attr('disabled',true);
+                    $("#ns4").attr('disabled',true);
+                    $("#ns5").attr('disabled',true);
+                    $("#domainnameserver1").attr('disabled',true);
+                    $("#domainnameserver2").attr('disabled',true);
+                    $("#domainnameserver3").attr('disabled',true);
+                    $("#domainnameserver4").attr('disabled',true);
+                    $("#domainnameserver5").attr('disabled',true);
+                }else{
+                    $("#main_nameserver").attr('checked',false);
+                    $("#ns1").attr('disabled',false);
+                    $("#ns2").attr('disabled',false);
+                    $("#ns3").attr('disabled',false);
+                    $("#ns4").attr('disabled',false);
+                    $("#ns5").attr('disabled',false);
+                    $("#domainnameserver1").attr('disabled',false);
+                    //$("#domainnameserver1 option[value="+ obj.reg1 +"]").prop("selected","selected");
+                    $("#domainnameserver2").attr('disabled',false);
+                    //$("#domainnameserver2 option[value="+ obj.reg2 +"]").prop("selected","selected");
+                    $("#domainnameserver3").attr('disabled',false);
+                    //$("#domainnameserver3 option[value="+ obj.reg3 +"]").prop("selected","selected");
+                    $("#domainnameserver4").attr('disabled',false);
+                    //$("#domainnameserver4 option[value="+ obj.reg4 +"]").prop("selected","selected");
+                    $("#domainnameserver5").attr('disabled',false);
+                    //$("#domainnameserver5 option[value="+ obj.reg5 +"]").prop("selected","selected");
+                }
+            }
+        }
+    });
+});
+$(".branding_tab").click(function (){
+    branding();
+});
+$("#btnaddaccount").click(function (){
+    generate_pass(12,'password');
+    $("#domainadd").val('');
+    $("#username").val('');
+    $("#btncreateaccounts").html('{{ langmod.RSLABEL27 }}');
+    $("#emailadd").val('');
+    $(".checkdom").attr('disabled',false);
+    $("#modal-addaccount").modal('toggle');
+    $("#emailadd").focus();
+    search_packages();
+    return false;
+});
+$("#resellerpass1").keyup(function() {
+    var color1=0;
+    var color2=0;
+    var color3=0;
+    var color4=0;
+    var classpar='';
+    var msj='';
+    // set password variable
+    var pswd = $(this).val();
+    //validate the length
+    if(pswd.length<8){ color1=0;}else{ color1=1; msj=msj+' largo 1';  }
+    //validate letter
+    if(pswd.match(/[A-z]/gi)){color2=1; msj=msj+' letras 1'; }else{ color2=0;}
+    //validate capital letter
+    if(pswd.match(/[A-Z]/gi)){ msj=msj+' Mayusculas 1'; color3=1; } else { color3=0; }
+    //validate number
+    if (pswd.match(/[0-9]/gi)){color4=1; msj=msj+' Numeros 1';}else{  color4=0; }
+    var sum=(color1+color2+color3+color4);
+    newvalidpassreseller($("#resellerpass1").val(),$("#resellerpass2").val());
+    //alert(sum+' M:'+msj);
+    if(sum==0){ classpar='progress-bar-danger';}
+    if(sum==1){ classpar='progress-bar-warning';}
+    if(sum==2){ classpar='progress-bar-danger';}
+    if(sum==3){ classpar='progress-bar-info';}
+    if(sum==4){ classpar='progress-bar-success';}
+    var barra='<div class="progress-bar '+classpar+'" style="width: '+((pswd.length)*10)+'%;"></div>';
+    $("#progresspassress").html(barra);
+});
+$("#resellerpass2").keyup(function() {
+    if($("#resellerpass2").val()==$("#resellerpass1").val()){
+        $("#btn-resellsubmit").show();
+        newvalidpassreseller($("#resellerpass1").val(),$("#resellerpass2").val());
+    }else{
+        $("#btn-resellsubmit").hide();
+        newvalidpassreseller($("#resellerpass1").val(),$("#resellerpass2").val());
+    }
+});
+$("#btnaddpackages").click(function (){
+    $("#modal-addpackages").modal('toggle');
+    return false;
+});
+$("#btncreatepackages").click(function (){
+    if($("#package_name").val()==''){ $("#package_name").css('border', 'solid 1px red'); noti_bubble('{{langmod.RSLABEL32}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true); return false;}
+    $("#btncreatepackages").attr('disabled',true);
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=reseller&op=packages&acc=add",
+        data:"package_name="+$("#package_name").val()+"&disk_quota="+$("#disk_quota").val()+"&bandwidth="+$("#bandwidth").val()+"&ftp_accounts="+$("#ftp_accounts").val()+"&email_accounts="+$("#email_accounts").val()+"&email_lists="+$("#email_lists").val()+"&databases="+$("#databases").val()+"&sub_domains="+$("#sub_domains").val()+"&parked_domains="+$("#parked_domains").val()+"&addons_domains="+$("#addons_domains").val()+"&hourly_emails="+$("#hourly_emails").val(),
+        complete: function(datos){
+            if(datos.responseText==1){
+                $("#tr_packages").html('<tr><td align="center" colspan="12"> <i class="fa fa-spinner fa-spin fa-3x"></i></td></tr>');
+                $.ajax({
+                    type: "POST",
+                    url: "./{{ users }}/index.php?module=reseller&op=packages&acc=list",
+                    complete: function(datos){
+                        $("#btncreatepackages").attr('disabled',false);
+                        $("#modal-addpackages").modal('toggle');
+                        $("#tr_packages").html(datos.responseText);
+                        return false;
+                    }
+                });
+            }else{
+                noti_bubble('{{langmod.RSLABEL33}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+                return false;
+            }
+            return false;
+        }
+    });
+});
+$("#btnaddmodulesresell").click(function (){
+    var dispo = $("#bootstrap-duallistbox-nonselected-list_").text();
+    if($("#idhiddemod").val()==''){
+        if($("#packagessel").val()==''){
+            noti_bubble('{{langmod.RSLABEL61}}','','error',false,false,'3000',true);
+            return false;
+        }
+        var mod='';
+        $("#bootstrap-duallistbox-selected-list_ option").each(function(){
+            mod=mod+$(this).text()+',';
+        });
+        if(mod==''){
+            noti_bubble('{{langmod.RSLABEL62}}','','error',false,false,'3000',true);
+            return false;
+        }else{
+            $("#btnaddmodulesresell").attr('disabled',true);
+            $("#btnaddmodulesresell").addClass('disabled');
+            $.ajax({
+                type: "POST",
+                url: "./{{ users }}/index.php?module=reseller&op=features&acc=add",
+                data: "pack="+$("#packagessel").val()+"&mod="+mod,
+                complete: function(datos){
+                    console.log(datos.responseText);
+                    if(datos.responseText!=0){
+                        $("#trlismod").html(datos.responseText);
+                        noti_bubble('{{langmod.RSLABEL64}}','','success',false,false,'4000',true);
+                        $("#btnaddmodulesresell").attr('disabled',false);
+                        $("#btnaddmodulesresell").removeClass('disabled');
+                        $("#packagessel option[value=x]").attr("selected",true);
+                        $("#bootstrap-duallistbox-selected-list_").html('');
+                        $("#bootstrap-duallistbox-nonselected-list_").html(dispo);
+                    }else{
+                        noti_bubble('{{langmod.RSLABEL74}}','','error',false,false,'3000',true);
+                        $("#btnaddmodulesresell").attr('disabled',false);
+                        $("#btnaddmodulesresell").removeClass('disabled');
+                    }
+                    return false;
+                }
+            });
+        }
+    }else{
+        if($("#packagessel").val()==''){
+            noti_bubble('{{langmod.RSLABEL61}}','','error',false,false,'3000',true);
+            return false;
+        }
+        var mod='';
+        $("#bootstrap-duallistbox-selected-list_ option").each(function(){
+            mod=mod+$(this).text()+',';
+        });
+        if(mod==''){
+            noti_bubble('{{langmod.RSLABEL62}}','','error',false,false,'3000',true);
+            return false;
+        }else{
+            $("#btnaddmodulesresell").attr('disabled',true);
+            $("#btnaddmodulesresell").addClass('disabled');
+            $.ajax({
+                type: "POST",
+                url: "./{{ users }}/index.php?module=reseller&op=features&acc=update",
+                data: "id="+$("#packagessel").val()+"&mod="+mod,
+                complete: function(datos){
+                    //console.log(atos.responseText);
+                    $("#trlismod").html('');
+                    $("#bootstrap-duallistbox-selected-list_").html('');
+                    noti_bubble('{{langmod.RSLABEL64}}','','success',false,false,'4000',true);
+                    $("#trlismod").html(datos.responseText);
+                    $("#btncalcel").hide();
+                    $("#divsavebtn").removeClass('col-lg-6');
+                    $("#divsavebtn").addClass('col-lg-12');
+                    $("#idhiddemod").val('');
+                    $("#btnaddmodulesresell").attr('disabled',false);
+                    $("#btnaddmodulesresell").removeClass('disabled');
+                    $("#packagessel option[value=x]").attr("selected",true);
+                    $("#packagessel").attr('disabled',false);
+                    return false;
+                }
+            });
+        }
+    }
+    return false;
+});
+$("#bntaddns").click(function (){
+    $("#domainnameserver1").css("border-color", "#e5e6e7");
+    $("#domainnameserver2").css("border-color", "#e5e6e7");
+    /*$("#domainnameserver3").css("border-color", "#e5e6e7");
+    $("#domainnameserver4").css("border-color", "#e5e6e7");
+    $("#domainnameserver5").css("border-color", "#e5e6e7");*/
+    $("#ns1").css("border-color", "#e5e6e7");
+    $("#ns2").css("border-color", "#e5e6e7");
+    /*$("#ns3").css("border-color", "#e5e6e7");
+    $("#ns4").css("border-color", "#e5e6e7");
+    $("#ns5").css("border-color", "#e5e6e7");*/
+    if($("#main_nameserver").prop('checked')){
+        var customdns ='off';
+    }else{
+        var customdns ='on';
+        if(($("#domainnameserver1").val()=='')||($("#domainnameserver2").val()=='')||($("#ns1").val()=='')||($("#ns2").val()=='')){
+            //if(($("#domainnameserver1").val()=='')||($("#domainnameserver2").val()=='')||($("#ns1").val()=='')||($("#ns2").val()=='')||($("#domainnameserver3").val()=='')||($("#ns3").val()=='')||($("#domainnameserver4").val()=='')||($("#ns4").val()=='')||($("#domainnameserver5").val()=='')||($("#ns5").val()=='')){
+            if($("#domainnameserver1").val()==''){$("#domainnameserver1").css("border-color", "#A80705");}
+            if($("#domainnameserver2").val()==''){$("#domainnameserver2").css("border-color", "#A80705");}
+            /*if($("#domainnameserver3").val()==''){$("#domainnameserver3").css("border-color", "#A80705");}*/
+            /*if($("#domainnameserver4").val()==''){$("#domainnameserver4").css("border-color", "#A80705");}*/
+            /*if($("#domainnameserver5").val()==''){$("#domainnameserver5").css("border-color", "#A80705");}*/
+            if($("#ns1").val()==''){$("#ns1").css("border-color", "#A80705");}
+            if($("#ns2").val()==''){$("#ns2").css("border-color", "#A80705");}
+            /*if($("#ns3").val()==''){$("#ns3").css("border-color", "#A80705");}
+            if($("#ns4").val()==''){$("#ns4").css("border-color", "#A80705");}
+            if($("#ns5").val()==''){$("#ns5").css("border-color", "#A80705");}*/
+            noti_bubble('{{langmod.RSLABEL65}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+            return false
+        }
+    }
+
+    var contbtn=$("#bntaddns").text();
+    $("#bntaddns").attr('disabled',true);
+    $("#bntaddns").addClass('disabled');
+    $("#bntaddns").html('<i class="fa fa-spinner fa-spin"></i>  '+contbtn);
+    $.ajax({
+        type: "POST",
+        url: "./{{ users }}/index.php?module=reseller&op=nameserver&acc=upd",
+        data: "prens1="+$("#ns1").val()+"&prens2="+$("#ns2").val()+"&prens3="+$("#ns3").val()+"&prens4="+$("#ns4").val()+"&prens5="+$("#ns5").val()+"&dom1="+$("#domainnameserver1").val()+"&dom2="+$("#domainnameserver2").val()+"&dom3="+$("#domainnameserver3").val()+"&dom4="+$("#domainnameserver4").val()+"&dom5="+$("#domainnameserver5").val()+"&customdns="+customdns,
+        complete: function(datos){
+            console.log(datos.responseText);
+            $("#returajax").val(datos.responseText);
+            var obj = jQuery.parseJSON( datos.responseText );
+            $("#ns1p").html(obj.ns1+'.'+obj.reg1+' ('+obj.ip1+')');
+            $("#ns2p").html(obj.ns2+'.'+obj.reg2+' ('+obj.ip2+')');
+            $("#ns3p").html(obj.ns3+'.'+obj.reg3+' ('+obj.ip3+')');
+            $("#ns4p").html(obj.ns4+'.'+obj.reg4+' ('+obj.ip4+')');
+            $("#ns5p").html(obj.ns5+'.'+obj.reg5+' ('+obj.ip5+')');
+            $("#dividns3").show();
+            $("#dividns4").show();
+            $("#dividns5").show();
+
+            if(obj.affected>0){
+                //zonedns
+                var content='{{langmod.RSLABEL67}} <b>'+obj.affected+'</b> {{langmod.RSLABEL68}} <b>'+obj.zonedns+'</b> {{langmod.RSLABEL69}}. <a class="alert-link" href="#" onclick="return changednszonebtn()">{{langmod.RSLABEL70}}</a> / <a class="alert-link" href="#" onclick="return btnnotalert()">{{langmod.RSLABEL71}}</a>';
+                $("#alertdiv").html(content);
+                $("#alertdiv").show('blind');
+                return false;
+            }else{
+                noti_bubble('{{langmod.RSLABEL66}}','{{langmod.RSLABEL64}}','success',false,false,'6000',true);
+                $("#bntaddns").attr('disabled',false);
+                $("#bntaddns").removeClass('disabled');
+                $("#bntaddns").html('{{langmod.RSLABEL72}}');
+                return false;
+            }
+        }
+    });
+    return false;
+});
+$("#btnsavebranding").click(function (){
+    var text_footer =$("#footertext").val();
+    $.ajax({
+        type: "POST",
+        url: "./{{ users }}/index.php?module=reseller&op=branding&acc=add",
+        data: "text_footer="+text_footer,
+        complete: function(datos){
+            noti_bubble('','{{langmod.RSLABEL75}}','success',false,false,'3000',true);
+            return false;
+        }
+    });
+
+    return false;
+});

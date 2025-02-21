@@ -1,0 +1,174 @@
+
+console.log();
+let wplist = null;
+let wp_table = null;
+function wpInit(){
+  if(wplist == null){
+    wpReList();
+  }
+}
+function cancelWP(idCollapse){
+  uchip.slideToggle('#wp_list','#wp_form', function(){
+
+  });
+  //$('#wppach').val('wp');
+  //$('#wpdomain').val('');
+  //$('#wplang').val('en');
+  $('#wpbd').val('wp{{mod.extra_data.randbd}}');
+  $('#wpuserdb').val('wp{{mod.extra_data.randbd}}');
+  $('#wppassbd').val('');
+  $('#wppassbd').pwstrength('forceUpdate');
+  uchip.validator('.reqwp', true);
+  cancelGeneral(idCollapse);
+}
+
+function installWP(){
+  if(uchip.validator('.reqwp')){
+    let wpurl = $("#wpurl").val();
+    let wpdomain = $("#wpdomain").val();
+    let wppach = $("#wppach").val();
+    let wplang = $("#wplang").val();
+    let wpbd = $("#wpbd").val();
+    let wppassbd = Base64.encode($("#wppassbd").val());
+    let wpuserdb = $("#wpuserdb").val();
+    let dompath =  $('#wpdomain option:selected').data('path');
+    let domssl =  $('#wpdomain option:selected').data('ssl');
+    let wpsitetitle = $("#wpsitetitle").val();
+    let wpadminuser = $("#wpadminuser").val();
+    let wpadminpass = $("#wpadminpass").val();
+    let wpadminemail = $("#wpadminemail").val();
+
+    let details = [
+      {
+        title : '{{langmod.ADDDOMLAB}}',
+        value : wpdomain
+      },
+      {
+        title : '{{langmod.ADDURLLAB}}',
+        value : (domssl == 1 ? 'https' : 'http') + '://' + wpdomain + '/' + wppach
+      },
+      {
+        title : '{{langmod.ADDPATHLAB}}',
+        value : dompath + '/' + wppach
+      },
+      {
+        title : '{{langmod.ADDDWP20}}',
+        value : wpbd
+      },
+      {
+        title : '{{langmod.ADDDBUSERLAB}}',
+        value : wpuserdb
+      }
+    ];
+    let data = 'wpurl=' + wpurl + '&wpdomain=' + wpdomain + '&wppach=' + wppach + '&wplang=' + wplang + '&wpbd=' + wpbd + '&wpuserdb=' + wpuserdb + '&dompath=' + dompath + '&domssl=' + domssl + '&wppassbd=' + wppassbd+ '&wpadminpass=' +wpadminpass + '&wpadminuser=' + wpadminuser+ '&wpsitetitle=' + wpsitetitle+ '&wpadminemail=' + wpadminemail;
+    confirmInstallation({
+      type: 'wordpress',
+      script: 'WordPress',
+      data : data,
+      wholepath: dompath + '/' + wppach,
+      callback: function(response){
+        if(response.hasOwnProperty('result') && response.result == 'success'){
+          if(response.db_result.result != 'success'){
+            noti_bubble('{{langmod.ADDINSTALLDET}} ' + handleDBError(response.db_result.code),'{{langmod.ADDATENTION}}','warning',false,false,'6500',true);
+          }else{
+            noti_bubble('{{langmod.ADDINSTALLSUCC}}','{{langmod.SUCCESS}}','success',false,false,'3000',true);
+          }
+        }else{
+          noti_bubble('{{langmod.ADDERRORGEN}}','{{langmod.FERROR}}','error',false,false,'3000',true);
+        }
+        var variableHTML='';
+        var modulin='wp';
+        if($("#instaled_"+modulin).html()==undefined){
+          variableHTML+='<div class="panel panel-default" id="instaled_'+modulin+'">'+
+                  ' <div class="panel-heading white-bg script-container-title">'+
+                  '<a class="accordion-toggle" style="width: 100%" data-toggle="collapse"  ' +
+                  'aria-expanded="true" aria-controls="panel_'+modulin+'_container" ' +
+                  'data-parent="#accordion1" data-target="#panel_'+modulin+'_container">'+
+                  '<h4 class="panel-title"><i class="more-less glyphicon-plus font-weight-bolder"></i></h4>' +
+                  '<h4 class="panel-title">Wordpress Installations</h4></a></div>' +
+                  '<div id="panel_'+modulin+'_container"  class="panel-collapse collapse">' +
+                  '<div class="panel-body" id="table_'+modulin+'_container"><div class="table_cron_loader"><span>' +
+                  '<i class="fa fa-circle-o-notch fa-spin"></i></span></div></div></div></div>'
+          $( "#accordion1" ).append( variableHTML );
+          $(".accordion-toggle").click(function(){
+            $("#"+$(this).prop('data-target')).slideToggle('slow');
+          });
+        }
+        $("#instaledEmpty").hide();
+        wpTable(response.list);
+        cancelWP('wp');
+      },
+      details: details
+    });
+  }else{
+    noti_bubble('{{langmod.ADDREQFIELDS}}','{{langmod.FERROR}}','error',false,false,'3000',true);
+  }
+}
+function wpReList(){
+  $('#table_wp_container').html(loader);
+  getList('wordpress', function(response){
+    wpTable(response);
+  });
+}
+function wpTable(list){
+  wplist = list;
+  if(wplist.length > 0){
+    let html_content = '';
+    let index = 0;
+    wplist.forEach(function(installation){
+      let insturl = installation.hasOwnProperty('url') ? installation.url : 'http://' + installation.domain;
+      let dbinf = '';
+      if(installation.hasOwnProperty('db_result') && installation.db_result.result != 'success'){
+        let dbtitle = '{{langmod.ADDDBNOT}} ' + handleDBError(installation.db_result.code);
+        dbinf = '<span class="fa-stack fa-xs" title="' + dbtitle + '" data-toggle="tooltip" data-placement="top" aria-hidden="true">' +
+                  '<i class="fa fa-circle fa-stack-2x"></i>' +
+                  '<i class="fa fa-info fa-stack-1x fa-inverse"></i>' +
+                '</span>';
+      }
+      html_content += '<tr id="tdwp_' + index + '">' +
+                        '<td>' + installation.domain + '<br>' +
+                          '<a href="' + insturl + '" target="_blank">' + insturl + '</a></td>' +
+                        '<td><div class="addon-td-item">' + installation.path + '</div></td>' +
+                        '<td><div class="addon-td-item"><a href="' + insturl + 'wp-admin/" target="_blank">' + insturl + 'wp-admin/</a></div></td>' +
+                        '<td><div class="addon-td-item">' + installation.lang + '</div></td>' +
+                        '<td>' +
+                          '<div class="database-info-td">' +
+                            '<div><b>{{langmod.ADDSHORTDB}}: </b> ' + installation.wpbd + '<br><b>{{langmod.ADDSHORTUDB}}: </b>' + installation.wpuserdb + '</div>' +
+                            dbinf +
+                          '</div>' +
+                        '</td>' +
+                        '<td>' +
+                          '<div class="addon-td-item text-center"><button title="{{langmod.ADDDWP3}}" data-traddon="#tdwp_' + index + '" data-type="wordpress" data-installation=\'' + JSON.stringify(installation) + '\' data-toggle="tooltip" data-placement="top" aria-hidden="true" class="btn btn-danger btn-xs btn-delete" onclick="return deleteAddon(this, 0)">' +
+                            '<i aria-hidden="true" class="fa fa-trash"></i>' +
+                          '</button></div>' +
+                        '</td>' +
+                      '</tr>';
+      index++;
+    });
+    let table_html = '<table class="table table-striped wp-table">' +
+                      '<thead>' +
+                        '<tr>' +
+                          '<th>{{langmod.ADDDOMLAB}}</th>' +
+                          '<th>{{langmod.ADDPATHLAB}}</th>' +
+                          '<th>{{langmod.ADDVERLAB}}</th>' +
+                          '<th>{{langmod.ADDLANGLAB}}</th>' +
+                          '<th>{{langmod.ADDBDUDB}}</th>' +
+                          '<th class="text-center"></th>' +
+                        '</tr>' +
+                      '</thead>' +
+                      '<tbody id="trpaneljl">' +
+                        html_content +
+                      '</tbody>' +
+                    '</table>';
+    $('#table_wp_container').html(table_html);
+    $('.wp-table').DataTable().destroy();
+    wp_table = $('.wp-table').DataTable();
+  }else{
+    $('#table_wp_container').html('<div class="empty_list"><h4 class="text-success">{{langmod.ADDNOTWP}}</h4></div>');
+  }
+  $('[data-toggle="tooltip"]').tooltip();
+}
+
+/* Start .THEMELY */
+{% include 'js/modules/themely.js.twig' %}
+/* End .THEMELY */

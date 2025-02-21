@@ -1,0 +1,30 @@
+{% if mod.license != 0 %}
+<div class="ibox" id="firewall_container">
+    <div class="ibox-title">
+        <h4>{{langmod.RSJSLAB78}}</h4>
+    </div>
+    <div class="ibox-content" style="height: 300px">
+        <div id="firewall_wrapper">
+            <div class="panel panel-default" style="padding-bottom: 15px; padding-top: 15px;margin-top: 20px">
+                <div class="row">
+                    <div class="col-md-6 col-md-offset-3">
+                        <label>Ip</b>:</label>
+                        <input class="form-control" id="ipblock" maxlength="15" placeholder="{{langmod.RSJSLAB81}}">
+                    </div>
+                </div>
+                <div class="row" style="margin-top: 10px">
+                    <div class="col-lg-12"><h5 align="center"><samp>Remove IP address from the firewall (temp and perm blocks)</samp></h5></div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-offset-7 col-md-4 text-right">
+                        <button class="btn btn-danger" id="bntipblock">{{langmod.RSJSLAB80}}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endif %}

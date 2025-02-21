@@ -1,0 +1,165 @@
+function refrestablepg(){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=postgresql_manager&acc=refrestable",
+        complete: function(datos){
+            $("#trtable").html(datos.responseText);
+        }
+    });
+}
+function deletedatabasepg(st,db){
+    if(st==0){
+        var btsfooter='<button type="button" class="btn btn-white" data-dismiss="modal">{{ langmod.PGNO }}</button><button type="button" class="btn btn-primary" id="btndgpgdel" onclick="return deletedatabasepg(1,\''+db+'\')">{{ langmod.PGYES }}</button>';
+        var btsheader='<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only"></span></button><h4 class="modal-title"><strong>{{langmod.PGWARNING}}</strong></h4><small class="font-bold"> {{langmod.PGDELEBASEDATE}} </small>';
+        $("#deletemodal .modal-footer").html(btsfooter);
+        $("#deletemodal .modal-header").html(btsheader);
+        $("#deletemodal .modal-body").html('<p class="text-center"><strong>'+db+'</strong></p>');
+        $("#deletemodal").modal('toggle');
+        return false;
+    }
+    if(st==1){
+        $("#alerdelete").hide('blind');
+        $("#alerdelete").html('');
+        btnporcess('off','btndgpgdel','{{ langmod.PGLABEL1 }}');
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=postgresql_manager&acc=deletedatabase",
+            data:"database="+db,
+            complete: function(datos){
+                if(datos.responseText=='OK'){
+                    noti_bubble('{{langmod.PGUMYQLDEL}}','{{langmod.PGSUCCT}}','success',false,false,'3000',true);
+                    btnporcess('on','btndgpgdel','{{ langmod.DBYES }}');
+                    refrestablepg();
+                    $("#deletemodal").hide();
+                }
+                if((datos.responseText=='bdpg01')||(datos.responseText=='bdpg03')){
+                    btnporcess('on','btndgpgdel','{{ langmod.DBYES }}');
+                    noti_bubble('{{langmod.PGUMYQLDEL}}','{{langmod.PGSUCCT}}','error',false,false,'3000',true);
+                }
+                return false;
+            }
+        });
+        return false;
+    }
+    return false;
+}
+function deleteuserdbpg(st, db,user){
+    if(st==0){
+        var btsfooter='<button type="button" class="btn btn-white" data-dismiss="modal">{{ langmod.PGNO }}</button><button type="button" class="btn btn-primary" id="btndeluserbdpg" onclick="return deleteuserdbpg(1,\''+db+'\',\''+user+'\')">{{ langmod.PGYES }}</button>';
+        var btsheader='<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only"></span></button><h4 class="modal-title"><strong>{{langmod.PGWARNING}}</strong></h4><small class="font-bold"> {{langmod.PGDELETEUSER}} </small>';
+        $("#deletemodal .modal-footer").html(btsfooter);
+        $("#deletemodal .modal-header").html(btsheader);
+        $("#deletemodal .modal-body").html('<p class="text-center"><strong>'+user+'</strong></p>');
+        $("#deletemodal").modal('toggle');
+        return false;
+    }
+    if(st==1){
+        $("#alerdelete").hide('blind');
+        $("#alerdelete").html('');
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        btnporcess('off','btndeluserbdpg','{{ langmod.PGLABEL1 }}');
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=postgresql_manager&acc=deleteuserdb",
+            data:"user="+user+"&db="+db,
+            complete: function(datos){
+                $("#deletemodal").modal('toggle');
+                refrestablepg();
+                noti_bubble('{{langmod.PGUSSQLDEL}}','{{langmod.PGSUCCT}}','success',false,false,'3000',true);
+                btnporcess('on','btndeluserbdpg','{{ langmod.DBYES }}');
+                return false;
+            }
+        });
+        return false;
+    }
+    return false;
+}
+function newuserpg(db){
+    $("#titlebdpg").html(db);
+    $("#dbasehidenpg").val(db);
+    $("#modal-newuserpg").modal('toggle');
+    return false;
+}
+function btnnewnewuserpg(){
+    var sw=0;
+    if(($("#newuserpg").val()=='')||($("#newpass1pg").val()=='')||($("#newpass2pg").val()=='')){ var msj='{{langmod.PGERROR4}}'; sw=1;}
+    if($("#newpass1pg").val()!=$("#newpass2pg").val()){ var msj='{{langmod.PGERROR3}}'; sw=1;}
+    if(sw==1){
+        noti_bubble(msj,'{{langmod.PGERROR}}','error',false,false,'3000',true);
+        return false;
+    }else{
+        btnporcess('off','btn-newnewuserpg','{{ langmod.PGLABEL1 }}');
+        var pass=Base64.encode($("#newpass1pg").val());
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=postgresql_manager&acc=newnewuser",
+            data: "userdb="+$("#newuserpg").val()+"&pass="+pass+"&dbase="+$("#dbasehidenpg").val(),
+            complete: function(datos){
+                refrestablepg();
+                $("#modal-newuserpg").modal('toggle');
+                if(datos.responseText=='OK'){
+                    $("#newuserpg").val('');
+                    $("#newpass1pg").val('');
+                    $("#newpass2pg").val('');
+                    btnporcess('on','btn-newnewuserpg','{{ langmod.PGCREATEUSER }}');
+                    $("#modal-newuserpg").modal('toggle');
+                    noti_bubble('{{langmod.PGSUCCT}}','{{langmod.PGUSSQLOK}}','success',false,false,'3000',true);
+                }else if(datos.responseText=='1'){
+                    //$("#alertnewdb2pg").html('<div class="alert alert-danger fade in"><i class="glyphicon glyphicon-ban-circle alert-icon "></i>{{langmod.PGERROR1}}</div>');
+                    //$("#alertnewdb2pg").show('blind');
+                    noti_bubble('{{langmod.PGERROR1}}','','error',false,false,'3000',true);
+                }else if(datos.responseText==2){
+                    //$("#alertnewdb2pg").html('<div class="alert alert-danger fade in"><i class="glyphicon glyphicon-ban-circle alert-icon "></i>{{langmod.PGERROR2}}</div>');
+                    //$("#alertnewdb2pg").show('blind');
+                    noti_bubble('{{langmod.PGERROR2}}','','error',false,false,'3000',true);
+                }
+                return false;
+            }
+        });
+        return false;
+    }
+}
+function btnnewdbonlypg(){
+    btnporcess('off','btn-newdbonlypg','{{ langmod.PGLABEL1 }}');
+    if($("#newdbpg").val()!=''){
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=postgresql_manager&acc=newbdonly",
+            data: "datebase="+$("#newdbpg").val(),
+            complete: function(datos){
+                if(datos.responseText=='OK'){
+                    noti_bubble('{{langmod.PGMYSQLOK}}','{{langmod.PGSUCCT}}','success',false,false,'3000',true);
+                    refrestablepg();
+                    btnporcess('on','btn-newdbonlypg','{{ langmod.PGCREATEMODAL }}');
+                    $("#addmodal").modal('toggle');
+                }else if((datos.responseText=='bdpg01')||(datos.responseText=='bdpg03')){
+                    $("#addmodal").modal('toggle');
+                    noti_bubble('{{langmod.PGERROR15}}','{{langmod.PGERROR}}','error',false,false,'3000',true);
+                    btnporcess('on','btn-newdbonlypg','{{ langmod.PGCREATEMODAL }}');
+                }else if(datos.responseText=='bdpg02'){
+                    $("#addmodal").modal('toggle');
+                    noti_bubble('{{langmod.PGERROR16}}','{{langmod.PGERROR}}','error',false,false,'3000',true);
+                    btnporcess('on','btn-newdbonlypg','{{ langmod.PGCREATEMODAL }}');
+                }
+                return false;
+            }
+        });
+    }else{
+        noti_bubble('{{langmod.PGERROR}}','{{langmod.PGERROR17}}','error',false,false,'3000',true);
+        btnporcess('on','btn-newdbonlypg','{{ langmod.PGCREATEMODAL }}');
+        return false;
+    }
+}
+$("#modal-btn-onlypg").click(function (){
+    var headervar ='<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{ langmod.PGCLOSE }}</span></button><h4 class="modal-title" id="mySmallModalLabel">{{ langmod.PGCREATEDB }} ({{ users }})</h4>';
+    var bodyvar ='<div class="row"><label class="col-lg-4  control-label" for="">{{ langmod.PGLABELDB }}:</label><div class="col-lg-4"><input type="text" class="form-control" id="newdbpg" maxlength="7" placeholder=""></div></div>';
+    var footervar ='<button type="button" class="btn btn-default" data-dismiss="modal">{{ langmod.PGCLOSE }}</button> <button type="button" class="btn btn-primary" id="btn-newdbonlypg" onclick="return btnnewdbonlypg()">{{ langmod.PGCREATEMODAL }}</button>';
+    $("#addmodal .modal-header").html(headervar);
+    $("#addmodal .modal-body").html(bodyvar);
+    $("#addmodal .modal-footer").html(footervar);
+    $("#addmodal").modal('toggle');
+});

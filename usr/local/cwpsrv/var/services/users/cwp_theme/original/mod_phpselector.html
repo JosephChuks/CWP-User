@@ -1,0 +1,183 @@
+<style media="screen">
+  .phpsel-min-loader {
+    color: #1a7bb9;
+  }
+
+  .directory_title {
+    padding-top: 10px;
+    padding-bottom: 5px;
+    border-top: 1px solid #e7eaec;
+    border-bottom: 1px solid #e7eaec;
+    margin: 10px 0px;
+  }
+
+  .ex1 {
+    padding: 1rem;
+    border: 1px dashed #ddd;
+    border-radius: 5px;
+  }
+
+  .ul-main-tree {
+    max-height: 200px;
+    overflow: auto;
+  }
+
+  .line_exploret {
+    margin: 10px;
+  }
+
+  .ex1 ul {
+    list-style: none;
+    padding-left: 0px;
+  }
+
+  .ex1 li {
+    border-bottom: 1px solid #eee;
+  }
+
+  .ex1 .dir_exploret_item {
+    padding: 5px 5px;
+  }
+
+  .phpver-installed {
+    padding: 5px 10px;
+  }
+
+  .phpver-installed i {
+    margin-right: 3px;
+    top: 0.12rem;
+    position: relative;
+  }
+
+  .ex1 li:nth-child(even) .dir_exploret_item {
+    background-color: #f3f3f4;
+    border-bottom: 1px solid #ddd;
+  }
+
+  /* .applycgibtn{
+    height: 3.4rem;
+    display: flex;
+    align-items: center;
+  } */
+</style>
+<div class="row  border-bottom white-bg dashboard-header">
+  {% if mod.fsl == 1 %}
+  {% set stflalert ='block' %}
+  {% else %}
+  {% set stflalert ='none' %}
+  {% endif %}
+  <div class="row  alert alert-warning col-lg-12" style="margin-left: 5px; padding-right: 5px;display:{{stflalert}}"
+    id="alertfl">
+    <strong>{{langene.GALARTFILEBLOCK}}</strong>
+  </div>
+  <div class="col-lg-10">
+    <h2>{{langmod.NAMEMOD}} ({{users}})</h2>
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="?">Home</a></li>
+      <li class="breadcrumb-item active"><strong>{{langmod.NAMEMOD}}</strong></li>
+    </ol>
+  </div>
+</div>
+<div class="row" style="margin-top:2rem;">
+  <div class="col-lg-9">
+    <div class="row">
+      {% if mod.license == 0%}
+      <div class="alert alert-danger" style="margin: 15px">
+        <b>{{langmod.SPHPLABEL38}}</b>
+      </div>
+      {% set license = 'disabled'%}
+      {% set license2 = 'disabled'%}
+      {% else %}
+      {% set license = ''%}
+      {% set license2 = 'disabled'%}
+      {% endif %}
+      <div class="col-md-9">
+        <div class="ibox">
+          <div class="ibox-title">
+            <h5>{{langmod.SPHPLABELSELECT}}</h5>
+          </div>
+          <div class="ibox-content">
+            <div class="row">
+              <div class="col-lg-5">
+                <label class="form-label">{{langmod.SPHPLABEL39}}: </label>
+                <select class="form-control" onchange="changeDomainSelect()" id="domainphp" {{license}}>
+                  <option value="">{{langmod.SPHPLABEL40}}</option>
+                  {% for domains in mod.domain %}
+                  <option value="{{domains}}">{{domains}}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-lg-4">
+                <label class="form-label">{{langmod.SPHPLABEL22}}</label>
+                <select class="form-control" id="verphp" {{license2}}>
+                  <option value="">{{langmod.SPHPLABEL40}}</option>
+                  {% for verphp in mod.phpver %}
+                  <option value="php{{verphp}}">{{verphp}} (Default)</option>
+                  {% endfor %}
+                  {% for verphpcgi in mod.phpcgi %}
+                  <option value="php{{verphpcgi}}">{{verphpcgi}} (Selector CGI)</option>
+                  {% endfor %}
+                  {% for verphpfpm in mod.phpfpm %}
+                  <option value="php-fpm{{verphpfpm}}">{{verphpfpm}} (Selector FPM)</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-lg-3">
+                <label class="form-label">&nbsp;</label>
+                <button class="btn btn-success btn-xs btn-block pull-right {{license}}" style="margin-top: 3px;"
+                  onclick="return updateVersionPHP(this)" {{license}}><i class="fa fa-refresh"></i>
+                  {{langmod.SPHPLABEL21}}</button>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="table_cron_loader" id="loader_domain" style="display:none;height: 20rem;"><span><i
+                    class="fa fa-circle-o-notch fa-spin"></i></span></div>
+              <div class="col-lg-12" style="display: none" id="exploret"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="ibox">
+          <div class="ibox-title">
+            <h5>{{langmod.SPHPLABELDETAILS}}</h5>
+          </div>
+          <div class="ibox-content php-details">
+            <input type="hidden" value="" id="namemark">
+            <div style="padding-top: 8px">
+              <small><strong>PHP</strong>:</small>
+              <span id="labeltypephp"></span>
+              <input type="hidden" id="phptypehidden" value="php-cgi">
+            </div>
+            <div style="padding-top: 8px">
+              <small><strong>{{langmod.SPHPLABEL26}}</strong>:</small>
+              <span id="verphpdiv"></span>
+            </div>
+            <div style="padding-top: 8px">
+              <small><strong>{{langmod.SPHPLABEL27}}</strong>:</small>
+              <span id="idapacdiv">
+                {% if mod.apache == 1 %}
+                {{langmod.SPHPLABEL1}}
+                {% else %}
+                {{langmod.SPHPLABEL35}}
+                {% endif %}
+              </span>
+            </div>
+            {% if mod.nginx == 1 %}
+            <div style="padding-top: 8px">
+              <small><strong>{{langmod.SPHPLABEL29}}</strong>:</small>
+              <span id="idnixdiv">
+                {{langmod.SPHPLABEL1}}
+              </span>
+            </div>
+            {% endif %}
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% include 'sidebar.html' %}
+</div>
+{% include 'footer.html' %}

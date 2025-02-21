@@ -1,0 +1,1327 @@
+function generatePasswordRand(length,type) {
+    switch(type){
+        case 'num':
+            characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            break;
+        case 'alf':
+            characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            break;
+        case 'rand':
+            //FOR ↓
+            break;
+        default:
+           characters = "0123456789/-_%*!^><.abcdefghijklmnopqrstuvwxyz/-_%*!^><.ABCDEFGHIJKLMNOPQRSTUVWXYZ/-_%*!^><.";
+            break;
+    }
+    var pass = "";
+    for (i=0; i < length; i++){
+        if(type == 'rand'){
+            pass += String.fromCharCode((Math.floor((Math.random() * 100)) % 94) + 33);
+        }else{
+            pass += characters.charAt(Math.floor(Math.random()*characters.length));
+        }
+    }
+    return pass;
+}
+function newpass(){
+    {% if mod.isie == 1 %}
+      uhcipajax = new $.Uchip();
+    {% else %}
+      uhcipajax = new Uchip();
+    {% endif %}
+    if(uhcipajax.validator('.accountpass',false, 'error-pass-account')){
+      var pass1 =Base64.encode($("#pass1").val());
+      var pass2 =Base64.encode($("#pass2").val());
+      $("#btn-submit").attr('disabled',true);
+      $("#btn-submit").addClass('disabled');
+      $("#btn-submit").html('<i class="fa fa-spinner fa-spin"></i>  {{ langene.MDBTN_SAVE }}');
+      $.ajax({
+          type: "POST",
+          url: "./{{users}}/index.php?acc=newpass",
+          data:"pass1="+pass1+"&pass2="+pass2+"&user={{users}}",
+          complete: function(datos){
+              //console.log(datos.responseText);
+              if(datos.responseText==0){
+                  $("#btn-submit").attr('disabled',false);
+                  $("#btn-submit").removeClass('disabled');
+                  $("#btn-submit").html('{{ langene.MDBTN_SAVE }}');
+
+                  $("#modal-changepass").modal('toggle');
+                  $("#pass1").val('');
+                  $("#pass2").val('');
+              }else{
+                  // window.location.href="/login/?acc=logon";
+              }
+              return false;
+          }
+      });
+    }
+    return false;
+}
+$('#modal-changepass').on('hidden.bs.modal', function () {
+  $('#pass1').val('');
+  $('#pass1').pwstrength("forceUpdate");
+  $('#pass2').val('');
+});
+let optpass_account = {};
+optpass_account.ui = {
+    container: "#pass_container",
+    showVerdictsInsideProgressBar: true,
+    viewports: {
+        progress: ".pwstrength_viewport_progress"
+    }
+};
+optpass_account.common = {
+    debug: false,
+};
+//$('#pass1').pwstrength(optpass_account);
+//$('[data-toggle="tooltip"]').tooltip();
+function MPcopyPass(elem){
+  let field = document.getElementById(elem);
+  field.select();
+  document.execCommand('copy');
+  noti_bubble('Password copied to clipboard','','success',false,false,'3000',true);
+}
+function MPopenPGOPT(type, second){
+  let divelem = type == null ? '#pgopt_container' : type;
+  if($(divelem).is(':visible')){
+    $(divelem).slideUp('fast');
+  }else{
+    $(divelem).slideDown('fast');
+    MPhideOnClickOutside(divelem, second);
+  }
+}
+function MPhideOnClickOutside(selector, second){
+  let forhide = true;
+  if(second === undefined){
+    second = '.show_options_button';
+    forhide = true;
+  }
+  function outsideClickListener(event){
+    $target = $(event.target);
+    if (!$target.closest(selector).length && !$target.closest(second).length  && $(selector).is(':visible')) {
+      if(forhide){
+        $(selector).slideUp('fast');
+      }else{
+        $(selector).remove();
+      }
+      removeClickListener();
+    }
+  }
+  function removeClickListener(){
+    document.removeEventListener('click', outsideClickListener)
+  }
+  document.addEventListener('click', outsideClickListener)
+}
+function MPgenerateNewPass(element){
+  let passmeter = $(element).parent().parent().find('.form-group input');
+  let lengthpass = $(element).parent().find('.general-password-generator-options .pwlength');
+  let typepass = $(element).parent().find('.general-password-generator-options .pwtype');
+  let confpass = 'ftppass2_ch';
+  let lpass = lengthpass.val();
+  let tpass = typepass.val();
+  let new_pass = generatePasswordRand(lpass, tpass);
+  passmeter.val(new_pass);
+  passmeter.pwstrength("forceUpdate");
+  MPcopyPass(passmeter.attr('id'));
+}
+function ValidateIPaddress(ipaddress){
+ if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ipaddress)){
+    return true;
+  }
+  return false;
+}
+{% if mod.isie == 1 %}
+  (function ($) { //an IIFE so safely alias jQuery to $
+    $.Uchip = function () {};
+    $.Uchip.prototype = {
+      slideToggle: function(show, hide, callback){
+        $(hide).slideUp('fast', function(){
+          if(typeof callback == 'function'){
+            callback();
+          }
+          $(show).slideDown('fast');
+        });
+      },
+      getBarColor: function(percent){
+        let classbar = '';
+        if (percent >=26 && percent <=50){
+          classbar = 'progress-bar progress-bar-success';
+        }else if(percent >=51 && percent <=75){
+          classbar = 'progress-bar progress-bar-warning';
+        }else if(percent >75){
+          classbar = 'progress-bar progress-bar-danger';
+        }else{
+          classbar = 'progress-bar';
+        }
+        return classbar;
+      },
+      humanFileSize: function(bytes, si){
+          var thresh = si ? 1000 : 1024;
+          if(Math.abs(bytes) < thresh) {
+              return bytes + ' B';
+          }
+          var units = ['kB','MB','GB','TB','PB','EB','ZB','YB'];
+              // : ['KiB','MiB','GiB','TiB','PiB','EiB','ZiB','YiB'];
+          var u = -1;
+          do {
+              bytes /= thresh;
+              ++u;
+          } while(Math.abs(bytes) >= thresh && u < units.length - 1);
+          return bytes.toFixed(1)+' '+units[u];
+      },
+      validator: function(selector, clear, errorclass){
+        errorclass = errorclass === undefined ? 'error-field' : errorclass;
+        function placeError(elem, reqmess){
+          let place_error = elem.data('errorplace');
+          if(!elem.hasClass('error')){
+            elem.addClass('error');
+            if(place_error !== false){
+              if(place_error == true || place_error === undefined){
+                elem.parent().append('<span class="' + errorclass + ' ' + selector.substr(1) + '-error">' + reqmess + '</span>');
+              }else{
+                $(place_error).append('<span class="' + errorclass + ' ' + selector.substr(1) + '-error">' + reqmess + '</span>');
+              }
+            }
+          }else{
+            if(place_error !== false){
+              if(place_error == true || place_error === undefined){
+                elem.parent().find('.' + errorclass).text(reqmess);
+              }else{
+                $(place_error).find('.' + errorclass).text(reqmess);
+              }
+            }
+          }
+        }
+        if(clear === true){
+          $(selector).removeClass('error');
+          $(selector.replace('#', '.') + '-error').remove();
+          return;
+        }
+        let is_valid = true;
+        $(selector).each(function(){
+          let item_valid = true;
+          let elem = $(this);
+          let required = elem.data('required') == true ? true : false;
+          let equalto = elem.data('equalto');
+          let nospace = elem.data('nospace');
+          let reqdomain = elem.data('reqdomain');
+          let nowww = elem.data('nowww');
+          let httpreq = elem.data('http');
+          let isemail = elem.data('reqemail');
+          let notin = elem.data('notin');
+          let maybempty = elem.data('maybempty');
+          let cwpmax = elem.data('cwpmax');
+          let emailtest = /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+          if(required){
+            let minlength = elem.data('minlength') !== undefined ? elem.data('minlength') : 1;
+            let itemval = elem.val();
+            if(itemval.length < minlength && maybempty !== true){ // VALID VALUE LENGHT OR EMPTY
+              is_valid = false;
+              let reqmess = elem.data('reqmess') !== undefined ? elem.data('reqmess') : '{{langene.VALIDATORREQ}}';
+              placeError(elem, reqmess);
+            }else if(cwpmax !== undefined && parseInt(itemval) > parseInt(cwpmax) && cwpmax != '-1'){
+              is_valid = false;
+              let reqmess = elem.data('equalmess') !== undefined ? elem.data('equalmess') : '{{langene.VALIDATORLIMIT}}';
+              placeError(elem, reqmess);
+              $(equalto).addClass('error');
+            }else if(equalto !== undefined && $(equalto).val() != itemval){
+              is_valid = false;
+              let reqmess = elem.data('equalmess') !== undefined ? elem.data('equalmess') : '{{langene.VALIDATORNOMA}}';
+              placeError(elem, reqmess);
+              $(equalto).addClass('error');
+            }else if(reqdomain !== undefined && !(/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]/g.test(itemval))){
+              is_valid = false;
+              let reqmess = elem.data('domainmessage') !== undefined ? elem.data('domainmessage') : '{{langene.VALIDATORDOM}}';
+              placeError(elem, reqmess);
+            }else if(nowww !== undefined && reqdomain !== undefined && itemval.indexOf('www.') != -1){
+              is_valid = false;
+              let reqmess = elem.data('nowwwmessage') !== undefined ? elem.data('nowwwmessage') : '{{langene.VALIDATONOWWW}}';
+              placeError(elem, reqmess);
+            }else if(httpreq !== undefined && itemval.substr(0,7) != 'http://' && itemval.substr(0,8) != 'https://'){
+              is_valid = false;
+              let reqmess = elem.data('httpmessage') !== undefined ? elem.data('httpmessage') : '{{langene.VALIDATORHTTP}}';
+              placeError(elem, reqmess);
+            }else if(nospace !== undefined && /\s/.test(itemval)){
+              is_valid = false;
+              let reqmess = elem.data('spacemessage') !== undefined ? elem.data('spacemessage') : '{{langene.VALIDATORWS}}';
+              placeError(elem, reqmess);
+            }else if(isemail !== undefined && !emailtest.test(itemval)){
+              if((maybempty == true && itemval != '') || maybempty != true){
+                is_valid = false;
+                let reqmess = elem.data('emailmessage') !== undefined ? elem.data('emailmessage') : '{{langene.VALIDATOREM}}';
+                placeError(elem, reqmess);
+              }
+            }else if(notin !== undefined && notin.indexOf(itemval) > -1){
+              is_valid = false;
+              let reqmess = notin + ' Are invalid values.';
+              placeError(elem, reqmess);
+            }else{
+              elem.removeClass('error');
+              let place_error = elem.data('errorplace');
+              if(equalto !== undefined){
+                $(equalto).removeClass('error');
+              }
+              if(place_error !== false){
+                if(place_error == true || place_error === undefined){
+                  elem.parent().find('.' + errorclass).remove();
+                }else{
+                  $(place_error).find('.' + errorclass).remove();
+                }
+              }
+            }
+          }
+        });
+        return is_valid;
+      },
+      placeLoader: function(elem, icon_fa, type){
+        let icon = $(elem).find('.fa');
+        if(type == undefined){
+          icon.removeClass(icon_fa);
+          icon.addClass('fa-spinner fa-spin');
+        }else{
+          icon.removeClass('fa-spinner fa-spin');
+          icon.addClass(icon_fa);
+        }
+      },
+      handleButton: function(elem, icon_fa, type){
+        let icon = $(elem).find('.fa');
+        if(type == undefined){
+          $(elem).addClass('disabled');
+          $(elem).prop('disabled', true);
+          icon.removeClass(icon_fa);
+          icon.addClass('fa-spinner fa-spin');
+        }else{
+          icon.removeClass('fa-spinner fa-spin');
+          icon.addClass(icon_fa);
+          $(elem).removeClass('disabled');
+          $(elem).prop('disabled', false);
+        }
+      },
+      call: function(path, settings_user){
+        let settings = {
+          data: '',
+          callback : function(resp){},
+          processData: false,  // tell jQuery not to process the data
+          contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+        };
+        $.extend( settings, settings_user );
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: './{{users}}/index.php?' + path,
+            //data: "datebase="+$("#newdb").val()+"&collation="+$("#collationonly").val()+"&charset="+$("#charsetonly").val(),
+            data: settings.data,
+            processData: settings.processData,  // tell jQuery not to process the data
+            contentType: settings.contentType,
+            complete: function(response){
+              settings.callback(response.hasOwnProperty('responseJSON') ? response.responseJSON : JSON.parse(response.responseText));
+            }
+        });
+      }
+    }
+  }(jQuery));
+{% else %}
+  class Uchip {
+    slideToggle(show, hide, callback){
+      $(hide).slideUp('fast', function(){
+        if(typeof callback == 'function'){
+          callback();
+        }
+        $(show).slideDown('fast');
+      });
+    }
+    getBarColor(percent){
+      let classbar = '';
+      if (percent >=26 && percent <=50){
+        classbar = 'progress-bar progress-bar-success';
+      }else if(percent >=51 && percent <=75){
+        classbar = 'progress-bar progress-bar-warning';
+      }else if(percent >75){
+        classbar = 'progress-bar progress-bar-danger';
+      }else{
+        classbar = 'progress-bar';
+      }
+      return classbar;
+    }
+    humanFileSize(bytes, si){
+        var thresh = si ? 1000 : 1024;
+        if(Math.abs(bytes) < thresh) {
+            return bytes + ' B';
+        }
+        var units = ['kB','MB','GB','TB','PB','EB','ZB','YB'];
+            // : ['KiB','MiB','GiB','TiB','PiB','EiB','ZiB','YiB'];
+        var u = -1;
+        do {
+            bytes /= thresh;
+            ++u;
+        } while(Math.abs(bytes) >= thresh && u < units.length - 1);
+        return bytes.toFixed(1)+' '+units[u];
+    }
+    validator(selector, clear, errorclass){
+      errorclass = errorclass === undefined ? 'error-field' : errorclass;
+      function placeError(elem, reqmess){
+        let place_error = elem.data('errorplace');
+        if(!elem.hasClass('error')){
+          elem.addClass('error');
+          if(place_error !== false){
+            if(place_error == true || place_error === undefined){
+              elem.parent().append('<span class="' + errorclass + ' ' + selector.substr(1) + '-error">' + reqmess + '</span>');
+            }else{
+              $(place_error).append('<span class="' + errorclass + ' ' + selector.substr(1) + '-error">' + reqmess + '</span>');
+            }
+          }
+        }else{
+          if(place_error !== false){
+            if(place_error == true || place_error === undefined){
+              elem.parent().find('.' + errorclass).text(reqmess);
+            }else{
+              $(place_error).find('.' + errorclass).text(reqmess);
+            }
+          }
+        }
+      }
+      if(clear === true){
+        $(selector).removeClass('error');
+        $(selector.replace('#', '.') + '-error').remove();
+        return;
+      }
+      let is_valid = true;
+      $(selector).each(function(){
+        let item_valid = true;
+        let elem = $(this);
+        let required = elem.data('required') == true ? true : false;
+        let equalto = elem.data('equalto');
+        let nospace = elem.data('nospace');
+        let reqdomain = elem.data('reqdomain');
+        let nowww = elem.data('nowww');
+        let httpreq = elem.data('http');
+        let isemail = elem.data('reqemail');
+        let notin = elem.data('notin');
+        let maybempty = elem.data('maybempty');
+        let cwpmax = elem.data('cwpmax');
+        let emailtest = /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+        if(required){
+          let minlength = elem.data('minlength') !== undefined ? elem.data('minlength') : 1;
+          let itemval = elem.val();
+          if(itemval.length < minlength && maybempty !== true){ // VALID VALUE LENGHT OR EMPTY
+            is_valid = false;
+            let reqmess = elem.data('reqmess') !== undefined ? elem.data('reqmess') : '{{langene.VALIDATORREQ}}';
+            placeError(elem, reqmess);
+          }else if(equalto !== undefined && $(equalto).val() != itemval){
+            is_valid = false;
+            let reqmess = elem.data('equalmess') !== undefined ? elem.data('equalmess') : '{{langene.VALIDATORNOMA}}';
+            placeError(elem, reqmess);
+            $(equalto).addClass('error');
+          }else if(cwpmax !== undefined && parseInt(itemval) > parseInt(cwpmax) && cwpmax != '-1'){
+            is_valid = false;
+            let reqmess = elem.data('equalmess') !== undefined ? elem.data('equalmess') : '{{langene.VALIDATORLIMIT}}';
+            placeError(elem, reqmess);
+            $(equalto).addClass('error');
+          }else if(reqdomain !== undefined && !(/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]/g.test(itemval))){
+            is_valid = false;
+            let reqmess = elem.data('domainmessage') !== undefined ? elem.data('domainmessage') : '{{langene.VALIDATORDOM}}';
+            placeError(elem, reqmess);
+          }else if(nowww !== undefined && reqdomain !== undefined && itemval.indexOf('www.') != -1){
+            is_valid = false;
+            let reqmess = elem.data('nowwwmessage') !== undefined ? elem.data('nowwwmessage') : '{{langene.VALIDATONOWWW}}';
+            placeError(elem, reqmess);
+          }else if(httpreq !== undefined && itemval.substr(0,7) != 'http://' && itemval.substr(0,8) != 'https://'){
+            is_valid = false;
+            let reqmess = elem.data('httpmessage') !== undefined ? elem.data('httpmessage') : '{{langene.VALIDATORHTTP}}';
+            placeError(elem, reqmess);
+          }else if(nospace !== undefined && /\s/.test(itemval)){
+            is_valid = false;
+            let reqmess = elem.data('spacemessage') !== undefined ? elem.data('spacemessage') : '{{langene.VALIDATORWS}}';
+            placeError(elem, reqmess);
+          }else if(isemail !== undefined && !emailtest.test(itemval)){
+            if((maybempty == true && itemval != '') || maybempty != true){
+              is_valid = false;
+              let reqmess = elem.data('emailmessage') !== undefined ? elem.data('emailmessage') : '{{langene.VALIDATOREM}}';
+              placeError(elem, reqmess);
+            }
+          }else if(notin !== undefined && notin.indexOf(itemval) > -1){
+            is_valid = false;
+            let reqmess = notin + ' Are invalid values.';
+            placeError(elem, reqmess);
+          }else{
+            elem.removeClass('error');
+            let place_error = elem.data('errorplace');
+            if(equalto !== undefined){
+              $(equalto).removeClass('error');
+            }
+            if(place_error !== false){
+              if(place_error == true || place_error === undefined){
+                elem.parent().find('.' + errorclass).remove();
+              }else{
+                $(place_error).find('.' + errorclass).remove();
+              }
+            }
+          }
+        }
+      });
+      return is_valid;
+    }
+    placeLoader(elem, icon_fa, type){
+      let icon = $(elem).find('.fa');
+      if(type == undefined){
+        icon.removeClass(icon_fa);
+        icon.addClass('fa-spinner fa-spin');
+      }else{
+        icon.removeClass('fa-spinner fa-spin');
+        icon.addClass(icon_fa);
+      }
+    }
+    handleButton(elem, icon_fa, type){
+      let icon = $(elem).find('.fa');
+      if(type == undefined){
+        $(elem).addClass('disabled');
+        $(elem).prop('disabled', true);
+        icon.removeClass(icon_fa);
+        icon.addClass('fa-spinner fa-spin');
+      }else{
+        icon.removeClass('fa-spinner fa-spin');
+        icon.addClass(icon_fa);
+        $(elem).removeClass('disabled');
+        $(elem).prop('disabled', false);
+      }
+    }
+    call(path, settings_user){
+      let settings = {
+        data: '',
+        callback: function (resp) { },
+        processData: false,  // tell jQuery not to process the data
+        contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+      };
+      $.extend(settings, settings_user);
+      $.ajaxSetup({ headers: { 'csrftoken': '{{ tokenajax }}' } });
+      $.ajax({
+        type: "POST",
+        url: './{{users}}/index.php?' + path,
+        //data: "datebase="+$("#newdb").val()+"&collation="+$("#collationonly").val()+"&charset="+$("#charsetonly").val(),
+        data: settings.data,
+        processData: settings.processData,  // tell jQuery not to process the data
+        contentType: settings.contentType,
+        complete: function (response) {
+          settings.callback(response.hasOwnProperty('responseJSON') ? response.responseJSON : JSON.parse(response.responseText));
+        }
+      });
+    }
+  }
+{% endif %}
+function save_lang(){
+    let lang = $('input:radio[name=lang]:checked').val();
+    window.location.href = './{{users}}/index.php?acc=save_lang&lang=' + lang;
+}
+
+function noti_bubble(title,msj,type,bar,button,timer,repeat) { //
+    toastr.options = {
+        closeButton: button,
+        progressBar: bar,
+        showMethod: 'slideDown',
+        preventDuplicates:repeat,
+        timeOut: timer
+    };
+    if(type =='success'){ toastr.success(title, msj); }
+    if(type =='error'){ toastr.error(title, msj); }
+    if(type =='info'){ toastr.info(title, msj); }
+    if(type =='warning'){ toastr.warning(title, msj); }
+    validatesound();
+}
+function validatesound(){
+    var stsound = {{ confi.SOUNDALERT }};
+    if(stsound==1){
+        errorsound();
+    }
+}
+
+function processlist(sw){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?acc=mod_process_list",
+        complete: function(datos){
+            $("#contentmodalpl").html(datos.responseText);
+            if(sw==1){
+                timer = setTimeout('processlist(1)', 4000);
+            }else{
+                return false;
+            }
+        }
+    });
+}
+function changstpublic(){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=files_system_lock&acc=changstpublic",
+        complete: function(datos){
+          var obj = JSON.parse(datos.responseText);
+            if(obj.state==1){
+                $("#imglock").removeClass('label-success');
+                $("#imglock").removeClass('label-warning');
+                $("#imglock").addClass('label-success');
+                $("#imglock").html('{{langene.FSL_LOCKED}}');
+                $("#alertfl").show('blind');
+                $("#contfl").html('<a class="btn btn-success btn-rounded btn-block" href="#" onclick="return changstpublic()"><i class="fa fa-unlock-alt"></i> {{langene.FSL_BTN_UNLOCKED}}</a>');
+            }else if(obj.state==0) {
+                $("#imglock").removeClass('label-warning');
+                $("#imglock").removeClass('label-success');
+                $("#imglock").addClass('label-warning');
+                $("#imglock").html('{{langene.FSL_UNLOCKED}}');
+                $("#alertfl").hide('blind');
+                $("#contfl").html('<a class="btn btn-warning btn-rounded btn-block" href="#" onclick="return changstpublic()"><i class="fa fa-lock"></i> {{langene.FSL_BTN_LOCKED}}</a>');
+            }
+        }
+    });
+}
+
+function refrespanelnew(module){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?acc=refrespanel",
+        data: "module="+module,
+        complete: function(datos){
+            if(module=='mysql_manager'){
+                //alert(datos.responseText);
+                var string=datos.responseText;
+                var trozo=string.split('||');
+                var package=trozo[0];
+                var used=trozo[1];
+                var sw=trozo[2];
+                var porc=((100/package)*used);
+                porc=Math.round(porc);
+
+                $("#tlmysqlind").html('{{langene.PGMYSQL}} '+used+'/'+package);
+                $("#indmysql .stat-percent").html(porc+'%');
+                $("#barmysqlind").attr('width',porc+'%');
+
+                if(porc <= 25){ var newclass='progress-bar';}
+                if((porc >= 26) && (porc <= 50)){ var newclass='progress-bar-success';}
+                if((porc >= 51) && (porc <= 75)){ var newclass='progress-bar-warning';}
+                if(porc > 75){ var newclass='progress-bar-danger'; }
+                $("#barmysqlind").removeClass('progress-bar-success');
+                $("#barmysqlind").removeClass('progress-bar-warning');
+                $("#barmysqlind").removeClass('progress-bar-danger');
+                if(porc >25){
+                    $("#barmysqlind").addClass(newclass);
+                }
+            }
+            if(module=='ftp_accounts'){
+                var string=datos.responseText;
+                var trozo=string.split('||');
+                var package=trozo[0];
+                var used=trozo[1];
+                var porc=parseInt(((100/package)*used));
+
+                $("#tlftpind").html('{{langene.PGFTP}} '+used+'/'+package);
+                $("#indftp .stat-percent").html(porc+'%');
+                $("#barftpind").attr('width',porc+'%');
+
+                if(porc <= 25){ var newclass='progress-bar';}
+                if((porc >= 26) && (porc <= 50)){ var newclass='progress-bar-success';}
+                if((porc >= 51) && (porc <= 75)){ var newclass='progress-bar-warning';}
+                if(porc > 75){ var newclass='progress-bar-danger'; }
+                $("#barftpind").removeClass('progress-bar-success');
+                $("#barftpind").removeClass('progress-bar-warning');
+                $("#barftpind").removeClass('progress-bar-danger');
+                if(porc >25){
+                    $("#barftpind").addClass(newclass);
+                }
+            }
+            if(module=='domains'){
+                var string=datos.responseText;
+                var trozo=string.split('||');
+                var package=trozo[0];
+                var used=trozo[1];
+                var porc=parseInt(((100/package)*used));
+                if(Math.round(used) < Math.round(package)){$("#divbtnadd").html('<button type="button" id="btn_add_domain" onclick="return btnadddomain()" class="btn btn-success btn-xs mr5 mb10"> {{langmod.DBNTADD}}</button>');}else{$("#divbtnadd").html('');}
+                $("#tldomind").html('{{langene.PGDOMAINS}} '+used+'/'+package);
+                $("#inddom .stat-percent").html(porc+'%');
+                $("#bardomindpor").attr('width',porc+'%');
+
+                if(porc <= 25){ var newclass='progress-bar';}
+                if((porc >= 26) && (porc <= 50)){ var newclass='progress-bar-success';}
+                if((porc >= 51) && (porc <= 75)){ var newclass='progress-bar-warning';}
+                if(porc > 75){ var newclass='progress-bar-danger'; }
+                $("#bardomind").removeClass('progress-bar-success');
+                $("#bardomind").removeClass('progress-bar-warning');
+                $("#bardomind").removeClass('progress-bar-danger');
+                if(porc >25){
+                    $("#bardomind").addClass(newclass);
+                }
+            }
+            if(module=='email_accounts'){
+                //console.log(datos.responseText);
+                var string=datos.responseText;
+                var trozo=string.split('||');
+                var package=trozo[0];
+                var used=trozo[1];
+                var sw=trozo[2];
+                var porc=((100/package)*used);
+                porc=Math.round(porc);
+
+                if(Math.round(used) < Math.round(package)){$("#divbtnadd").show();}else{$("#divbtnadd").hide();}
+                $("#tlftpind").html('{{langene.PGEMAIL}} '+used+' / '+package);
+                $("#indemail .stat-percent").html(porc+'%');
+                $("#baremailind").attr('width',porc+'%');
+
+                if(porc <= 25){ var newclass='progress-bar';}
+                if((porc >= 26) && (porc <= 50)){ var newclass='progress-bar-success';}
+                if((porc >= 51) && (porc <= 75)){ var newclass='progress-bar-warning';}
+                if(porc > 75){ var newclass='progress-bar-danger'; }
+                $("#baremailind").removeClass('progress-bar-success');
+                $("#baremailind").removeClass('progress-bar-warning');
+                $("#baremailind").removeClass('progress-bar-danger');
+                if(porc >25) {
+                    $("#baremailind").addClass(newclass);
+                }
+            }
+            if(module=='subdomains'){
+                //alert(datos.responseText);
+                var string=datos.responseText;
+                var trozo=string.split('||');
+                var package=trozo[0].trim();
+                var used=trozo[1].trim();
+                var porc=parseInt(((100/package)*used));
+                //alert(used+' - '+package);
+                if(Math.round(used) < Math.round(package)){$("#divbtnadd").html('<button type="button" id="btn_add_subdomain" class="btn btn-success btn-xs mr5 mb10" onclick="return btnaddsubdomain()"> {{langmod.SDBNTADD}}</button>');}else{$("#divbtnadd").html('');}
+                $("#tldomind").html('{{langene.SUBDOMAIN}} '+used+'/'+package);
+                $("#inddom .stat-percent").html(porc+'%');
+                //$("#bardomindpor").attr('width',porc+'%');
+                $("#bardomindpor").css('width',porc+'%');
+
+                if(porc <= 25){ var newclass='progress-bar';}
+                if((porc >= 26) && (porc <= 50)){ var newclass='progress-bar-success';}
+                if((porc >= 51) && (porc <= 75)){ var newclass='progress-bar-warning';}
+                if(porc > 75){ var newclass='progress-bar-danger'; }
+                $("#bardomind").removeClass('progress-bar-success');
+                $("#bardomind").removeClass('progress-bar-warning');
+                $("#bardomind").removeClass('progress-bar-danger');
+                if(porc >25){
+                    $("#bardomind").addClass(newclass);
+                }
+            }
+            if(module=='email_forwarders'){
+                var string=datos.responseText;
+                var trozo=string.split('||');
+                var package=trozo[0];
+                var used=trozo[1];
+                var sw=trozo[2];
+                var porc=((100/package)*used);
+                porc=Math.round(porc);
+                $("#tlforwind").html('{{langmod.PGFORWA}} '+used+' / '+package);
+                if(Math.round(used) < Math.round(package)){
+                    $(".forwbtnadd").show();
+                }else{
+                    $(".forwbtnadd").hide();
+                }
+                $("#indforw .stat-percent").html(porc+'%');
+                $("#barforwind").attr('width',porc+'%');
+
+                if(porc <= 25){ var newclass='progress-bar';}
+                if((porc >= 26) && (porc <= 50)){ var newclass='progress-bar-success';}
+                if((porc >= 51) && (porc <= 75)){ var newclass='progress-bar-warning';}
+                if(porc > 75){ var newclass='progress-bar-danger'; }
+                $("#barforwind").removeClass('progress-bar-success');
+                $("#barforwind").removeClass('progress-bar-warning');
+                $("#barforwind").removeClass('progress-bar-danger');
+                if(porc >25) {
+                    $("#barforwind").addClass(newclass);
+                }
+            }
+            if(module=='mail_autoreply'){
+                var string=datos.responseText;
+                var trozo=string.split('||');
+                var package=trozo[0];
+                var used=trozo[1];
+                var sw=trozo[2];
+                var porc=((100/package)*used);
+                porc=Math.round(porc);
+                $("#tlftpind").html('{{langmod.EARESPONDER}} '+used+' / '+package);
+                if(Math.round(package) > Math.round(used)){
+                    $("#btn-addautof").show();
+                }
+                if(Math.round(package) <= Math.round(used)){
+                    $("#btn-addautof").hide();
+                }
+                $("#indemail .stat-percent").html(porc+'%');
+                $("#baremailind").attr('width',porc+'%');
+
+                if(porc <= 25){ var newclass='progress-bar';}
+                if((porc >= 26) && (porc <= 50)){ var newclass='progress-bar-success';}
+                if((porc >= 51) && (porc <= 75)){ var newclass='progress-bar-warning';}
+                if(porc > 75){ var newclass='progress-bar-danger'; }
+                $("#baremailind").removeClass('progress-bar-success');
+                $("#baremailind").removeClass('progress-bar-warning');
+                $("#baremailind").removeClass('progress-bar-danger');
+                if(porc >25) {
+                    $("#baremailind").addClass(newclass);
+                }
+            }
+            return false;
+        }
+    });
+}
+function changeradio(sw){
+    if(sw==0){
+        $("#exploret").hide();
+        $("#manual").show('blind');
+    }
+    if(sw==1){
+        $("#manual").hide();
+        $("#exploret").show('blind');
+    }
+}
+function cancel() {
+    $("#alert").hide();
+    $("#alert1").hide();
+    $("#divaddform").hide('blind');
+    $("#divbtn-add").show();
+    return false;
+}
+function btnporcess(sw,id,text){
+    if(sw=='off'){
+        $("#"+id).html('<i class="fa fa-spinner fa-spin"></i>   '+text);
+        $("#"+id).addClass('disabled');
+        $("#"+id).attr('disabled',true);
+    }
+    if(sw=='on'){
+        $("#"+id).html(text);
+        $("#"+id).removeClass('disabled');
+        $("#"+id).attr('disabled',false);
+    }
+}
+function changesttypephp(sw){
+    if(sw=='php-fpm'){ $("#typephp").attr('checked',true);}else{$("#typephp").attr('checked',false);}
+}
+function errorsound(){
+    $('<audio id="chatAudio"><source src="{{url}}/sound/End_note.ogg" type="audio/ogg"><source src="{{url}}/sound/End_note.mp3" type="audio/mpeg"><source src="{{url}}/sound/End_note.wav" type="audio/wav"></audio>').appendTo('body');
+    $('#chatAudio')[0].play();
+}
+function cancelfemail(){
+    $("#deletemodal").modal('hide');
+    return false;
+}
+function valiarbackuser(sw){
+    var swbtn=0;
+    if($("#homeuser").attr('checked')){
+        if(sw==0){ noti_bubble('{{langmod.BACKALER1}}','{{langmod.BCARNING}}','error',false,false,'3000',true); }
+        if(sw==1){ noti_bubble('{{langmod.BACKALER2}}','{{langmod.BCARNING}}','error',false,false,'3000',true); }
+
+        $("#btnretore").attr('disabled',false);
+        $("#btnretore").removeClass('disabled');
+        $("#errorbackup").hide('blind');
+        swbtn=swbtn+1;
+    }else{
+        //$("#alertbackup").hide('blind');
+        $("#alertbackup").html('');
+    }
+    if($("#mysqluser").attr('checked')){
+        $("#alertbackup2").html(msj2);
+        $("#alertbackup2").show('blind');
+        $("#btnretore").attr('disabled',false);
+        $("#btnretore").removeClass('disabled');
+        $("#errorbackup").hide('blind');
+        swbtn=swbtn+1;
+    }else{
+        $("#alertbackup2").hide('blind');
+        $("#alertbackup2").html('');
+    }
+    if($("#mailuser").attr('checked')){
+        $("#btnretore").attr('disabled',false);
+        $("#btnretore").removeClass('disabled');
+        $("#errorbackup").hide('blind');
+        swbtn=swbtn+1;
+    }
+    if($("#ftpaccounts").attr('checked')){
+        $("#btnretore").attr('disabled',false);
+        $("#btnretore").removeClass('disabled');
+        $("#errorbackup").hide('blind');
+        swbtn=swbtn+1;
+    }
+    if($("#nameds").attr('checked')){
+        $("#btnretore").attr('disabled',false);
+        $("#btnretore").removeClass('disabled');
+        $("#errorbackup").hide('blind');
+        swbtn=swbtn+1;
+    }
+    //if(swbtn>0){ $("#btnretoreuser").show('blind'); }else{ $("#btnretoreuser").hide('blind'); }
+}
+function logon(){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?acc=logon",
+        complete: function(datos){
+            window.location = '/login/?acc=logon';
+            return false;
+        }
+    });
+}
+
+function googlefa(){
+    if($("#GOOGLEFA").prop('checked')){
+        $("#divimggoogle").html('<i class="fa fa-spinner fa-spin"></i>');
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?acc=googlefa",
+            complete: function(datos){
+                var obj = jQuery.parseJSON( datos.responseText );
+                $("#divimggoogle").html('<img src="'+obj.imgqr+'" width="200" height="200" border="0" id="googleqrimg">'+obj.secretcode);
+
+                //$("#googleqrimg").attr("src",);
+            }
+        });
+        $("#divqr").show('blind');
+    }else{
+        $("#divqr").hide('blind');
+    }
+    return false;
+}
+
+$("#verphp").change(function (){
+    var cadena = $("#verphp").val();
+    var termi = "-";
+    var posicion = cadena.indexOf(termi);
+    if (posicion !== -1){ var tipo='php-fpm';}else{ var tipo='php-cgi'; }
+    //if($("#phptypehidden").val()!=tipo){
+        if(tipo=='php-cgi'){
+            $("#exploret").show();
+        }else{
+            $("#exploret").hide();
+        }
+    //}
+    return false;
+
+});
+$("#newdb").keyup(function(){
+    var valuename=$("#newdb").val();
+    var strclear=valuename.replace(/[^a-z0-9\s]/gi, '');
+    $("#newdb").val(strclear);
+});
+$("#bdname").keyup(function(){
+    var valuename=$("#bdname").val();
+    var strclear=valuename.replace(/[^a-z0-9\s]/gi, '');
+    $("#bdname").val(strclear);
+});
+
+function displayConsumptionInfo(quota, item_val, prefix, uchip) {
+  // let quota = data_consumption.packquota;
+  let quota_bytes = quota * 1000 * 1000;
+  let val_percent = Math.round((100 / quota) * item_val);
+  let val_bytes = item_val * 1000 * 1000;
+  let bar = $("#bp-" + prefix);
+  bar.width(val_percent + '%');
+  bar.addClass(uchip.getBarColor(val_percent));
+  $("#pull" + prefix).html(val_percent + '%');
+  $("#stat-" + prefix).html(uchip.humanFileSize(val_bytes, true) + ' / ' + uchip.humanFileSize(quota_bytes, true));
+  //console.log('HEY');
+}
+$("#storage").click(function () {
+  {% if mod.isie == 1 %}
+  let uchip = new $.Uchip();
+  {% else %}
+  let uchip = new Uchip();
+  {% endif %}
+  if (!$("#divstorage").is(':visible')) {
+    $("#divstorage").slideDown('fast');
+    $("#sw").removeClass('fa-caret-left');
+    $("#sw").addClass('fa-caret-down');
+    $('#storage h5').text('Less');
+    if ($('#divstorage').data('loaded') === 0) {
+      uchip.call('acc=disk_space', {
+        callback: function (data_consumption) {
+          // let data_consumption = datos.responseJSON;
+          // getBarColor
+          // humanFileSize
+          displayConsumptionInfo(data_consumption.packquota, data_consumption.backup_quota, 'backup', uchip);
+          displayConsumptionInfo(data_consumption.packquota, data_consumption.sizehome / 1000, 'home', uchip);
+          displayConsumptionInfo(data_consumption.packquota, data_consumption.sizemail / 1000, 'email', uchip);
+          displayConsumptionInfo(data_consumption.packquota, data_consumption.sizemysql / 1000, 'mysql', uchip);
+
+          $('#divstorage_loader').fadeOut('fast', function () {
+            $('#divstorage_info').fadeIn('fast');
+          });
+          $('#divstorage').data('loaded', 1)
+          return false;
+        }
+      });
+    }
+  } else {
+    $('#storage h5').text('{{langene.GNLABEL49}}');
+    $("#sw").removeClass('fa-caret-down');
+    $("#sw").addClass('fa-caret-left');
+    $("#divstorage").slideUp('fast');
+  }
+
+  return false;
+});
+$("#regaddnew").click(function () {
+    $("#addnew_tex").val('');
+    $("#addnew_tex").toggle('blind');
+    $("#addnew_sel").toggle('blind');
+    return false;
+});
+$(".logon").click(function () {
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?acc=logon",
+        complete: function(datos){
+            window.location = '/login/?acc=logon';
+            return false;
+        }
+    });
+});
+$('#litab1').on('click', function(){
+    $("#litab1").addClass('active');
+    $("#litab2").removeClass('active');
+    $("#litab3").removeClass('active');
+    $("#tab-1").addClass('active');
+    $("#tab-2").removeClass('active');
+    $("#tab-3").removeClass('active');
+});
+$('#litab2').on('click', function(){
+    $("#litab1").removeClass('active');
+    $("#litab2").addClass('active');
+    $("#litab3").removeClass('active');
+    $("#tab-1").removeClass('active');
+    $("#tab-2").addClass('active');
+    $("#tab-3").removeClass('active');
+});
+$('#litab3').on('click', function(){
+    $("#litab1").removeClass('active');
+    $("#litab2").removeClass('active');
+    $("#litab3").addClass('active');
+    $("#tab-1").removeClass('active');
+    $("#tab-2").removeClass('active');
+    $("#tab-3").addClass('active');
+});
+
+
+$("#btn-process-list-on").click(function(){
+    $("#btn-process-list-on").hide();
+    $("#btn-process-list-off").show();
+    timer = setTimeout('processlist(1)', 4000);
+});
+$("#btn-process-list-off").click(function(){
+    $("#btn-process-list-off").hide();
+    $("#btn-process-list-on").show();
+    clearTimeout(timer);
+});
+$("#notiemail").click(function (){
+    if( $("#notiemail").attr('checked') ) {
+        $("#contdivemail1").show();
+        $("#contdivemail2").show();
+    }else{
+        $("#contdivemail1").hide();
+        $("#contdivemail2").hide();
+    }
+});
+
+$(".files_system_lock").click(function(){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=files_system_lock&acc=status",
+        complete: function(datos){
+          var obj = JSON.parse(datos.responseText);
+            if(obj.status==1){
+              var fclass="btn-success";
+              var ficon ="<i class=\"fa fa-lock\"></i>";
+              var ftext='{{langene.FSL_BTN_LOCKED}}';
+            }else if(obj.status==0){
+              var fclass="btn-warning";
+              var ficon ="<i class=\"fa fa-unlock-alt\"></i>";
+              var ftext='{{langene.FSL_BTN_UNLOCKED}}';
+            }
+            var btn='<div id="contfl"><a class="btn '+fclass+' btn-rounded btn-block" href="#" onclick="return changstpublic()">'+ficon+' '+ftext+'</a></div><br><p align="center">{{langene.FSL_DETAIL}}</p>';
+            $("#modal-fsl .modal-body").html(btn);
+            $("#modal-fsl").modal('toggle');
+            return false;
+        }
+    });
+});
+$(".clam").click(function(){
+    $("#antivirus-modalnew").modal();
+    return false;
+});
+$("#btn-star-antivirus2").click(function(){
+    var avtype=$('input:radio[name=avtype2]:checked').val();
+    $("#btn-star-antivirus2").hide();
+    $("#btn-star-antivirus_process2").show();
+    $("#alerbtn_av2").html('');
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=clam&acc=antivirus",
+        data:"typescan="+avtype,
+        complete: function(datos){
+            //alert(datos.responseText);
+            if(datos.responseText==11){
+                var msj="{{langene.AVALERT1}}";
+                var sw=1;
+            }else if(datos.responseText==12){
+                var msj="{{langene.AVALERT2}}";
+                var sw=1;
+            }else if(datos.responseText==31){
+                var msj="{{langene.AVALERT3}}";
+                var sw=1;
+            }else{
+                var msj=datos.responseText;
+                $("#antivirus-modal .modal-body").html(datos.responseText);
+                $("#antivirus-modalnew").modal('toggle');
+                $("#antivirus-modal").modal();
+                var sw=0;
+            }
+            $("#btn-star-antivirus_process2").hide();
+            $("#btn-star-antivirus2").show();
+            if(sw==1){
+                $("#alerbtn_av2").html(msj);
+                $("#alerbtn_av2").show();
+            }
+            return false;
+        }
+    });
+});
+$("#btn-save-theme").click(function (){
+    $("#btn-save-theme").addClass('disabled');
+    $("#btn-save-theme").attr('disabled',true);
+    $("#btn-save-theme").html('<i class="fa fa-spinner fa-spin"></i> {{langene.PGCHANGTHEME}}');
+    var theme_new=$('input:radio[name=theme-save]:checked').val();
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?acc=changethemesave",
+        data: "theme="+theme_new,
+        complete: function(datos){
+            //alert(datos.responseText);
+          window.location.href=datos.responseText;
+            return false;
+        }
+    });
+    return false;
+});
+$("#btn_add_domain_OLD").click(function (){
+    alert();
+    var headervar='<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{ langmod.DOMLABLE3 }}</span></button><h4 class="modal-title">{{ langmod.DBNTADD }}</h4>';
+    var bodyvar='<div class="row"><div class="col-sm-5"><b>Domain:</b></div><div class="col-sm-7"><input type="text" class="form-control" style="padding:3px 0px;" id="newdomain" onkeyup="return newdomainkeyup()"></div></div><div class="row" style="padding-top: 5px"><div class="col-sm-5" style="padding-top: 3px"><b>Path:</b> /home/{{ users }}/</div><div class="col-sm-7"><input type="text" class="form-control" style="padding:3px 0px;" id="pathdomain" value="public_html/"></div></div>';
+    var btnvar='<button type="button"  class="btn btn-default btn-block mb10" onclick ="return canceladd()">{{ langmod.DCANDELDOMAIN }}</button></div><div class="col-sm-6"><button type="button" onclick="return btn_save_domain()" id="btn_save_domain" class="btn btn-primary btn-block mb10">{{ langmod.DBNTADD }}</button>';
+    $("#addmodal .modal-header").html(headervar);
+    $("#addmodal .modal-body").html(bodyvar);
+    $("#addmodal .modal-footer").html(btnvar);
+    $("#addmodal").modal('toggle');
+});
+$("#btn-updsettings").click(function (){
+    if($("#GOOGLEFA").prop('checked')){ var googlefa =1;}else{var googlefa =0;}
+    $("#btn-updsettings").attr('disabled',true);
+    $("#btn-updsettings").addClass('disabled');
+    $("#btn-updsettings").html('<i class="fa fa-spinner fa-spin"></i> {{langene.GNBTN3}}');
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?acc=change_settings",
+        data: "sessiontime="+$("#sessiontime").val()+"&listrow="+$("#listrow").val()+"&soundalert="+$("#soundalert").val()+"&googlefa="+googlefa,
+        complete: function(datos){
+            noti_bubble('{{langene.NSACCSUCCESS}}','{{langene.GNLABEL20}}','success',false,false,'3000',true);
+            $("#btn-updsettings").attr('disabled',false);
+            $("#btn-updsettings").removeClass('disabled');
+            $("#btn-updsettings").html('{{langene.GNBTN3}}');
+            $("#modal-settings").modal('toggle');
+            return false;
+        }
+    });
+});
+$("#tab1link").click(function (){
+    $("#tab2link").removeClass('active');
+    $("#tab2link").removeClass('show');
+    $("#tab1link").addClass('active');
+    $("#tab1link").addClass('show');
+    $("#tab-2").hide();
+    $("#tab-1").show();
+});
+$("#tab2link").click(function (){
+    $("#tab1link").removeClass('active');
+    $("#tab1link").removeClass('show');
+    $("#tab2link").addClass('active');
+    $("#tab2link").addClass('show');
+    $("#tab-1").hide();
+    $("#tab-2").show();
+});
+$(".mysql_processes").click(function (){
+    processlistmysql(1);
+    $("#mysqlprocesslist").modal('toggle');
+});
+$("#btn-delete-filemanager").click(function (){
+    var btsfooter='<button type="button" class="btn btn-white" data-dismiss="modal">{{ langmod.TNOT }}</button><button type="button" class="btn btn-primary" onclick="return alertdeletefilemanager(1)">{{ langmod.TYES }}</button>';
+    var btsheader='<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only"></span></button><h4 class="modal-title"></h4><small class="font-bold"></small>';
+    $("#deletemodal .modal-footer").html(btsfooter);
+    $("#deletemodal .modal-header").html(btsheader);
+    $("#deletemodal .modal-body").html('<p class="text-center"><strong>{{ langmod.DESINTALL }}</strong></p>');
+    $("#deletemodal").modal('toggle');
+});
+$("#dbtab1").click(function (){
+    $("#litab1").addClass('active');
+    $("#tab-1").addClass('active');
+    $("#tab-1").addClass('show');
+    $("#litab2").removeClass('active');
+    $("#tab-2").removeClass('active');
+    $("#tab-2").removeClass('show');
+    $("#dbtab2").removeClass('show');
+    $("#dbtab2").removeClass('active');
+    $("#dbtab1").addClass('show');
+    $("#dbtab1").addClass('active');
+    $("#tab-2").hide();
+    $("#tab-1").show();
+});
+$("#dbtab2").click(function (){
+    $("#litab1").removeClass('active');
+    $("#tab-1").removeClass('active');
+    $("#tab-1").removeClass('show');
+    $("#litab2").addClass('active');
+    $("#tab-2").addClass('active');
+    $("#tab-2").addClass('show');
+    $("#dbtab1").removeClass('show');
+    $("#dbtab1").removeClass('active');
+    $("#dbtab2").addClass('show');
+    $("#dbtab2").addClass('active');
+    $("#tab-1").hide();
+    $("#tab-2").show();
+});
+
+var Base64 = {
+
+    // private property
+    _keyStr : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+
+    // public method for encoding
+    encode : function (input) {
+        var output = "";
+        var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+        var i = 0;
+
+        input = Base64._utf8_encode(input);
+
+        while (i < input.length) {
+
+            chr1 = input.charCodeAt(i++);
+            chr2 = input.charCodeAt(i++);
+            chr3 = input.charCodeAt(i++);
+
+            enc1 = chr1 >> 2;
+            enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+            enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+            enc4 = chr3 & 63;
+
+            if (isNaN(chr2)) {
+                enc3 = enc4 = 64;
+            } else if (isNaN(chr3)) {
+                enc4 = 64;
+            }
+
+            output = output +
+                this._keyStr.charAt(enc1) + this._keyStr.charAt(enc2) +
+                this._keyStr.charAt(enc3) + this._keyStr.charAt(enc4);
+
+        }
+
+        return output;
+    },
+
+    // public method for decoding
+    decode : function (input) {
+        var output = "";
+        var chr1, chr2, chr3;
+        var enc1, enc2, enc3, enc4;
+        var i = 0;
+
+        input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+
+        while (i < input.length) {
+
+            enc1 = this._keyStr.indexOf(input.charAt(i++));
+            enc2 = this._keyStr.indexOf(input.charAt(i++));
+            enc3 = this._keyStr.indexOf(input.charAt(i++));
+            enc4 = this._keyStr.indexOf(input.charAt(i++));
+
+            chr1 = (enc1 << 2) | (enc2 >> 4);
+            chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+            chr3 = ((enc3 & 3) << 6) | enc4;
+
+            output = output + String.fromCharCode(chr1);
+
+            if (enc3 != 64) {
+                output = output + String.fromCharCode(chr2);
+            }
+            if (enc4 != 64) {
+                output = output + String.fromCharCode(chr3);
+            }
+
+        }
+
+        output = Base64._utf8_decode(output);
+
+        return output;
+
+    },
+
+    // private method for UTF-8 encoding
+    _utf8_encode : function (string) {
+        string = string.replace(/\r\n/g,"\n");
+        var utftext = "";
+
+        for (var n = 0; n < string.length; n++) {
+
+            var c = string.charCodeAt(n);
+
+            if (c < 128) {
+                utftext += String.fromCharCode(c);
+            }
+            else if((c > 127) && (c < 2048)) {
+                utftext += String.fromCharCode((c >> 6) | 192);
+                utftext += String.fromCharCode((c & 63) | 128);
+            }
+            else {
+                utftext += String.fromCharCode((c >> 12) | 224);
+                utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+                utftext += String.fromCharCode((c & 63) | 128);
+            }
+
+        }
+
+        return utftext;
+    },
+
+    // private method for UTF-8 decoding
+    _utf8_decode : function (utftext) {
+        var string = "";
+        var i = 0;
+        var c = c1 = c2 = 0;
+
+        while ( i < utftext.length ) {
+
+            c = utftext.charCodeAt(i);
+
+            if (c < 128) {
+                string += String.fromCharCode(c);
+                i++;
+            }
+            else if((c > 191) && (c < 224)) {
+                c2 = utftext.charCodeAt(i+1);
+                string += String.fromCharCode(((c & 31) << 6) | (c2 & 63));
+                i += 2;
+            }
+            else {
+                c2 = utftext.charCodeAt(i+1);
+                c3 = utftext.charCodeAt(i+2);
+                string += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
+                i += 3;
+            }
+
+        }
+
+        return string;
+    }
+
+}

@@ -1,0 +1,264 @@
+<div class="modal fade pgresql-modal" id="_pgre_delete_confirm_modal_" tabindex="-1" role="dialog" aria-labelledby="videoModal" aria-hidden="true">
+    <div class="vertical-alignment-helper">
+        <div class="modal-dialog vertical-align-center" style="width: 400px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="nodejs-modal-title modal-title text-center">
+                        {{langmod.LABPGRE71}}
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="_pgre_sql_deleting_index_" value="">
+                    <h5>{{langmod.LABPGRE72}}: <span id="_pgresql_database_to_remove_"></span></h5>
+                    <h5>{{langmod.LABPGRE70}}</h5>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal" id="">
+                        <i class="fa fa-ban" aria-hidden="true"></i>
+                        {{langmod.LABPGRE9}}
+                    </button>
+                    <button id="" onclick="pgreDeletionConfirmed()" class="btn btn-success">
+                        <i class="fa fa-check-circle" aria-hidden="true"></i>
+                        {{langmod.LABPGRE69}}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade pgresql-modal" id="_pgre_manage_user_modal_" tabindex="-1" role="dialog" aria-labelledby="videoModal"
+    aria-hidden="true">
+    <div class="vertical-alignment-helper">
+        <div class="modal-dialog vertical-align-center" style="width: 500px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-center" id="_pgresql_modal_user_title_"></h5>
+                </div>
+                <div class="modal-body">
+                    <div id="_pgre_existing_user_form_">
+                        <div class="add-existing-user-select-wrapper">
+                            <label for="_add_existing_user_select_">Select an existing user:</label>
+                            <div id="_add_existing_user_select_wrapper_">
+                                <select class="form-control" id="_add_existing_user_select_">
+                                    <option value="">Select user</option>
+                                </select>
+                            </div>
+                        </div>
+                        <a href="javascript:void(0)" onclick="showUserFormInner()" id="_pgre_existing_user_chg_btn_"><i
+                                class="fa fa-plus"></i> Add new user</a>
+                    </div>
+                    <div id="_pgre_user_form_">
+                        <input type="hidden" id="_pgre_user_modal_dbname_" value="">
+                        <div class="form-group">
+                            <label for="email">{{langmod.LABPGRE73}}:</label>
+                            <div class="pgresql-username-wrapper" id="_pgresql_username_wrapper_">
+                                <span id="_pgresql_user_modal_sysowner_"></span>
+                                <input type="text" class="form-control" id="_pgresql_username_input_">
+                            </div>
+                            <div id="_pgresql_manage_username_wrapper_">
+                                <span></span>
+                            </div>
+                        </div>
+                        <!-- <div class="form-group">
+                                                <label for="email">{{langmod.LABPGRE74}}:</label>
+                                                <select class="form-control" id="_user_role">
+                                                    <option value="" selected>{{langmod.LABPGRE75}}...</option>
+                                                    <option value="read">{{langmod.LABPGRE37}}</option>
+                                                    <option value="readWrite">{{langmod.LABPGRE38}}</option>
+                                                </select>
+                                            </div> -->
+                        <div class="modal-user-pass-container">
+                            <div class="modal-user-pass-input pass_container">
+                                <label for="_user_new_pass_field">{{langmod.LABPGRE75}}:</label>
+                                <input type="text" class="form-control" id="_user_new_pass_field">
+                                <div class="pwstrength_viewport_progress"></div>
+                            </div>
+                            <div class="modal-user-pass-generator">
+                                <span class="btn btn-default" title="{{langmod.LABPGRECOPYPASS}}" data-toggle="tooltip" data-placement="top"
+                                    aria-hidden="true" onclick="copyPass('_user_new_pass_field')">
+                                    <i class="fa fa-copy"></i>
+                                </span>
+                                <span class="btn btn-default" title="{{langmod.LABPGREGENRPASS}}" data-toggle="tooltip" data-placement="top"
+                                    aria-hidden="true" onclick="generateNewPass(this)">
+                                    <i class="fa fa-key" aria-hidden="true"></i>
+                                </span>
+                                <div class="btn-group dropdown show_options_wp">
+                                    <button type="button" class="btn btn-default" title="{{langmod.LABPGRECHOPTPAS}}" data-toggle="tooltip"
+                                        data-placement="top" aria-hidden="true" onclick="openPGOPT('#pass_wpad1', '.show_options_wp')">
+                                        <i class="fa fa-cogs"></i>
+                                        <span class="caret" style="margin-left:10px"></span>
+                                    </button>
+                                    <div class="general-password-generator-options mysql_generator" id="pass_wpad1"
+                                        style="display: none;z-index: 20;box-shadow: 3px 7px 10px -6px #777;">
+                                        <ul class="right animated fadeIn">
+                                            <li>
+                                                <select class="form-control pwlength" id="lengthpass2" title="{{langmod.FTPLENGTH}}"
+                                                    style="margin-bottom: 5px;">
+                                                    <option value="7"> {{langmod.FTPLENGTH}} 7</option>
+                                                    <option value="8"> {{langmod.FTPLENGTH}} 8</option>
+                                                    <option value="9"> {{langmod.FTPLENGTH}} 9</option>
+                                                    <option value="10"> {{langmod.FTPLENGTH}} 10</option>
+                                                    <option value="11"> {{langmod.FTPLENGTH}} 11</option>
+                                                    <option value="12" selected=""> {{langmod.FTPLENGTH}} 12</option>
+                                                    <option value="13"> {{langmod.FTPLENGTH}} 13</option>
+                                                    <option value="14"> {{langmod.FTPLENGTH}} 14</option>
+                                                    <option value="15"> {{langmod.FTPLENGTH}} 15</option>
+                                                </select>
+                                            </li>
+                                            <li>
+                                                <select class="form-control pwtype" id="typepass2" title="Type">
+                                                    <option value="alf">{{langmod.FTPTYPE}} {{langmod.FTPALF}}</option>
+                                                    <option value="num" selected="">{{langmod.FTPTYPE}} {{langmod.FTPALFNUM}}
+                                                    </option>
+                                                    <option value="def">{{langmod.FTPTYPE}} {{langmod.FTPALFNUMSIG}}</option>
+                                                </select>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0px;">
+                            <label for="_user_new_pass_field_confirm">{{langmod.LABPGRE76}}:</label>
+                            <input type="text" class="form-control" id="_user_new_pass_field_confirm">
+                        </div>
+                        <div style="margin-top:1.5rem;">
+                            <a href="javascript:void(0)" onclick="showUserFormInner()" id="_pgre_toexisting_user_chg_btn_"><i
+                                    class="fa fa-user"></i>
+                                Add existing user</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal"
+                        id="_pgresql_modal_user_cancel_btn_">
+                        <i class="fa fa-ban" aria-hidden="true"></i>
+                        {{langmod.LABPGRE9}}
+                    </button>
+                    <button id="_pgresql_modal_user_save_btn_" class="btn btn-success">
+                        <i class="fa fa-floppy-o" aria-hidden="true"></i>
+                        {{langmod.LABPGRE10}}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade pgresql-modal" id="_pgre_delete_user_modal_2_" tabindex="-1" role="dialog" aria-labelledby="videoModal"
+    aria-hidden="true">
+    <div class="vertical-alignment-helper">
+        <div class="modal-dialog" style="width: 400px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="nodejs-modal-title modal-title text-center">
+                        {{langmod.LABPGRE77}}
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <h4>Attention!</h4>
+                    <h5>You are about to completely remove the user: <span id="_pgresql_user_to_remove_2_"></span></h5>
+                    <!-- <div class="pgre-remove-user-db-option">
+                        <input type="radio" checked name="_user_deletion_type" onchange="" id="_user_deletion_type_user">
+                        <label for="_user_deletion_type_user">Just remove user from DB</label>
+                    </div>
+                    <div class="pgre-remove-user-db-option">
+                        <input type="radio" name="_user_deletion_type" onchange="" id="_user_deletion_type_whole">
+                        <label for="_user_deletion_type_whole">Completely remove user</label>
+                    </div> -->
+                    <h5>{{langmod.LABPGRE70}}</h5>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal" id="">
+                        <i class="fa fa-ban" aria-hidden="true"></i>
+                        {{langmod.LABPGRE9}}
+                    </button>
+                    <button id="" onclick="pgresqlUserDeletionConfirmed(true)" class="btn btn-primary">
+                        <i class="fa fa-check-circle" aria-hidden="true"></i>
+                        {{langmod.LABPGRE69}}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade pgresql-modal" id="_pgre_delete_user_modal_" tabindex="-1" role="dialog" aria-labelledby="videoModal"
+    aria-hidden="true">
+    <div class="vertical-alignment-helper">
+        <div class="modal-dialog" style="width: 400px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="nodejs-modal-title modal-title text-center">
+                        {{langmod.LABPGRE77}}
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="_pgre_user_deleting_footprint_" value="">
+                    <h5>{{langmod.LABPGRE78}}: <span id="_pgresql_user_to_remove_"></span></h5>
+                    <div class="pgre-remove-user-db-option">
+                        <input type="radio" checked name="_user_deletion_type" onchange="" id="_user_deletion_type_user">
+                        <label for="_user_deletion_type_user">Just remove user from DB</label>
+                    </div>
+                    <div class="pgre-remove-user-db-option">
+                        <input type="radio" name="_user_deletion_type" onchange="" id="_user_deletion_type_whole">
+                        <label for="_user_deletion_type_whole">Completely remove user</label>
+                    </div>
+                    <h5>{{langmod.LABPGRE70}}</h5>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal" id="">
+                        <i class="fa fa-ban" aria-hidden="true"></i>
+                        {{langmod.LABPGRE9}}
+                    </button>
+                    <button id="" onclick="pgresqlUserDeletionConfirmed()" class="btn btn-success">
+                        <i class="fa fa-check-circle" aria-hidden="true"></i>
+                        {{langmod.LABPGRE69}}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade pgresql-modal" id="_pgre_new_db_user_modal_" tabindex="-1" role="dialog"
+    aria-labelledby="videoModal" aria-hidden="true">
+    <div class="vertical-alignment-helper">
+        <div class="modal-dialog" style="width: 500px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="nodejs-modal-title modal-title text-center">
+                        {{langmod.LABPGRE6}}
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <div class="pgre-form-wrapper">
+                        <div class="pgre-form-inner">
+                            <!-- <div class="row-db-form">
+                                    <label for="">{{langmod.LABPGRE11}}: <small class="required-asterisk">*</small></label>
+                                    <input type="text" class="form-control" placeholder="{{langmod.LABPGRE14}}" maxlength="30" name="" id="_pgre_sql_name_input_">
+                                </div>
+                            </div> -->
+                            <div class="form-group">
+                                <label for="usr">{{langmod.LABPGRE11}}: <small class="required-asterisk">*</small></label>
+                                <input type="text" class="form-control" placeholder="{{langmod.LABPGRE14}}" onkeyup="updateDBNameExample(this)" maxlength="30" name="" id="_pgre_sql_name_input_">
+                            </div>
+                            <div class="pgre-form-wrapper-alert">
+                                <div class="alert alert-info">
+                                    <strong>{{langmod.LABPGRE13}}:</strong> {{langmod.LABPGRE12}} <b>{{users}}_<span id="_pgre_form_alert_dbname_">dbname</span></b>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning btn-cancel-form" data-dismiss="modal" id="">
+                        <i class="fa fa-ban" aria-hidden="true"></i>
+                        {{langmod.LABPGRE9}}
+                    </button>
+                    <button id="" onclick="savepgreForm()" class="btn btn-success btn-save-pgre-sql">
+                        <i class="fa fa-floppy-o" aria-hidden="true"></i>
+                        {{langmod.LABPGRE10}}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

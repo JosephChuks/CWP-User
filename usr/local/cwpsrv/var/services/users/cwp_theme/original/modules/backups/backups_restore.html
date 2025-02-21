@@ -1,0 +1,120 @@
+{% if mod.license != 1 %}
+<div class="notpro-message bg-warning">
+    <h2><i class="fa fa-ban"></i> This feature is available just for pro license.</h2>
+</div>
+{% endif %}
+<div class="panel-body autobackup-panel {% if mod.license != 1 %} not-pro{% endif %}">
+    <div class="col-lg-12">
+        <div class="ibox" style="margin-bottom:0px;">
+            <div class="form-group">
+                <label for="selectBack">{{langmod.RESTORETITLEFILE}}</label>
+                <select id="selectBack" class="form-control" onchange="show_options_restore(this.value)">
+                    <option value="">Select a Backup</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-12 restore-with-info" >
+        <div class="ibox" style="margin-bottom:0px;">
+            <div class="col-md-12">
+                <h3 class="autobackup-configurations-heading">{{langmod.TYPERESTOREFILE}}</h3>
+                <div class="radio radio-primary">
+
+                    <input type="radio" id="restore_all_content" name="typeRestore" onclick="hide_divs()" class="radio radio-danger" value="1">
+
+                    <label for="restore_all_content">
+                        {{langmod.RESTOREALLCONTENT}}
+                    </label>
+                    <span class="fa-stack fa-xs" data-toggle="tooltip" data-placement="top" title="{{langmod.DESCPALLCONTENT}}">
+                        <i class="fa fa-circle fa-stack-2x"></i>
+                        <i class="fa fa-info fa-stack-1x fa-inverse"></i>
+                      </span>
+                </div>
+
+
+                <div class="radio radio-primary">
+
+                    <input type="radio" id="restore_partial_content" name="typeRestore" onclick="listFilesback('home/');listMysqlback()" class="radio radio-danger" value="0">
+
+                    <label for="restore_partial_content">
+                        {{langmod.RESTOREPARTIALCONTENT}}
+                    </label>
+                    <span class="fa-stack fa-xs" data-toggle="tooltip" data-placement="top" title="{{langmod.DESCPPARTIALCONTENT}}">
+                        <i class="fa fa-circle fa-stack-2x"></i>
+                        <i class="fa fa-info fa-stack-1x fa-inverse"></i>
+                      </span>
+                </div>
+
+            </div>
+            <div class="col-md-12 restore_allaccount text-center">
+                <button type="button" class="btn btn-primary  btn-xs mr5 mb10 allaccount" onclick="confirmModal('restoreallaccount','Restaurar todo el contenido','','')"><i class="fa fa-download" aria-hidden="true"></i> Restore all Files and Database</button>
+            </div>
+            <div class="col-md-12 restore_files_mysql">
+                <div class="panel-group accordion" id="accordion1">
+                    <div class="panel panel-default">
+                        <div class="panel-heading white-bg script-container-title">
+                            <a class="accordion-toggle" style="width: 100%" data-toggle="collapse"  aria-expanded="true" aria-controls="panel_home_container" data-parent="#accordion1" data-target="#panel_home_container">
+                                <h4 class="panel-title">
+
+                                    <i class="more-less glyphicon-minus font-weight-bolder"></i>
+                                </h4>
+                                <h4 class="panel-title">Home</h4>
+
+                            </a>
+                        </div>
+                        <div id="panel_home_container"  class="panel-collapse collapse in" style="padding-top: 10px">
+
+                            <div id="backup_table_files">
+                                <div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+                            </div>
+                            <div class="row m10 p10 text-center panelbuttons" style="padding-bottom: 10px">
+                                <button type="button" class="btn btn-warning backbtn btn-xs mr5 mb10 disabled" onclick="uplevelfile()"><i class="fa fa-angle-left" aria-hidden="true"></i> Up level</button>
+                                <button type="button" class="btn btn-success restbtnfile btn-xs mr5 mb10 disabled" onclick="confirmModal('restorefiles','','','')"><i class="fa fa-check-square" aria-hidden="true"></i> Restore selected Files</button>
+                                <button type="button" class="btn btn-primary  btn-xs mr5 mb10 allfiles" onclick="confirmModal('restoreallFiles','','','')"><i class="fa fa-download" aria-hidden="true"></i> Restore all Files</button>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading white-bg script-container-title">
+                            <a class="accordion-toggle" style="width: 100%" data-toggle="collapse"  aria-expanded="true" aria-controls="panel_database_container" data-parent="#accordion1" data-target="#panel_database_container">
+                                <h4 class="panel-title">
+                                    <i class="more-less glyphicon-plus font-weight-bolder"></i>
+
+                                </h4>
+                                <h4 class="panel-title">Mysql Databases</h4>
+
+                            </a>
+                        </div>
+                        <div id="panel_database_container"  class="panel-collapse collapse" style="padding-top: 10px">
+
+                            <div  id="backup_mysql_files">
+                                <div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+                            </div>
+                            <div class="row m10 p10 text-center panelbuttons" style="padding-bottom: 10px">
+                                <button type="button" class="btn btn-success restbtndb  btn-xs mr5 mb10 disabled" onclick="confirmModal('restoreDatabase','','','')"><i class="fa fa-check-square" aria-hidden="true"></i> Restore selected Databases </button>
+                                <button type="button" class="btn btn-primary btn-xs mr5 mb10 alldb" onclick="confirmModal('restoreAlldatabase','','','')"><i class="fa fa-download" aria-hidden="true"></i> Restore all Databases</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal" id="deletemodalmail" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content animated fadeIn">
+            <div class="modal-header">
+
+            </div>
+            <div class="modal-body small-pad-modal">
+
+            </div>
+            <div class="modal-footer">
+
+            </div>
+        </div>
+    </div>
+</div>

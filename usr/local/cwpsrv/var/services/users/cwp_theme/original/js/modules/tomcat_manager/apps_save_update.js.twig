@@ -1,0 +1,136 @@
+function getFileExplorerValue(elem) {
+    let file_explorer_elem = $(elem);
+    return (file_explorer_elem.data('pathdir') !== undefined ? file_explorer_elem.data('pathdir') : '') +
+        (file_explorer_elem.data('pathfile') !== undefined ? file_explorer_elem.data('pathfile') : '');
+}
+function saveNewTomcatManagerApp() {
+    let valid = true;
+    if ($('#tomcat_url_selector_domain').val() == '') {
+        $('#tomcat_url_selector_select').addClass('error-field');
+        if (valid === true) {
+            $('#tomcat_url_selector_domain').focus();
+            valid = false;
+        }
+    } else {
+        $('#tomcat_url_selector_select').removeClass('error-field');
+    }
+    let deploy_type = $('#_tomcat_app_deploy_type_').val();
+    let selector_input = deploy_type == 'upload_file' ? '.tomcat-deploy-type:visible input' : '.tomcat-deploy-type:visible .file-path-selector';
+    let deploy_type_item = $(selector_input);
+    let val_input = deploy_type == 'upload_file' ? deploy_type_item.val() : getFileExplorerValue('.tomcat-deploy-type:visible .file-path-selector');
+    if (val_input == '') {
+        deploy_type_item.addClass('error-field');
+        if (valid === true) {
+            deploy_type_item.focus();
+            valid = false;
+        }
+    } else {
+        deploy_type_item.removeClass('error-field');
+    }
+    if (valid) {
+        let data_app = getAppDataFromForm();
+        let data_request = new FormData();
+        let type_val = $('#_tomcat_app_form_type').val();
+        data_request.append('deploy_type', deploy_type);
+        if (deploy_type == 'upload_file') {
+            data_request.append('war_file', $('#_tomcat_app_war_file_')[0].files[0]);
+        }
+        if (type_val !== 'new') {
+            data_request.append('type', 'edit');
+            data_request.append('key_to_edit', type_val);
+        } else {
+            data_request.append('type', 'new');
+        }
+        data_request.append('app', JSON.stringify(data_app));
+        //let data_request = 'type=' + (type_val !== 'new' ? 'editing&key_id=' + type_val : 'new') + '&app=' + JSON.stringify(data_app);
+        uchip.handleButton('.btn-save-app', 'fa-floppy-o');
+        uchip.handleButton('.btn-cancel-app', 'fa-ban');
+        sendRequestSaveApp(data_request, function (resp_data) {
+            app_list = resp_data.list;
+            calculateQuota();
+            renderTomcatManagerAppList();
+            cancelTomcatManagerForm();
+            noti_bubble('{{langmod.LABTOMCAT118}}', '{{langmod.LABTOMCAT83}}', 'success', true, false, '5500', true);
+            uchip.handleButton('.btn-save-app', 'fa-floppy-o', true);
+            uchip.handleButton('.btn-cancel-app', 'fa-ban', true);
+        }, function () {
+            uchip.handleButton('.btn-save-app', 'fa-floppy-o', true);
+            uchip.handleButton('.btn-cancel-app', 'fa-ban', true);
+        });
+
+    }
+    console.log('valid', valid);
+}
+function calculateQuota(){
+    let apps_quota = {{mod.apps_quota}};
+    $('#apps_used').text(app_list.length);
+    if(apps_quota >= 0){
+        if(app_list.length == apps_quota){
+            $('#_btn_add_app_').addClass('disabled');
+            $('#_btn_add_app_').prop('disabled', true)
+        }else{
+            $('#_btn_add_app_').removeClass('disabled');
+            $('#_btn_add_app_').prop('disabled', false)
+        }
+        let percent = ((app_list.length * 100) / apps_quota).toFixed(0);
+        $('.stat-percent').text(percent + '%');
+        let barcolor = uchip.getBarColor(percent);
+        $('#barappspor').removeClass();
+        $('#barappspor').addClass(barcolor);
+        $('#barappspor').width(percent + '%');
+    }
+}
+function getAppDataFromForm() {
+    let env_variables = [];
+    $('#_tomcat_envars_list_container .app-env-var-item').each(function () {
+        let key = $(this).find('.env-var-key').val();
+        if (key !== '') {
+            env_variables.push({
+                key: key,
+                value: $(this).find('.env-var-value').val(),
+            });
+        }
+    });
+    return {
+        type: 'tomcat',
+        //version: $('#_tomcat_app_form_tomcat_select').val(),
+        //name: $('#_tomcat_app_desc_name').val(),
+        //mode: $('#_tomcat_app_mode').val(),
+        //path: $('#dirsel').text(),
+        //user: $("#tomcat_user_selector_").val(),
+        url: $('#tomcat_url_selector_domain').val(),
+        conf_file: getFileExplorerValue('#tomcat_deploy_type_xml .file-path-selector'),
+        war_path: getFileExplorerValue('#tomcat_deploy_type_war .file-path-selector'),
+    }
+}
+function sendRequestSaveApp(data, success, cleaner) {
+    uchip.call('module=tomcat_manager&acc=tomcat_app_save', {
+        data: data,
+        processData: false,  // tell jQuery not to process the data
+        contentType: false,
+        callback: function (response) {
+            if (response.result == 'success') {
+                success(response);
+            } else {
+                let message_error = '{{langmod.LABTOMCAT81}}';
+                if (response.hasOwnProperty('code')) {
+                    if (response.code == 1) {
+                        message_error = '{{langmod.LABTOMCAT151}}';
+                    } else if (response.code == 2) {
+                        message_error = '{{langmod.LABTOMCAT152}}';
+                    } else if (response.code == 3) {
+                        message_error = '{{langmod.LABTOMCAT148}}';
+                    } else if (response.code == 4) {
+                        message_error = '{{langmod.LABTOMCAT150}}';
+                    } else if (response.code == 6) {
+                        message_error = '{{langmod.LABTOMCAT149}}';
+                    } else if (response.code == 7) {
+                        message_error = '{{langmod.LABTOMCAT151}}';
+                    }
+                }
+                noti_bubble(message_error, '{{langmod.LABTOMCAT82}}', 'error', true, false, '3000', true);
+                cleaner();
+            }
+        }
+    });
+}

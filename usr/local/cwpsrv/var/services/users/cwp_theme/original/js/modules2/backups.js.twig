@@ -1,0 +1,300 @@
+function deletetar(st,file,div){
+    if(st==0){
+        /*var msj='<div class="alert alert-warning fade in"><i class="glyphicon glyphicon-warning-sign alert-icon "></i><strong>{{langmod.BCARNING}}</strong> {{langmod.BCDELETEFILE}} <strong>'+file+'</strong>    <a href="#" onclick="return deletetar(1,\''+file+'\',\''+div+'\')">  <b>{{langmod.BCYES}}</b></a>  /  <a href="#" data-dismiss="alert" aria-hidden="true" ><b>{{langmod.BCNO}}</b></a>';
+        $("#alertback").html(msj);
+        $("#alertback").show('blind');
+        return false;*/
+
+        var strheader = '<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{langmod.BCARNING}}</span></button><h4 class="modal-title">{{langmod.BCDELETEFILE}}</h4>';
+        var strbody = '<p class="text-center">'+file+'</p>';
+        var strfooter = '<button type="button" class="btn btn-white" data-dismiss="modal">{{langmod.BCNO}}</button><button type="button" class="btn btn-primary" id="btnyesdel" onclick="return deletetar(\'1\',\''+file+'\',\''+div+'\')">{{langmod.BCYES}}</button>';
+        $("#deletemodal .modal-footer").html(strfooter);
+        $("#deletemodal .modal-body").html(strbody);
+        $("#deletemodal .modal-header").html(strheader);
+        ///btnporcess('on','btnyesdel','{{ langmod.DYES }}');
+        $("#deletemodal").modal('toggle');
+        return false;
+
+
+    }
+    if(st==1){
+        btnporcess('off','btnyesdel','{{ langmod.BCLABEL10 }}');
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=backups&acc=deletetar",
+            data:"file="+file,
+            complete: function(datos){
+                if(datos.responseText==1){
+                    $("#tar"+div).hide();
+                    $("#alertback").hide('blind');
+                    noti_bubble('{{langmod.BCDELETEOK}}','{{langmod.BCSUCCT}}','success',false,false,'3000',true);
+                    btnporcess('on','btnyesdel','{{ langmod.DYES }}');
+                    $("#deletemodal").modal('toggle');
+                    return false;
+                }else{
+                    noti_bubble('{{langmod.BCRROR2}}','{{langmod.BCARNING}}','error',false,false,'3000',true);
+                    btnporcess('on','btnyesdel','{{ langmod.DYES }}');
+                    return false;
+                }
+            }
+        });
+    }
+}
+function ajaxcreatebackup(email,typefile,div){
+    $("#"+div).addClass('disabled');
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    noti_bubble('{{langmod.BCALERT1}}','{{langmod.BCSUCCT}}','warning',true,true,'3000',true);
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=backups&acc=backupfullnow",
+        data:"email="+email+"&typefile="+typefile,
+        complete: function(datos){
+            $("#"+div).removeClass('disabled');
+            noti_bubble('{{langmod.BSBACKUPOK}}','{{langmod.BCSUCCT}}','success',false,false,'3000',true);
+            return false;
+        }
+    });
+}
+function searchbackup(){
+    var spin = '<i class="fa fa-spinner fa-spin"></i>';
+    $("#restselect").html(spin);
+    $("#restradio").html(spin);
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=backups&acc=type",
+        complete: function(datos){
+            //console.log(datos.responseText);
+            //alert(datos.responseText);
+            var str = datos.responseText;
+            var trozo = str.split('|@|');
+            $("#restselect").html(trozo[0]);
+            $("#restradio").html(trozo[1]);
+            return false;
+        }
+    });
+    return false;
+}
+function restoreback(st,file,row){
+    if(st==0){
+        $("#btndole"+row).hide();
+        $("#btnacition"+row).show();
+        $("#hiddenvalue").val(file+'||'+row);
+        $("#myModaldetail").modal('toggle');
+    }
+    if(st==1){
+        $("#hiddenvalue").val(file+'||'+row);
+        $("#myModaldetail").modal('toggle');
+        return false;
+    }
+    if(st==2){
+        $("#btnacition"+row).hide();
+        $("#btndole"+row).show();
+    }
+    if(st==3){
+        var sw='';
+        if($("#homeuser2").prop('checked')){sw=sw+'homeuser||';}
+        if($("#mysqluser2").prop('checked')){sw=sw+'mysqluser||';}
+        if($("#mailuser2").prop('checked')){sw=sw+'mailuser||';}
+        if($("#ftpaccounts2").prop('checked')){sw=sw+'ftpaccounts||';}
+        if($("#nameds2").prop('checked')){sw=sw+'nameds||';}
+        if($("#passaccount").prop('checked')){sw=sw+'passaccount||';}
+
+        if(sw!=''){
+            var trozval=$("#hiddenvalue").val();
+            var trozo =trozval.split('||');
+            var row =trozo[1];
+            var file =trozo[0];
+            $("#myModaldetail").modal('toggle');
+            $("#btn-restorenow"+row).html('<i class="fa fa-spinner fa-spin"></i> {{langmod.BCLABEL18}}');
+            $("#btn-restorenow"+row).addClass('disabled');
+            $("#btn-restorenow"+row).attr('disabled',true);
+            $("#btn-restorecancel"+row).hide();
+            $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+            $.ajax({
+                type: "POST",
+                url: "./{{users}}/index.php?module=backups&acc=restoreback",
+                data:"file="+file+"&options="+sw,
+                complete: function(datos){
+                    console.log(datos.responseText);
+                    if(datos.responseText==1){
+                        $("#btnacition"+row).hide();
+                        $("#btndole"+row).show();
+                        noti_bubble('{{ langmod.BCLABEL15 }}','{{  langmod.BCSUCCT }}','success',false,false,'3000',true);
+                    }else{
+                        noti_bubble('{{ langmod.BCLABEL22 }}','{{  langmod.BCLABEL12 }}','error',false,false,'5000',true);
+                        $("#btnacition"+row).hide();
+                        $("#btndole"+row).show();
+                    }
+                    return false;
+                }
+            });
+        }else{
+            noti_bubble('{{ langmod.BCLABEL21 }}','{{  langmod.BCLABEL12 }}','error',false,false,'5000',true);
+            return false;
+        }
+    }
+    return false;
+}
+function typerestore(sw){
+    if(sw==0){
+        $("#backupfile").hide('blind');
+        $("#serverbackup").show('blind');
+        $("#btnretoreuser").show();
+        searchbackup();
+
+    }else{
+        $("#serverbackup").hide('blind');
+        $("#backupfile").show('blind');
+        $("#btnretoreuser").hide();
+    }
+}
+$("#btnretoreuser").click(function(){
+    if($("#selecttypebackup").val()==''){
+        noti_bubble('{{langmod.BCLABEL11}}','{{langmod.BCLABEL12}}','error',false,false,'3000',true);
+        return false;
+    }
+    var restaure ='';
+    var homeuser =0;
+    var mysqluser =0;
+    var mailuser =0;
+    var ftp =0;
+    var named =0;
+    $("input:checkbox:checked").each(function() {
+        restaure=$(this).val();
+        if($(this).val()=='home'){ homeuser = 1;}
+        if($(this).val()=='mysql'){ mysqluser = 1;}
+        if($(this).val()=='mail'){ mailuser = 1;}
+        if($(this).val()=='ftp'){ ftp = 1;}
+        if($(this).val()=='named'){ named = 1;}
+    });
+    if(restaure==''){
+        noti_bubble('{{langmod.BCLABEL13}}','{{langmod.BCLABEL12}}','error',false,false,'3000',true);
+        return false;
+    }
+    var selecttypebackup = $("#selecttypebackup").val();
+    $("#btnretoreuser").attr('disabled',true);
+    $("#btnretoreuser").addClass('disabled');
+    $("#btnretoreuser").html('<i class="fa fa-spinner fa-spin"></i> {{ langmod.BCLABEL14 }}');
+    $("#btnretoreuser").removeClass('btn-success');
+    $("#btnretoreuser").addClass('btn-primary');
+
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=backups&acc=restoreuserbackup",
+        data:"homeuser="+homeuser+"&mysqluser="+mysqluser+"&mailuser="+mailuser+"&selecttypebackup="+selecttypebackup+"&ftp="+ftp+"&named="+named,
+        complete: function(datos){
+            //alert(datos.responseText);
+            if(datos.responseText=='OK'){
+                noti_bubble('{{langmod.BCLABEL15}}','{{langmod.BCSUCCT}}','success',false,false,'3000',true);
+            }else{
+                noti_bubble('{{langmod.BCLABEL16}}','{{langmod.BCLABEL12}}','error',false,false,'3000',true);
+            }
+            $("#btnretoreuser").attr('disabled',false);
+            $("#btnretoreuser").removeClass('disabled');
+            $("#btnretoreuser").html('{{ langmod.BTNRESTORE }}');
+            $("#btnretoreuser").removeClass('btn-primary');
+            $("#btnretoreuser").addClass('btn-success');
+            return false;
+        }
+    });
+
+});
+$("#restor_file").change(function() {
+    $("#btn_rest_file").hide();
+    var file = this.files[0];
+    var imagefile = file.type;
+    var match="application/gzip";
+    if(imagefile!=match){
+        noti_bubble('{{langmod.BCALERt1}}','','error',false,false,'3000',true);
+        return false;
+    }else{
+        $("#btn_rest_file ").show();
+        return false;
+    }
+});
+$("#restore_sql").change(function (){
+    $("#btn_rest_sql").hide();
+    var file = this.files[0];
+    var imagefile = file.type;
+    var match="application/sql";
+    if(imagefile!=match){
+        noti_bubble('{{langmod.BCALERt1}}','','error',false,false,'3000',true);
+        return false;
+    }else{
+        $("#btn_rest_sql ").show();
+        return false;
+    }
+});
+$('#btn_rest_sql').click(function () {
+    noti_bubble('{{langmod.BCLOADING}}','','warning',false,false,'3000',true);
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        url: "./{{users}}/index.php?module=backups&acc=restore_sql",
+        type: "POST",
+        data: new FormData(uploadsql),
+        contentType: false,
+        cache: false,
+        processData:false,
+        success: function(data){
+            //$("#message2").html('<b>{{langmod.BCBACKUPOK}}</b>');
+            noti_bubble('{{langmod.BCBACKUPOK}}','','success',false,false,'3000',true);
+            return false;
+        }
+    });
+    return false;
+});
+$('#btn_rest_file').click(function () {
+    noti_bubble('{{langmod.BCLOADING}}','','warning',false,false,'3000',true);
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    var uploadtargz =$("#restor_file");
+    $.ajax({
+        url: "./{{users}}/index.php?module=backups&acc=restore_file",
+        type: "POST",
+        data: new FormData(uploadtargz),
+        contentType: false,
+        cache: false,
+        processData:false,
+        success: function(datos){
+            if(datos.responseText==0){
+                noti_bubble('{{langmod.BCBACKUPOK}}','','success',false,false,'3000',true);
+            }else{
+                var errormsj=datos.responseText;
+                noti_bubble('{{langmod.BCBACKUPOK}}',errormsj,'error',false,false,'3000',true);
+            }
+            return false;
+        }
+    });
+    return false;
+});
+$("#btn_rest_file").on('submit',(function(e) {
+    e.preventDefault();
+    $("#message").empty();
+    $('#loading').show();
+    $.ajax({
+        url: "ajax_php_file.php", // Url to which the request is send
+        type: "POST",             // Type of request to be send, called as method
+        data: new FormData(this), // Data sent to server, a set of key/value pairs (i.e. form fields and values)
+        contentType: false,       // The content type used when sending data to the server.
+        cache: false,             // To unable request pages to be cached
+        processData:false,        // To send DOMDocument or non processed data file it is set to false
+        success: function(data)   // A function to be called if request succeeds
+        {
+            $('#loading').hide();
+            $("#message").html(data);
+        }
+    });
+}));
+$("#btn-generatenow").click(function (){
+    $("#notemailb").hide('blind');
+    $("#btn-genenow").hide();
+    $("#textbackok").show();
+    $("#btn-fullbackup").addClass('disabled');
+    var email=$("#notiemail").val();
+    var typefile='all';
+    btnporcess('off','btn-generatenow','{{ langmod.BCLABEL4 }}');
+    ajaxcreatebackup(email,typefile,'btn-fullbackup');
+    btnporcess('on','btn-generatenow','{{ langmod.BCLABEL1 }}');
+    return false;
+});

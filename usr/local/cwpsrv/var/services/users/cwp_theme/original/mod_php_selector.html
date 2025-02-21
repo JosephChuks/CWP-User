@@ -1,0 +1,33 @@
+<div class="row  border-bottom white-bg dashboard-header">
+    {% if mod.fsl == 1 %}
+    {% set stflalert ='block' %}
+    {% else %}
+    {% set stflalert ='none' %}
+    {% endif %}
+    <div class="row  alert alert-warning col-lg-12" style="margin-left: 5px; padding-right: 5px;display:{{stflalert}}" id="alertfl">
+        <strong>{{langene.GALARTFILEBLOCK}}</strong>
+    </div>
+    <div class="col-lg-10">
+        <h2>{{langmod.TITLE}} ({{users}})</h2>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="?">Home</a></li>
+            <li class="breadcrumb-item active"><strong>{{langmod.TITLE}}</strong></li>
+        </ol>
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-9">
+        <br>
+        <div class="row">
+            {% if cloudlinux.st == 0 %}
+            <br>
+            <div class="alert alert-warning" style="margin-top: 15px; margin-left: 15px">
+                <strong>{{langene.WAR1}}!</strong>. {{langene.ERRORCLOUD}}
+            </div>
+            {% endif %}
+            <br>
+        </div>
+    </div>
+    {% include 'sidebar.html' %}
+</div>
+{% include 'footer.html' %}

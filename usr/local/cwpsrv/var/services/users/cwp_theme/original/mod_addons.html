@@ -1,0 +1,157 @@
+{% set app = mod.addons_mod %}
+{% if app == 'filemanager' %}{% set swlm = ' active' %}{% set diclm = 'in' %}{% else %}{% set swlm = '' %}{% set diclm = '' %}{% endif %}
+{% if app == 'wordpress' %}{% set swwp = ' active' %}{% set dicwp = 'in' %}{% else %}{% set swwp = '' %}{% set dicwp = '' %}{% endif %}
+{% if app == 'prestashop' %}{% set swps = ' active' %}{% set dicps = 'in' %}{% else %}{% set swps = '' %}{% set dicps = '' %}{% endif %}
+{% if app == 'joomla' %}{% set swjl = ' active' %}{% set dicjl = 'in' %}{% else %}{% set swjl = '' %}{% set dicjl = '' %}{% endif %}
+{% if app == 'drupal' %}{% set swdp = ' active' %}{% set dicdp = 'in' %}{% else %}{% set swdp = '' %}{% set dicdp = '' %}{% endif %}
+{% if app == 'laravel' %}{% set swlv = ' active' %}{% set diclv = 'in' %}{% else %}{% set swlv = '' %}{% set diclv = '' %}{% endif %}
+{% if app == 'symfony' %}{% set swsf = ' active' %}{% set dicsf = 'in' %}{% else %}{% set swsf = '' %}{% set dicsf = '' %}{% endif %}
+{% if app == 'whcms' %}{% set swwhc = ' active' %}{% set dicwhc = 'in' %}{% else %}{% set swwhc = '' %}{% set dicwhc = '' %}{% endif %}
+<style media="screen">
+    {% include 'modules/addons/styles.css' %}
+</style>
+<div class="modal" id="conf_installation" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" style="width:500px;">
+    <div class="modal-content animated fadeIn">
+      <div class="modal-header">
+        <h4 class="text-center">{{langmod.ADDCONF}}</h4>
+      </div>
+      <div class="modal-body" style="padding:15px">
+
+      </div>
+      <div class="modal-footer">
+
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal" id="deleteaddons" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content animated fadeIn">
+            <div class="modal-header" style="padding: 10px;">
+              <button type="button" class="close" data-dismiss="modal">
+                <span aria-hidden="true">×</span>
+                <span class="sr-only">{{langene.MDCLOSE}}</span>
+              </button>
+              <h4 class="modal-title" style="font-size:2rem">{{langmod.ADDATENTION}}</h4>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+              <p style="font-weight:600;font-size:1.6rem">{{langmod.ADDDELLAB1}}</p>
+              <div id="desaddon"></div>
+              <ul class="rem-addons-options">
+                <li>
+                  <div class="radio">
+                      <input type="radio" id="rem_jfiles" class="rem-option" value="1" name="rem_option" checked>
+                      <label for="rem_jfiles">{{langmod.ADDDDP43}} {{langmod.ADDDDP44}}</label>
+                  </div>
+                </li>
+                <li>
+                  <div class="radio">
+                      <input type="radio" id="rem_whole" class="rem-option" value="2" name="rem_option">
+                      <label for="rem_whole">{{langmod.ADDDDP41}}</label>
+                  </div>
+                </li>
+              </ul>
+              <p style="font-weight:600;font-size:1.6rem">{{langmod.ADDDELLAB4}}</p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-white" data-dismiss="modal">{{langmod.TNOT}}</button>
+              <button type="button" class="btn btn-primary" id="conf_del_btn" onclick="deleteAddon(this, 1)">{{langmod.TYES}}</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row  border-bottom white-bg dashboard-header"  id="upheader">
+    {% if mod.fsl == 1 %}
+        {% set stflalert ='block' %}
+    {% else %}
+        {% set stflalert ='none' %}
+    {% endif %}
+    <div class="row  alert alert-warning col-lg-12" style="margin-left: 5px; padding-right: 5px;display:{{stflalert}}" id="alertfl">
+        <strong>{{langene.GALARTFILEBLOCK}}</strong>
+    </div>
+    <div class="col-lg-12">
+        <h2>{{langmod.ADDDTLASW}} ({{users}})</h2>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="?">Home</a></li>
+            <li class="breadcrumb-item active"><strong>{{langmod.ADDDTLASW}}</strong></li>
+            <li class="breadcrumb-item active"><strong>{{mod.addons_mod}}</strong></li>
+
+        </ol>
+    </div>
+</div>
+
+<div class="row" style="margin-top:2rem;margin-bottom:2rem">
+    <div class="col-lg-9">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="ibox">
+                    <div class="ibox-content" id="addons_tab_wrapper">
+                        <div class="tabs-container">
+                            <ul class="nav nav-tabs" role="tablist">
+                                {% if app != 'installed' %}
+                                <li class="active"><a data-toggle="tab" href="#tab_scripts"><i class="fa fa-file-code-o"></i> {{langmod.ADDSCRIPTS}}</a></li>
+                                <li class=""><a data-toggle="tab" href="#tab_installed"><i class="fa fa-download"></i> {{langmod.ADDINSTALLED}}</a></li>
+                                {% else %}
+                                <li class="" ><a data-toggle="tab" href="#tab_scripts"><i class="fa fa-file-code-o"></i> {{langmod.ADDSCRIPTS}}</a></li>
+                                <li class="active"><a data-toggle="tab" href="#tab_installed"><i class="fa fa-download"></i>{{langmod.ADDINSTALLED}}</a></li>
+
+                                {% endif %}
+
+                                {% for fscript in mod.scripts %}
+                                {% set featuredScript = "addons_#{fscript.code}" %}
+                                {% if (featuredScript in rmenu ) or (swmenu==1) %}
+                                  <li class="liAddon tab_sw{{fscript.code}}" style="display:none"><a data-toggle="tab" href="#tab_sw{{fscript.code}}"><i class="fa"></i> {{fscript.name}}</a></li>
+
+                                {% endif %}
+                                {% endfor %}
+
+                                <!-- <li class="{{swlm}}"><a data-toggle="tab" href="#tab_swlm"><i class="fa fa-laptop"></i> {{langmod.ADDTLMENU2}}</a></li> -->
+                            </ul>
+                            <div class="tab-content">
+                                {% include 'modules/addons/dashboard.html' %}
+                                {% include 'modules/addons/installed.html' %}
+
+                                {% if ("addons_wp" in rmenu )or(swmenu==1) %}
+                                    {% include 'mod_addons_wp.html' %}
+                                {% endif %}
+                                {% if ("addons_ps" in rmenu )or(swmenu==1) %}
+                                    {% include 'mod_addons_ps.html' %}
+                                {% endif %}
+                                {% if ("addons_jl" in rmenu )or(swmenu==1) %}
+                                    {% include 'mod_addons_jl.html' %}
+                                {% endif %}
+                                {% if ("addons_dp" in rmenu )or(swmenu==1) %}
+                                    {% include 'mod_addons_dp.html' %}
+                                {% endif %}
+
+                                {% include 'modules/addons/laravel.html' %}
+                                {% include 'modules/addons/symfony.html' %}
+                                {% include 'modules/addons/whcms.html' %}
+                                {% include 'modules/addons/smf.html' %}
+                                {% include 'modules/addons/magento.html' %}
+                                {% include 'modules/addons/osticket.html' %}
+                                {% include 'modules/addons/phpbb.html' %}
+                                {% include 'modules/addons/nextcloud.html' %}
+                                {% include 'modules/addons/owncloud.html' %}
+                                {% include 'modules/addons/moodle.html' %}
+                                {% include 'modules/addons/livehelper.html' %}
+                                {% include 'modules/addons/suitecrm.html' %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ibox-content" id="installing_screen" tabindex="1">
+                      <div class="installing-loader" id="installing_loader">
+                        <h1>{{langmod.ADDINSTALLING}} <span id="installing_title_script"></span></h1>
+                        <span class="icon-script"><i class="fa fa-joomla" id="icon_installing"></i></span>
+                        <span><i class="fa fa-circle-o-notch fa-spin"></i></span>
+                        <p>{{langmod.ADDPLWAIT}}</p>
+                      </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% include 'sidebar.html' %}
+</div>
+{% include 'footer.html' %}

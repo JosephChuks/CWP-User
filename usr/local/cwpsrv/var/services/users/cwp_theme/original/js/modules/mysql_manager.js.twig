@@ -1,0 +1,1550 @@
+
+console.log();
+
+let last_view = 'list_db_view';
+function changeView(view){
+  $('#' + last_view).slideUp('fast', function(){
+    last_view = view;
+    $('#' + view).slideDown('fast');
+    if(view == 'add_db_view'){
+      $('#mysql_add_user').hide();
+      $('#newdb').val('');
+    }else if (view == 'list_db_view') {
+      $('#user_to_db').html('');
+      $('#add_user_content').html('');
+      buttonsHandle(false);
+      resetFormDB();
+    }
+  });
+}
+function resetFormDB(){
+  $('#newdb').val('');
+  $('#newdb').removeClass('error');
+  $('#newdb').parent().find('span.error').remove();
+  $('#charsetonly').val('');
+}
+function showCreateUser(hideform){
+  let panel = $('#mysql_add_user');
+  if(panel.is(':visible')){
+    panel.slideUp('fast', function(){
+      $('#user_to_db').html('');
+    });
+  }else{
+    $('<div class="temp_form" style="display:none">' + user_form + '</div>').appendTo('body');
+    let html_form = $('#user_form_container').html();
+    $('.temp_form').remove();
+    $('#user_to_db').html(html_form);
+    $('.defpriv').prop('checked', true);
+    generateNewPass(true);
+    bindUSerEvents();
+    if(hideform === true){
+      $('#mysql_user_form').hide();
+      $('.mysql_add_user_title').hide();
+    }
+    panel.slideDown('fast');
+  }
+}
+function renderSelectBD(){
+  let html_select = '<select class="form-control" id="adddbtouserselect">' +
+                      '<option value="">{{langmod.DBSELECTDBLABEL}}</option>';
+  db_list.forEach(function(db){
+    html_select += '<option value="' + db.dbname + '">' + db.dbname + '</option>'
+  });
+  html_select += '</select>';
+  return html_select;
+}
+function addJustUser(){
+  $('#add_user_content').html(user_form);
+  $('.defpriv').prop('checked', true);
+  generateNewPass(true);
+  bindUSerEvents();
+  $('#user_sel_db').html(renderSelectBD());
+  $('.user_sel_db').show();
+  $('#adddbtouserselect').change(function(){
+    if($(this).val() != ''){
+      $('#permission_panel').slideDown();
+    }else{
+      $('#permission_panel').slideUp();
+    }
+  });
+  $('#permission_panel').hide();
+  $('.btn-save-mysql-user').click(function(){
+    saveUser();
+  });
+  changeView('add_dbuser_view');
+}
+function saveUser(){
+  let acc = 'adduser';
+  let bdname = '';
+  let valid = true;
+  if($('#dbto_add_user').length > 0){
+    bdname = '&bdname=' + $('#dbto_add_user').text().split('_')[1];
+  }else if($('#adddbtouserselect').length > 0 && $('#adddbtouserselect').val()){
+    bdname = '&bdname=' + $('#adddbtouserselect').val().split('_')[1];
+  }
+  valid = getUserData();
+  if(!valid){
+    noti_bubble('{{langmod.DBREQUIREDFIELDS}}','{{langmod.DBERROR}}','error',false,false,'3000',true);
+    return;
+  }
+  buttonsHandle();
+  let data_send = valid + bdname;
+  uchip.call('module=mysql_manager&acc=adduser', {
+    data: data_send,
+    callback: function(response){
+      if(response.result == 'success'){
+        if(response.hasOwnProperty('list')){
+          dbTable(response.list);
+        }
+        dbUserTable(response.listusers);
+        noti_bubble('{{langmod.DBSUCCT}}','{{langmod.DMUSSQLOK}}','success',false,false,'3000',true);
+        changeView('list_db_view');
+      }else{
+        //noti_bubble('{{langmod.DBERROR}}','{{langmod.DBERROCREATEU}}','error',false,false,'3000',true);
+        noti_bubble('{{langmod.DBERROR}}',response.message,'error',false,false,'3000',true);
+      }
+      buttonsHandle(false);
+    }
+  });
+}
+function generateUserSelect(dbname){
+
+  let db = db_list.filter(function(db){ return db.dbname == dbname})[0];
+
+  let html_select = '<select class="form-control" id="adddbtouserselect">' +
+                      '<option value="">{{langmod.DBCHOOSEUSER}}</option>';
+  user_list.forEach(function(user){
+    if(db.users.filter(function(udb){ return udb.user == user.uname})[0] == undefined){
+      html_select += '<option value="' + user.uname + '" data-host="' + user.host + '">' + user.uname + '</option>';
+    }
+  });
+  html_select += '</select>';
+  return html_select;
+}
+function addExistingUser(dbname){
+  $('#add_user_content').html(user_form);
+  $('.defpriv').prop('checked', true);
+  $('#mysql_user_form').hide();
+  $('#mysql_user_form').remove();
+  $('#user_form_title').text('{{langmod.DBADDEXISTINGU}} ' + dbname + ' {{langmod.DBTITLETABLEDB}}');
+  let user_select = generateUserSelect(dbname);
+  let selec_html = '<div class="form-group row">' +
+                        '<label class="col-lg-3  control-label" for="pass2new">{{langmod.DBSELECTULABEL}}:</label>' +
+                        '<div class="col-lg-4">' +
+                        user_select +
+                        '</div>' +
+                    '</div>'+
+                    '<div class="form-group row">' +
+                        '<label class="col-lg-3  control-label">{{langmod.DBHOST}}:</label>' +
+                        '<div class="col-md-4">' +
+                          '<select id="newhost" onchange="selectHost(this)" class="form-control">' +
+                            '<option value="localhost">localhost</option>' +
+                            '<option value="%">{{langmod.DBANY}}</option>' +
+                            '<option value="IP">{{langmod.DBLABEL5}}</option>' +
+                          '</select>' +
+                        '</div>' +
+                        '<div class="col-md-3 hidden" id="ippers"><input value="" id="customip" class="form-control" placeholder="XXX.XXX.XXX.XXX"></div>' +
+                    '</div>'
+  $('#mysql_user_info').html(selec_html);
+  $('#mysql_user_info').show();
+  bindUSerEvents();
+  changeView('add_dbuser_view');
+  $('.btn-save-mysql-user').click(function(){
+    MkaddExistingUser(dbname);
+  });
+}
+function MkaddExistingUser(dbname){
+  let data_per = getUserData();
+  if($('#adddbtouserselect').val() == ''){
+    $("#adddbtouserselect").addClass('error');
+    if(!fieldHasError('#adddbtouserselect')){
+      $('#adddbtouserselect').after('<span class="error text-danger">{{langmod.DBPLEASESELU}}</span>');
+    }
+    return;
+  }
+  if(data_per == false){
+    return;
+  }
+  buttonsHandle();
+  let uname = $('#adddbtouserselect').val();
+  let host = $('#adddbtouserselect').children("option:selected").data('host')
+  let data_send = 'username=' + uname + '&dbname=' + dbname + '&' + data_per;
+  uchip.call('module=mysql_manager&acc=addexistingtodb', {
+    data: data_send,
+    callback: function(response){
+      if(response.result == 'success'){
+        if(response.hasOwnProperty('list')){
+          dbTable(response.list);
+        }
+        noti_bubble('{{langmod.DBSUCCT}}','{{langmod.DBUSERADDED}}','success',false,false,'3000',true);
+        changeView('list_db_view');
+      }else{
+        noti_bubble('{{langmod.DBERROR}}','{{langmod.DBERROADDINGU}}','error',false,false,'3000',true);
+      }
+      buttonsHandle(false);
+    }
+  });
+}
+function addUToDB(db){
+  // console.log(db);
+  $('#add_user_content').html(user_form);
+  $('.defpriv').prop('checked', true);
+  $('#user_form_title').text('{{langmod.DBADDUTODB}} ' + db + ' {{langmod.DBTITLETABLEDB}}.');
+  $('#user_sel_db').html('<label class="control-label" id="dbto_add_user">' + db + '</label>');
+  $('.user_sel_db').show();
+  generateNewPass(true);
+  bindUSerEvents();
+  $('.btn-save-mysql-user').click(function(){
+    saveUser();
+  });
+  changeView('add_dbuser_view');
+}
+function bindUSerEvents(){
+  $(".alldata").click(function(){
+    let status = $(this).is(':checked') ? true : false;
+    let grandp = $(this).parent().parent().parent();
+    grandp.find('.panel-body input:checkbox').each(function(){
+      $(this).prop('checked',status);
+    });
+  });
+  var optpass2 = {};
+  optpass2.ui = {
+      container: "#changepass_container",
+      showVerdictsInsideProgressBar: true,
+      viewports: {
+          progress: ".pwstrength_viewport_progress2"
+      }
+  };
+  optpass2.common = {
+      debug: false,
+  };
+  $('#pass1new').pwstrength(optpass2);
+  $('.collapse-link').on('click', function (e) {
+      e.preventDefault();
+      var ibox = $(this).closest('div.ibox');
+      var button = $(this).find('i');
+      var content = ibox.children('.ibox-content');
+      content.slideToggle(200);
+      button.toggleClass('fa-chevron-up').toggleClass('fa-chevron-down');
+      ibox.toggleClass('').toggleClass('border-bottom');
+      setTimeout(function () {
+          ibox.resize();
+          ibox.find('[id^=map-]').resize();
+      }, 50);
+  });
+}
+let db_list = JSON.parse('{{mod.dblist|json_encode|raw}}');
+let user_list = JSON.parse('{{mod.userlist|json_encode|raw}}');
+let user_form = '{{mod.user_form|raw}}';
+let mysql_quota = JSON.parse('{{mod.mysqlpack|json_encode|raw}}');
+function calculateQuota(){
+  let plan = $('#mysql_plan').val();
+  $('#mysqlused').text(db_list.length);
+  if(plan >= 0){
+    if(db_list.length == plan){
+      $('#modal-btn-onlymysql').addClass('disabled');
+      $('#modal-btn-onlymysql').prop('disabled', true)
+    }else{
+      $('#modal-btn-onlymysql').removeClass('disabled');
+      $('#modal-btn-onlymysql').prop('disabled', false)
+    }
+    let percent = ((db_list.length * 100) / plan).toFixed(0);
+    let classbar = '';
+    if (percent >=26 && percent <=50){
+      classbar = 'progress-bar progress-bar-success';
+    }else if(percent >=51 && percent <=75){
+      classbar = 'progress-bar progress-bar-warning';
+    }else if(percent >75){
+      classbar = 'progress-bar progress-bar-danger';
+    }else{
+      classbar = 'progress-bar';
+    }
+    $('#stat-percent').text(percent + '%');
+    $("#baremailind").removeClass();
+    $('#baremailind').addClass(classbar);
+    $('#baremailind').width(percent+'%');
+  }
+}
+function dbTable(dblist){
+  db_list = dblist;
+  let content_html = '';
+  calculateQuota();
+  if(dblist.length > 0){
+    let table_content = '';
+    let index = 0;
+    dblist.forEach(function(dbitem){
+    index++;
+    let db_quota_usage = '<i class="fa fa-2x fa-circle-o-notch fa-spin" style="color: #e7eaec;"></i>';
+    let usage = db_consumption.filter(function(db){ return db.name == dbitem.dbname})[0];
+    if(usage !== undefined){
+      db_quota_usage = (usage.usage / 1024 / 1024).toFixed(1) + ' MB';
+    }
+    let users = dbitem.users;
+    table_content += '<tr id="db_line_' + index + '">' +
+                          '<td class="">' + index + '</td>' +
+                          '<td class="" style="width:45%">' +
+                            '<div class="db_list_name_item">' +
+                              '<span>' + dbitem.dbname + '</span>' +
+                              '<div>' +
+                                '<button type="button" style="margin-top: 2px" class="btn btn-primary btn-xs mr5 mb10" title="{{langmod.DBOPTITOP}}" onclick="optimizerMysql(\'' + dbitem.dbname + '\', this)">' +
+                                  '<i class="fa fa-tachometer" aria-hidden="true"></i>' +
+                                '</button>' +
+                                '<button type="button" title="{{langmod.DBCHEKMYSQL}}" style="margin-left: 2px; margin-top: 2px" class="btn btn-info btn-xs mr5 mb10" onclick="checkMysql(\'' + dbitem.dbname + '\', this)">' +
+                                  '<i class="fa fa-check-circle" aria-hidden="true"></i>' +
+                                '</button>' +
+                                '<button type="button" title="{{langmod.DBREPARAIR}}" style="margin-left: 2px; margin-top: 2px" class="btn btn-warning btn-xs mr5 mb10" onclick="repairMysql(\'' + dbitem.dbname + '\', this)">' +
+                                  '<i class="fa fa-wrench" aria-hidden="true"></i>' +
+                                '</button>' +
+                                '<button type="button" title="{{langmod.DBBACKUPDB}}" style="margin-left: 2px; margin-top: 2px" class="btn btn-success btn-xs mr5 mb10" onclick="dumpSql(\'' + dbitem.dbname + '\', this)">' +
+                                  '<i class="fa fa-database" aria-hidden="true"></i>' +
+                                '</button>' +
+                                '<button type="button" title="{{langmod.DBDELETEDB}}" style="margin-left: 2px; margin-top: 2px" class="btn btn-danger btn-xs mr5 mb10" onclick="deleteDBMysql(\'' + dbitem.dbname + '\', this)">' +
+                                  '<i class="fa fa-trash" aria-hidden="true"></i>' +
+                                '</button>' +
+                              '</div>' +
+                            '</div>' +
+                          '</td>' +
+                          '<td style="text-align:center;" id="usedby_' + dbitem.dbname + '">'+
+                            db_quota_usage +
+                          '</td>' +
+                          '<td class="db_list_users">';
+                          let line = 1;
+                          users.forEach(function(user){
+                            table_content += '<div class="db_list_user_item" id="user_line_' + index + '_' + line + '">' +
+                                                '<span>' +
+                                                  user.user + ' [<span class="udb_host">' + user.host + '</span>]' +
+                                                '</span>' +
+                                                '<div>'+
+                                                  '<button type="button" style="margin-top: 2px" class="btn edit-privbtn btn-primary btn-xs mr5 mb10" title="{{langmod.DBEDITPRIV}}" data-line="' + index + '_' + line + '" data-priv="' + user.priv + '" data-database="' + dbitem.dbname + '" data-user="' + user.user + '" data-host="' + user.host + '" onclick="privUser(this)">' +
+                                                    '<i class="fa fa-edit" aria-hidden="true"></i>' +
+                                                  '</button>' +
+                                                  '<button type="button" style="margin-left: 2px; margin-top: 2px" class="btn btn-success btn-xs mr5 mb10" title="{{langmod.DBCHANGEPASS}}" data-username="' + user.user + '" data-host="' + user.host + '" onclick="changeUPass(this)">' +
+                                                    '<i class="fa fa-lock" aria-hidden="true"></i>' +
+                                                  '</button>' +
+                                                  '<button type="button" style="margin-left: 2px; margin-top: 2px" class="btn btn-danger btn-xs mr5 mb10" title="{{langmod.DBDELETEUSER}}" data-line="' + index + '_' + line + '" data-database="' + dbitem.dbname + '" data-host="' + user.host + '" data-user="' + user.user + '" onclick="deleteUser(this)">' +
+                                                    '<i class="fa fa-trash" aria-hidden="true"></i>' +
+                                                  '</button>' +
+                                                '</div>' +
+                                              '</div>';
+                            line++;
+                          });
+                          if(users.length == 0){
+                            table_content += '<div><h4>{{langmod.DBNOUASSOC}}</h4></div>';
+                          }
+                          table_content += '<button type="button" class="btn btn-outline btn-primary btn-xs" onclick="addUToDB(\'' + dbitem.dbname + '\')"><i class="fa fa-plus"></i> {{langmod.DBBTNNEWUSER}}</button>&nbsp;'+
+                                            '<button type="button" class="btn btn-outline btn-success btn-xs" onclick="addExistingUser(\'' + dbitem.dbname + '\')"><i class="fa fa-user"></i> {{langmod.DBUSERANMYSQLUSER}}</button>' +
+                                              '</td>' +
+                                            '</tr>';
+    });
+    content_html = '<table class="table table-striped mysql-db-table">' +
+                    '<thead>' +
+                        '<tr>' +
+                          '<th style="width:25px">#</th>' +
+                          '<th>{{langmod.DBTITLETABLEDB}}</th>' +
+                          '<th style="text-align:center;">Disk quota</th>' +
+                          '<th>{{langmod.DBUSERSLABEL}}</th>' +
+                        '</tr>' +
+                    '</thead>' +
+                    '<tbody id="table_mysql_db">' +
+                      table_content +
+                    '</tbody>' +
+                '</table>';
+    $('#table_db_container').html(content_html);
+    $('.mysql-db-table').DataTable().destroy();
+    $('.mysql-db-table').DataTable();
+    $('.mysql-db-table').on( 'page.dt', function () {
+       setTimeout(function () {
+        db_consumption.forEach(function (item){
+          $('#usedby_' + item.name).html((item.usage / 1024 / 1024).toFixed(1) + ' MB');
+        });
+       }, 30)
+    });
+  }else{
+    content_html = '<div class="empty_list"><h4 class="text-success">{{langmod.DBNODBCREATED}}</h4></div>';
+    $('#table_db_container').html(content_html);
+  }
+
+}
+function humanFileSize(bytes, si){
+    var thresh = si ? 1000 : 1024;
+    if(Math.abs(bytes) < thresh) {
+        return bytes + ' B';
+    }
+    var units = si
+        ? ['kB','MB','GB','TB','PB','EB','ZB','YB']
+        : ['KiB','MiB','GiB','TiB','PiB','EiB','ZiB','YiB'];
+    var u = -1;
+    do {
+        bytes /= thresh;
+        ++u;
+    } while(Math.abs(bytes) >= thresh && u < units.length - 1);
+    return bytes.toFixed(1)+' '+units[u];
+}
+let db_consumption = [];
+function getConsumption(){
+  uchip.call('module=mysql_manager&acc=getconsumption', {
+    callback: function(response){
+      let itpos = $('#info_tab_quota').offset();
+      // let positionr = ($('#quotadisk_mysql').width() / 1.15) + itpos.left;
+      // console.log('itpos', itpos);
+      // console.log(positionr, itpos.left, $('#quotadisk_mysql').width());
+      // console.log(response);
+
+      let databases = response.consumption.databases;
+      databases.forEach(function (item){
+        $('#usedby_' + item.name).html((item.usage / 1024 / 1024).toFixed(1) + ' MB');
+      });
+      db_consumption = databases;
+      let dbtotal = Math.round(response.consumption.dbtotal / 1024 / 1024);
+      let quota = parseFloat(mysql_quota.disk_quota);
+
+      let percent = (dbtotal * 100) / quota;
+      $('#stat-percent-disk').html(percent.toFixed(2) + ' %');
+      $('#mysqldused').html(dbtotal.toFixed(1));
+      $('#mysqldquota').html(humanFileSize(quota * 1024 * 1024));
+      // $('#quotadisk_mysql').css('left',positionr);
+      let classbar = '';
+      if (percent >=26 && percent <=50){
+        classbar = 'progress-bar progress-bar-success';
+      }else if(percent >=51 && percent <=75){
+        classbar = 'progress-bar progress-bar-warning';
+      }else if(percent >75){
+        classbar = 'progress-bar progress-bar-danger';
+      }else{
+        classbar = 'progress-bar';
+      }
+      $('#barmysqldusage').width(percent + '%');
+      $('#barmysqldusage').addClass(classbar);
+      $('#quotadisk_mysql').slideDown();
+    }
+  });
+}
+function mkchangePass(elem){
+  if($("#adduserpass").val() != $("#pass2new").val() || $("#adduserpass").val() == ''){
+    $("#adduserpass").addClass('error');
+    let msj = '';
+    if($("#adduserpass").val() == ''){
+      msj = '{{langmod.DBTYPENEWPASS}}';
+    }else{
+      msj = '{{langmod.DBERROR3}}';
+    }
+    $('#pass2new').parent().find('span.error').remove();
+    $('#pass2new').after('<span class="error text-danger">' + msj + '</span>');
+    $("#pass2new").addClass('error');
+    return;
+  }
+  buttonsHandle();
+  let data_send = 'pass=' + Base64.encode($("#adduserpass").val()) + '&user=' + $('#user_to_cp').val() + '&host=' + $('#host_to_cp').val();
+  uchip.call('module=mysql_manager&acc=chageuserpass', {
+    data: data_send,
+    callback: function(response){
+      if(response.result == 'success'){
+        noti_bubble('{{langmod.DBSUCCT}}','{{langmod.DBCHANGEPASSEXIST}}','success',false,false,'3000',true);
+        changeView('list_db_view');
+      }else{
+        noti_bubble('{{langmod.DBERROR}}','{{langmod.DBERRORCHPASS}}','error',false,false,'3000',true);
+        buttonsHandle(false);
+      }
+    }
+  });
+}
+function sendUserDeletion(){
+  $('#confirmDBDelete').modal('toggle');
+  let db = $('#db_todelete').text();
+  let uname = $('#user_db_todelete').text();
+  let host = $('#host_to_delete').val();
+  handleDbButton(last_delete, 'fa-trash');
+  let line = $(last_delete).data('line');
+  let typedel = $('#wholedelete').is(':checked') ? 'whole' : 'single';
+  let data_send = 'db=' + db + '&user=' + uname + '&host=' + host + '&typedel=' + typedel;
+  uchip.call('module=mysql_manager&acc=deleteuserdb', {
+    data: data_send,
+    callback: function(response){
+      //console.log(response);
+      if(response.result == 'success'){
+        noti_bubble('{{langmod.DMUMYQLDEL}}', '{{langmod.DBSUCCT}}','success',false,false,'3000',true);
+        if(typedel == 'single'){
+          $('#user_line_' + line).slideUp('fast', function(){
+            let parent = $(this).parent();
+            $(this).remove();
+            if(parent.find('.db_list_user_item').length < 1){
+              parent.prepend('<div><h4>{{langmod.DBNOUASSOC}}</h4></div>');
+            }
+          });
+        }else{
+          dbTable(response.list);
+          dbUserTable(response.users);
+        }
+      }else{
+        noti_bubble('{{langmod.DBERRORDELETING}}','{{langmod.DBERROR}}','error',false,false,'3000',true);
+        handleDbButton(last_delete, 'fa-trash', true);
+      }
+    }
+  });
+}
+function deleteUser(elem, fromuser){
+  last_delete = elem;
+  let db = $(elem).data('database');
+  let uname = $(elem).data('user');
+  let host = $(elem).data('host');
+  if(fromuser == undefined){
+    $('#db_confirm_text').html('<p>{{langmod.DBUDELLABEL1}}<br/>{{langmod.DBUDELLABEL2}}: <b><span id="user_db_todelete">' + uname + '</span></b>, ' +
+                                '<br>{{langmod.DBUDELLABEL3}}: <b>' +
+                                '<span id="db_todelete">' + db + '</span><input type="hidden" id="host_to_delete" value="' + host + '"></b>' +
+                                '<div class="radio radio-primary">' +
+                                  '<input type="radio" name="deltype" checked id="justfromdb">' +
+                                  '<label class="control-label" for="justfromdb">{{langmod.DBUDELLABEL4}}</label>' +
+                                '</div>' +
+                                '<div class="radio radio-primary">' +
+                                  '<input type="radio" name="deltype" id="wholedelete">' +
+                                  '<label class="control-label" for="wholedelete">{{langmod.DBUDELLABEL5}}</label>' +
+                                '</div>' +
+                                '{{langmod.DBUDELLABEL6}}</b>');
+  }else{
+    $('#db_confirm_text').html('<p>{{langmod.DBUDELLABEL1}}<br/> {{langmod.DBUDELLABEL2}}: <b><span id="user_db_todelete">' + uname + '</span></b>, ' +
+                                '<input type="hidden" id="host_to_delete" value="' + host + '">' +
+                                '<input type="radio" checked style="display:none" name="deltype" id="wholedelete">' +
+                                '<br>{{langmod.DBUDELLABEL6}}</b>');
+  }
+
+  $('#confirmDBDelete').modal('toggle');
+}
+function changeUPass(elem){
+  let uname = $(elem).data('username');
+  let host = $(elem).data('host');
+  $('#user_to_cp').val(uname);
+  $('#host_to_cp').val(host);
+  $('#user_chpass_title').text('{{langmod.DBCHANGEPASSTOU}} ' + uname);
+  changeView('change_pass_user');
+}
+function dbUserTable(list){
+  user_list = list;
+  let content_html = '';
+  let options_selector = '<option value="">{{langmod.DBLABELN1}}</option>' +
+                          '<option value="1">{{langmod.DBLABELN2}}</option>';
+  if(list.length > 0){
+    let table_content = '';
+    let index = 1;
+    list.forEach(function(user){
+      table_content += '<tr>' +
+                        '<td>' + index + '</td>' +
+                        '<td>' + user.uname + '</td>' +
+                        '<td>' + user.host + '</td>' +
+                        '<td class="text-right">' +
+                          '<span class="btn btn-sm btn-primary" title="{{langmod.DBCHANGEPASS}}" data-username="' + user.uname + '" data-host="' + user.host + '" onclick="changeUPass(this)"><i class="fa fa-lock"></i> {{langmod.DBCHANGEPASS}}</span> ' +
+                          '<span class="btn btn-sm btn-danger" title="{{langmod.DBDELETEUSER}}" data-user="' + user.uname + '" data-host="' + user.host + '" onclick="deleteUser(this, true)"><i class="fa fa-trash"></i> {{langmod.DBDELETEUSER}}</span>' +
+                        '</td>' +
+                      '</tr>';
+      options_selector += '<option data-host="' + user.host + '" value="' + user.uname + '">' + user.uname + ' (' + user.host + ')</option>'
+      index++;
+    });
+    content_html = '<table class="table table-striped mysql-user-table">' +
+                    '<thead>' +
+                        '<tr>' +
+                          '<th style="width:25px">#</th>' +
+                          '<th>{{langmod.DBUDELLABEL2}}</th>' +
+                          '<th>Host</th>' +
+                          '<th style="width:250px"></th>' +
+                        '</tr>' +
+                    '</thead>' +
+                    '<tbody id="table_mysql_users">' +
+                      table_content +
+                    '</tbody>' +
+                '</table>';
+    $('#table_user_container').html(content_html);
+    $('.mysql-user-table').DataTable().destroy();
+    $('.mysql-user-table').DataTable();
+  }else{
+    content_html = '<div class="empty_list"><h4 class="text-success">{{langmod.DBNOUSERCREATED}}</h4></div>';
+    $('#table_user_container').html(content_html);
+  }
+  if ($('#user_selector_db').hasClass("select2-hidden-accessible")) {
+    $('#user_selector_db').select2('destroy');
+  }
+  $('#user_selector_db').children().remove().end()
+  $('#user_selector_db').append(options_selector);
+  $('#user_selector_db').select2();
+  $('#user_selector_db').on('select2:open', function(){
+    $('.select2-results__options li:nth-child(2)').prepend('<i class="fa fa-plus"></i>');
+  });
+  $('#user_selector_db').on('select2:select', function (e) {
+    if(e.params.data.id == '1'){
+      if($('#mysql_add_user').is(':visible')){
+        $('#mysql_user_form').slideDown('fast');
+        $('.mysql_add_user_title').slideDown('fast');
+      }else{
+        showCreateUser();
+      }
+    }else if(e.params.data.id != ''){
+      if($('#mysql_add_user').is(':visible')){
+        $('#mysql_user_form').slideUp('fast');
+        $('.mysql_add_user_title').slideUp('fast');
+      }else{
+        showCreateUser(true);
+      }
+    }else{
+      showCreateUser();
+    }
+  });
+}
+function closePGOPT(){
+  $('#pgopt_container').slideUp();
+}
+function generateNewPass(type, element){
+  let adduserpass = 'pass1new';
+  let lengthpass = 'lengthpassbd';
+  let typepass = 'typepassbd';
+  //adduserpass = 'adduserpass';
+  //lengthpass = 'lengthpass';
+  //typepass = 'typepass';
+  if(type == 'userp'){
+    adduserpass = 'adduserpass';
+    lengthpass = 'lengthpass';
+    typepass = 'typepass';
+  }
+  let lpass = $('#' + lengthpass).val();
+  let tpass = $('#' + typepass).val();
+  let new_pass = generatePasswordRand(lpass, tpass);
+  $('#' + adduserpass).val(new_pass);
+  $('#pass2new').val(new_pass);
+  $('#' + adduserpass).pwstrength("forceUpdate");
+  if(type == undefined || type == 'userp'){
+    copyPass(adduserpass, element);
+  }
+}
+
+function copyPass(elem, element){
+  let field = document.getElementById(elem);
+  field.select();
+  document.execCommand('copy');
+  let message_copy = $('<div class="clearfix"></div><div class="p-copied-message-container"><div class="p-copied-message bg-info" style="max-width: 22rem;border-radius: 5px;margin-top: 2px;"><h4 style="font-size:1.3rem">{{langmod.BDPASSCOPIED}}</h4></div></div>');
+  if(element == undefined){
+    message_copy.insertAfter('#' + elem);
+  }else{
+    $(element).parent().append(message_copy);
+  }
+
+  message_copy.slideDown('slow');
+  setTimeout(function(){
+    message_copy.slideUp('slow',function(){
+      $(this).remove();
+    });
+  }, 4500);
+}
+function openPGOPT(){
+  if($('#pgopt_container').is(':visible')){
+    $('#pgopt_container').slideUp('fast');
+  }else{
+    $('#pgopt_container').slideDown('fast');
+    hideOnClickOutside('#pgopt_container');
+  }
+}
+function hideOnClickOutside(selector, second){
+  let forhide = false;
+  if(second === undefined){
+    second = '#show_options_button';
+    forhide = true;
+  }
+  function outsideClickListener(event){
+    $target = $(event.target);
+    if (!$target.closest(selector).length && !$target.closest(second).length  && $(selector).is(':visible')) {
+      if(forhide){
+        $(selector).slideUp('fast');
+      }else{
+        $(selector).remove();
+      }
+
+        removeClickListener();
+    }
+  }
+
+  function removeClickListener(){
+    document.removeEventListener('click', outsideClickListener)
+  }
+
+  document.addEventListener('click', outsideClickListener)
+}
+$(document).ready(function() {
+  {% if mod.isie == 1 %}
+    uchip = new $.Uchip();
+  {% else %}
+    uchip = new Uchip();
+  {% endif %}
+  getConsumption();
+  $('#confirmDBDelete').on('shown.bs.modal', function () {
+    $('#btndbcontinue').unbind('click');
+    $('#btndbcontinue').click(function(){
+      if($('#user_db_todelete').length > 0 && $('#user_db_todelete').is(':visible')){
+        sendUserDeletion();
+      }else {
+        sendDbDeletion();
+      }
+
+    });
+  });
+  $('.i-checks').iCheck({
+      checkboxClass: 'icheckbox_square-green',
+      radioClass: 'iradio_square-green',
+  });
+  $(".alldata").click(function(){
+    let status = $(this).is(':checked') ? true : false;
+    let grandp = $(this).parent().parent().parent();
+    grandp.find('.panel-body input:checkbox').each(function(){
+      $(this).prop('checked',status);
+    });
+  });
+  // dbTable(db_list.result);
+  var optpass1 = {};
+  optpass1.ui = {
+      container: "#changepass_container",
+      showVerdictsInsideProgressBar: true,
+      viewports: {
+          progress: ".pwstrength_userchange"
+      }
+  };
+  optpass1.common = {
+      debug: false,
+  };
+
+  $('#adduserpass').pwstrength(optpass1);
+});
+let uchip = null;
+function buttonsHandle(status){
+  if(status == undefined || status == true){
+    $('.btn-action-cwp').addClass('disabled');
+    $('.btn-save-mysql .fa').removeClass('fa-floppy-o');
+    $('.btn-save-mysql .fa').addClass('fa-spinner fa-spin');
+    $('.btn-save-mysql .btn-cwp-tag').text('{{langmod.BDSAVINGLABEL}}');
+    $('.btn-save-mysql .btn-cp-tag').text('{{langmod.DBCHANGINPASS}}');
+  }else{
+    $('.btn-save-mysql .fa').removeClass('fa-spinner fa-spin');
+    $('.btn-save-mysql .fa').addClass('fa-floppy-o');
+    $('.btn-save-mysql .btn-cwp-tag').text('{{langmod.DBSAVELABEL}}');
+    $('.btn-save-mysql .btn-cp-tag').text('{{langmod.DBCHANGEPASS}}');
+    $('.btn-action-cwp').removeClass('disabled');
+  }
+}
+function getUserData(hosttype){
+  var invalid = false;
+  let mess = '';
+  let fdvisible = $('#mysql_user_form').is(':visible');
+  if(($("#bdusername").val()=='') && fdvisible){
+    invalid = true;
+    $("#bdusername").addClass('error');
+    if(!fieldHasError('#bdusername')){
+      $('#bdusername').after('<span class="error text-danger">{{langmod.DBINVALIDUNAME}}</span>');
+    }
+  }
+  if($("#pass2new").val() != $("#pass1new").val() && fdvisible){
+    invalid = true;
+    $("#pass1new").addClass('error');
+    if(!fieldHasError('#pass2new')){
+      $('#pass2new').after('<span class="error text-danger">{{langmod.DBERROR3}}</span>');
+    }
+    $("#pass2new").addClass('error');
+  }
+  if($("#maxqueryhour").val() == ''){
+    invalid = true;
+    $('#maxqueryhour').addClass('error');
+    if(!fieldHasError('#maxqueryhour')){
+      $('#maxqueryhour').after('<span class="error text-danger">{{langmod.DBINVALIDPARAM}}</span>');
+    }
+  }
+  if($("#maxupdhour").val() == ''){
+    invalid = true;
+    $('#maxupdhour').addClass('error');
+    if(!fieldHasError('#maxupdhour')){
+      $('#maxupdhour').after('<span class="error text-danger">{{langmod.DBINVALIDPARAM}}</span>');
+    }
+  }
+  if($("#maxconnechour").val() == ''){
+    invalid = true;
+    $('#maxconnechour').addClass('error');
+    if(!fieldHasError('#maxconnechour')){
+      $('#maxconnechour').after('<span class="error text-danger">{{langmod.DBINVALIDPARAM}}</span>');
+    }
+  }
+  if($("#maxuserconnec").val() == ''){
+    invalid = true;
+    $('#maxuserconnec').addClass('error');
+    if(!fieldHasError('#maxuserconnec')){
+      $('#maxuserconnec').after('<span class="error text-danger">{{langmod.DBINVALIDPARAM}}</span>');
+    }
+  }
+  if($("#newhost").val() == 'IP' && !ValidateIPaddress($('#customip').val()) && $("#newhost").is(':visible')){
+    invalid = true;
+    $('#customip').addClass('error');
+    if(!fieldHasError('#customip')){
+      $('#customip').after('<span class="error text-danger">{{langmod.DBINVALIDIP}}</span>');
+    }
+  }
+
+  if(invalid) {
+      return false;
+  }else{
+      var pass=Base64.encode($("#pass1new").val());
+      if($('#select').is(':checked')){var Vselect='Y';}else{var Vselect='';}
+      if($('#insert').is(':checked')){var Vinsert='Y';}else{var Vinsert='';}
+      if($('#update').is(':checked')){var Vupdate='Y';}else{var Vupdate='';}
+      if($('#delete').is(':checked')){var Vdelete='Y';}else{var Vdelete='';}
+      if($('#file').is(':checked')){var Vfile='Y';}else{var Vfile='';}
+      if($('#create').is(':checked')){var Vcreate='Y';}else{var Vcreate='';}
+      if($('#alter').is(':checked')){var Valter='Y';}else{var Valter='';}
+      if($('#index').is(':checked')){var Vindex='Y';}else{var Vindex='';}
+      if($('#drop').is(':checked')){var Vdrop='Y';}else{var Vdrop='';}
+      if($('#creattemptable').is(':checked')){var Vcreattemptable='Y';}else{var Vcreattemptable='';}
+      if($('#showview').is(':checked')){var Vshowview='Y';}else{var Vshowview='';}
+      if($('#createroutine').is(':checked')){var Vcreateroutine='Y';}else{var Vcreateroutine='';}
+      if($('#alterroutine').is(':checked')){var Valterroutine='Y';}else{var Valterroutine='';}
+      if($('#execute').is(':checked')){var Vexecute='Y';}else{var Vexecute='';}
+      if($('#createview').is(':checked')){var Vcreateview='Y';}else{var Vcreateview='';}
+      if($('#event').is(':checked')){var Vevent='Y';}else{var Vevent='';}
+      if($('#trigger').is(':checked')){var Vtrigger='Y';}else{var Vtrigger='';}
+      if($('#reference_priv').is(':checked')){var refpriv='Y';}else{var refpriv='';}
+      if($('#locktables_priv').is(':checked')){var locktabpriv='Y';}else{var locktabpriv='';}
+      if(hosttype == undefined){
+        if($("#newhost").val()=='IP'){ var namehost=$("#customip").val(); }else{ var namehost=$("#newhost").val(); }
+      }else{
+        var namehost=$("#user_priv_host").val();
+      }
+
+      let data_user = '';
+      if(fdvisible){
+        data_user = "&adduser=1&userdb="+$("#bdusername").val()+"&pass="+pass+"&host="+namehost+"&select="+Vselect+"&insert="+Vinsert+"&lock_tables=" + locktabpriv + "&references=" + refpriv + "&update="+
+                Vupdate+"&delete="+Vdelete+"&file="+Vfile+"&create="+Vcreate+"&alter="+Valter+"&index="+Vindex+"&drop="+Vdrop+"&creattemptable="+Vcreattemptable+"&showview="+
+                Vshowview+"&createroutine="+Vcreateroutine+"&alterroutine="+Valterroutine+"&execute="+Vexecute+"&event="+Vevent+"&createview="+Vcreateview+"&trigger="+Vtrigger+
+                "&maxqueryhour="+$("#maxqueryhour").val()+"&maxupdhour="+$("#maxupdhour").val()+"&maxconnechour="+$("#maxconnechour").val()+"&maxuserconnec="+$("#maxuserconnec").val()
+      }else{
+        data_user = "userdb=" + $('#user_priv').val() + "&host=" + namehost + "&dbase=" + $('#user_priv_db').val() + "&select="+Vselect+"&insert="+Vinsert+"&lock_tables=" + locktabpriv + "&references=" + refpriv + "&update="+
+                Vupdate+"&delete="+Vdelete+"&file="+Vfile+"&create="+Vcreate+"&alter="+Valter+"&index="+Vindex+"&drop="+Vdrop+"&creattemptable="+Vcreattemptable+"&showview="+
+                Vshowview+"&createroutine="+Vcreateroutine+"&alterroutine="+Valterroutine+"&execute="+Vexecute+"&event="+Vevent+"&createview="+Vcreateview+"&trigger="+Vtrigger+
+                "&maxqueryhour="+$("#maxqueryhour").val()+"&maxupdhour="+$("#maxupdhour").val()+"&maxconnechour="+$("#maxconnechour").val()+"&maxuserconnec="+$("#maxuserconnec").val()
+      }
+      return data_user;
+  }
+}
+function getPrivileges(){
+  if($('#select').is(':checked')){var Vselect='Y';}else{var Vselect='';}
+  if($('#insert').is(':checked')){var Vinsert='Y';}else{var Vinsert='';}
+  if($('#update').is(':checked')){var Vupdate='Y';}else{var Vupdate='';}
+  if($('#delete').is(':checked')){var Vdelete='Y';}else{var Vdelete='';}
+  if($('#file').is(':checked')){var Vfile='Y';}else{var Vfile='';}
+  if($('#create').is(':checked')){var Vcreate='Y';}else{var Vcreate='';}
+  if($('#alter').is(':checked')){var Valter='Y';}else{var Valter='';}
+  if($('#index').is(':checked')){var Vindex='Y';}else{var Vindex='';}
+  if($('#drop').is(':checked')){var Vdrop='Y';}else{var Vdrop='';}
+  if($('#creattemptable').is(':checked')){var Vcreattemptable='Y';}else{var Vcreattemptable='';}
+  if($('#showview').is(':checked')){var Vshowview='Y';}else{var Vshowview='';}
+  if($('#createroutine').is(':checked')){var Vcreateroutine='Y';}else{var Vcreateroutine='';}
+  if($('#alterroutine').is(':checked')){var Valterroutine='Y';}else{var Valterroutine='';}
+  if($('#execute').is(':checked')){var Vexecute='Y';}else{var Vexecute='';}
+  if($('#createview').is(':checked')){var Vcreateview='Y';}else{var Vcreateview='';}
+  if($('#event').is(':checked')){var Vevent='Y';}else{var Vevent='';}
+  if($('#trigger').is(':checked')){var Vtrigger='Y';}else{var Vtrigger='';}
+  if($('#reference_priv').is(':checked')){var refpriv='Y';}else{var refpriv='';}
+  if($('#locktables_priv').is(':checked')){var locktabpriv='Y';}else{var locktabpriv='';}
+  return "&select="+Vselect+"&insert="+Vinsert+"&lock_tables=" + locktabpriv + "&references=" + refpriv + "&update="+
+          Vupdate+"&delete="+Vdelete+"&file="+Vfile+"&create="+Vcreate+"&alter="+Valter+"&index="+Vindex+"&drop="+Vdrop+"&creattemptable="+Vcreattemptable+"&showview="+
+          Vshowview+"&createroutine="+Vcreateroutine+"&alterroutine="+Valterroutine+"&execute="+Vexecute+"&event="+Vevent+"&createview="+Vcreateview+"&trigger="+Vtrigger+
+          "&maxqueryhour="+$("#maxqueryhour").val()+"&maxupdhour="+$("#maxupdhour").val()+"&maxconnechour="+$("#maxconnechour").val()+"&maxuserconnec="+$("#maxuserconnec").val();
+}
+function fieldHasError(elem){
+  return $(elem).parent().find('span.error').length > 0 ? true : false;
+}
+function optimizerMysql(db, elem){
+  handleDbButton(elem, 'fa-tachometer');
+  let data_send = "db=" + db;
+  uchip.call('module=mysql_manager&acc=optimizerdb', {
+    data: data_send,
+    callback: function(response){
+      if(response.result == 'success'){
+        noti_bubble('{{langmod.DBOPTIOK}}','{{langmod.DBSUCCT}}','success',false,false,'3000',true);
+      }else{
+        noti_bubble('{{langmod.DBERROR}}, {{langmod.DBERRORCODE}}: ' + (response.code !== undefined ? response.code : 'Unexpected error.'),'{{langmod.DBERROR2}}','error',false,false,'3000',true);
+      }
+      handleDbButton(elem, 'fa-tachometer', true);
+    }
+  });
+}
+function handleDbButton(elem, icon_fa, type){
+  let icon = $(elem).find('.fa');
+  if(type == undefined){
+    $(elem).addClass('disabled');
+    icon.removeClass(icon_fa);
+    icon.addClass('fa-spinner fa-spin');
+  }else{
+    icon.removeClass('fa-spinner fa-spin');
+    icon.addClass(icon_fa);
+    $(elem).removeClass('disabled');
+  }
+}
+function dumpSql(db, elem){
+  handleDbButton(elem, 'fa-database');
+  let data_send = "db=" + db;
+  uchip.call('module=mysql_manager&acc=dumpsql', {
+    data: data_send,
+    callback: function(response){
+      if(response.result == 'success'){
+        noti_bubble('{{langmod.DBRDUMPOK}}','{{langmod.DBSUCCT}}','success',false,false,'3000',true);
+        window.open('./{{users}}/index.php?module=mysql_manager&acc=download_backup&identifier=' + response.identifier, '_blank');
+      }else{
+        noti_bubble('{{langmod.DBERROR2}}','{{langmod.DBERROR}}','error',false,false,'3000',true);
+      }
+      handleDbButton(elem, 'fa-database', true);
+    }
+  });
+}
+function sendDbDeletion(){
+  $('#confirmDBDelete').modal('toggle');
+  let db = $('#db_todelete').text();
+  handleDbButton(last_delete, 'fa-trash');
+  let data_send = "db=" + db;
+  uchip.call('module=mysql_manager&acc=deletedatabase', {
+    data: data_send,
+    callback: function(response){
+      if(response.result == 'success'){
+        noti_bubble('{{langmod.DBSUCCT}}','{{langmod.DMUMYQLDELDB}}','success',false,false,'3000',true);
+        dbTable(response.list)
+      }else{
+        noti_bubble('{{langmod.DBERROR2}}','{{langmod.DBERROR}}','error',false,false,'3000',true);
+      }
+      // handleDbButton(last_delete, 'fa-trash', true);
+    }
+  });
+}
+let last_delete = null;
+let last_priv = null;
+function deleteDBMysql(db, elem){
+  last_delete = elem;
+  $('#db_confirm_text').html('<p>{{langmod.DBCONFIRMDBDEL}}: <br><b><span id="db_todelete">' + db + '</span></b><br>{{langmod.DBUDELLABEL6}}</b>');
+  $('#confirmDBDelete').modal('toggle');
+}
+function repairMysql(db, elem){
+  handleDbButton(elem, 'fa-wrench');
+  let data_send = "db=" + db;
+  uchip.call('module=mysql_manager&acc=repairmysql', {
+    data: data_send,
+    callback: function(response){
+      if(response.result == 'success'){
+        noti_bubble('{{langmod.DBREPAIROK}}','{{langmod.DBSUCCT}}','success',false,false,'3000',true);
+      }else{
+        noti_bubble('{{langmod.DBERROR2}}','{{langmod.DBERROR}}','error',false,false,'3000',true);
+      }
+      handleDbButton(elem, 'fa-wrench', true);
+    }
+  });
+}
+function checkMysql(db, elem){
+  handleDbButton(elem, 'fa-check-circle');
+  let data_send = "db=" + db;
+  uchip.call('module=mysql_manager&acc=checkmysql', {
+    data: data_send,
+    callback: function(response){
+      if(response.result == 'success'){
+        noti_bubble('{{langmod.DBCHECKOK}}','{{langmod.DBSUCCT}}','success',false,false,'3000',true);
+      }else{
+        noti_bubble('{{langmod.DBERROR2}}','{{langmod.DBERROR}}','error',false,false,'3000',true);
+      }
+      handleDbButton(elem, 'fa-check-circle', true);
+    }
+  });
+}
+function changePriv(elem){
+  let data_per = getUserData(true);
+  if(data_per === false){
+    noti_bubble('You need to complete required fields','{{langmod.DBERROR}}','error',false,false,'3000',true);
+    return;
+  }
+  if($("#newhostedit").val()=='IP'){
+    var namehost = $("#ippersedit_customip").val();
+  }else{
+    var namehost = $("#newhostedit").val();
+  }
+  data_per += '&newhost=' + namehost;
+  buttonsHandle();
+  uchip.call('module=mysql_manager&acc=savepriv', {
+    data: data_per,
+    callback: function(response){
+      if(response.result == 'success'){
+        changeView('list_db_view');
+        $(elem).data('priv', response.new_priv);
+        $(elem).data('host', namehost);
+        let line_index = $(elem).data('line');
+        $('#user_line_' + line_index).find('.udb_host').text(namehost);
+        noti_bubble('{{langmod.DBUPRIVCHANGE}}','{{langmod.DBSUCCT}}','success',false,false,'3000',true);
+      }else{
+        noti_bubble('{{langmod.DBERROGEN}}','{{langmod.DBERROR}}','error',false,false,'3000',true);
+      }
+      buttonsHandle(false);
+    }
+  });
+}
+function privUser(elem){
+  last_priv = elem;
+  let db = $(elem).data('database');
+  let user = $(elem).data('user');
+  let host = $(elem).data('host');
+  let JsPriv = Base64.decode($(elem).data('priv'));
+  let privObj = jQuery.parseJSON( JsPriv );
+  $('#add_user_content').html(user_form);
+  $('#mysql_user_form').hide();
+  $('#user_form_title').text('{{langmod.DBLABEL17}}');
+  // generateNewPass(true);
+  let html_desc = '<div class="form-group mysql-user-info">' +
+                      '<label class="control-label" for="bdname"><i class="fa fa-user"></i> {{langmod.DBUDELLABEL2}}: </label>' +
+                      '<span>' + user + '</span>' +
+                      '<input type="hidden" value="' + user + '" id="user_priv">' +
+                  '</div>'+
+                  '<div class="form-group user_db_host mysql-user-info">' +
+                      '<label class="control-label" for="bdname"><i class="fa fa-cloud"></i> {{langmod.DBHOST}}: </label>' +
+                      '<div class="">' +
+                        '<input type="hidden" value="' + host + '" id="user_priv_host">' +
+                        '<select id="newhostedit" onchange="selectHost(this,\'#ippersedit\')" class="form-control">' +
+                          '<option value="localhost"' + (host == 'localhost' ? 'selected' : '') + '>localhost</option>' +
+                          '<option value="%"' + (host == '%' ? 'selected' : '') + '>{{langmod.DBANY}}</option>' +
+                          '<option value="IP"' + (host != 'localhost' && host != '%' ? 'selected' : '') + '>{{langmod.DBLABEL5}}</option>' +
+                        '</select>' +
+                      '</div>' +
+                      '<div class="' + (host != 'localhost' && host != '%' ? '' : 'hidden') + '" id="ippersedit"><input value="' + (host != 'localhost' && host != '%' ? host : '') + '" id="ippersedit_customip" class="form-control" placeholder="XXX.XXX.XXX.XXX"></div>' +
+                  '</div>'+
+                  '<div class="form-group mysql-user-info">' +
+                      '<label class="control-label" for="bdname"><i class="fa fa-database"></i> {{langmod.DBTITLETABLEDB}}: </label>' +
+                      '<span>' + db + '</span>' +
+                      '<input type="hidden" value="' + db + '" id="user_priv_db">' +
+                  '</div>'
+  $('#mysql_user_info').html(html_desc);
+  $('#mysql_user_info').show();
+  bindUSerEvents();
+  $('.btn-save-mysql-user').click(function(){
+    changePriv(elem);
+  });
+  changeView('add_dbuser_view');
+  populatePermissions(privObj);
+  return;
+
+    // $("#titlebd_edi").html(db+' / '+user+' [ '+host+' ]');
+    // $("#db_h").val(db);
+    // $("#user_h").val(user);
+    // $("#host_h").val(host);
+
+
+    // $("#modal-changeprivmysql").modal('toggle');
+    return false;
+}
+function populatePermissions(obj){
+  if(obj.Select_priv=='Y'){ $("#select").attr('checked',true); }else{ $("#select").attr('checked',false); }
+  if(obj.Insert_priv=='Y'){ $("#insert").attr('checked',true); }else{ $("#insert").attr('checked',false); }
+  if(obj.Update_priv=='Y'){ $("#update").attr('checked',true); }else{ $("#update").attr('checked',false); }
+  if(obj.Lock_tables_priv == 'Y'){ $("#locktables_priv").attr('checked',true); }else{ $("#locktables_priv").attr('checked',false); }
+  if(obj.References_priv == 'Y'){ $("#reference_priv").attr('checked',true); }else{ $("#reference_priv").attr('checked',false); }
+  if(obj.Delete_priv=='Y'){ $("#delete").attr('checked',true); }else{ $("#delete").attr('checked',false); }
+  if(obj.Create_priv=='Y'){ $("#create").attr('checked',true); }else{ $("#create").attr('checked',false); }
+  if(obj.Drop_priv=='Y'){ $("#drop").attr('checked',true); }else{ $("#drop").attr('checked',false); }
+  if(obj.Create_routine_priv=='Y'){ $("#createroutine").attr('checked',true); }else{ $("#createroutine").attr('checked',false); }
+  if(obj.Create_view_priv=='Y'){ $("#createview").attr('checked',true); }else{ $("#createview").attr('checked',false); }
+
+  if(obj.Alter_priv=='Y'){ $("#alter").attr('checked',true); }else{ $("#alter").attr('checked',false); }
+  if(obj.Trigger_priv=='Y'){ $("#trigger").attr('checked',true); }else{ $("#trigger").attr('checked',false); }
+  if(obj.Alter_routine_priv=='Y'){ $("#alterroutine").attr('checked',true); }else{ $("#alterroutine").attr('checked',false); }
+  if(obj.Event_priv=='Y'){ $("#event").attr('checked',true); }else{ $("#event").attr('checked',false); }
+
+  if(obj.Index_priv=='Y'){ $("#index").attr('checked',true); }else{ $("#index").attr('checked',false); }
+  if(obj.Show_view_priv=='Y'){ $("#showview").attr('checked',true); }else{ $("#showview").attr('checked',false); }
+  if(obj.Execute_priv=='Y'){ $("#execute").attr('checked',true); }else{ $("#execute").attr('checked',false); }
+  if(obj.Create_tmp_table_priv=='Y'){ $("#creattemptable").attr('checked',true); }else{ $("#creattemptable").attr('checked',false); }
+
+  if(obj.hasOwnProperty('maxqueryhour') && obj.maxqueryhour != ''){ $("#maxqueryhour").val(obj.maxqueryhour); }else{ $("#maxqueryhour").val(0); }
+  if(obj.hasOwnProperty('maxupdhour') && obj.maxupdhour != ''){ $("#maxupdhour").val(obj.maxupdhour); }else{ $("#maxupdhour").val(0); }
+  if(obj.hasOwnProperty('maxconnechour') && obj.maxconnechour != ''){ $("#maxconnechour").val(obj.maxconnechour); }else{ $("#maxconnechour").val(0); }
+  if(obj.hasOwnProperty('maxuserconnec') && obj.maxuserconnec != ''){ $("#maxuserconnec").val(obj.maxuserconnec); }else{ $("#maxuserconnec").val(0); }
+}
+function createDB(elem_btn){
+  //let panel = $('#mysql_add_user');
+  let utype = $('#user_selector_db').val();
+  let dbname = $('#newdb').val();
+  let charset = $('#charsetonly').val();
+  let invalid = false;
+  if(dbname == ''){
+    let has_error = fieldHasError('#newdb');
+    $('#newdb').addClass('error');
+    if(!has_error){
+      $('#newdb').after('<span class="error text-danger">{{langmod.DBINVALIDDBNAME}}</span>');
+    }
+    invalid = true;
+  }
+  let data_send = 'dbname=' + dbname + '&charset=' + charset;
+  let user_creating = false;
+  if(utype == '1'){
+    user_creating = true;
+    if(user_data = getUserData()){
+      data_send += user_data
+    }else{
+      invalid = true;
+    }
+  }else if(utype != ''){
+    let host = $('#user_selector_db').children("option:selected").data('host');
+    data_send += '&userexisting=' + utype + '&host=' + host + getPrivileges();
+  }
+  if(invalid){
+    noti_bubble('{{langmod.DBREQUIREDFIELDS}}','{{langmod.DBERROR}}','error',false,false,'3000',true);
+    return;
+  }
+  buttonsHandle();
+  uchip.call('module=mysql_manager&acc=adddb', {
+    data: data_send,
+    callback: function(response){
+      if(response.result == 'success'){
+        if(user_creating && response.user.result != 'success'){
+          let user_error = '';
+          if(response.user.error == '4'){
+            user_error = '{{langmod.DBERROR4}}';
+          }else{
+            user_error = 'UNKNOW ERROR';
+          }
+          noti_bubble('{{langmod.DMMYSQLOK}}, {{langmod.DBERRORINUSER}}: <b>' + user_error + '</b>','Warning','warning',false,false,'6000',true);
+        }else{
+          noti_bubble('{{langmod.DBSUCCT}}','{{langmod.DMMYSQLOK}}','success',false,false,'3000',true);
+        }
+        dbTable(response.list);
+        changeView('list_db_view');
+      }else{
+        if(response.result == 'error' && response.error == '1'){
+          noti_bubble('{{langmod.DBERROR1}}','{{langmod.DBERROR}}','error',false,false,'3000',true);
+        }else if(response.result == 'error' && response.error == '2'){
+          noti_bubble('{{langmod.DBERROR2}}','{{langmod.DBERROR}}','error',false,false,'3000',true);
+        }else{
+          noti_bubble('UNKNOW ERROR','{{langmod.DBERROR}}','error',false,false,'3000',true);
+        }
+        buttonsHandle(false);
+      }
+    }
+  });
+}
+function selectHost(elem, elemip){
+  let ipdiv = elemip == undefined ? '#ippers' : elemip;
+  if($(elem).val() == 'IP'){
+    $(ipdiv).removeClass('hidden');
+  }else{
+    $(ipdiv).addClass('hidden');
+  }
+}
+dbTable(db_list);
+$(document).ready(function() {
+  dbUserTable(user_list);
+});
+
+function btnchangpassusermysql(){
+    btnporcess('off','btn-changpassusermysql','{{ langmod.DBLABEL4 }}');
+    if(($("#newpass2user").val()=='') || ($("#newpass2user2").val()=='')){
+        noti_bubble('{{langmod.DBERROR4}}','{{langmod.DBERROR}}','error',false,false,'3000',true);
+        btnporcess('on','btn-changpassusermysql','{{langene.MDBTN_SAVE}}');
+        return false;
+    }else{
+        if($("#newpass2user").val()!=$("#newpass2user2").val()){
+            noti_bubble('{{langmod.DBERROR3}}','{{langmod.DBERROR}}','error',false,false,'3000',true);
+            btnporcess('on','btn-changpassusermysql','{{langene.MDBTN_SAVE}}');
+            return false;
+        }else{
+            var merge=$("#mysqluserpass").val();
+            $.ajax({
+                type: "POST",
+                url: "./{{users}}/index.php?module=mail_autoreply&acc=changepassuserdb",
+                data:"dates="+merge+"&passuser="+Base64.encode($("#newpass2user").val()),
+                complete: function(datos){
+                    if(datos.responseText==1){
+                        $("#modal-changepassusermysql").modal('hide');
+                        noti_bubble('{{langmod.DBCHANGEPASSEXIST}}','{{langmod.DBSUCCT}}','success',false,false,'3000',true);
+                        btnporcess('on','btn-changpassusermysql','{{langene.MDBTN_SAVE}}');
+                    }else{
+                        noti_bubble('{{langmod.DBERROR2}}','{{langmod.DBERROR}}','error',false,false,'3000',true);
+                        btnporcess('on','btn-changpassusermysql','{{langene.MDBTN_SAVE}}');
+                    }
+                    return false;
+                }
+            });
+            return false;
+        }
+    }
+    return false;
+}
+function deleteuserdb(st, db,user,host){
+    if(st==0){
+        var strheader = '<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{ langmod.SSLCLOSE }}</span></button><h4 class="modal-title">{{langmod.DBWARNING}}</h4><small class="font-bold">{{langmod.DBDELETEUSER}}</small>';
+        var strbody = '<p class="text-center">'+user+' '+host+'</p>';
+        var strfooter = '<button type="button" class="btn btn-white" data-dismiss="modal">{{langmod.DBNO}}</button><button type="button" class="btn btn-primary" id="btnyesdel" onclick="return deleteuserdb(1,\''+db+'\',\''+user+'\',\''+host+'\')">{{langmod.DBYES}}</button>';
+        $("#deletemodal .modal-header").html(strheader);
+        $("#deletemodal .modal-body").html(strbody);
+        $("#deletemodal .modal-footer").html(strfooter);
+        $("#deletemodal").modal('toggle');
+        return false;
+    }
+    if(st==1){
+        $("#alerdelete").hide('blind');
+        $("#alerdelete").html('');
+        btnporcess('off','btnyesdel','{{ langmod.DBLABEL4 }}');
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=mysql_manager&acc=deleteuserdb",
+            data:"user="+user+"&host="+host,
+            complete: function(datos){
+                refrestable();
+                btnporcess('on','btnyesdel','{{ langmod.DBYES }}');
+                $("#deletemodal").modal('hide');
+                noti_bubble('{{langmod.DBSUCCT}}','{{langmod.DMUSSQLDEL}}','success',false,false,'3000',true);
+                return false;
+            }
+        });
+        return false;
+    }
+    return false;
+}
+function refrestable(user){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=mysql_manager&acc=refrestable",
+        complete: function(datos){
+            var str =datos.responseText;
+            var trozo=str.split("|||");
+            var tables=trozo[0];
+            var tbusers=trozo[1];
+            $('.dataTables-example').DataTable().destroy();
+            $("#trtable").html(tables);
+            $("#trsuser").html(tbusers);
+            $('.dataTables-example').DataTable();
+        }
+    });
+}
+function btnaddbdandusernew(){
+    var sw=0;
+    if(($("#bdname").val()=='')||($("#pass1new").val()=='')||($("#pass2new").val()=='')){ var msj='{{langmod.DBERROR4}}'; sw=1;}
+    if($("#pass1new").val()!=$("#pass2new").val()){ var msj='{{langmod.DBERROR3}}'; sw=1; }
+    if(sw==1){
+        noti_bubble(msj,'','error',false,false,'3000',true);
+        return false;
+    }else{
+        var pass=Base64.encode($("#pass1new").val());
+        var collation='';
+        var charset=$("#charset").val();
+        btnporcess('off','btn-addbdandusernew','{{ langmod.DBLABEL4 }}');
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=mysql_manager&acc=newmysqlanduser",
+            data: "datebase="+$("#bdname").val()+"&pass="+pass+"&collation="+collation+"&charset="+charset,
+            complete: function(datos){
+                if(datos.responseText=='OK'){
+                    $("#bdname").val('');
+                    $("#pass1new").val('');
+                    $("#pass2new").val('');
+                    refrestable();
+                    refrespanelnew('mysql_manager');
+                    $("#modal-createbdanduser").modal('hide');
+                    noti_bubble('{{langmod.DBSUCCT}}','{{langmod.DMMYSQLOK}}','success',false,false);
+                    btnporcess('on','btn-addbdandusernew','{{ langmod.DBCREATEMODAL }}');
+                }else if(datos.responseText=='1'){
+                    noti_bubble('','{{langmod.DBERROR1}}','error',false,false);
+                    btnporcess('on','btn-addbdandusernew','{{ langmod.DBCREATEMODAL }}');
+                }else if(datos.responseText==2){
+                    noti_bubble('','{{langmod.DBERROR2}}','error',false,false);
+                    btnporcess('on','btn-addbdandusernew','{{ langmod.DBCREATEMODAL }}');
+                }
+                return false;
+            }
+        });
+        return false;
+    }
+}
+function processlistmysql(sw){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=mysql_manager&acc=procsmysql",
+        complete: function(datos){
+            //alert(datos.responseText);
+            $("#contentmodalplmysql").html(datos.responseText);
+            if(sw==1){
+                timer = setTimeout('processlistmysql(1)', 4000);
+            }else{
+                return false;
+            }
+        }
+    });
+}
+function changepassmysqluser(st,db,user,host){
+    $('#mysqluserpass').val(user+'||'+host);
+    $("#ttcgpss").html(user+' '+host);
+    $("#modal-changepassusermysql").modal('toggle');
+    return false;
+}
+function newusermysql(bd){
+    $("#alerdelete").hide('blind');
+    $("#titlebd").html(bd);
+    $("#dbasehiden").val(bd);
+    var randpass = generatePasswordRand(10,'alf');
+    $("#newpass1").val(randpass);
+    $("#modal-newusermysql").modal('toggle');
+    return false;
+}
+function modalbtnonlymysql (){
+    $("#modal-onlymysql").modal('toggle');
+}
+function changepassmysqluser(st,db,user,host){
+    $('#mysqluserpass').val(user+'||'+host);
+    $("#ttcgpss").html(user+' '+host);
+    $("#modal-changepassusermysql").modal('toggle');
+    return false;
+}
+$("#modal-btn-createbdanduser").click(function(){
+    var randpass=generatePasswordRand(10,'alf');
+    $("#pass1new").val(randpass);
+    $("#modal-createbdanduser").modal('toggle');
+    return false;
+});
+$("#alldata_edi").click(function(){
+    if ($('#alldata_edi').is(':checked')) {
+        $('#select_edi').attr('checked',true);
+        $('#insert_edi').attr('checked',true);
+        $('#update_edi').attr('checked',true);
+        $('#delete_edi').attr('checked',true);
+        $('#file_edi').attr('checked',true);
+    }else{
+        $('#select_edi').attr('checked',false);
+        $('#insert_edi').attr('checked',false);
+        $('#update_edi').attr('checked',false);
+        $('#delete_edi').attr('checked',false);
+        $('#file_edi').attr('checked',false);
+    }
+});
+$("#allstructure").click(function(){
+    if ($('#allstructure').is(':checked')) {
+        $('#create').attr('checked',true);
+        $('#alter').attr('checked',true);
+        $('#index').attr('checked',true);
+        $('#drop').attr('checked',true);
+        $('#creattemptable').attr('checked',true);
+        $('#showview').attr('checked',true);
+        $('#createroutine').attr('checked',true);
+        $('#alterroutine').attr('checked',true);
+        $('#execute').attr('checked',true);
+        $('#createview').attr('checked',true);
+        $('#event').attr('checked',true);
+        $('#trigger').attr('checked',true);
+    }else{
+        $('#create').attr('checked',false);
+        $('#alter').attr('checked',false);
+        $('#index').attr('checked',false);
+        $('#drop').attr('checked',false);
+        $('#creattemptable').attr('checked',false);
+        $('#showview').attr('checked',false);
+        $('#createroutine').attr('checked',false);
+        $('#alterroutine').attr('checked',false);
+        $('#execute').attr('checked',false);
+        $('#createview').attr('checked',false);
+        $('#event').attr('checked',false);
+        $('#trigger').attr('checked',false);
+    }
+});
+$("#allstructure_edi").click(function(){
+    if ($('#allstructure_edi').is(':checked')) {
+        $('#create_edi').attr('checked',true);
+        $('#alter_edi').attr('checked',true);
+        $('#index_edi').attr('checked',true);
+        $('#drop_edi').attr('checked',true);
+        $('#creattemptable_edi').attr('checked',true);
+        $('#showview_edi').attr('checked',true);
+        $('#createroutine_edi').attr('checked',true);
+        $('#alterroutine_edi').attr('checked',true);
+        $('#execute_edi').attr('checked',true);
+        $('#createview_edi').attr('checked',true);
+        $('#event_edi').attr('checked',true);
+        $('#trigger_edi').attr('checked',true);
+    }else{
+        $('#create_edi').attr('checked',false);
+        $('#alter_edi').attr('checked',false);
+        $('#index_edi').attr('checked',false);
+        $('#drop_edi').attr('checked',false);
+        $('#creattemptable_edi').attr('checked',false);
+        $('#showview_edi').attr('checked',false);
+        $('#createroutine_edi').attr('checked',false);
+        $('#alterroutine_edi').attr('checked',false);
+        $('#execute_edi').attr('checked',false);
+        $('#createview_edi').attr('checked',false);
+        $('#event_edi').attr('checked',false);
+        $('#trigger_edi').attr('checked',false);
+    }
+});
+$("#newhost").click(function (){
+    if($("#newhost").val()=='IP'){
+        $("#ippers").removeClass('hidden');
+    }else{
+        $("#ippers").addClass('hidden');
+        $("#ippers").val('');
+    }
+});
+$("#btn-usemysqluser").click(function (){
+    btnporcess('off','btn-usemysqluser','{{ langmod.DBLABEL4 }}');
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=mysql_manager&acc=usemysqluser",
+        data: "userdb="+$("#useusermyqlsel").val()+"&host="+$("#newhostuser").val()+"&dbase="+$("#dbasehiden").val(),
+        complete: function(datos){
+            if(datos.responseText=='OK'){
+                $("#newuser").val('');
+                $("#newpass1").val('');
+                $("#newpass1").val('');
+                $("#modal-newusermysql").modal('toggle');
+                noti_bubble('{{langmod.DMUSSQLOK}}','{{langmod.DBSUCCT}}','success',false,false,'3000',true);
+                refrestable();
+                btnporcess('on','btn-usemysqluser','{{ langmod.DBBTNASIGN }}');
+            }else if(datos.responseText=='1'){
+                noti_bubble('{{langmod.DBERROR}}','{{langmod.DBERROR1}}','error',false,false,'3000',true);
+                btnporcess('on','btn-usemysqluser','{{ langmod.DBBTNASIGN }}');
+            }else if(datos.responseText==2){
+                noti_bubble('{{langmod.DBERROR}}','{{langmod.DBERROR2}}','error',false,false,'3000',true);
+                btnporcess('on','btn-usemysqluser','{{ langmod.DBBTNASIGN }}');
+            }
+            return false;
+        }
+    });
+    return false;
+});
+$("#btn-newdbonly").click(function (){
+    if($("#newdb").val()!=''){
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        btnporcess('off','btn-newdbonly','{{ langmod.DBLABEL4 }}');
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=mysql_manager&acc=newmysqlonly",
+            //data: "datebase="+$("#newdb").val()+"&collation="+$("#collationonly").val()+"&charset="+$("#charsetonly").val(),
+            data: "datebase="+$("#newdb").val()+"&charset="+$("#charsetonly").val(),
+            complete: function(datos){
+                if(datos.responseText=='OK'){
+                    $("#modal-onlymysql").modal('hide');
+                    refrestable();
+                    refrespanelnew('mysql_manager');
+                    noti_bubble('{{langmod.DBSUCCT}}','{{langmod.DMMYSQLOK}}','success',false,false,'3000',true);
+                    btnporcess('on','btn-newdbonly','{{ langmod.DBCREATEMODAL }}');
+                }else if(datos.responseText=='1'){
+                    noti_bubble('{{langmod.DBERROR1}}','{{langmod.DMMYSQLOK}}','error',false,false,'3000',true);
+                    btnporcess('on','btn-newdbonly','{{ langmod.DBCREATEMODAL }}');
+                }else if(datos.responseText=='2'){
+                    noti_bubble('{{langmod.DBERROR2}}','{{langmod.DMMYSQLOK}}','error',false,false,'3000',true);
+                    btnporcess('on','btn-newdbonly','{{ langmod.DBCREATEMODAL }}');
+                }
+                return false;
+            }
+        });
+    }else{
+        noti_bubble('{{langmod.DBERRORBD}}','{{langmod.DMMYSQLOK}}','error',false,false,'3000',true);
+        btnporcess('on','btn-newdbonly','{{ langmod.DBCREATEMODAL }}');
+        return false;
+    }
+});
+$("#btn-newnewuser").click(function (){
+    var sw=0;
+    if(($("#newuser").val()=='')||($("#newpass1").val()=='')||($("#newpass2").val()=='')){ var msj='{{langmod.DBERROR4}}'; sw=1;}
+    if($("#newpass1").val()!=$("#newpass2").val()){ var msj='{{langmod.DBERROR3}}'; sw=1;}
+    if($("#maxqueryhour").val()==''){sw=1; $("#maxqueryhour").addClass('error');}
+    if($("#maxupdhour").val()==''){sw=1;$("#maxupdhour").addClass('error');}
+    if($("#maxconnechour").val()==''){sw=1; $("#maxconnechour").addClass('error');}
+    if($("#maxuserconnec").val()==''){sw=1; $("#maxuserconnec").addClass('error');}
+
+    if(sw==1) {
+        noti_bubble('{{ langmod.DBERROR4 }}', '{{ langmod.DBERROR }}', 'error', false, false, '4000', true);
+        return false;
+    }else{
+        var pass=Base64.encode($("#newpass1").val());
+        if($('#select').is(':checked')){var Vselect='Y';}else{var Vselect='';}
+        if($('#insert').is(':checked')){var Vinsert='Y';}else{var Vinsert='';}
+        if($('#update').is(':checked')){var Vupdate='Y';}else{var Vupdate='';}
+        if($('#delete').is(':checked')){var Vdelete='Y';}else{var Vdelete='';}
+        if($('#file').is(':checked')){var Vfile='Y';}else{var Vfile='';}
+        if($('#create').is(':checked')){var Vcreate='Y';}else{var Vcreate='';}
+        if($('#alter').is(':checked')){var Valter='Y';}else{var Valter='';}
+        if($('#index').is(':checked')){var Vindex='Y';}else{var Vindex='';}
+        if($('#drop').is(':checked')){var Vdrop='Y';}else{var Vdrop='';}
+        if($('#creattemptable').is(':checked')){var Vcreattemptable='Y';}else{var Vcreattemptable='';}
+        if($('#showview').is(':checked')){var Vshowview='Y';}else{var Vshowview='';}
+        if($('#createroutine').is(':checked')){var Vcreateroutine='Y';}else{var Vcreateroutine='';}
+        if($('#alterroutine').is(':checked')){var Valterroutine='Y';}else{var Valterroutine='';}
+        if($('#execute').is(':checked')){var Vexecute='Y';}else{var Vexecute='';}
+        if($('#createview').is(':checked')){var Vcreateview='Y';}else{var Vcreateview='';}
+        if($('#event').is(':checked')){var Vevent='Y';}else{var Vevent='';}
+        if($('#trigger').is(':checked')){var Vtrigger='Y';}else{var Vtrigger='';}
+        if($("#newhost").val()=='IP'){ var namehost=$("#ippers").val(); }else{ var namehost=$("#newhost").val(); }
+        btnporcess('off','btn-newnewuser','{{ langmod.DBLABEL4 }}');
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=mysql_manager&acc=newnewuser",
+            data: "userdb="+$("#newuser").val()+"&pass="+pass+"&host="+namehost+"&dbase="+$("#dbasehiden").val()+"&select="+Vselect+"&insert="+Vinsert+"&update="+
+                    Vupdate+"&delete="+Vdelete+"&file="+Vfile+"&create="+Vcreate+"&alter="+Valter+"&index="+Vindex+"&drop="+Vdrop+"&creattemptable="+Vcreattemptable+"&showview="+
+                    Vshowview+"&createroutine="+Vcreateroutine+"&alterroutine="+Valterroutine+"&execute="+Vexecute+"&event="+Vevent+"&createview="+Vcreateview+"&trigger="+Vtrigger+
+                    "&maxqueryhour="+$("#maxqueryhour").val()+"&maxupdhour="+$("#maxupdhour").val()+"&maxconnechour="+$("#maxconnechour").val()+"&maxuserconnec="+$("#maxuserconnec").val(),
+            complete: function(datos){
+                if(datos.responseText=='OK'){
+                    $("#newuser").val('');
+                    $("#newpass1").val('');
+                    $("#newpass1").val('');
+                    $("#modal-newusermysql").modal('hide');
+                    noti_bubble('{{langmod.DBSUCCT}}','{{langmod.DMUSSQLOK}}','success',false,false,'3000',true);
+                    refrestable();
+                    btnporcess('on','btn-newnewuser','{{ langmod.DBCREATEUSER }}');
+                }else if(datos.responseText=='1'){
+                    noti_bubble('{{langmod.DBERROR1}}','{{langmod.DBERROR}}','error',false,false,'3000',true);
+                    btnporcess('on','btn-newnewuser','{{ langmod.DBCREATEUSER }}');
+                }else if(datos.responseText==2){
+                    noti_bubble('{{langmod.DBERROR2}}','{{langmod.DBERROR}}','error',false,false,'3000',true);
+                    btnporcess('on','btn-newnewuser','{{ langmod.DBCREATEUSER }}');
+                }else if(datos.responseText==4){
+                    noti_bubble('{{langmod.DBERROR4}}','{{langmod.DBERROR}}','error',false,false,'3000',true);
+                    btnporcess('on','btn-newnewuser','{{ langmod.DBCREATEUSER }}');
+                }
+                return false;
+            }
+        });
+        return false;
+    }
+});
+$("#btn-savepriv").click(function (){
+    $("#btn-savepriv").attr('disabled',true);
+    $("#btn-savepriv").addClass('disabled');
+    var textntn=$("#btn-savepriv").text();
+    $("#btn-savepriv").html('<i class="fa fa-spinner fa-spin"></i> '+textntn);
+
+    if ($('#select_edi').is(':checked')) { var Vselect='Y'; }else{ var Vselect='';}
+    if ($('#insert_edi').is(':checked')) { var Vinsert='Y'; }else{ var Vinsert='';}
+    if ($('#update_edi').is(':checked')) { var Vupdate='Y'; }else{ var Vupdate='';}
+    if ($('#delete_edi').is(':checked')) { var Vdelete='Y'; }else{ var Vdelete='';}
+
+    if ($('#create_edi').is(':checked')) { var Vcreate='Y'; }else{ var Vcreate='';}
+    if ($('#alter_edi').is(':checked')) { var Valter='Y'; }else{ var Valter='';}
+    if ($('#index_edi').is(':checked')) { var Vindex='Y'; }else{ var Vindex='';}
+    if ($('#drop_edi').is(':checked')) { var Vdrop='Y'; }else{ var Vdrop='';}
+
+    if ($('#creattemptable_edi').is(':checked')) { var Vcreattemptable='Y'; }else{ var Vcreattemptable='';}
+    if ($('#showview_edi').is(':checked')) { var Vshowview='Y'; }else{ var Vshowview='';}
+    if ($('#createroutine_edi').is(':checked')) { var Vcreateroutine='Y'; }else{ var Vcreateroutine='';}
+    if ($('#alterroutine_edi').is(':checked')) { var Valterroutine='Y'; }else{ var Valterroutine='';}
+
+    if ($('#execute_edi').is(':checked')) { var Vexecute='Y'; }else{ var Vexecute='';}
+    if ($('#event_edi').is(':checked')) { var Vevent='Y'; }else{ var Vevent='';}
+    if ($('#createview_edi').is(':checked')) { var Vcreateview='Y'; }else{ var Vcreateview='';}
+    if ($('#trigger_edi').is(':checked')) { var Vtrigger='Y'; }else{ var Vtrigger='';}
+
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=mysql_manager&acc=savepriv",
+        data: "userdb="+$("#user_h").val()+"&host="+$("#host_h").val()+"&dbase="+$("#db_h").val()+"&select="+Vselect+"&insert="+Vinsert+"&update="+Vupdate+"&delete="+Vdelete+"&create="+Vcreate+"&alter="+Valter+"&index="+Vindex+"&drop="+Vdrop+"&creattemptable="+Vcreattemptable+"&showview="+Vshowview+"&createroutine="+Vcreateroutine+"&alterroutine="+Valterroutine+"&execute="+Vexecute+"&event="+Vevent+"&createview="+Vcreateview+"&trigger="+Vtrigger+"&maxqueryhour="+$("#maxqueryhour_edi").val()+"&maxupdhour="+$("#maxupdhour_edi").val()+"&maxconnechour="+$("#maxconnechour_edi").val()+"&maxuserconnec="+$("#maxuserconnec_edi").val(),
+        complete: function(datos){
+            refrestable();
+            $("#modal-changeprivmysql").modal('toggle');
+            return false;
+        }
+    });
+    return false;
+});

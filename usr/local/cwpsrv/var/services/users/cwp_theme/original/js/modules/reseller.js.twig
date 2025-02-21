@@ -1,0 +1,2784 @@
+
+console.log();
+let uchip = null;
+//let list_accounts = JSON.parse('{{mod.init_info.account_list|json_encode|raw}}');
+//let list_packages = JSON.parse('{{mod.init_info.package_list|json_encode|raw}}');
+let accounts_table = null;
+let packages_table = null;
+let list_packages_features = [];
+let editor_mirror = null;
+{% include 'js/modules/reseller_tabs.js.twig' %}
+String.prototype.isEmpty = function() {
+    return (this.length === 0 || !this.trim());
+};
+$(window).on('resize', function (e) {
+
+  reAdjust();
+
+});
+initTabs();
+$(document).ready(function() {
+  {% if mod.isie == 1 %}
+    uchip = new $.Uchip();
+  {% else %}
+    uchip = new Uchip();
+  {% endif %}
+  $('[data-toggle="tooltip"]').tooltip()
+  let optpass1 = {};
+  optpass1.ui = {
+      container: "#pass_container",
+      showVerdictsInsideProgressBar: true,
+      viewports: {
+          progress: ".pwstrength_viewport_progress"
+      }
+  };
+  optpass1.common = {
+      debug: false,
+  };
+  $('#account_password').pwstrength(optpass1);
+  $('#resellerpass1').pwstrength(optpass1);
+  renderDashboard()
+});
+
+function setUnlimited(elem){
+  let root = $(elem).parent().parent().parent();
+  let input = root.find('.packinput');
+  if($(elem).is(':checked')){
+    input.hide();
+    input.val('-1');
+    root.find('.unlimited-pack').show();
+  }else{
+    root.find('.unlimited-pack').hide();
+    input.val('');
+    input.show();
+  }
+}
+function renderDashboard(){
+  let total = $('.mini-dashboard-graph').length;
+  $('.mini-dashboard-graph').each(function(index){
+    let donout = $(this).data('donout');
+    let used = $(this).data('used');
+    let limit = $(this).data('limit');
+    if(donout=='rs_dash_disk'){
+      used = used/10;
+      limit = limit/100;
+    }
+
+    miniGraph({
+      used: used,
+      limit: limit,
+      selector: donout
+    });
+    if(index == total - 1){
+      $('#mini_dashboard_loader').fadeOut('fast', function(){
+        $('.mini-dashboard').fadeIn('fast');
+      });
+    }
+
+    if(donout=='rs_dash_accounts'){
+      var percent = limit == -1 ? 0 : (used / limit) * 100;
+    }else{
+      var percent = limit == -1 ? 0 : (used * 1024) / limit;
+    }
+    percent =(percent > 100) ? 100 : percent;
+
+    let bar = '<div class="mini-dashboard-percent"><div id="bar_' + donout + '" class="progress progress-mini progress-mini-dashboard">' +
+                  '<div style="width:' + percent + '%;" class="progress-bar ' + uchip.getBarColor(percent) + '"></div>' +
+                '</div><span>' + Math.ceil(percent) + '%</span></div>';
+    $('#' + donout).after(bar);
+    let bytes = $(this).find('.mini-dashboard-bytes');
+    if(bytes.length > 0){
+      bytes.find('.used-bytes').text(uchip.humanFileSize(used * 1024 * 1024));
+      bytes.find('.limit-bytes').html(limit == -1 ? '<span class="infinite-sign">&infin;</span>' : uchip.humanFileSize(limit * 1024 * 1024, true));
+    }
+  });
+}
+function showNewAccount(){
+  uchip.slideToggle('#add_new_account_container','#account_list_wrapper', function(){
+    domain_reseller();
+  });
+}
+function openPGOPT(type, second){
+  let divelem = type == null ? '#pgopt_container' : type;
+  if($(divelem).is(':visible')){
+    $(divelem).slideUp('fast');
+  }else{
+    $(divelem).slideDown('fast');
+    hideOnClickOutside(divelem, second);
+  }
+}
+function hideOnClickOutside(selector, second){
+  let forhide = true;
+  if(second === undefined){
+    second = '.show_options_button';
+    forhide = true;
+  }
+  function outsideClickListener(event){
+    $target = $(event.target);
+    if (!$target.closest(selector).length && !$target.closest(second).length  && $(selector).is(':visible')) {
+      if(forhide){
+        $(selector).slideUp('fast');
+      }else{
+        $(selector).remove();
+      }
+      removeClickListener();
+    }
+  }
+  function removeClickListener(){
+    document.removeEventListener('click', outsideClickListener)
+  }
+  document.addEventListener('click', outsideClickListener)
+}
+function copyPass(elem){
+  let field = document.getElementById(elem);
+  field.select();
+  document.execCommand('copy');
+  noti_bubble('{{langmod.ADDCOPIEDPASS}}','{{langmod.SUCCESS}}','success',false,false,'3000',true);
+}
+function generateNewPass(element){
+  let passmeter = $(element).parent().parent().find('.pass_container input');
+  let lengthpass = $(element).parent().find('.general-password-generator-options .pwlength');
+  let typepass = $(element).parent().find('.general-password-generator-options .pwtype');
+  let confpass = 'ftppass2_ch';
+  let lpass = lengthpass.val();
+  let tpass = typepass.val();
+  let new_pass = generatePasswordRand(lpass, tpass);
+  passmeter.val(new_pass);
+  passmeter.pwstrength("forceUpdate");
+  copyPass(passmeter.attr('id'));
+}
+function listAccountsX(){
+  if($("#swajaxaccount").val()==''){
+    {#if(!$('#loader_accounts').is(':visible')){
+      $("#loader_accounts").show();
+    }#}
+    var table='';
+    table = $('#accounts_table').DataTable( {
+      "processing": true,
+      "bProcessing": true,
+      "bServerSide": true,
+      'iDisplayLength': 10,
+      "ajax": {
+        "url": "./{{users}}/index.php?module=reseller&acc=listsaccount",
+        "type": "POST"
+      }
+    } );
+    $("#swajaxaccount").val(1);
+    {#if($('#loader_accounts').is(':visible')){
+      $("#loader_accounts").hide();
+    }#}
+    $("#table_accounts_wrapper").show();
+  }
+}
+function listAccounts(list){
+  list_accounts = list;
+  if(list_accounts.length > 0){
+    let html_content = '';
+    let index = 0;
+    list_accounts.forEach(function(account){
+      let porcen = (100 * account.diskUsed) / account.disk_quota;
+      let porcenbw = (account.bandwidthusade * 100) / account.bandwidth;
+      html_content +='<tr id="tr_raccount_' + account.id + '">' +
+                        '<td><a href="#" title="{{langmod.RSJSLAB1}}" data-toggle="tooltip" data-placement="top" aria-hidden="true" onclick="return autologin(\'' + account.token + ' \',\'https://' + account.hostname + ':2083/' + account.username + '/\',\'{{users}}\')"><i class="fa fa-user"></i> ' + account.username + ' </a>' +
+                        '<br /><a href="http://' + account.domain + '" target="_blank"><i class="fa fa-globe"></i> ' + account.domain + '</a></td>' +
+                        '<td>' +
+                          '<div id="email' + account.id + '" data-email="' + account.email + '"><span id="email_title_'+ account.id +'">' + account.email + '</span>&nbsp;<button class="btn btn-success btn-xs goto-edit-btn" onclick="return changeemail(\'' + account.id + '\')" title="{{langmod.RSLABEL78}}"><i class="fa fa-edit"></i></button></div>' +
+                          '<div id="divemail' + account.id + '" style="display: none">' +
+                            '<div class="email-inline-editor">' +
+                              '<input type="text" data-required="true" data-reqemail="true" id="changeemail' + account.id + '" value="' + account.email + '" class="form-control">' +
+                              '<button href="#" class="btn btn-primary btn-xs" onclick="return saveemail(' + account.id + ')"><i class="fa fa-check-circle"></i> {{langmod.RSJSLAB2}}</button>' +
+                              '<button href="#" class="color-green btn btn-danger btn-xs" onclick="return cancel_changeemail(' + account.id + ')"><i class="fa fa-times-circle"></i> {{langmod.RSLABEL42}}</button>' +
+                            '</div>' +
+                          '</div>' +
+                        '</td>' +
+                        // '<td align="center">$fech</td>' +
+                        '<td>' +
+                          '<div id="packname' + account.id + '" data-package="' + account.package  + '"><span id="package_title_' + account.id  + '">' + account.package_name +'</span>' +
+                            '&nbsp;<button onclick="return editPackage(' + account.id  + ')" title="{{langmod.RSLABEL77}}" class="btn btn-success btn-xs goto-edit-btn"><i class="fa fa-edit"></i></button>' +
+                          '</div>' +
+                          '<div id="divpack' + account.id + '" style="display: none">' +
+                            '<div class="package-inline-editor"><select data-required="true" class="form-control" id="pack_sel_' + account.id + '"></select>' +
+                            '<button href="#" class="btn btn-primary btn-xs" onclick="return updatePackage(' + account.id + ')"><i class="fa fa-check-circle"></i> {{langmod.RSJSLAB2}}</button>' +
+                            '<button href="#" class="color-green btn btn-danger btn-xs" onclick="return cancelPackageEdit(' + account.id + ')"><i class="fa fa-times-circle"></i> {{langmod.RSLABEL42}}</button></div>' +
+                          '</div>' +
+                        '</td>' +
+                        '<td align="center" id="bar_dd_' + account.id + '" data-used="' + account.diskUsed + '">' +
+                          '<div class="progress" style="height: 10px;background-color: #CBCACF;">' +
+                            '<div style="width: ' + porcen + '%" aria-valuemax="100" aria-valuemin="0" role="progressbar" class="indibar ' + uchip.getBarColor(porcen) + '"></div>' +
+                          '</div><p class="no-margin-p">' + uchip.humanFileSize(account.diskUsed) + ' / <span class="package-limit">' + uchip.humanFileSize(account.disk_quota * 1024 * 1024) + '</span></p>' +
+                        '</td>' +
+                        '<td align="center" id="bar_bw_' + account.id + '" data-used="' + (account.bandwidthusade == '' ? 0 : account.bandwidthusade) + '">'  +
+                          '<div class="progress" style="height: 10px;background-color: #CBCACF;">' +
+                            '<div style="width: ' + porcenbw + '%;" aria-valuemax="100" aria-valuemin="0" aria-valuenow="' + porcenbw + '" role="progressbar" class="indibar ' + uchip.getBarColor(porcenbw) + '"></div>' +
+                          '</div><p class="no-margin-p">' + uchip.humanFileSize(account.bandwidthusade == '' ? 0 : account.bandwidthusade) + ' / <span class="package-limit">' + uchip.humanFileSize(account.bandwidth * 1024 * 1024) + '</span></p>' +
+                        '</td>'  +
+                        '<td>'+
+                          '<div class="row actions-td">'+
+                            '<div class="btn-group" style="margin-left: 15px">';
+                                if({{mod.license}} != '0'){
+                                  let colorbtn = 'btn-warning';
+                                  let iconbtn = 'fa-times';
+                                  let stbtn = 0;
+                                  let title = '{{langmod.RSLABEL39}}';
+                                  if(account.status == '1'){
+                                    colorbtn = 'btn-primary';
+                                    iconbtn = 'fa-check';
+                                    stbtn = 1;
+                                    title = '{{langmod.RSLABEL38}}';
+                                  }
+                                  let backup_html = '<button class="btn btn-warning btn-xs tip clsactnr' + account.id + '" title="{{langmod.RSLABEL44}}" id="backup' + account.id + '" onclick="return changebackup(' + account.id + ')"><i class="fa fa-database"></i></button>';
+                                  if(account.backup == 'on'){
+                                    backup_html = '<button class="btn btn-default btn-xs tip clsactnr' + account.id + '" title="{{langmod.RSLABEL43}}" id="backup'  + account.id + '" onclick="return changebackup(' + account.id + ')"><i class="fa fa-database"></i></button>';
+                                  }
+                                  html_content +='<button class="btn btn-default btn-xs tip clsactnr' + account.id + '" onclick="return reseller_changepass(\'' + account.username + '\')" title="{{langmod.RSLABEL45}}"><i class="fa fa-key"></i></button>' +
+                                                backup_html +
+                                                '<button class="btn ' + colorbtn + ' btn-xs tip clsactnr' + account.id + '" title="' + title + '" id="st'  + account.id + '" data-currst="' + account.status + '" onclick="return changest(\'' + account.username + '\',this)"><i class="fa ' + iconbtn + '"></i></button>' +
+                                                '<button id="btn_acc_del_' + account.id + '" class="btn btn-danger btn-xs tip clsactnr' + account.id + '" title="{{langmod.RSLABEL40}}"  onclick="return deleteaccount(' + account.id  + ',0,\'' + account.username + '\',' + index + ')"><i class="fa fa-trash"></i></button>';
+                                }
+                                html_content +='</div>' +
+                            '</div>' +
+                        '</td>' +
+                        '</tr>';
+      index++;
+    });
+    let table_html = '<table class="table accounts_table table-striped table-bordered table-hover">' +
+                        '<thead>' +
+                          '<tr>' +
+                            '<th>{{langmod.RSLABEL7}}/{{langmod.RSLABEL8}}</th>' +
+                            '<th style="width:180px;">{{langmod.RSLABEL9}}</th>' +
+                            // '<th>{{langmod.RSLABEL10}}</th>' +
+                            '<th style="width:160px;">{{langmod.RSLABEL11}}</th>' +
+                            '<th style="width:100px;">{{langmod.RSLABEL12}}</th>' +
+                            '<th style="width:100px;">{{langmod.RSLABEL25}}</th>' +
+                            '<th style="width:120px;">{{langmod.RSLABEL13}}</th>' +
+                          '</tr>' +
+                        '</thead>'+
+                        '<tbody id="contenttr">' +
+                          html_content +
+                        '</tbody>' +
+                      '</table>';
+    $('#table_accounts_wrapper').html(table_html);
+    $('.accounts_table').DataTable().destroy();
+    accounts_table = $('.accounts_table').DataTable();
+    $('[data-toggle="tooltip"]').tooltip()
+  }else{
+    $('#table_accounts_wrapper').html('<div class="empty_list"><h4 class="text-success">{{langmod.RSLABEL96}}</h4></div>');
+  }
+}
+function saveNewAccount(){
+  if(uchip.validator('.checkdom')){
+    uchip.handleButton('.sv-account-btn', 'fa-floppy-o');
+    uchip.handleButton('.cnl-account-btn', 'fa-ban');
+    let backup = $('#backup').is(':checked') ? 1 : 0;
+    let autossl = $('#autossl').is(':checked') ? 1 : 0;
+    let pass = Base64.encode($("#account_password").val());
+    let data = 'domain=' + $('#domainadd').val() + '&username=' + $('#account_username').val() + '&password=' + pass + '&email=' +
+    $('#emailadd').val() + '&lang=' + $('#lang_account').val() + '&package=' + $('#package_account').val() + '&backup=' + backup + '&autossl=' + autossl;
+    uchip.call('module=reseller&acc=addaccount', {
+      data: data,
+      callback: function(response){
+        if(response.result == 'success'){
+          noti_bubble('{{langmod.RSLABEL82}}','{{langmod.RSLABEL64}}','success',false,false,'3000',true);
+          //listAccounts(response.list);
+          cancelNewAccount();
+            $('#accounts_table').DataTable().ajax.reload( function ( json ) {
+
+            } );
+        }else{
+          let message = '{{langmod.RSLABEL33}}';
+          if(response.code == '1'){
+            message = '{{langmod.RSLABEL84}}';
+          }else if(response.code == '2'){
+            message = '{{langmod.RSLABEL85}}';
+          }else if(response.code == '3'){
+            message = '{{langmod.RSLABEL83}}';
+          }else if(response.code == '4'){
+            message = '{{langmod.RSLABEL29}}';
+          }else if(response.code == '5'){
+            message = '{{langmod.RSLABEL29}}';
+          }else if(response.code == '6'){
+            message = '{{langmod.RSLABEL87}}';
+          }
+          noti_bubble(message,'{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+        }
+        uchip.handleButton('.sv-account-btn', 'fa-floppy-o', true);
+        uchip.handleButton('.cnl-account-btn', 'fa-ban', true);
+      }
+    });
+  }
+}
+function cancelNewAccount(){
+  uchip.slideToggle('#account_list_wrapper','#add_new_account_container',function(){
+    $('#domainadd').val('');
+    $('#account_username').val('');
+    $('#account_password').val('');
+    $('#emailadd').val('');
+    $('#package_account').val('');
+    $('#lang_account').val('{{lang}}')
+    $('#account_password').pwstrength('forceUpdate');
+    $('#backup').prop('checked',true);
+    $('#autossl').prop('checked',false);
+    $('#domainadd').unbind('keyup');
+    uchip.validator('.checkdom',true);
+  });
+}
+function domain_reseller(){
+  $('#domainadd').keyup(function(){
+    let string_domain = $(this).val();
+    let regex = /-|_|\./gi;
+    let respst = string_domain.replace(regex, '');
+    let resplo = respst.toLowerCase()
+    $("#account_username").val(resplo.substr(0, 8));
+  });
+}
+function changeemail(id){
+    // $().html('ddd');
+    // $("#divemail"+id).toggle('blind');
+  uchip.slideToggle('#divemail' + id,'#email' + id);
+}
+function cancel_changeemail(id){
+  uchip.slideToggle('#email' + id, '#divemail' + id, function(){
+    $('#changeemail' + id).val($('#email' + id).data('email'));
+  });
+}
+function cancelPackageEdit(id){
+  uchip.slideToggle('#packname' + id, '#divpack' + id);
+}
+function editPackage(id){
+  let package_account = $('#packname' + id).data('package');
+  $('#pack_sel_' + id).html($('#package_account').html());
+  $('#pack_sel_' + id).val(package_account);
+  uchip.slideToggle('#divpack' + id,'#packname' + id);
+}
+function updatePlanInline(newpack, id){
+  newpack.disk_quota = 1000;
+  newpack.bandwidth = 50000;
+  $('#packname' + id).data('package', newpack.id);
+  $('#package_title_' + id).text(newpack.package_name);
+  cancelPackageEdit(id);
+  updateIndi('#bar_dd_' + id, newpack.disk_quota);
+  updateIndi('#bar_bw_' + id, newpack.bandwidth);
+}
+function updateIndi(selector, quota){
+  let dd_used = $(selector).data('used');
+  let dd_bar = $(selector).find('.indibar');
+  $(selector).find('.package-limit').text(uchip.humanFileSize(quota * 1024 * 1024));
+  let porcen = (100 * dd_used) / quota;
+  dd_bar.width(porcen);
+  dd_bar.removeClass();
+  dd_bar.addClass('indibar ' + uchip.getBarColor(porcen));
+}
+function saveemail(id){
+  if(uchip.validator('#changeemail' + id)){
+    uchip.handleButton('#divemail' + id + ' .btn-primary','fa-check-circle');
+    uchip.handleButton('#divemail' + id + ' .btn-danger','fa-times-circle');
+    let email = $('#changeemail' + id).val();
+    uchip.call('module=reseller&acc=editaccount', {
+      data: 'type=email&id=' + id + '&email=' + email,
+      callback: function(response){
+        if(response.result == 'success'){
+          $('#email' + id).data('email', email);
+          $('#email_title_' + id).text(email);
+          cancel_changeemail(id);
+          noti_bubble('{{langmod.RSLABEL75}}','{{langmod.RSLABEL64}}','success',false,false,'3000',true);
+        }else{
+          noti_bubble('{{langmod.RSLABEL33}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+        }
+        uchip.handleButton('#divemail' + id + ' .btn-primary','fa-check-circle', true);
+        uchip.handleButton('#divemail' + id + ' .btn-danger','fa-times-circle', true);
+      }
+    });
+  }
+}
+function updatePackage(id){
+  if(uchip.validator('#pack_sel_' + id)){
+    uchip.handleButton('#divpack' + id + ' .btn-primary','fa-check-circle');
+    uchip.handleButton('#divpack' + id + ' .btn-danger','fa-times-circle');
+    uchip.call('module=reseller&acc=editaccount', {
+      data: 'type=package&id=' + id + '&pack=' + $('#pack_sel_' + id).val(),
+      callback: function(response){
+        if(response.result == 'success'){
+          updatePlanInline(response.package, id);
+          noti_bubble('{{langmod.RSLABEL75}}','{{langmod.RSLABEL64}}','success',false,false,'3000',true);
+        }else{
+          let message = '{{langmod.RSLABEL33}}';
+          if(response.code == '1'){
+            message = '{{langmod.RSLABEL88}}';
+          }else if(response.code == '6'){
+            message = '{{langmod.RSLABEL87}}';
+          }
+          noti_bubble(message,'{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+        }
+        uchip.handleButton('#divpack' + id + ' .btn-primary','fa-check-circle', true);
+        uchip.handleButton('#divpack' + id + ' .btn-danger','fa-times-circle', true);
+      }
+    });
+  }
+
+}
+function newpassreseller(){
+  if(uchip.validator('.passchange-field')){
+    let uaccount = $('#subaccount_pass').val();
+    uchip.handleButton('#btn_sv_npass','fa-floppy-o');
+    uchip.handleButton('#btn_cncl_npass','fa-ban');
+    uchip.call('module=reseller&acc=rchangepass', {
+      data: 'pass1=' + Base64.encode($("#resellerpass1").val()) + '&useraccount=' + uaccount,
+      callback: function(response){
+        if(response.result == 'success'){
+          $("#modal-reseller_pass").modal('toggle');
+          noti_bubble('{{langmod.RSLABEL89}}','{{langmod.RSLABEL64}}','success',false,false,'3000',true);
+        }else{
+          noti_bubble('{{langmod.RSLABEL33}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+        }
+        uchip.handleButton('#btn_sv_npass','fa-floppy-o', true);
+        uchip.handleButton('#btn_cncl_npass','fa-ban', true);
+      }
+    });
+  }
+}
+function reseller_changepass(account){
+    $("#mytitleresseller").html('{{langmod.RSLABEL47}}  ('+account+')');
+    $("#subaccount_pass").val(account);
+    $("#modal-reseller_pass").modal('toggle');
+    return false;
+}
+$('#modal-reseller_pass').on('hidden.bs.modal', function (e) {
+  $('#resellerpass1').val('');
+  $('#resellerpass2').val('');
+  $('#subaccount_pass').val('');
+  $('#resellerpass1').pwstrength('forceUpdate');
+})
+function changebackup(id){
+  uchip.handleButton('#backup' + id, 'fa-database');
+  uchip.call('module=reseller&acc=modifybackup', {
+    data: 'id=' + id + '&type=backup',
+    callback: function(response){
+      if(response.result == 'success'){
+        let newclass = 'btn-warning';
+        let newtitle = '{{langmod.RSLABEL44}}';
+        if(response.newst == 'on'){
+          newclass = 'btn-default';
+          newtitle = '{{langmod.RSLABEL43}}';
+        }
+        $('#backup' + id).attr('title', newtitle);
+        $('#backup' + id).removeClass();
+        $('#backup' + id).addClass('btn btn-xs tip clsactnr ' + newclass);
+        noti_bubble('{{langmod.RSLABEL90}}','{{langmod.RSLABEL64}}','success',false,false,'3000',true);
+      }else{
+        noti_bubble('{{langmod.RSLABEL33}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+      }
+      uchip.handleButton('#backup' + id,'fa-database', true);
+    }
+  });
+}
+function changest(user,elem){
+  let currst = $(elem).data('currst');
+  let curr_icon = currst == 1 ? 'fa-check' : 'fa-times';
+  uchip.handleButton(elem, curr_icon);
+  uchip.call('module=reseller&acc=modifystaccount', {
+    data: 'username=' + user + '&type=status',
+    callback: function(response){
+      if(response.result == 'success'){
+        let newclass = 'btn-warning';
+        let newtitle = '{{langmod.RSLABEL39}}';
+        let newicon = 'fa-times';
+        if(response.newst == '1'){
+          newclass = 'btn-primary';
+          newtitle = '{{langmod.RSLABEL38}}';
+          newicon = 'fa-check';
+        }
+        $(elem).data('currst', response.newst);
+        $(elem).attr('title', newtitle);
+        $(elem).removeClass();
+        // let icon = $(elem).find('i');
+        // icon.removeClass();
+        // icon.addClass('fa ' + newicon);
+        $(elem).addClass('btn ' + newclass + ' btn-xs tip clsactnr');
+        noti_bubble('{{langmod.RSLABEL91}}','{{langmod.RSLABEL64}}','success',false,false,'3000',true);
+        uchip.handleButton(elem,newicon, true);
+      }else{
+        uchip.handleButton(elem,curr_icon, true);
+        noti_bubble('{{langmod.RSLABEL33}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+      }
+
+    }
+  });
+}
+function deleteaccount(id, st, account, index){
+  if(st == 0){
+    let strfooter = '<button type="button" class="btn btn-white" data-dismiss="modal">{{ langmod.RSLABEL42 }}</button>' +
+                    '<button type="button" class="btn btn-primary" id="btnyesdel" onclick="return deleteaccount(' + id + ',1,\'' + account + '\',' + index + ')">{{langmod.RSLABEL94}}</button>';
+    let strbody = '<h4>{{langmod.RSLABEL92}}:</h4><span>' + account + '</span><h4>{{langmod.RSLABEL93}}</h4>';
+    $("#delete_reselleracc_modal .modal-body").html(strbody);
+    $("#delete_reselleracc_modal .modal-footer").html(strfooter);
+    $('#delete_reselleracc_modal').modal('show');
+  }else{
+    $("#delete_reselleracc_modal").modal('hide');
+    uchip.handleButton('#btn_acc_del_' + id,'fa-trash');
+    let tr = $('#tr_raccount_' + id);
+    tr.addClass('deleting_tr');
+    tr.find('button').addClass('disabled').prop('disabled', true);
+    uchip.call('module=reseller&acc=deleteaccount', {
+      data: 'username=' + id,
+      callback: function(response){
+        if(response.result == 'success'){
+          noti_bubble('{{langmod.RSLABEL95}}','{{langmod.RSLABEL64}}','success',false,false,'3000',true);
+          {#tr.slideUp('fast', function(){
+            accounts_table.row(this).remove().draw();
+          });
+          list_accounts.splice(index, 1);#}
+            $('#accounts_table').DataTable().ajax.reload( function ( json ) {
+
+            } );
+        }else{
+          tr.removeClass('deleting_tr');
+          tr.find('button').removeClass('disabled').prop('disabled', false);
+          uchip.handleButton('#btn_acc_del_' + id,'fa-trash', true);
+          noti_bubble('{{langmod.RSLABEL33}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+        }
+      }
+    });
+  }
+}
+function showNewPackageForm(){
+  uchip.slideToggle('#add_new_package_container','#packages_list_wrapper');
+}
+function cancelNewPackage(callback){
+  uchip.slideToggle('#packages_list_wrapper','#add_new_package_container', function(){
+    $('.packinput').each(function(){
+      $(this).val('');
+    });
+    $('#pack_form_title').text('{{langmod.RSLABEL101}}');
+    $('#is_editing').val(0);
+    uchip.validator('.packinput',true);
+    if (typeof callback === "function") {
+      callback();
+    }
+  });
+
+}
+function listPackages(list){
+  list_packages = list;
+  if(list_packages.length > 0){
+    let html_content = '';
+    let index = 0;
+    list_packages.forEach(function(pack){
+      html_content += '<tr id="tr_rpackage_' + index + '">' +
+                        '<td class="actions-td">' +
+                            '<div class="btn-group">';
+      if({{mod.license}} != '0'){
+        html_content +='<button class="btn btn-default btn-xs tip btnnor' + pack.id + '" data-package=\'' + JSON.stringify(pack) + '\' title="{{langmod.RSLABEL79}}" onclick="return editpackage(this)"><i class="fa fa-file-code-o"></i></button>' +
+        '<button id="btn_del_pack_' + index + '" class="btn btn-danger btn-xs tip btnnor' + pack.id + '" title="{{langmod.RSLABEL40}}" onclick="return deletepackage(' + pack.id + ',0,\'' + pack.package_name + '\',' + index + ')"><i class="fa fa-trash"></i></button>';
+      }
+      html_content +='</div>' +
+                    '</td>' +
+                    '<td>' + pack.package_name + '</td>' +
+                    '<td align="center">' + pack.disk_quota + '</td>' +
+                    '<td align="center">' + pack.bandwidth + '</td>' +
+                    '<td align="center">' + pack.ftp_accounts + '</td>' +
+                    '<td align="center">' + pack.email_accounts + '</td>' +
+                    '<td align="center">' + pack.email_lists + '</td>' +
+                    '<td align="center">' + pack.databases + '</td>' +
+                    '<td align="center">' + pack.sub_domains + '</td>' +
+                    '<td align="center">' + pack.parked_domains + '</td>' +
+                    '<td align="center">' + pack.addons_domains + '</td>' +
+                    '<td align="center">' + pack.hourly_emails + '</td>' +
+                    '<td align="center">' + pack.nodejs_apps + '</td>';
+                    if(pack.mongo_database!=undefined){
+                      html_content +='<td align="center">' + pack.mongo_database + '</td>';
+                    }
+                    if(pack.pgresql_database!=undefined){
+                      html_content +='<td align="center">' + pack.pgresql_database + '</td>';
+                    }
+      html_content +='</tr>';
+      index++;
+    });
+    let table_html = '<table class="table packages_table table-striped table-bordered table-hover">' +
+                        '<thead>' +
+                          '<tr>' +
+                            '<th style="width:60px">{{langmod.RSLABEL13}}</th>' +
+                            '<th style="width:100px">{{langmod.RSLABEL15}}</th>' +
+                            '<th style="width:100px">{{langmod.RSLABEL16}}</th>' +
+                            '<th style="width:100px">{{langmod.RSLABEL25}}</th>' +
+                            '<th style="width:100px">{{langmod.RSLABEL17}}</th>' +
+                            '<th style="width:100px">{{langmod.RSLABEL18}}</th>' +
+                            '<th style="width:100px">{{langmod.RSLABEL19}}</th>' +
+                            '<th style="width:100px">{{langmod.RSLABEL24}}</th>' +
+                            '<th style="width:100px">{{langmod.RSLABEL20}}</th>' +
+                            '<th style="width:100px">{{langmod.RSLABEL21}}</th>' +
+                            '<th style="width:100px">{{langmod.RSLABEL22}}</th>' +
+                            '<th style="width:100px">{{langmod.RSLABEL23}}</th>' +
+                          '</tr>' +
+                        '</thead>'+
+                        '<tbody id="contenttr">' +
+                          html_content +
+                        '</tbody>' +
+                      '</table>';
+    if(packages_table != null){
+      $('.packages_table').DataTable().destroy();
+    }
+    $('#table_packages_wrapper').html(table_html);
+
+    $('[data-toggle="tooltip"]').tooltip()
+  }else{
+    $('#table_packages_wrapper').html('<div class="empty_list"><h4 class="text-success">{{langmod.RSLABEL121}}</h4></div>');
+  }
+}
+function listPackagesX(){
+  if($("#swajaxpack").val()==''){
+    var table2='';
+    table2 = $('#packs_table').DataTable( {
+      "processing": true,
+      "bProcessing": true,
+      "bServerSide": true,
+      'iDisplayLength': 10,
+      "ajax": {
+        "url": "./{{users}}/index.php?module=reseller&acc=listspack",
+        "type": "POST"
+      }
+    } );
+    $("#swajaxpack").val(1);
+  }
+}
+$(".packages_tab").click(function (){
+  listPackagesX();
+});
+function saveNewPackage(){
+  if(uchip.validator('.packinput')){
+    let data = '';
+    $('.packinput').each(function(){
+      data += $(this).attr('id') + '=' + $(this).val() + '&';
+    });
+    uchip.handleButton('.sv-package-btn', '.fa-floppy-o');
+    uchip.handleButton('.cnl-package-btn', '.fa-ban');
+    if($('#is_editing').val() == '0'){
+      mkSaveNewPackage(data);
+    }else{
+      mkUpdatePackage(data);
+    }
+  }
+}
+function mkUpdatePackage(data){
+  uchip.call('module=reseller&acc=updatepackage', {
+    data: data + 'id=' + $('#is_editing').val(),
+    callback: function(response){
+      if(response.result == 'success'){
+        noti_bubble('{{langmod.RSLABEL102}}','{{langmod.RSLABEL64}}','success',false,false,'3000',true);
+        cancelNewPackage(function(){
+          setTimeout(function(){
+            $('#packs_table').DataTable().ajax.reload( function ( json ) {
+
+            } );
+          },100);
+        });
+      }else{
+        noti_bubble('{{langmod.RSLABEL33}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+      }
+      uchip.handleButton('.sv-package-btn', '.fa-floppy-o', true);
+      uchip.handleButton('.cnl-package-btn', '.fa-ban', true);
+    }
+  });
+}
+function mkSaveNewPackage(data){
+  uchip.call('module=reseller&acc=addpackage', {
+    data: data,
+    callback: function(response){
+      if(response.result == 'success'){
+        noti_bubble('{{langmod.RSLABEL97}}','{{langmod.RSLABEL64}}','success',false,false,'3000',true);
+        $('#package_account').append('<option value="' + response.newpack.id + '">' + response.newpack.name + '</option>');
+        cancelNewPackage(function(){
+          setTimeout(function(){
+           {# packages_table = $('.packages_table').DataTable({
+                "scrollX": true
+            });#}
+            $('#packs_table').DataTable().ajax.reload( function ( json ) {
+
+            } );
+          },100);
+        });
+      }else{
+        noti_bubble('{{langmod.RSLABEL33}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+      }
+      uchip.handleButton('.sv-package-btn', '.fa-floppy-o', true);
+      uchip.handleButton('.cnl-package-btn', '.fa-ban', true);
+    }
+  });
+}
+function deletepackage(id, st, package_name, index){
+  if(st == 0){
+    let strfooter = '<button type="button" class="btn btn-white" data-dismiss="modal">{{ langmod.RSLABEL42 }}</button>' +
+                    '<button type="button" class="btn btn-primary" onclick="return deletepackage(' + id + ',1,\'' + package_name + '\',' + index + ')">{{langmod.RSLABEL94}}</button>';
+    let strbody = '<h4>{{langmod.RSLABEL99}}:</h4><span>' + package_name + '</span><h4>{{langmod.RSLABEL93}}</h4>';
+    $("#delete_package_modal .modal-body").html(strbody);
+    $("#delete_package_modal .modal-footer").html(strfooter);
+    $('#delete_package_modal').modal('show');
+  }else{
+    $("#delete_package_modal").modal('hide');
+    uchip.handleButton('#btn_del_pack_' + index,'fa-trash');
+    let tr = $('#tr_rpackage_' + index);
+    tr.addClass('deleting_tr');
+    tr.find('button').addClass('disabled').prop('disabled', true);
+    uchip.call('module=reseller&acc=deletepackage', {
+      data: 'id=' + id,
+      callback: function(response){
+        if(response.result == 'success'){
+          noti_bubble('{{langmod.RSLABEL100}}','{{langmod.RSLABEL64}}','success',false,false,'3000',true);
+          {#tr.slideUp('fast', function(){
+            packages_table.row(this).remove().draw();
+          });
+          list_packages.splice(index, 1);#}
+          $('#packs_table').DataTable().ajax.reload( function ( json ) {
+
+          } );
+        }else{
+          tr.removeClass('deleting_tr');
+          tr.find('button').removeClass('disabled').prop('disabled', false);
+          uchip.handleButton('#btn_del_pack_' + index,'fa-trash', true);
+          let message = '{{langmod.RSLABEL33}}';
+          if(response.hasOwnProperty('code') && response.code == 1){
+            message = '{{langmod.RSLABEL34}}';
+          }
+          noti_bubble(message,'{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+        }
+      }
+    });
+  }
+}
+function editpackage(elem){
+  let pack_data = $(elem).data('package');
+  $('#package_name').val(pack_data.package_name);
+  $('#disk_quota').val(pack_data.disk_quota);
+  $('#bandwidth').val(pack_data.bandwidth);
+  $('#ftp_accounts').val(pack_data.ftp_accounts);
+  $('#email_accounts').val(pack_data.email_accounts);
+  $('#email_lists').val(pack_data.email_lists);
+  $('#databases').val(pack_data.databases);
+  $('#sub_domains').val(pack_data.sub_domains);
+  $('#parked_domains').val(pack_data.parked_domains);
+  $('#addons_domains').val(pack_data.addons_domains);
+  $('#hourly_emails').val(pack_data.hourly_emails);
+  $('#nodejs_apps').val(pack_data.nodejs_apps);
+  if(pack_data.mongo_database!=undefined){ $('#mongo_database').val(pack_data.mongo_database); }
+  if(pack_data.pgresql_database!=undefined){ $('#pgresql_database').val(pack_data.pgresql_database); }
+
+
+  $('#pack_form_title').text('{{langmod.RSLABEL36}}');
+  $('#is_editing').val(pack_data.id);
+  showNewPackageForm();
+}
+function featPackChange(elem){
+  if($(elem).val() != ''){
+    let option_selected = $(elem).children("option:selected");
+    $('#tit_pack_feat').text(option_selected.data('name'));
+    let features = option_selected.data('features');
+    let verb_feat = '{{langmod.RSLABEL104}}';
+    $('#pack_feat_edit').val('');
+    $('#opmodules option').prop('selected', false);
+    if(features.length > 0){
+      $('#pack_feat_edit').val($(elem).val());
+      if(dual_select_features != null){
+        features.forEach(function(feat) {
+          $('#opmodules option[value="' + feat + '"]').prop('selected', true);
+        });
+        verb_feat = '{{langmod.RSLABEL105}}';
+      }
+    }
+    dual_select_features.bootstrapDualListbox('refresh', true);
+    $('#verb_feat').text(verb_feat);
+    $('.wizard-big').slideDown('fast');
+  }else{
+    $('.wizard-big').slideUp('fast');
+  }
+}
+let dual_select_features = null;
+$(".features_tab").click(function (){
+  setTimeout(function(){
+    if($('#loader_features').is(':visible')){
+      uchip.call('module=reseller&acc=initfeatures', {
+        callback: function(response){
+          if(response.hasOwnProperty('modules')){
+            let html_pack = '<option value="">{{langmod.RSLABEL110}}</option>';
+            response.packages.forEach(function(pack){
+              html_pack += '<option data-name="' + pack.package_name + '" data-features=\'' + JSON.stringify(pack.features) + '\' value="' + pack.id + '">' + pack.package_name + (pack.features.length > 0 ? ' - ({{langmod.RSLABEL111}})' : ' - ({{langmod.RSLABEL112}})') +'</option>';
+            });
+            $('#packagessel').html(html_pack);
+            let multi_sel = '';
+            response.modules.forEach(function(mod){
+              multi_sel += '<option value="' + mod + '">' + mod + '</option>';
+            });
+            $('#opmodules').html(multi_sel);
+            dual_select_features = $('.dual_select').bootstrapDualListbox({
+              selectorMinimalHeight: 160
+            });
+            $('.dual_select').on('change',function (e) {
+                // $('#bootstrap-duallistbox-nonselected-list_').trigger('focus');
+                setTimeout(function(){
+                  $('#bootstrap-duallistbox-nonselected-list_ option').css('display','block');
+                  $('#bootstrap-duallistbox-selected-list_ option').css('display','block');
+                }, 10);
+            });
+            listPackagesFeatures(response.packages.filter(function(pack){
+              return pack.features.length > 0;
+            }));
+            $('#btn_add_feature').fadeIn('fast');
+          }
+        }
+      });
+    }
+  },10);
+});
+let featpack_table = null;
+function featuresShowHide(elem){
+  if($('.rs-hidden-feat').is(':visible')){
+    $('.rs-hidden-feat').hide();
+    $(elem).html('<i class="fa fa-plus"></i> {{langmod.RSFEATLAB5}}');
+  }else{
+    $('.rs-hidden-feat').show();
+    $(elem).html('<i class="fa fa-minus"></i> {{langmod.RSFEATLAB6}}');
+  }
+
+}
+function listPackagesFeatures(list){
+  list_packages_features = list;
+  // list_packages_features = [];
+  if(list_packages_features.length > 0){
+    let html_content = '';
+    let index = 0;
+    list_packages_features.forEach(function(pack){
+      html_content += '<tr id="trfealist' + pack.id + '">' +
+                        '<td class="per5">' + (index + 1) + '</td>' +
+                        '<td>' + pack.package_name + '</td>' +
+                        '<td class="labels-features">' +
+                          pack.features.map(function(fea, i){ return '<span class="pull-left label label-primary' + (i > 11 ? ' rs-hidden-feat' : '') + '" style="margin-left: 5px;">' + fea + '</span> '}).join('') +
+                          (pack.features.length > 12 ? '<span style="margin-left: 5px;" onclick="featuresShowHide(this)" class="pull-left label label-success rs-more-features"><i class="fa fa-plus"></i> {{langmod.RSFEATLAB5}}</span>' : '')  +
+                        '</td>' +
+                        '<td class="actions-td" style="width:60px">';
+      if({{mod.license}} != '0'){
+          html_content += '<button class="btn btn-default btn-xs tip clsnormod' + pack.id + '" data-toggle="tooltip" data-placement="top" aria-hidden="true" title="{{langmod.RSFEATLAB7}}" onclick="return editpackmod(' + pack.id + ')" id="bntedifeac' + pack.id + '"><i class="fa fa-file-code-o"></i></button>' +
+                          '<button id="btn_del_featpack_' + index + '" class="btn btn-danger btn-xs tip clsnormod' + pack.id + '" data-toggle="tooltip" data-placement="top" aria-hidden="true" title="{{langmod.RSFEATLAB8}}" onclick="return deletepackmod(' + pack.id + ',0,\'' + pack.package_name + '\',' + index + ')"><i class="fa fa-trash"></i></button>';
+      }
+      html_content += '</td>' +
+                    '</tr>';
+      index++;
+    });
+    let table_html = '<table class="table packfeatures_table table-striped table-bordered table-hover">' +
+                        '<thead>' +
+                          '<tr>' +
+                            '<th class="per5">#</th>' +
+                            '<th>Package</th>' +
+                            '<th>Modules</th>' +
+                            '<th style="width:60px">Action</th>' +
+                          '</tr>' +
+                        '</thead>'+
+                        '<tbody id="contenttr">' +
+                          html_content +
+                        '</tbody>' +
+                      '</table><p class="sub-info-table-features">{{langmod.RSLABEL80}}</p>';
+    // if(packages_table != null){
+    //   $('.packages_table').DataTable().destroy();
+    // }
+    $('.packfeatures_table').DataTable().destroy();
+    $('#features_wrapper').html(table_html);
+    featpack_table = $('.packfeatures_table').DataTable();
+    $('[data-toggle="tooltip"]').tooltip()
+  }else{
+    $('#features_wrapper').html('<div class="empty_list features_empty"><h4 class="text-success">{{langmod.RSLABEL103}}</h4><p><strong>{{langmod.RSLABEL80}}</strong></p></div>');
+  }
+}
+function cancelNewFeat(){
+  uchip.slideToggle('#features_list_wrapper','#add_new_feature_container', function(){
+    $('#opmodules option').prop('selected', false);
+    dual_select_features.bootstrapDualListbox('refresh', true);
+    $('#packagessel').val('');
+    $('#packagessel').prop('disabled', false);
+    $('.wizard-big').hide();
+    $('#pack_feat_edit').val('');
+    $('.dualselect-error').hide();
+    $('.packagessel-error').remove();
+    $('#packagessel').removeClass('error');
+  });
+}
+function showNewFeatForm(){
+  uchip.slideToggle('#add_new_feature_container','#features_list_wrapper');
+}
+function newFeatpack(){
+  let sel_features = validFeatures();
+  let isvalid = true;
+  let succmess = '{{langmod.RSLABEL109}}';
+  let pack = $('#pack_feat_edit').val();
+  if($('#pack_feat_edit').val() == ''){
+    isvalid = uchip.validator('#packagessel');
+    succmess = '{{langmod.RSLABEL108}}';
+    pack = $('#packagessel').val();
+  }
+  if(isvalid && sel_features){
+    uchip.handleButton('.sv-feat-btn', '.fa-floppy-o');
+    uchip.handleButton('.cnl-feat-btn', '.fa-ban');
+    uchip.call('module=reseller&acc=newfeatpack', {
+      data: 'pack=' + pack + '&mod=' + sel_features,
+      callback: function(response){
+        if(response.result == 'success'){
+          noti_bubble(succmess,'{{langmod.RSLABEL64}}','success',false,false,'3000',true);
+          listPackagesFeatures(response.list.filter(function(pack){
+            return pack.features.length > 0;
+          }));
+          let option = $('#packagessel option[value="' + pack + '"]');
+          option.data('features', sel_features.split(','));
+          option.text(option.data('name') + ' - ({{langmod.RSLABEL111}})');
+          cancelNewFeat();
+        }else{
+          noti_bubble('{{langmod.RSLABEL33}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+        }
+        uchip.handleButton('.sv-feat-btn', '.fa-floppy-o', true);
+        uchip.handleButton('.cnl-feat-btn', '.fa-ban', true);
+      }
+    });
+  }
+}
+function validFeatures(){
+  if(!$('.wizard-big').is(':visible')){
+    return false;
+  }
+  let features = false;
+  let sel_features = $('#opmodules').children("option:selected");
+  if(sel_features.length > 0){
+    features = '';
+    $('.dualselect-error').hide();
+    sel_features.each(function(){
+      features += $(this).val() + ',';
+    });
+    features = features.slice(0, -1);
+  }else{
+    $('.dualselect-error').show();
+  }
+  return features;
+}
+function saveFeatSettings(){
+  newFeatpack();
+}
+function editpackmod(id){
+  let elem = '#packagessel';
+  $(elem).val(id);
+  $(elem).prop('disabled', true);
+  featPackChange(elem);
+  showNewFeatForm();
+}
+function deletepackmod(id, st, package_name, index){
+  if(st == 0){
+    let strfooter = '<button type="button" class="btn btn-white" data-dismiss="modal">{{ langmod.RSLABEL42 }}</button>' +
+                    '<button type="button" class="btn btn-primary" onclick="return deletepackmod(' + id + ',1,\'' + package_name + '\',' + index + ')">{{langmod.RSLABEL94}}</button>';
+    let strbody = '<h4>{{langmod.RSLABEL114}}:</h4><span>' + package_name + '</span><h4>{{langmod.RSLABEL93}}</h4>';
+    $("#delete_featpack_modal .modal-body").html(strbody);
+    $("#delete_featpack_modal .modal-footer").html(strfooter);
+    $('#delete_featpack_modal').modal('show');
+  }else{
+    $("#delete_featpack_modal").modal('hide');
+    uchip.handleButton('#btn_del_featpack_' + index,'fa-trash');
+    let tr = $('#trfealist' + id);
+    tr.addClass('deleting_tr');
+    tr.find('button').addClass('disabled').prop('disabled', true);
+    uchip.call('module=reseller&acc=deletefeatpack', {
+      data: 'id=' + id,
+      callback: function(response){
+        if(response.result == 'success'){
+          noti_bubble('{{langmod.RSLABEL100}}','{{langmod.RSLABEL64}}','success',false,false,'3000',true);
+          tr.slideUp('fast', function(){
+            featpack_table.row(this).remove().draw();
+          });
+          let option = $('#packagessel option[value="' + id + '"]');
+          option.data('features', []);
+          option.text(option.data('name') + ' - ({{langmod.RSLABEL112}})');
+          list_packages_features.splice(index, 1);
+        }else{
+          tr.removeClass('deleting_tr');
+          tr.find('button').removeClass('disabled').prop('disabled', false);
+          uchip.handleButton('#btn_del_featpack_' + index,'fa-trash', true);
+          let message = '{{langmod.RSLABEL33}}';
+          noti_bubble(message,'{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+        }
+      }
+    });
+  }
+}
+$(".nameservers_tab").click(function (){
+  setTimeout(function(){
+    if($('#loader_namerservers').is(':visible')){
+      uchip.call('module=reseller&acc=nameserverlist', {
+        callback: function(response){
+          let html_select = '<option value="">{{langmod.RSJSLAB3}}</option>';
+          response.data.domains.forEach(function(dom){
+            html_select += '<option value="' + dom.domain + '">' + dom.domain + '</option>';
+          });
+          $('.ns-select').html(html_select);
+          renderNS(response.data.ns);
+          $('#loader_namerservers').fadeOut('fast', function(){
+            $('#nameservers_wrapper').fadeIn();
+          });
+        }
+      });
+    }
+  },10);
+});
+function renderNS(nsdata){
+  //if(nsdata!=null){
+    $('.ns-select').val('');
+    let inputst = nsdata.custom == 'on' ? false : true;
+    // let inputst = 'on' == 'on' ? false : true;
+    $('.ns-input').prop('disabled', inputst);
+    $('#main_nameserver').prop('checked', inputst);
+    $('#ns1p').html(nsdata.ns1 + '.' + nsdata.reg1 + ' (' + nsdata.ip1 + ')');
+    $('#ns2p').html(nsdata.ns2 + '.' + nsdata.reg2 + ' (' + nsdata.ip2 + ')');
+    $('#ns3p').html((nsdata.reg3.isEmpty() ? '' : nsdata.ns3 + '.' + nsdata.reg3 + ' (' + nsdata.ip3 + ')'));
+    $('#ns4p').html((nsdata.reg4.isEmpty() ? '' : nsdata.ns4 + '.' + nsdata.reg4 + ' (' + nsdata.ip4 + ')'));
+    $('#ns5p').html((nsdata.reg5.isEmpty() ? '' : nsdata.ns5 + '.' + nsdata.reg5 + ' (' + nsdata.ip5 + ')'));
+    if(nsdata.affected > 0 && nsdata.pending_change == 1){
+      let content = '{{langmod.RSLABEL67}} <b>' + nsdata.affected + '</b> {{langmod.RSLABEL68}} <b>' +
+              nsdata.zonedns + '</b> {{langmod.RSLABEL69}}. <span id="btn_confirm_ns"><a class="alert-link" href="javascript:void(0)" onclick="return changednszonebtn()">' +
+              '{{langmod.RSLABEL70}}</a> / <a class="alert-link" href="javascript:void(0)" onclick="return btnnotalert(0)">{{langmod.RSLABEL71}}</a></span>';
+      $("#alertdiv .alert").html(content);
+      $("#alertdiv").slideDown('fast');
+      $('#alert_acc_qty').text(nsdata.affected);
+      $('#alert_zon_qty').text(nsdata.zonedns);
+    }
+  //}
+}
+function saveNS(elem){
+  let data = '';
+  if($("#main_nameserver").is(':checked')){
+    data = 'customdns=off';
+  }else{
+    if(uchip.validator('.ns-required')){
+      data = 'prens1=' + $('#ns1').val() + '&prens2=' + $('#ns2').val() + '&prens3=' + $('#ns3').val() + '&prens4=' +
+              $('#ns4').val() + '&prens5=' + $('#ns5').val() + '&dom1=' + $('#domainnameserver1').val() + '&dom2=' +
+              $('#domainnameserver2').val() + '&dom3=' + $('#domainnameserver3').val() + '&dom4=' + $('#domainnameserver4').val() +
+              '&dom5=' + $('#domainnameserver5').val() + '&customdns=on';
+    }else{
+      noti_bubble('{{langmod.RSLABEL65}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+      return;
+    }
+  }
+  uchip.handleButton(elem, 'fa-floppy-o');
+  uchip.call('module=reseller&acc=nameserverupdate', {
+    data: data,
+    callback: function(response){
+      if(response.result == 'success'){
+        renderNS(response.datans);
+        if(response.datans.affected > 0){
+          noti_bubble('{{langmod.RSLABEL115}}','{{langmod.RSLABEL64}}','success',false,false,'6000',true);
+        }else{
+          noti_bubble('{{langmod.RSLABEL66}}','{{langmod.RSLABEL64}}','success',false,false,'6000',true);
+        }
+        uchip.handleButton(elem, 'fa-floppy-o', true);
+      }else{
+        noti_bubble('{{langmod.RSLABEL33}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+      }
+    }
+  });
+  return;
+}
+function btnnotalert(st){
+  if(st == 0){
+    $('#noupdate_ns').modal('show');
+  }else{
+    $('#noupdate_ns').modal('hide');
+    uchip.call('module=reseller&acc=dismissautomatic');
+    $("#alertdiv").slideUp('fast');
+  }
+}
+function changednszonebtn(){
+  $('#btn_confirm_ns').html('<i class="fa fa-spinner fa-spin"></i>');
+  uchip.handleButton('#bntaddns', 'fa-floppy-o');
+  uchip.call('module=reseller&acc=nameserverupgrade', {
+    callback: function(response){
+      if(response.result == 'success'){
+        $("#alertdiv").slideUp('fast');
+        noti_bubble('{{langmod.RSLABEL119}}','{{langmod.RSLABEL64}}','success',false,false,'6000',true);
+      }else{
+        noti_bubble('{{langmod.RSLABEL33}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+      }
+      uchip.handleButton('#bntaddns', 'fa-floppy-o', true);
+    }
+  });
+}
+function delimgreseller(st){
+    if(st==0){
+        $(".opdelimnres0").hide();
+        $(".opdelimnres1").show();
+        return false;
+    }
+    if(st==1){
+        $(".opdelimnres1").hide();
+        $("#loader_img_del").show();
+        uchip.call('module=reseller&acc=brandingdelfile', {
+          callback: function(response){
+            $("#imgreseller").hide();
+            $("#dropzone-form").show('blind');
+            $("#divdeletes").hide();
+            $(".opdelimnres1").hide();
+            $("#loader_img_del").hide();
+            $(".opdelimnres0").show();
+            $("#logomenu").attr('src','{{url}}/img/cwp_logo.png');
+          }
+        });
+        return false;
+    }
+    if(st==2){
+        $(".opdelimnres1").hide();
+        $(".opdelimnres0").show();
+        return false;
+    }
+}
+Dropzone.options.dropzoneForm = {
+  success: function(file, response){
+      reemplogo(response);
+      this.removeAllFiles(true);
+  }
+};
+function reemplogo(response){
+    // $("#logomenu").attr('src','https://{{mod.domain_username}}/reseller/img/' + response.img);
+    // $("#imgreseller").attr('src','https://{{mod.domain_username}}/reseller/img/' + response.img);
+    $("#logomenu").attr('src',response.img);
+    $("#imgreseller").attr('src',response.img);
+    $("#dropzone-form").hide();
+    $("#imgreseller").show('blind');
+    $("#divdeletes").show();
+}
+function branding(){
+  if(!$('#loader_branding').is(':visible')){
+    return;
+  }
+  uchip.call('module=reseller&acc=brandinglist', {
+    callback: function(response){
+      if(response.hasOwnProperty('text_footer')){
+        $("#footertext").val(response.text_footer);
+      }
+      if(response.hasOwnProperty('panel_title')){
+        $("#titletext").val(response.panel_title);
+      }
+      if(response.hasOwnProperty('backup_fromn')){
+        $("#bckfromname").val(response.backup_fromn);
+      }
+      if(response.hasOwnProperty('backup_froma')){
+        $("#bckfromemail").val(response.backup_froma);
+      }
+      if(!response.img.isEmpty()){
+        $("#imgreseller").attr("src",response.img);
+        $("#dropzone-form").hide();
+        $("#imgreseller").show();
+      }else{
+        $("#imgreseller").hide();
+        $("#dropzoneForm").show();
+        $("#imgreseller").attr("src","");
+      }
+      uchip.slideToggle('#branding_wrapper','#loader_branding');
+    }
+  });
+}
+function apimanager(){
+  if(!$('#loader_apimanager').is(':visible')){
+    return;
+  }
+  uchip.call('module=reseller&acc=apimanager', {
+    callback: function(response){
+      //console.log(response);
+      if(response.hasOwnProperty('reg')){
+        if(response.reg > 0){
+          var table = '';
+              var sw=1;
+              $.each(response.cont, function(i, item) {
+                table+='<tr id="td'+item.line+'">';
+                table+='<th scope="row">'+sw+'</th>';
+                table+='<td>'+item.name+'</td>';
+                table+='<td align="center">'+item.ip+'</td>';
+                table+='<td align="center" style="font-weight: bold">'+item.key+'</td>';
+                var funciones = item.funct.split(',');
+                var mostrFunc ='';
+                var cont=0;
+                for(i=0;i<funciones.length;i++){
+                  var eti='';
+                  if(funciones[i]=='accout_add'){ eti='{{ langmod.ACCOUT_ADD }}';}
+                  if(funciones[i]=='accout_upd'){ eti='{{ langmod.ACCOUT_UPD }}';}
+                  if(funciones[i]=='accout_del'){ eti='{{ langmod.ACCOUT_DEL }}';}
+                  if(funciones[i]=='accout_susp'){ eti='{{ langmod.ACCOUT_SUSP }}';}
+                  if(funciones[i]=='accout_unsp'){ eti='{{ langmod.ACCOUT_UNSP }}';}
+                  if(funciones[i]=='changpass_udp'){ eti='{{ langmod.CHANGPASS_UDP }}';}
+                  if(funciones[i]=='pack_list'){ eti='{{ langmod.PACK_LIST }}';}
+                  if(cont==4){
+                    mostrFunc+='<span class="badge badge-info" title="'+eti+'">'+funciones[i]+'</span><br>';
+                    cont=0;
+                  }else{
+                    mostrFunc+='<span class="badge badge-info" title="'+eti+'">'+funciones[i]+'</span> ';
+                    cont++;
+                  }
+                }
+                table+='<td align="center">'+mostrFunc+'</td>';
+                table+='<td align="center">'+item.form+'</td>';
+                table+='<td><button class="btn btn-default btn-xs tip btnnor5" title="Edit" onclick="return editTok('+item.line+')"><i class="fa fa-file-code-o"></i></button> <button id="btn_del_pack_0" class="btn btn-danger btn-xs tip btnnor5" title="Delete" onclick="return deleteTok(0,'+item.line+',\''+item.name+'\')"><i class="fa fa-trash"></i></button></td>';
+                table+='</tr>';
+                sw++;
+              });
+            //table+='</tbody></table>';
+              $("#tbodylist").html(table);
+        }else{
+          $("#tbodylist").html('<tr><td colspan="8" align="center">{{ langmod.RSJSLAB35 }}</td></tr>');
+        }
+      }
+      uchip.slideToggle('#apimanager_wrapper','#loader_apimanager');
+      return false;
+    }
+  });
+}
+function showNewToken(){
+  uchip.slideToggle('#add_new_token_container','#apimanager_container', function(){
+    //domain_reseller();
+  });
+  return false;
+}
+function showNewip() {
+  uchip.slideToggle('#add_new_ip_container','#firewall_container', function(){
+
+  });
+  return false;
+}
+function deleteTok(st,id,name){
+  if(st==0){
+    $("#linedel").val(id);
+    $("#del_token_modal .modal-body").html('<p align="center">'+name+'</p>');
+    $("#del_token_modal").modal('toggle');
+    return false;
+  }else{
+    $("#btndeletetoken").attr('disabled',true);
+    $("#btndeletetoken").addClass('disabled');
+    uchip.call('module=reseller&acc=apimanagerdel&id='+$("#linedel").val(), {
+      callback: function(response){
+        console.log(response);
+        if(response=='OK'){
+          listtokenapi();
+          noti_bubble('','{{langmod.RSJSLAB15}}','success',false,false,'3000',true);
+          $("#btndeletetoken").attr('disabled',false);
+          $("#btndeletetoken").removeClass('disabled');
+          $("#del_token_modal").modal('toggle');
+          return false;
+        }else{
+          noti_bubble('','{{langmod.RSJSLAB16}}','error',false,false,'3000',true);
+          $("#btndeletetoken").attr('disabled',false);
+          $("#btndeletetoken").removeClass('disabled');
+          $("#del_token_modal").modal('toggle');
+          return false;
+        }
+      }
+    });
+  }
+}
+function listtokenapi(){
+  uchip.call('module=reseller&acc=apimanagerlist', {
+    callback: function(response){
+      //console.log(response);
+      var sw=1;
+      var table='';
+      $.each(response.cont, function(i, item) {
+        table+='<tr id="td'+item.line+'">';
+        table+='<th scope="row">'+sw+'</th>';
+        table+='<td>'+item.name+'</td>';
+        table+='<td align="center">'+item.ip+'</td>';
+        table+='<td align="center" style="font-weight: bold">'+item.key+'</td>';
+        var funciones = item.funct.split(',');
+        var mostrFunc ='';
+        var cont = 0;
+        for(i=0;i<funciones.length;i++){
+          var eti='';
+          if(funciones[i]=='accout_add'){ eti='{{ langmod.ACCOUT_ADD }}';}
+          if(funciones[i]=='accout_upd'){ eti='{{ langmod.ACCOUT_UPD }}';}
+          if(funciones[i]=='accout_del'){ eti='{{ langmod.ACCOUT_DEL }}';}
+          if(funciones[i]=='accout_susp'){ eti='{{ langmod.ACCOUT_SUSP }}';}
+          if(funciones[i]=='accout_unsp'){ eti='{{ langmod.ACCOUT_UNSP }}';}
+          if(funciones[i]=='changpass_udp'){ eti='{{ langmod.CHANGPASS_UDP }}';}
+          if(funciones[i]=='pack_list'){ eti='{{ langmod.PACK_LIST }}';}
+          if(cont==4){
+            mostrFunc+='<span class="badge badge-info" title="'+eti+'">'+funciones[i]+'</span><br>';
+            cont=0;
+          }else{
+            mostrFunc+='<span class="badge badge-info" title="'+eti+'">'+funciones[i]+'</span> ';
+            cont++;
+          }
+        }
+        table+='<td align="center">'+mostrFunc+'</td>';
+        table+='<td align="center">'+item.form+'</td>';
+        table+='<td><button class="btn btn-default btn-xs tip btnnor5" title="Edit" onclick="return editTok('+item.line+')"><i class="fa fa-file-code-o"></i></button> <button id="btn_del_pack_0" class="btn btn-danger btn-xs tip btnnor5" title="Delete" onclick="return deleteTok(0,'+item.line+',\''+item.name+'\')"><i class="fa fa-trash"></i></button></td>';
+        table+='</tr>';
+        sw++;
+      });
+      $("#tbodylist").html(table);
+    }
+  });
+  return false;
+}
+function editTok(id){
+  uchip.call('module=reseller&acc=apimanagerupd&id='+id, {
+    callback: function(response){
+      if(response.status=='OK'){
+        if(response.reg >0){
+          uchip.slideToggle('#edit_token_container','#apimanager_container', function(){
+            $("#lineEdit").val(id);
+            $("#nameEdit").val(response.name);
+            $("#hostEdit").val(response.ip);
+            $("#tokenEdit").val(response.key);
+            $("#formatEdit").append("<option value=\""+response.form+"\" selected>"+response.form+"</option>");
+            var checkdef = response.funct;
+            var arry = checkdef.split(',');
+            //$("input:checkbox").attr('checked', false);
+            for(i=0;i<arry.length;i++){
+              $("#"+arry[i]+"_edit").attr('checked', true);
+            }
+          });
+          return false;
+        }else{
+          noti_bubble('','{{langmod.RSLABEL33}}','error',false,false,'4000',true);
+          return false;
+        }
+      }else{
+        noti_bubble('','{{langmod.RSLABEL33}}','error',false,false,'4000',true);
+        return false;
+      }
+    }
+  });
+  return false;
+}
+function updateToken(){
+  var sw = 0;
+  if($("#nameEdit").val()==''){$("#nameEdit").css('border','1px solid #ed5565'); }else{$("#nameEdit").css('border','1px solid #e5e6e7');}
+  if($("#hostEdit").val()==''){$("#hostEdit").css('border','1px solid #ed5565'); }else{$("#hostEdit").css('border','1px solid #e5e6e7');}
+  if($("#tokenEdit").val()==''){$("#tokenEdit").css('border','1px solid #ed5565'); }else{$("#tokenEdit").css('border','1px solid #e5e6e7');}
+
+  if(sw==1){
+    noti_bubble('','{{langmod.RSJSLAB28}}','error',false,false,'3000',true);
+    return false;
+  }else{
+    var opc='';
+    $("#EditTable input:checkbox:checked").each(function() {
+      //opc+=$(this).attr("id")+',';
+      opc+=$(this).val()+',';
+    });
+    $(".btnsav").attr('disabled',true);
+    $(".btnsav").addClass('disabled');
+    $.ajax({
+      type: "POST",
+      url: "./{{ users }}/index.php?module=reseller&acc=apimanagerupdate",
+      data:"name="+$("#nameEdit").val()+"&host="+$("#hostEdit").val()+"&tokenT="+$("#tokenEdit").val()+"&opc="+opc+"&formt="+$("#formatEdit").val()+"&acc=apimanagerupdate&line="+$("#lineEdit").val(),
+      complete: function(datos){
+        var obj = JSON.parse(datos.responseText);
+        if(obj.status=="OK"){
+          $(".btnsav").attr('disabled',false);
+          $(".btnsav").removeClass('disabled');
+          noti_bubble('','{{langmod.RSJSLAB34}}','success',false,false,'3000',true);
+          listtokenapi();
+          cancelNewToken(1);
+          return false;
+        }else{
+          $(".btnsav").attr('disabled',false);
+          $(".btnsav").removeClass('disabled');
+          noti_bubble('','{{langmod.RSLABEL33}}','error',false,false,'3000',true);
+          return false;
+        }
+      }
+    });
+    return false;
+  }
+}
+function miniGraph(settings) {
+  // used, limit, label1, label2, selector
+  let gf2a = settings.used;
+  let gf2b = settings.limit;
+  let dispemail, consemail;
+
+  if (gf2b <= 0) {
+    dispemail = gf2b === 0 ? 0 : 100;
+    consemail = 100 - dispemail;
+  } else {
+    let percentage = (gf2a / gf2b) * 100;
+    if (percentage >= 100) {
+      consemail = 100;
+      dispemail = 0;
+    } else {
+      consemail = Math.round(percentage);
+      dispemail = Math.round(100 - percentage);
+    }
+  }
+
+  let classbar = '#23c6c8';
+  if (consemail >= 26 && consemail <= 50) {
+    classbar = '#1ab394';
+  } else if (consemail >= 51 && consemail <= 75) {
+    classbar = '#f8ac59';
+  } else if (consemail > 75) {
+    classbar = '#ed5565';
+  }
+
+  let doughnutData = {
+    labels: ['{{langene.DSWLABEL2}}', '{{langene.DSWLABLE1}}'],
+    datasets: [{
+      data: [consemail, dispemail],
+      backgroundColor: [classbar, "#dedede"]
+    }]
+  };
+
+  var doughnutOptions = {
+    responsive: false,
+    legend: {
+      display: false
+    },
+    tooltips: {
+      callbacks: {
+        label: function(tooltipItem, data) {
+          var label = data.labels[tooltipItem.index] + ': ' + data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index] + '%';
+          return label;
+        }
+      }
+    }
+  };
+
+  var emailg = document.getElementById(settings.selector).getContext("2d");
+  new Chart(emailg, {type: 'doughnut', data: doughnutData, options: doughnutOptions});
+}
+function check_domain(){
+    $(".checkdom").attr('disabled',true);
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=reseller&op=accounts&acc=check_domain",
+        data:"domain="+$("#domainadd").val(),
+        complete: function(datos){
+            //console.log(datos.responseText);
+            if(datos.responseText==1){
+                $("#domainadd").attr('disabled',false);
+                $("#domainadd").css('border', 'solid 1px red');
+                noti_bubble('{{langmod.RSLABEL29}}','{{langmod.RSLABEL28}}','error',false,false,'4000',true);
+                $("#validate_domain").val('');
+            }else if(datos.responseText==2){
+                $("#domainadd").attr('disabled',false);
+                $("#domainadd").css('border', 'solid 1px red');
+                noti_bubble('{{langmod.RSLABEL30}}','{{langmod.RSLABEL28}}','error',false,false,'4000',true);
+                $("#validate_domain").val('');
+            }else{
+                $("#domainadd").css('border', 'solid 1px green');
+                $(".checkdom").attr('disabled',false);
+                $("#validate_domain").val(1);
+            }
+        }
+    });
+}
+function changepackage(id,pack,st){
+    if(st==0){
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=reseller&op=accounts&acc=change_pack",
+            data:"id="+id+"&pack="+pack,
+            complete: function(datos){
+                $("#divpack"+id).html('<select id="selpack'+id+'" class="form-control">'+datos.responseText+'</select>  <a href="#" onclick="return changepackage('+id+','+pack+',1)"><i class="fa fa-check-circle"></i></a>  <a href="#" class="color-green" onclick="return changepackage('+id+','+pack+',2)"><i class="fa fa-times-circle"></i></a>');
+                $("#divpack"+id).toggle('blind');
+            }
+        });
+        return false;
+    }else if(st==1){
+        var idsel = $("#selpack"+id).val();
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=reseller&op=accounts&acc=update&type=package",
+            data:"id="+id+"&pack="+idsel,
+            complete: function(datos){
+                //alert(datos.responseText);
+                var name = $('#selpack'+id+' option:selected').text();
+                $("#packname"+id).html(name);
+                $("#divpack"+id).hide('blind');
+                return false;
+            }
+        });
+    }else{
+        $("#divpack"+id).hide();
+        return false;
+    }
+
+}
+function check_user(){
+    $(".checkdom").attr('disabled',true);
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=reseller&op=accounts&acc=check_user",
+        data:"username="+$("#username").val(),
+        complete: function(datos){
+            if(datos.responseText==1){
+                $("#username").attr('disabled',false);
+                $("#username").css('border', 'solid 1px red');
+                noti_bubble('{{langmod.RSLABEL29}}','{{langmod.RSLABEL28}}','error',false,false,'4000',true);
+                $("#validate_user").val('');
+                if($("#validate_domain").val()==1){$("#domainadd").attr('disabled',false);}
+            }else if(datos.responseText==2){
+                $("#username").attr('disabled',false);
+                $("#username").css('border', 'solid 1px red');
+                noti_bubble('{{langmod.RSLABEL30}}','{{langmod.RSLABEL28}}','error',false,false,'4000',true);
+                $("#validate_user").val('');
+                if($("#validate_domain").val()==1){$("#domainadd").attr('disabled',false);}
+            }else{
+                $("#username").css('border', 'solid 1px green');
+                $(".checkdom").attr('disabled',false);
+                $("#validate_user").val(1);
+                if($("#validate_domain").val()==1){$("#domainadd").attr('disabled',false);}
+            }
+        }
+    });
+}
+function savepackages(){
+    if($("#package_name").val()==''){ $("#package_name").css('border', 'solid 1px red'); noti_bubble('{{langmod.RSLABEL32}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true); return false;}
+    $("#btnsavepackages").attr('disabled',true);
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=reseller&op=packages&acc=save",
+        data:"package_name="+$("#package_name").val()+"&disk_quota="+$("#disk_quota").val()+"&bandwidth="+$("#bandwidth").val()+"&ftp_accounts="+$("#ftp_accounts").val()+"&email_accounts="+$("#email_accounts").val()+"&email_lists="+$("#email_lists").val()+"&databases="+$("#databases").val()+"&sub_domains="+$("#sub_domains").val()+"&parked_domains="+$("#parked_domains").val()+"&addons_domains="+$("#addons_domains").val()+"&hourly_emails="+$("#hourly_emails").val()+"&id="+$("#modeedit").val(),
+        complete: function(datos){
+            //console.log(datos.responseText);
+            if(datos.responseText==1){
+                $("#tr_packages").html('<tr><td align="center" colspan="12"> <i class="fa fa-spinner fa-spin fa-3x"></i></td></tr>');
+                $.ajax({
+                    type: "POST",
+                    url: "./{{ users }}/index.php?module=reseller&op=packages&acc=list",
+                    complete: function(datos){
+                        $("#btncreatepackages").attr('disabled',false);
+                        $("#modal-addpackages").modal('toggle');
+                        $("#tr_packages").html(datos.responseText);
+                        return false;
+                    }
+                });
+            }else{
+                noti_bubble('{{langmod.RSLABEL33}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+                return false;
+            }
+            return false;
+        }
+    });
+}
+function search_packages(){
+    $("#package_account").html('<option >{{ langmog.RSLABEL37 }}</option>');
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=reseller&op=accounts&acc=search_packages",
+        complete: function(datos){
+            $("#package_account").html(datos.responseText);
+            return false;
+        }
+    });
+    return false;
+}
+function packageaccount(){
+    if($("#package_account").val()!=''){
+        if($("#domainadd").val()!=''){
+            if($("#username").val()!=''){
+                $("#btncreateaccounts").attr('disabled',false);
+                $("#btncreateaccounts").removeClass('disabled');
+            }else{
+                $("#btncreateaccounts").attr('disabled',true);
+                $("#btncreateaccounts").addClass('disabled');
+            }
+        }else{
+            $("#btncreateaccounts").attr('disabled',true);
+            $("#btncreateaccounts").addClass('disabled');
+        }
+    }else{
+        $("#btncreateaccounts").attr('disabled',true);
+        $("#btncreateaccounts").addClass('disabled');
+    }
+}
+function newvalidpassreseller(pass1,pass2){
+    var expreg =/^[a-zA-Z0-9\_\.\-\/]+$/i;
+    var sw1=0;
+    var sw2=0;
+    if(pass1!=""){
+        //var resp=expreg.test(pass1);
+        var resp = true;
+        if(resp==false){
+            noti_bubble('{{langmod.ERROR1}}','{{langmod.RSLABEL58}}','error',true,false,'3000',true);
+            sw1=1;
+        }else{
+            sw1=3;
+        }
+    }
+    if(pass2!=""){
+        //var resp=expreg.test(pass2);
+        var resp = true;
+        if(resp==false){
+            noti_bubble('{{langmod.ERROR1}}','{{langmod.RSLABEL58}}','error',true,false,'3000',true);
+            sw2=1;
+            $("#btn-resellsubmit").hide();
+        }else{
+            sw2=3;
+        }
+    }
+    if((pass1==pass2)&&(sw1 + sw2)==6) { $("#btn-resellsubmit").show(); }else{ $("#btn-resellsubmit").hide(); }
+}
+function createaccount(){
+    var namebtn =$("#btncreateaccounts").text();
+    $("#btncreateaccounts").attr('disabled',true);
+    $("#btncreateaccounts").addClass('disabled');
+    $("#btncreateaccounts").html('<i class="fa fa-spinner fa-spin"></i>'+namebtn);
+    if($("#backup").attr('checked')){ var backup = 1;}else{ var backup = 0;}
+    if($("#autossl").attr('checked')){ var autossl = 1;}else{ var autossl = 0;}
+    if(($("#domainadd").val()=='')||($("#username").val()=='')||($("#emailadd").val()=='')||($("#package_account").val()=='')||($("#password").val()=='')){
+        noti_bubble('{{langmod.RSLABEL33}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+        $("#btncreateaccounts").html(namebtn);
+        return false;
+    }
+
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    var pass = Base64.encode($("#password").val());
+    var date = "domain="+$("#domainadd").val()+"&username="+$("#username").val()+"&password="+pass+"&email="+$("#emailadd").val()+"&package="+$("#package_account").val()+"&backup="+backup+"&autossl="+autossl;
+    $.ajax({
+        type: "POST",
+        url: "./{{ users }}/index.php?module=reseller&op=accounts&acc=add",
+        data: date,
+        complete: function(datos){
+            //console.log(datos.responseText);
+            if(datos.responseText==1){
+                ini_list_accounts(0);
+                ini_detailreseller();
+                $("#modal-addaccount").modal('toggle');
+                return false;
+            }else{
+                noti_bubble(datos.responseText,'{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+                $("#btncreateaccounts").attr('disabled',false);
+                $("#btncreateaccounts").removeClass('disabled');
+                $("#btncreateaccounts").html(namebtn);
+            }
+            return false;
+        }
+    });
+}
+function delnns(id,st){
+    if(st==0){ $(".clsnorns"+id).hide(); $(".clsdelns"+id).show(); }
+    if(st==1){
+        $("#icondelns"+id).addClass('disabled');
+        $("#icondelns"+id).attr('disabled',true);
+        $("#icondelns"+id).html('<i class="fa fa-spinner fa-spin"></i>');
+        $.ajax({
+            type: "POST",
+            url: "./{{ users }}/index.php?module=reseller&op=nameserver&acc=del",
+            data:"id="+id,
+            complete: function(datos){
+                $(".clsdelns"+id).hide('blind');
+                $(".clsnorns"+id).hide('blind');
+                $("#nsp"+id).hide('blind');
+
+                return false;
+            }
+        });
+    }
+    if(st==2){ $(".clsdelns"+id).hide(); $(".clsnorns"+id).show(); }
+}
+function main_nameserver(){
+    if($("#main_nameserver").prop('checked')){
+        $("#ns1").attr('disabled',true);
+        $("#ns2").attr('disabled',true);
+        $("#ns3").attr('disabled',true);
+        $("#ns4").attr('disabled',true);
+        $("#ns5").attr('disabled',true);
+        $("#domainnameserver1").attr('disabled',true);
+        $("#domainnameserver2").attr('disabled',true);
+        $("#domainnameserver3").attr('disabled',true);
+        $("#domainnameserver4").attr('disabled',true);
+        $("#domainnameserver5").attr('disabled',true);
+    }else{
+        $("#ns1").attr('disabled',false);
+        $("#ns2").attr('disabled',false);
+        $("#ns3").attr('disabled',false);
+        $("#ns4").attr('disabled',false);
+        $("#ns5").attr('disabled',false);
+        $("#domainnameserver1").attr('disabled',false);
+        $("#domainnameserver2").attr('disabled',false);
+        $("#domainnameserver3").attr('disabled',false);
+        $("#domainnameserver4").attr('disabled',false);
+        $("#domainnameserver5").attr('disabled',false);
+    }
+}
+function caracterilimitado(str) {
+    let res = str.replace("-1", "&infin;");
+    res = res.replace("undefined", "&infin;");
+    return res;
+}
+function generate_pass(longitud,id){
+    var caracteres = "abcdefghijkmnpqrtuvwxyz!@*()/|ABCDEFGHIJKLMNPQRTUVWXYZ2346789";
+    var contraseña = "";
+    for (i=0; i<longitud; i++) contraseña += caracteres.charAt(Math.floor(Math.random()*caracteres.length));
+    $("#"+id).val(contraseña);
+}
+function autologin(t,u,r){
+    $("#tokenuser").val(t);
+    $("#userRes").val(r);
+    $('#autologinuser').attr("action", u);
+    $("#autologinuser").submit();
+    return false;
+}
+function saveNewToken(){
+  var sw = 0;
+  if($("#nameT").val()==''){ sw=1; $("#nameT").css('border','1px solid #ed5565'); }else{$("#nameT").css('border','1px solid #e5e6e7');}
+  if($("#hostT").val()==''){ sw=1; $("#hostT").css('border','1px solid #ed5565'); }else{$("#hostT").css('border','1px solid #e5e6e7');}
+  if($("#tokenT").val()==''){ sw=1; $("#tokenT").css('border','1px solid #ed5565'); }else{$("#tokenT").css('border','1px solid #e5e6e7');}
+
+  if(sw==1){
+    noti_bubble('','{{langmod.RSJSLAB28}}','error',false,false,'3000',true);
+    return false;
+  }else{
+    var opc='';
+    $("input:checkbox:checked").each(function() {
+      opc+=$(this).attr("id")+',';
+    });
+    $(".btnsav").attr('disabled',true);
+    $(".btnsav").addClass('disabled');
+    $.ajax({
+      type: "POST",
+      url: "./{{ users }}/index.php?module=reseller&acc=apimanagersave",
+      data:"name="+$("#nameT").val()+"&host="+$("#hostT").val()+"&tokenT="+$("#tokenT").val()+"&opc="+opc+"&formt="+$("#formatT").val()+"&acc=apimanagersave",
+      complete: function(datos){
+        console.log(datos.status);
+        if(datos.status=="200" || datos.status=="OK"){
+          $(".btnsav").attr('disabled',false);
+          $(".btnsav").removeClass('disabled');
+          noti_bubble('','{{langmod.RSJSLAB34}}','success',false,false,'3000',true);
+          listtokenapi();
+          cancelNewToken(0);
+          return false;
+        }else{
+          $(".btnsav").attr('disabled',false);
+          $(".btnsav").removeClass('disabled'); //
+          noti_bubble('','{{langmod.RSLABEL33}}','error',false,false,'3000',true);
+          return false;
+        }
+      }
+    });
+    return false;
+  }
+}
+function cancelNewToken(sw){
+  if(sw==0){
+    uchip.slideToggle('#apimanager_container','#add_new_token_container', function(){
+      uncheckall();
+      $("#nameT").val('');
+      $("#hostT").val('');
+      $("#tokenT").val('');
+    });
+  }
+  if(sw==1){
+    uchip.slideToggle('#apimanager_container','#edit_token_container', function(){
+      uncheckall();
+      $("#nameT").val('');
+      $("#hostT").val('');
+      $("#tokenT").val('');
+    });
+  }
+
+}
+function cancelNewIp(){
+    uchip.slideToggle('#firewall_container','#add_new_ip_container', function(){
+      $("#Ipfirewall").val('');
+    });
+}
+function saveNewIp(){
+  $("#Ipfirewall").css('border','1px solid #e5e6e7');
+  if($("#Ipfirewall").val()==''){
+    $("#Ipfirewall").css('border', 'solid 1px red');
+    noti_bubble('{{langmod.RSJSLAB82}}','','error',false,false,'3000',true);
+    return false;
+  }else{
+    $(".btnsav").attr('disabled',true);
+    $(".btnsav").addClass('disabled');
+    $.ajax({
+      type: "POST",
+      url: "./{{ users }}/index.php?module=reseller&acc=firewalladd",
+      data:"ip="+$("#Ipfirewall").val(),
+      complete: function(datos){
+        console.log(datos);
+        var obj = JSON.parse(datos.responseText);
+        if(obj.status=='OK'){
+          firewall();
+          $("#Ipfirewall").val('');
+          noti_bubble('{{langmod.RSJSLAB83}}','','success',false,false,'3000',true);
+          $(".btnsav").attr('disabled',false);
+          $(".btnsav").removeClass('disabled');
+          cancelNewIp();
+          return false;
+        }else if(obj.status=='Error'){
+          if(obj.code==1){
+            noti_bubble('{{langmod.RSJSLAB82}}','','error',false,false,'3000',true);
+          }else if(obj.code==2){
+            noti_bubble('{{langmod.RSJSLAB84}}','','error',false,false,'3000',true);
+          }else if(obj.code==3){
+            noti_bubble('{{langmod.RSJSLAB85}}','','error',false,false,'3000',true);
+          }
+          $(".btnsav").attr('disabled',false);
+          $(".btnsav").removeClass('disabled');
+          return false;
+        }
+        return false;
+      }
+    });
+  }
+  return false;
+}
+function autoselect(valor,sw){
+  if(valor=='whmcs'){
+    var checkdefauld = ["accout_add", "accout_upd", "accout_del","accout_susp","accout_unsp","pack_list","changpass_udp","user_session_list"];
+  }
+  if(sw==0){
+    $("#edit_token_container input:checkbox").attr('checked', false);
+    checkdefauld.forEach( function(valor, indice, array) {
+      $("#"+valor+"_edit").prop('checked', true);
+    });
+  }
+  if(sw==1){
+    $("#add_new_token_container input:checkbox").attr('checked', false);
+    checkdefauld.forEach( function(valor, indice, array) {
+      $("#"+valor).prop('checked', true);
+    });
+  }
+  return false;
+}
+function uncheckall(sw){
+  if(sw==0) {
+    $("#edit_token_container check").attr("checked", false);
+    //$("#edit_token_container input:checkbox").prop('checked', false);
+    //$("#edit_token_container check").prop("checked", this.false);
+    return false;
+  }else if(sw==1){
+    //$("#add_new_token_container check").attr("checked", false);
+    $("#add_new_token_container check").prop("checked", this.false);
+    return false;
+  }
+}
+function generate_token(){
+  var rand = function() {
+    return Math.random().toString(36).substr(2); // remove `0.`
+  };
+
+  var token = function() {
+    return rand() + rand();
+  };
+
+  $("#tokenT").val(token());
+}
+function handleStatus(elem){
+  let status = 1;
+  let curr_status = $(elem).is(':checked');
+  if (!curr_status){
+    status = 0;
+  }
+  let domain = $(elem).data('domain');
+  let user = $(elem).data('user');
+  let index = $(elem).data('index');
+  let tr_domain = $('#_reseller_modsec_domain_' + index);
+  tr_domain.addClass('deleting_tr');
+  tr_domain.find('.btn').addClass('disabled').prop('disabled', true);
+  uchip.call('module=reseller&acc=handlestatus', {
+    data: 'status=' + status + '&domain=' + domain+'&account='+user,
+    callback: function(response){
+      if (response.hasOwnProperty('result') && response.result == 'success') {
+        noti_bubble('Status Succesufully changed!', 'Success', 'success', false, false, '3000', true);
+      } else {
+        $(elem).prop('checked', !curr_status);
+        noti_bubble('An error ocurred, try again.', '{{langmod.SECLABEL2}}', 'error', false, false, '3000', true);
+      }
+      tr_domain.find('.btn').removeClass('disabled').prop('disabled', false);
+      tr_domain.removeClass('deleting_tr');
+    }
+  });
+}
+function modsecurity(){
+  uchip.call('module=reseller&acc=modsecuritylist', {
+    callback: function(response){
+      $('#loader_modseg').fadeOut('fast', function(){
+        var account =response.domains;
+        if(response.count>0){
+          var html ='';
+          list_accounts = response.domains;
+          var contador=1;
+          list_accounts.forEach(function(account){
+            html +='<tr id="_reseller_modsec_domain_' + contador + '">' +
+                    '<td >'+contador+'</td>' +
+                    '<td>'+account.domain+'</td>' +
+                    '<td align="center">'+account.tipe_domain+'</td>' +
+                    '<td align="center">'+account.username+'</td>' +
+                    '<td style="width:150px;">'+
+                      '<div class="reseller-modsec-action-td">'+
+                        '<div>' +
+                          '<div class="onoffswitch">' +
+                          '<input data-domain="' + account.domain + '" data-user="' + account.username + '" onchange="handleStatus(this)" data-index="' + contador + '" type="checkbox" ' + (account.active !== 1 ? '' : 'checked') + ' class="onoffswitch-checkbox" id="item_dom_' + contador + '">' +
+                          '<label class="onoffswitch-label" for="item_dom_' + contador + '">' +
+                          '<span class="onoffswitch-inner"></span>' +
+                          '<span class="onoffswitch-switch"></span>' +
+                          '</label>' +
+                          '</div>' +
+                          '<div class="ms-activator-loader">' +
+                          '<i class="fa fa-circle-o-notch fa-spin"></i>' +
+                          '</div>' +
+                        '</div>' +
+                        '<button type="button" title="{{langmod.SECLABEL9}}" data-toggle="tooltip" data-placement="top" aria-hidden="true" class="btn btn-success btn-xs" onclick="editRules(\'' + account.domain + '\',\'' + account.username + '\')">' +
+                          '<i class="fa fa-pencil-square-o"></i> {{langmod.SECLABEL4}}' +
+                        '</button>' +
+                        '<button type="button" title="{{langmod.SECLABEL10}}" data-toggle="tooltip" data-placement="top" aria-hidden="true" class="btn btn-primary btn-xs" onclick="checkIp(\'' + account.ip + '\', \'' + account.domain + '\')">' +
+                          '<i class="fa fa-sitemap"></i> {{langmod.SECLABEL5}}' +
+                        '</button>' +
+                      '</div>'+
+                    '</td>' +
+                    '</tr>';
+            contador++;
+          });
+        }else{
+          var html='<tr><td colspan="8" align="center">Sin datos</td></tr>';
+        }
+        $("#tbodylistmodseg").html(html);
+        $("#modseg_wrapper").show('blind');
+        $('#tablemodseg').DataTable().destroy();
+        domain_table = $('#tablemodseg').DataTable();
+      });
+    }
+  });
+  return false;
+}
+function detailFunction(funt){
+  var cont='';
+  var detcont=''; //
+  if(funt=='fcaccounts'){
+    cont='<div class="col-lg-1" style="font-weight: bold">Url:</div>\n' +
+            '                        <div class="col-lg-3"><span class="badge badge-success" style="color: #ffffff">https://{{ mod.ipreseller }}:2304/v1/account</span></div>\n' +
+            '                        <div class="col-lg-1" style="font-weight: bold">Method:</div>\n' +
+            '                        <div class="col-lg-1">POST</div>\n' +
+            '                        <div class="col-lg-1" style="font-weight: bold">Actions:</div>\n' +
+            '                        <div class="col-lg-3">\n' +
+            '                          <div class="row">\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <a href="#" onclick="return descripFunction(\'account\',\'add\')">\n' +
+            '                                <span class="badge badge-primary" style="color: #ffffff">add</span>\n' +
+            '                              </a>\n' +
+            '                            </div>\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <a href="#" onclick="return descripFunction(\'account\',\'udp\')">\n' +
+            '                                 <span class="badge badge-primary" style="color: #ffffff">udp</span>\n' +
+            '                              </a>\n' +
+            '                            </div>\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <a href="#" onclick="return descripFunction(\'account\',\'del\')">\n' +
+            '                                 <span class="badge badge-primary" style="color: #ffffff">del</span>\n' +
+            '                              </a>\n' +
+            '                            </div>\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <a href="#" onclick="return descripFunction(\'account\',\'list\')">\n' +
+            '                                 <span class="badge badge-primary" style="color: #ffffff">list</span>\n' +
+            '                              </a>\n' +
+            '                            </div>\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                               <a href="#" onclick="return descripFunction(\'account\',\'susp\')">\n' +
+            '                                 <span class="badge badge-primary" style="color: #ffffff">susp</span>\n' +
+            '                              </a>\n' +
+            '                            </div>\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <a href="#" onclick="return descripFunction(\'account\',\'unsp\')">\n' +
+            '                                 <span class="badge badge-primary" style="color: #ffffff">unsp</span>\n' +
+            '                              </a>\n' +
+            '                            </div>\n' +
+            '                          </div>\n' +
+            '                        </div>\n' +
+            '                        <div class="col-lg-1" style="font-weight: bold">Return:</div>\n' +
+            '                        <div class="col-lg-1">JSON/XML</div>'
+    var detcont='<p align="center">Click on an action to see the detail</p>';
+  }
+  if(funt=='fcaccoundetail'){
+    cont='<div class="col-lg-1" style="font-weight: bold">Url:</div>\n' +
+            '                        <div class="col-lg-3"><span class="badge badge-success" style="color: #ffffff">https://{{ mod.ipreseller }}:2304/v1/accountdetail</span></div>\n' +
+            '                        <div class="col-lg-1" style="font-weight: bold">Method:</div>\n' +
+            '                        <div class="col-lg-1">POST</div>\n' +
+            '                        <div class="col-lg-1" style="font-weight: bold">Actions:</div>\n' +
+            '                        <div class="col-lg-3">\n' +
+            '                          <div class="row">\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                                <span class="badge badge-secondary" style="color: #ffffff">add</span>\n' +
+            '                            </div>\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <span class="badge badge-secondary" style="color: #ffffff">udp</span>\n' +
+            '                            </div>\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <span class="badge badge-secondary" style="color: #ffffff">del</span>\n' +
+            '                            </div>\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <a href="#" onclick="return descripFunction(\'accountdetail\',\'list\')">\n' +
+            '                              <span class="badge badge-primary" style="color: #ffffff">list</span>\n' +
+            '                              </a>\n' +
+            '                            </div>\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <span class="badge badge-secondary" style="color: #ffffff">susp</span>\n' +
+            '                            </div>\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <span class="badge badge-secondary" style="color: #ffffff">unsp</span>\n' +
+            '                            </div>\n' +
+            '                          </div>\n' +
+            '                        </div>\n' +
+            '                        <div class="col-lg-1" style="font-weight: bold">Return:</div>\n' +
+            '                        <div class="col-lg-1">JSON/XML</div>'
+    var detcont='<p align="center">Click on an action to see the detail</p>';
+  }
+  if(funt=='fcautologin'){
+    cont='<div class="col-lg-1" style="font-weight: bold">Url:</div>\n' +
+            '                        <div class="col-lg-3"><span class="badge badge-success" style="color: #ffffff">https://{{ mod.ipreseller }}:2304/v1/user_session</span></div>\n' +
+            '                        <div class="col-lg-1" style="font-weight: bold">Method:</div>\n' +
+            '                        <div class="col-lg-1">POST</div>\n' +
+            '                        <div class="col-lg-1" style="font-weight: bold">Actions:</div>\n' +
+            '                        <div class="col-lg-3">\n' +
+            '                          <div class="row">\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                                <span class="badge badge-secondary" style="color: #ffffff">add</span>\n' +
+            '                            </div>\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <span class="badge badge-secondary" style="color: #ffffff">udp</span>\n' +
+            '                            </div>\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <span class="badge badge-secondary" style="color: #ffffff">del</span>\n' +
+            '                            </div>\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <a href="#" onclick="return descripFunction(\'user_session\',\'list\')">\n' +
+            '                              <span class="badge badge-primary" style="color: #ffffff">list</span>\n' +
+            '                              </a>\n' +
+            '                            </div>\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <span class="badge badge-secondary" style="color: #ffffff">susp</span>\n' +
+            '                            </div>\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <span class="badge badge-secondary" style="color: #ffffff">unsp</span>\n' +
+            '                            </div>\n' +
+            '                          </div>\n' +
+            '                        </div>\n' +
+            '                        <div class="col-lg-1" style="font-weight: bold">Return:</div>\n' +
+            '                        <div class="col-lg-1">JSON/XML</div>'
+    var detcont='<p align="center">Click on an action to see the detail</p>';
+  }
+  if(funt=='fcchangepass'){
+    cont='<div class="col-lg-1" style="font-weight: bold">Url:</div>\n' +
+            '                        <div class="col-lg-3"><span class="badge badge-success" style="color: #ffffff">https://{{ mod.ipreseller }}:2304/v1/changepass</span></div>\n' +
+            '                        <div class="col-lg-1" style="font-weight: bold">Method:</div>\n' +
+            '                        <div class="col-lg-1">POST</div>\n' +
+            '                        <div class="col-lg-1" style="font-weight: bold">Actions:</div>\n' +
+            '                        <div class="col-lg-3">\n' +
+            '                          <div class="row">\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                                <span class="badge badge-secondary" style="color: #ffffff">add</span>\n' +
+            '                            </div>\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <a href="#" onclick="return descripFunction(\'changepass\',\'udp\')">\n' +
+            '                              <span class="badge badge-primary" style="color: #ffffff">udp</span>\n' +
+            '                              </a>\n' +
+            '                            </div>\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <span class="badge badge-secondary" style="color: #ffffff">del</span>\n' +
+            '                            </div>\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <span class="badge badge-secondary" style="color: #ffffff">list</span>\n' +
+            '                            </div>\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <span class="badge badge-secondary" style="color: #ffffff">susp</span>\n' +
+            '                            </div>\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <span class="badge badge-secondary" style="color: #ffffff">unsp</span>\n' +
+            '                            </div>\n' +
+            '                          </div>\n' +
+            '                        </div>\n' +
+            '                        <div class="col-lg-1" style="font-weight: bold">Return:</div>\n' +
+            '                        <div class="col-lg-1">JSON/XML</div>'
+    var detcont='<p align="center">Click on an action to see the detail</p>';
+  }
+  if(funt=='fcpackages'){
+    cont='<div class="col-lg-1" style="font-weight: bold">Url:</div>\n' +
+            '                        <div class="col-lg-3"><span class="badge badge-success" style="color: #ffffff">https://{{ mod.ipreseller }}:2304/v1/packages</span></div>\n' +
+            '                        <div class="col-lg-1" style="font-weight: bold">Method:</div>\n' +
+            '                        <div class="col-lg-1">POST</div>\n' +
+            '                        <div class="col-lg-1" style="font-weight: bold">Actions:</div>\n' +
+            '                        <div class="col-lg-3">\n' +
+            '                          <div class="row">\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <a href="#" onclick="return descripFunction(\'packages\',\'add\')">\n' +
+            '                                 <span class="badge badge-primary" style="color: #ffffff">add</span>\n' +
+            '                              </a>\n' +
+            '                            </div>\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <a href="#" onclick="return descripFunction(\'packages\',\'udp\')">\n' +
+            '                               <span class="badge badge-primary" style="color: #ffffff">udp</span>\n' +
+            '                              </a>\n' +
+            '                            </div>\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <a href="#" onclick="return descripFunction(\'packages\',\'del\')">\n' +
+            '                               <span class="badge badge-primary" style="color: #ffffff">del</span>\n' +
+            '                              </a>\n' +
+            '                            </div>\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <a href="#" onclick="return descripFunction(\'packages\',\'list\')">\n' +
+            '                               <span class="badge badge-primary" style="color: #ffffff">list</span>\n' +
+            '                              </a>\n' +
+            '                            </div>\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <a href="#" onclick="return descripFunction(\'packages\',\'susp\')">\n' +
+            '                               <span class="badge badge-secondary" style="color: #ffffff">susp</span>\n' +
+            '                              </a>\n' +
+            '                            </div>\n' +
+            '                            <div class="col-lg-2">\n' +
+            '                              <a href="#" onclick="return descripFunction(\'packages\',\'unsp\')">\n' +
+            '                               <span class="badge badge-secondary" style="color: #ffffff">unsp</span>\n' +
+            '                              </a>\n' +
+            '                            </div>\n' +
+            '                          </div>\n' +
+            '                        </div>\n' +
+            '                        <div class="col-lg-1" style="font-weight: bold">Return:</div>\n' +
+            '                        <div class="col-lg-1">JSON/XML</div>'
+    var detcont='<p align="center">Click on an action to see the detail</p>';
+  }
+
+  $("#contfunct").html(cont);
+  $("#detfunctcont").html(detcont);
+  $("#titlecont").hide();
+  $("#contafifuctiondesc").show('blind');
+  return false;
+}
+function descripFunction(fuct,acc){
+  if(fuct=='account'){
+    if(acc=='add'){
+      var table='<table class="table packages_table table-striped table-bordered table-hover dataTable no-footer" id="detailFunc2">';
+      table+='<tr><td style="font-weight: bold">key:</td><td>{{ langmod.RSJSLAB39 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">action:</td><td>add</td></tr>';
+      table+='<tr><td style="font-weight: bold">user:</td><td>{{ langmod.RSJSLAB40 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">domain:</td><td>{{ langmod.RSJSLAB41 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">pass:</td><td>{{ langmod.RSJSLAB42 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">email:</td><td>{{ langmod.RSJSLAB43 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">package:</td><td>{{ langmod.RSJSLAB44 }}Create account with package</td></tr>';
+      table+='<tr><td style="font-weight: bold">inode:</td><td>{{ langmod.RSJSLAB45 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">limit_nproc:</td><td>{{ langmod.RSJSLAB46 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">limit_nofile:</td><td>{{ langmod.RSJSLAB47 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">server_ips:</td><td>{{ langmod.RSJSLAB48 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">autossl:</td><td>{{ langmod.RSJSLAB49 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">encodepass:</td><td>{{ langmod.RSJSLAB50 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">lang:</td><td>{{ langmod.RSJSLAB51 }}</td></tr>';
+      table+='</table>';
+    }
+    if(acc=='udp'){
+      var table='<table class="table packages_table table-striped table-bordered table-hover dataTable no-footer" id="detailFunc2">';
+      table+='<tr><td style="font-weight: bold">key:</td><td>{{ langmod.RSJSLAB39 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">action:</td><td>udp</td></tr>';
+      table+='<tr><td style="font-weight: bold">user:</td><td>{{ langmod.RSJSLAB40 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">email:</td><td>Email associated with the account</td></tr>';
+      table+='<tr><td style="font-weight: bold">package:</td><td>Package name or ID with @ front Ex: @12</td></tr>';
+      table+='<tr><td style="font-weight: bold">backup:</td><td>on/off</td></tr>';
+      table+='<tr><td style="font-weight: bold">inode:</td><td>number of Inode</td></tr>';
+      table+='<tr><td style="font-weight: bold">processes:</td><td>number of processes</td></tr>';
+      table+='<tr><td style="font-weight: bold">openfiles:</td><td>number of open files</td></tr>';
+      table+='<tr><td style="font-weight: bold">server_ips:</td><td>server_ips</td></tr>';
+      table+='</table>';
+    }
+    if(acc=='del'){
+      var table='<table class="table packages_table table-striped table-bordered table-hover dataTable no-footer" id="detailFunc2">';
+      table+='<tr><td style="font-weight: bold">key:</td><td>{{ langmod.RSJSLAB39 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">action:</td><td>del</td></tr>';
+      table+='<tr><td style="font-weight: bold">user:</td><td>{{ langmod.RSJSLAB40 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">email:</td><td>Email Address of the account owner</td></tr>';
+      table+='</table>';
+    }
+    if(acc=='list'){
+      var table='<table class="table packages_table table-striped table-bordered table-hover dataTable no-footer" id="detailFunc2">';
+      table+='<tr><td style="font-weight: bold">key:</td><td>{{ langmod.RSJSLAB39 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">action:</td><td>list</td></tr>';
+      table+='</table>';
+    }
+    if(acc=='susp'){
+      var table='<table class="table packages_table table-striped table-bordered table-hover dataTable no-footer" id="detailFunc2">';
+      table+='<tr><td style="font-weight: bold">key:</td><td>{{ langmod.RSJSLAB39 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">action:</td><td>susp</td></tr>';
+      table+='<tr><td style="font-weight: bold">user:</td><td>{{ langmod.RSJSLAB40 }}</td></tr>';
+      table+='</table>';
+    }
+    if(acc=='unsp'){
+      var table='<table class="table packages_table table-striped table-bordered table-hover dataTable no-footer" id="detailFunc2">';
+      table+='<tr><td style="font-weight: bold">key:</td><td>{{ langmod.RSJSLAB39 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">action:</td><td>unsp</td></tr>';
+      table+='<tr><td style="font-weight: bold">user:</td><td>{{ langmod.RSJSLAB40 }}</td></tr>';
+      table+='</table>';
+    }
+  }
+  if(fuct=='accountdetail'){
+    if(acc=='list'){
+      var table='<table class="table packages_table table-striped table-bordered table-hover dataTable no-footer" id="detailFunc2">';
+      table+='<tr><td style="font-weight: bold">key:</td><td>{{ langmod.RSJSLAB39 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">action:</td><td>list</td></tr>';
+      table+='<tr><td style="font-weight: bold">user:</td><td>{{ langmod.RSJSLAB40 }}</td></tr>';
+      table+='</table>';
+    }
+  }
+  if(fuct=='user_session'){
+    if(acc=='list'){
+      var table='<table class="table packages_table table-striped table-bordered table-hover dataTable no-footer" id="detailFunc2">';
+      table+='<tr><td style="font-weight: bold">key:</td><td>{{ langmod.RSJSLAB39 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">action:</td><td>list</td></tr>';
+      table+='<tr><td style="font-weight: bold">user:</td><td>{{ langmod.RSJSLAB52 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">timer:</td><td>{{ langmod.RSJSLAB53 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">module:</td><td>{{ langmod.RSJSLAB54 }}</td></tr>';
+      table+='</table>';
+    }
+  }
+  if(fuct=='changepass'){
+    if(acc=='udp'){
+      var table='<table class="table packages_table table-striped table-bordered table-hover dataTable no-footer" id="detailFunc2">';
+      table+='<tr><td style="font-weight: bold">key:</td><td>{{ langmod.RSJSLAB39 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">action:</td><td>udp</td></tr>';
+      table+='<tr><td style="font-weight: bold">user:</td><td>{{ langmod.RSJSLAB40 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">pass:</td><td>{{ langmod.RSJSLAB55 }}</td></tr>';
+      table+='</table>';
+    }
+  }
+  if(fuct=='packages'){
+    if(acc=='add'){
+      var table='<table class="table packages_table table-striped table-bordered table-hover dataTable no-footer" id="detailFunc2">';
+      table+='<tr><td style="font-weight: bold">key:</td><td>{{ langmod.RSJSLAB39 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">action:</td><td>add</td></tr>';
+      table+='<tr><td style="font-weight: bold">package_name:</td><td>{{ langmod.RSLABEL15 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">disk_quota:</td><td>{{ langmod.RSJSLAB56 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">bandwidth:</td><td>{{ langmod.RSLABEL25 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">ftp_accounts:</td><td>{{ langmod.RSJSLAB57 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">email_accounts:</td><td>{{ langmod.RSJSLAB58 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">email_lists:</td><td>{{ langmod.RSJSLAB59 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">databases:</td><td>{{ langmod.RSJSLAB60 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">sub_domains:</td><td>{{ langmod.RSJSLAB61 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">parked_domains:</td><td>{{ langmod.RSJSLAB62 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">addons_domains:</td><td>{{ langmod.RSJSLAB63 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">hourly_emails:</td><td>{{ langmod.RSJSLAB64 }}</td></tr>';
+      table+='</table>';
+    }
+    if(acc=='udp'){
+      var table='<table class="table packages_table table-striped table-bordered table-hover dataTable no-footer" id="detailFunc2">';
+      table+='<tr><td style="font-weight: bold">key:</td><td>{{ langmod.RSJSLAB39 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">action:</td><td>udp</td></tr>';
+      table+='<tr><td style="font-weight: bold">package_name:</td><td>{{ langmod.RSJSLAB65 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">disk_quota:</td><td>{{ langmod.RSJSLAB66 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">bandwidth:</td><td>{{ langmod.RSJSLAB67 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">ftp_accounts:</td><td>{{ langmod.RSJSLAB68 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">email_accounts:</td><td>{{ langmod.RSJSLAB69 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">email_lists:</td><td>{{ langmod.RSJSLAB70 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">databases:</td><td>{{ langmod.RSJSLAB71 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">sub_domains:</td><td>{{ langmod.RSJSLAB72 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">parked_domains:</td><td>{{ langmod.RSJSLAB73 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">addons_domains:</td><td>{{ langmod.RSJSLAB74 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">hourly_emails:</td><td>{{ langmod.RSJSLAB75 }}</td></tr>';
+      table+='</table>';
+    }
+    if(acc=='del'){
+      var table='<table class="table packages_table table-striped table-bordered table-hover dataTable no-footer" id="detailFunc2">';
+      table+='<tr><td style="font-weight: bold">key:</td><td>{{ langmod.RSJSLAB39 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">action:</td><td>del</td></tr>';
+      table+='<tr><td style="font-weight: bold">package_name:</td><td>{{ langmod.RSJSLAB65 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">id:</td><td>{{ langmod.RSJSLAB39 }}Package ID</td></tr>';
+      table+='</table>';
+    }
+    if(acc=='list'){
+      var table='<table class="table packages_table table-striped table-bordered table-hover dataTable no-footer" id="detailFunc2">';
+      table+='<tr><td style="font-weight: bold">key:</td><td>{{ langmod.RSJSLAB39 }}</td></tr>';
+      table+='<tr><td style="font-weight: bold">action:</td><td>list</td></tr>';
+      table+='</table>';
+    }
+  }
+
+  $("#detfunctcont").hide();
+  $("#detfunctcont").html(table);
+  $("#detfunctcont").show('blind');
+  return false;
+}
+function editRules(domain,username){
+  uchip.slideToggle('#_reseller_modsec_rules', '#_reseller_modsec_main', function(){
+    rulesEditor(domain,username);
+  });
+}
+function backFrom(selector){
+  uchip.slideToggle('#_reseller_modsec_main', selector);
+}
+function rulesEditor(domain,username){
+  $('#rules_editor_wrapper').removeClass('with-tabs');
+  $('#rules_editor_domain_loader').text(domain);
+  $('#rules_title_domain').text(domain);
+  $("#usernameregla").val(username);
+  uchip.slideToggle('#rules_loader', '#rules_logs_wrapper');
+  $('#top_wrapper').focus();
+  uchip.call('module=reseller&acc=loadrules', {
+    data: 'domain=' + domain,
+    callback: function(response){
+      //console.log(response);
+      if(response.hasOwnProperty('result') && response.result == 'success'){
+        uchip.slideToggle('#rules_logs_wrapper', '#rules_loader', function(){
+          $('.rules-wrapper-error').hide();
+          $('.rules-wrapper-success').show();
+          $('#rules_editor_wrapper').addClass('with-tabs');
+          renderRulesEditor(response, domain);
+        });
+      }else{
+        uchip.slideToggle('#rules_logs_wrapper', '#rules_loader',function(){
+          $('.rules-wrapper-error').show();
+          $('.rules-wrapper-success').hide();
+          $('#rules_retry_logs_btn').unbind('click');
+          $('#rules_retry_logs_btn').click(function(){
+            rulesEditor(domain,username);
+          });
+        });
+        noti_bubble('{{langmod.SECLABEL29}}','{{langmod.SECLABEL2}}','error',false,false,'3000',true);
+      }
+    }
+  });
+}
+function addNeRuleID(elem){
+  if(!(/^\d{6}$/gm.test($('#addID').val()))){
+    noti_bubble('Invalid RuleID','{{langmod.SECLABEL2}}','error',false,false,'3000',true);
+    return false;
+  }
+  if(uchip.validator('#addID')){
+    uchip.handleButton(elem, 'fa-floppy-o');
+    uchip.handleButton('#btn_back_ruler_editor', 'fa-arrow-left');
+    let domain = $(elem).data('domain');
+    uchip.call('module=reseller&acc=addrule', {
+      data: 'domain=' + domain + '&ruleid=' + $('#addID').val()+"&username="+$("#usernameregla").val(),
+      callback: function(response){
+        if(response.hasOwnProperty('result') && response.result == 'success'){
+          $('#addID').val('');
+          renderRulesEditor(response, domain);
+          noti_bubble('{{langmod.SECLABEL23}}','{{langmod.SECLABEL21}}','success',false,false,'3000',true);
+        }else{
+          noti_bubble('{{langmod.SECLABEL22}}','{{langmod.SECLABEL2}}','error',false,false,'3000',true);
+        }
+        uchip.handleButton(elem, 'fa-floppy-o', true);
+        uchip.handleButton('#btn_back_ruler_editor', 'fa-arrow-left', true);
+      }
+    });
+  }
+}
+function updateEditor(file_content){
+  if(editor_mirror == null){
+    $('#rules_editor_mirror').val(file_content);
+  }else{
+    editor_mirror.setValue(file_content);
+  }
+}
+function foucsNewRule(){
+  $('#addID').focus();
+}
+function deleteRule(domain, value, line, status){
+  if(status == 0){
+    let strbody = '<h4>{{langmod.SECLABEL45}} <b>' +
+            value + '</b> {{langmod.SECLABEL46}} <b>' + domain + '</b></h4><br>' +
+            '<h4>{{langmod.SECLABEL47}}</h4>';
+    let strfooter = '<button type="button" class="btn btn-white" data-dismiss="modal">{{langmod.SECLABEL48}}</button>' +
+            '<button type="button" class="btn btn-primary" id="btnyesdel" onclick="deleteRule(\'' + domain + '\', \'' + value + '\', ' + line + ', 1)">{{langmod.SECLABEL49}}</button>';
+    $("#deleterule .modal-footer").html(strfooter);
+    $("#deleterule .modal-body").html(strbody);
+    $('#deleterule').modal('show');
+  }else{
+    $("#deleterule").modal('hide');
+    uchip.handleButton('#btn_del_rule_' + line,'fa-trash');
+    let line_rule = $('#rule_line_' + line);
+    line_rule.addClass('deleting_tr');
+    uchip.call('module=reseller&acc=deleteline', {
+      data: 'domain=' + domain + '&line=' + line+"&username="+$("#usernameregla").val(),
+      callback: function(response){
+        if(response.hasOwnProperty('result') && response.result == 'success'){
+          renderRulesEditor(response, domain);
+          noti_bubble('Rule ID deleted','{{langmod.SECLABEL21}}','success',false,false,'3000',true);
+        }else{
+          uchip.handleButton('#btn_del_rule_' + line,'fa-trash', true);
+          line_rule.removeClass('deleting_tr');
+          noti_bubble('{{langmod.SECLABEL3}}','{{langmod.SECLABEL2}}','error',false,false,'3000',true);
+        }
+      }
+    });
+  }
+}
+function renderRulesEditor(response, domain){
+  $('.nav-tabs a[href="#rules_basic_editor"]').tab('show');
+  $('#file_domain_editor_warning').hide();
+  uchip.validator('#addID', true);
+  $('#bt_add_rule').data('domain', domain);
+  let rules_html = '';
+  updateEditor(response.file_content);
+  if(response.rules.length > 0){
+    rules_html = '<div class="rules-list-top" style="margin-bottom:10px">' +
+            '<h4 class="rules-editor-title">{{langmod.SECLABEL24}}</h4>' +
+            '<div class="input-group input-icon">' +
+            '<span class="input-group-addon"><i class="fa fa-search s16"></i></span>' +
+            '<input type="text" class="form-control" id="search_rule" size="30" style="top: 0px!important">' +
+            '</div>' +
+            '</div>';
+    response.rules.forEach(function(rule){
+      rules_html += '<div class="rules-editor-line" id="rule_line_' + rule.line + '" data-search="' + rule.value + '">' +
+              '<span class="rules-editor-value"><i class="fa fa-caret-right" aria-hidden="true"></i> SecRuleRemoveById <b>' + rule.value + '</b></span>' +
+              '<div class="rules-editor-actions"><button title="{{langmod.SECLABEL25}}" id="btn_del_rule_' + rule.line + '" onclick="deleteRule(\'' + domain + '\',\'' + rule.value + '\',' + rule.line + ', 0)" class="btn btn-danger btn-xs"><i class="fa fa-trash"></i></button></div>' +
+              '</div>';
+    });
+    rules_html += '<div class="rules-editor-nosearch">' +
+            '<div class="rules-editor-nosearch-content"><h4>{{langmod.SECLABEL26}}</h4></div>' +
+            '</div>';
+  }else{
+    rules_html = '<div class="rules-list-empty">' +
+            '<div class="rules-list-empty-content">' +
+            '<h4>{{langmod.SECLABEL27}} ' + domain + '</h4>' +
+            '<button class="btn btn-primary" onclick="foucsNewRule()">{{langmod.SECLABEL28}}</button>' +
+            '</div>'
+    '</div>';
+  }
+  $('.file-domain-editor').text(domain);
+  if(response.file_exists !== true){
+    $('#file_domain_editor').text(domain);
+    $('#file_domain_editor_warning').show();
+  }else{
+    $('#file_domain_editor_warning').slideUp('fast');
+  }
+  $('#rules_list_wrapper').html(rules_html);
+  $('#search_rule').keyup(function() {
+    if(timeout_search !== null ){
+      clearTimeout(timeout_search);
+    }
+    let elem = $(this);
+    timeout_search = setTimeout(function(){
+      let term = elem.val();
+      $('.rules-editor-line').each(function(){
+        let item_value = $(this).data('search').toString();
+        if(term.isEmpty()){
+          $(this).slideDown('fast');
+          $('.rules-editor-nosearch').fadeOut('fast');
+        }else if(item_value.search(term) < 0){
+          $(this).slideUp('fast');
+        }else{
+          $(this).slideDown('fast');
+          $('.rules-editor-nosearch').fadeOut('fast');
+        }
+      });
+      setTimeout(function(){
+        if($('.rules-editor-line:visible').length < 1){
+          $('.rules-editor-nosearch').fadeIn('fast');
+        }
+      },300);
+    }, 300);
+  });
+}
+function reCheckIP(){
+  let ip = $('#check_ip_field').val();
+  let domain = $("#domainhidd").val();
+  loadIpLog(ip, domain)
+}
+function loadIpLog(ip, domain){
+  if(!ValidateIPaddress(ip)){
+    $('#check_ip_field').focus();
+    noti_bubble('Invalid IP Address','{{langmod.SECLABEL2}}','error',false,false,'3000',true);
+    return false;
+  }
+  $("#domainhidd").val(domain);
+  $('#ip_checker_address').text(ip);
+  $('#ip_checker_domain').text(domain);
+  uchip.slideToggle('#logip_loader', '#IP_logs_wrapper');
+  $('#top_wrapper').focus();
+  uchip.call('module=reseller&acc=checkip', {
+    data: 'ip=' + ip + '&domain=' + domain,
+    callback: function(response){
+      if(response.hasOwnProperty('result') && response.result == 'success'){
+        uchip.slideToggle('#IP_logs_wrapper', '#logip_loader', function(){
+          $('#ip_checker_domain2').text(domain);
+          $('#check_ip_domain').val(domain);
+          let logip = '{{langmod.SECLABEL20}} /usr/local/apache/domlogs/' + domain +'.error.log'
+          if(response.log != 'empty'){
+            logip = response.log;
+          }
+          $('#check_ip_field').val(ip);
+          $('#IPlog_area_viewer').text(logip);
+          $('.Iplogs-wrapper-error').hide();
+          $('.IPlogs-wrapper-success').show();
+        });
+      }else{
+        uchip.slideToggle('#IP_logs_wrapper', '#logip_loader',function(){
+          $('.Iplogs-wrapper-error').show();
+          $('.IPlogs-wrapper-success').hide();
+          $('#IPretry_logs_btn').unbind('click');
+          $('#IPretry_logs_btn').click(function(){
+            loadIpLog(ip, domain);
+          });
+        });
+        noti_bubble('{{langmod.SECLABEL3}}','{{langmod.SECLABEL2}}','error',false,false,'3000',true);
+      }
+    }
+  });
+}
+function checkIp(ip, domain){
+  uchip.slideToggle('.mod-security-ipchecker', '#_reseller_modsec_main', function(){
+    loadIpLog(ip, domain);
+  });
+}
+
+$(".moredetail").click(function () {
+  if($("#swdetail").val()==0){
+    uchip.slideToggle('#boxdetaltable','#apimanager_wrapper', function(){
+      $("#swdetail").val(1);
+    });
+  }else{
+    uchip.slideToggle('#apimanager_wrapper','#boxdetaltable', function(){
+      $("#swdetail").val(0);
+    });
+  }
+
+});
+$("#btncalcel").click(function (){
+    $("#packagessel option[value=x]").attr("selected",true);
+    $("#btncalcel").hide();
+    $("#divsavebtn").removeClass('col-lg-6');
+    $("#divsavebtn").addClass('col-lg-12');
+    $("#idhiddemod").val('');
+    $("#packagessel").attr('disabled',false);
+    $("#bootstrap-duallistbox-selected-list_").html('');
+
+});
+
+$("#btnaddaccount").click(function (){
+    generate_pass(12,'password');
+    $("#domainadd").val('');
+    $("#username").val('');
+    $("#btncreateaccounts").html('{{ langmod.RSLABEL27 }}');
+    $("#emailadd").val('');
+    $(".checkdom").attr('disabled',false);
+    $("#modal-addaccount").modal('toggle');
+    $("#emailadd").focus();
+    search_packages();
+    return false;
+});
+$("#resellerpass1").keyup(function() {
+    var color1=0;
+    var color2=0;
+    var color3=0;
+    var color4=0;
+    var classpar='';
+    var msj='';
+    // set password variable
+    var pswd = $(this).val();
+    //validate the length
+    if(pswd.length<8){ color1=0;}else{ color1=1; msj=msj+' largo 1';  }
+    //validate letter
+    if(pswd.match(/[A-z]/gi)){color2=1; msj=msj+' letras 1'; }else{ color2=0;}
+    //validate capital letter
+    if(pswd.match(/[A-Z]/gi)){ msj=msj+' Mayusculas 1'; color3=1; } else { color3=0; }
+    //validate number
+    if (pswd.match(/[0-9]/gi)){color4=1; msj=msj+' Numeros 1';}else{  color4=0; }
+    var sum=(color1+color2+color3+color4);
+    newvalidpassreseller($("#resellerpass1").val(),$("#resellerpass2").val());
+    //alert(sum+' M:'+msj);
+    if(sum==0){ classpar='progress-bar-danger';}
+    if(sum==1){ classpar='progress-bar-warning';}
+    if(sum==2){ classpar='progress-bar-danger';}
+    if(sum==3){ classpar='progress-bar-info';}
+    if(sum==4){ classpar='progress-bar-success';}
+    var barra='<div class="progress-bar '+classpar+'" style="width: '+((pswd.length)*10)+'%;"></div>';
+    $("#progresspassress").html(barra);
+});
+$("#resellerpass2").keyup(function() {
+    if($("#resellerpass2").val()==$("#resellerpass1").val()){
+        $("#btn-resellsubmit").show();
+        newvalidpassreseller($("#resellerpass1").val(),$("#resellerpass2").val());
+    }else{
+        $("#btn-resellsubmit").hide();
+        newvalidpassreseller($("#resellerpass1").val(),$("#resellerpass2").val());
+    }
+});
+$("#btncreatepackages").click(function (){
+    if($("#package_name").val()==''){ $("#package_name").css('border', 'solid 1px red'); noti_bubble('{{langmod.RSLABEL32}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true); return false;}
+    $("#btncreatepackages").attr('disabled',true);
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=reseller&op=packages&acc=add",
+        data:"package_name="+$("#package_name").val()+"&disk_quota="+$("#disk_quota").val()+"&bandwidth="+$("#bandwidth").val()+"&ftp_accounts="+$("#ftp_accounts").val()+"&email_accounts="+$("#email_accounts").val()+"&email_lists="+$("#email_lists").val()+"&databases="+$("#databases").val()+"&sub_domains="+$("#sub_domains").val()+"&parked_domains="+$("#parked_domains").val()+"&addons_domains="+$("#addons_domains").val()+"&hourly_emails="+$("#hourly_emails").val(),
+        complete: function(datos){
+            if(datos.responseText==1){
+                $("#tr_packages").html('<tr><td align="center" colspan="12"> <i class="fa fa-spinner fa-spin fa-3x"></i></td></tr>');
+                $.ajax({
+                    type: "POST",
+                    url: "./{{ users }}/index.php?module=reseller&op=packages&acc=list",
+                    complete: function(datos){
+                        $("#btncreatepackages").attr('disabled',false);
+                        $("#modal-addpackages").modal('toggle');
+                        $("#tr_packages").html(datos.responseText);
+                        return false;
+                    }
+                });
+            }else{
+                noti_bubble('{{langmod.RSLABEL33}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+                return false;
+            }
+            return false;
+        }
+    });
+});
+$("#btnaddmodulesresell").click(function (){
+    var dispo = $("#bootstrap-duallistbox-nonselected-list_").text();
+    if($("#idhiddemod").val()==''){
+        if($("#packagessel").val()==''){
+            noti_bubble('{{langmod.RSLABEL61}}','','error',false,false,'3000',true);
+            return false;
+        }
+        var mod='';
+        $("#bootstrap-duallistbox-selected-list_ option").each(function(){
+            mod=mod+$(this).text()+',';
+        });
+        if(mod==''){
+            noti_bubble('{{langmod.RSLABEL62}}','','error',false,false,'3000',true);
+            return false;
+        }else{
+            $("#btnaddmodulesresell").attr('disabled',true);
+            $("#btnaddmodulesresell").addClass('disabled');
+            $.ajax({
+                type: "POST",
+                url: "./{{ users }}/index.php?module=reseller&op=features&acc=add",
+                data: "pack="+$("#packagessel").val()+"&mod="+mod,
+                complete: function(datos){
+                    console.log(datos.responseText);
+                    if(datos.responseText!=0){
+                        $("#trlismod").html(datos.responseText);
+                        noti_bubble('{{langmod.RSLABEL64}}','','success',false,false,'4000',true);
+                        $("#btnaddmodulesresell").attr('disabled',false);
+                        $("#btnaddmodulesresell").removeClass('disabled');
+                        $("#packagessel option[value=x]").attr("selected",true);
+                        $("#bootstrap-duallistbox-selected-list_").html('');
+                        $("#bootstrap-duallistbox-nonselected-list_").html(dispo);
+                    }else{
+                        noti_bubble('{{langmod.RSLABEL74}}','','error',false,false,'3000',true);
+                        $("#btnaddmodulesresell").attr('disabled',false);
+                        $("#btnaddmodulesresell").removeClass('disabled');
+                    }
+                    return false;
+                }
+            });
+        }
+    }else{
+        if($("#packagessel").val()==''){
+            noti_bubble('{{langmod.RSLABEL61}}','','error',false,false,'3000',true);
+            return false;
+        }
+        var mod='';
+        $("#bootstrap-duallistbox-selected-list_ option").each(function(){
+            mod=mod+$(this).text()+',';
+        });
+        if(mod==''){
+            noti_bubble('{{langmod.RSLABEL62}}','','error',false,false,'3000',true);
+            return false;
+        }else{
+            $("#btnaddmodulesresell").attr('disabled',true);
+            $("#btnaddmodulesresell").addClass('disabled');
+            $.ajax({
+                type: "POST",
+                url: "./{{ users }}/index.php?module=reseller&op=features&acc=update",
+                data: "id="+$("#packagessel").val()+"&mod="+mod,
+                complete: function(datos){
+                    //console.log(atos.responseText);
+                    $("#trlismod").html('');
+                    $("#bootstrap-duallistbox-selected-list_").html('');
+                    noti_bubble('{{langmod.RSLABEL64}}','','success',false,false,'4000',true);
+                    $("#trlismod").html(datos.responseText);
+                    $("#btncalcel").hide();
+                    $("#divsavebtn").removeClass('col-lg-6');
+                    $("#divsavebtn").addClass('col-lg-12');
+                    $("#idhiddemod").val('');
+                    $("#btnaddmodulesresell").attr('disabled',false);
+                    $("#btnaddmodulesresell").removeClass('disabled');
+                    $("#packagessel option[value=x]").attr("selected",true);
+                    $("#packagessel").attr('disabled',false);
+                    return false;
+                }
+            });
+        }
+    }
+    return false;
+});
+$("#btnsavebranding").click(function (){
+  let text_footer = $("#footertext").val();
+  let panel_title = $("#titletext").val();
+  let backup_fromn = $("#bckfromname").val();
+  let backup_froma = $("#bckfromemail").val();
+  let btn = this;
+  if(!uchip.validator('#bckfromemail')){
+    return;
+  }
+  uchip.handleButton(btn, 'fa-floppy-o');
+  uchip.call('module=reseller&acc=brandingparams', {
+    data : 'text_footer=' + text_footer + '&panel_title=' + panel_title + '&backup_fromn=' + backup_fromn + '&backup_froma=' + backup_froma,
+    callback: function(response){
+      if(response.result == 'success'){
+        noti_bubble('','{{langmod.RSLABEL75}}','success',false,false,'3000',true);
+        if(!panel_title.isEmpty()){
+          document.title = panel_title + ' - {{langene.TITLETAG}}';
+        }else{
+          document.title = '{{langene.TITLETAG}}';
+        }
+      }else{
+        noti_bubble('{{langmod.RSLABEL33}}','{{langmod.RSLABEL28}}','error',false,false,'3000',true);
+      }
+      uchip.handleButton(btn, 'fa-floppy-o', true);
+    }
+  });
+});
+
+{% if mod.licenseReseller ==1 %}
+$(".accounts_tab").click(function (){
+  listAccountsX();
+});
+$("#apimanager_tab").click(function (){
+  setTimeout(function(){
+    apimanager();
+  },10)
+});
+$("#apimanager_tab2").click(function (){
+  setTimeout(function(){
+    apimanager();
+  },10)
+});
+$("#modsecurity_tab").click(function (){
+  setTimeout(function(){
+    modsecurity();
+  },10)
+});
+$(".branding_tab").click(function (){
+  setTimeout(function(){
+    branding();
+  },10)
+});
+$("#bntipblock").click(function (){
+  $("#ipblock").css('border','1px solid #e5e6e7');
+  if($("#ipblock").val()==''){
+    $("#ipblock").css('border','1px solid #ed5565');
+    noti_bubble('{{langmod.RSJSLAB82}}','','error',false,false,'3000',true);
+    return false;
+  }else{
+    $("#bntipblock").attr('disabled',true);
+    $("#bntipblock").addClass('disabled');
+    var textbtn =$("#bntipblock").text();
+    $("#bntipblock").html('<i class="fa fa-spinner fa-spin"></i> '+textbtn);
+    $.ajax({
+      type: "POST",
+      url: "./{{ users }}/index.php?module=reseller&acc=firewalldel",
+      data: "ip="+$("#ipblock").val(),
+      complete: function(datos){
+        //console.log(datos.responseText);
+        var obj = JSON.parse(datos.responseText);
+        if(obj.status=="OK"){
+          $("#ipblock").val('');
+          noti_bubble('{{langmod.RSJSLAB85}}',obj.count+' Resuelt','success',false,false,'3000',true);
+          $("#bntipblock").attr('disabled',false);
+          $("#bntipblock").removeClass('disabled');
+          $("#bntipblock").html(textbtn);
+        }else{
+          noti_bubble('{{langmod.RSLABEL33}}','','error',false,false,'3000',true);
+          $("#bntipblock").attr('disabled',false);
+          $("#bntipblock").removeClass('disabled');
+          $("#bntipblock").html(textbtn);
+        }
+        return false;
+      }
+    });
+  }
+});
+{% endif %}
+
+

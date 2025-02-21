@@ -1,0 +1,42 @@
+<style>
+    {% include 'modules/postgresql_manager/styles.css' %}
+</style>
+<div class="row  border-bottom white-bg dashboard-header">
+    {% if mod.fsl == 1 %}
+    <div class="row  alert alert-warning col-lg-12" style="margin-left: 5px; padding-right: 5px;display:{{stflalert}}"
+        id="alertfl">
+        <strong>{{langene.GALARTFILEBLOCK}}</strong>
+    </div>
+    {% endif %}
+    <div class="col-lg-10">
+        <h2>{{langmod.DTITLE}} ({{users}})</h2>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="?">Home</a></li>
+            <li class="breadcrumb-item active"><strong>PostgreSQL Manager</strong></li>
+        </ol>
+    </div>
+</div>
+<div class="row pgresql-main-wrapper">
+    <div class="col-lg-12">
+        <div class="row">
+            {% if mod.mod_error == 0 %}
+                {% if mod.mod_installed == 1 and mod.usr_config.user_enabled == 1 %}
+                    {% include 'modules/postgresql_manager/dashboard.html' %}
+                {% else %}
+                    {% include 'modules/postgresql_manager/not_available.html' %}
+                {% endif %}
+            {% else %}
+                <div class="col-md-12">
+                    <div class="ibox" id="">
+                        <div class="ibox-content error-ocurred-pgre">
+                            <i class="fa text-danger fa-ban"></i>
+                            <h4>An error ocurred.</h4>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            
+        </div> 
+    </div> 
+</div> 
+{% include 'modules/postgresql_manager/modals.html' %}

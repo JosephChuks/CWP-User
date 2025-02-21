@@ -1,0 +1,107 @@
+
+console.log();
+jQuery(document).ready(function() {
+    $.ajax({
+        url: "./{{users}}/index.php?module=themely&acc=directory",
+        type: "POST",
+        success: function(data) {
+            jQuery("#results").html(data);
+        },
+        error: function(error) {
+            alert("Error displaying themes");
+        }
+    });
+});
+
+/* Theme Selector */
+jQuery(document).ready(function() {
+  $("#results").on('click', 'button', function() {
+    var $btn = $(this);
+    if ($btn.hasClass('btn-primary')) {
+        $btn.prop("clicked", false);
+        $btn.html('Select');
+        $btn.removeClass('btn-primary');
+        $btn.addClass('btn-success');
+        $('#wpthemeurl').val("");
+        $('#wpthemeslug').val("");
+    } else if ($btn.data('clicked', true)) {
+		var group = "button[name='" + $btn.attr("name") + "']";
+		$(group).prop("clicked", false);
+		$(group).html('Select');
+		$(group).removeClass('btn-primary');
+		$(group).addClass('btn-success');
+		$btn.prop("clicked", true);
+		$btn.html('Selected');
+		$btn.removeClass('btn-success');
+		$btn.addClass('btn-primary');
+		$('#wpthemeurl').val($(this).data("themeurl"));
+		$('#wpthemeslug').val($(this).data("themeslug"));
+    } else {
+		$btn.prop("clicked", false);
+		$('#wpthemeurl').val("");
+		$('#wpthemeslug').val("");
+    } 
+  });
+});
+
+/* Live Search Themes */
+jQuery(document).ready(function() {
+    function debounce(callback, wait) {
+		let timeout;
+		return (...args) => {
+		 	clearTimeout(timeout);
+		 	timeout = setTimeout(function () { callback.apply(this, args) }, wait);
+		};
+	}
+	document.querySelector('#search_param').addEventListener('keyup', debounce( () => {
+		var search_param = jQuery("#search_param").val();
+        $.ajax({
+            url: "./{{users}}/index.php?module=themely",
+            type: "POST",
+            data: {search_param: search_param},
+            beforeSend: function () {
+                jQuery(".themely .spinner-border").show();
+            },
+            success: function (data) {
+                jQuery("#results").html(data);
+                jQuery(".themely .spinner-border").hide();
+            },
+            error: function (error) {
+                alert("Error");
+            }
+        });
+	}, 800))
+});
+
+/* Install Selected Theme & Onboarding Plugin */
+function installThemely() {
+	let wpdomain = $("#wpdomain").val();
+	let dompath = $('#wpdomain option:selected').data('path');
+    let domssl =  $('#wpdomain option:selected').data('ssl');
+	let wppach = $("#wppach").val();
+	let wpsitetitle = $("#wpsitetitle").val();
+	let wpsitedesc = $("#wpsitedesc").val();
+	let wpadminuser = $("#wpadminuser").val();
+	let wpadminpass = $("#wpadminpass").val();
+	let wpadminemail = $("#wpadminemail").val();
+    let wplang = $("#wplang").val();
+	let wpthemeslug = $("#wpthemeslug").val();
+	let wpthemeurl = $("#wpthemeurl").val();
+	let data = '&wpdomain=' + wpdomain + '&dompath=' + dompath + '&domssl=' + domssl + '&wppach=' + wppach + '&wpthemeslug=' + wpthemeslug + '&wpthemeurl=' + wpthemeurl + '&wpsitetitle=' + wpsitetitle + '&wpsitedesc=' + wpsitedesc + '&wplang=' + wplang + '&wpadminuser=' + wpadminuser + '&wpadminpass=' + wpadminpass + '&wpadminemail=' + wpadminemail;
+	$.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=themely&acc=install",
+        data: data,
+        complete: function(){
+            return false;
+        },
+        success: function() {
+         	return false;
+        },
+        error: function() {
+            return false;
+        }
+    });
+    return false;
+}

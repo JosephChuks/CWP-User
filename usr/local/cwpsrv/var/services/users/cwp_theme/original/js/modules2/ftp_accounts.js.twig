@@ -1,0 +1,245 @@
+function ftprefres(user,domain){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=ftp_accounts&acc=ftprefres",
+        data:"user="+user+"&domain="+domain,
+        complete: function(datos){
+            $("#contftp").html('');
+            $("#contftp").html(datos.responseText);
+            return false;
+        }
+    });
+}
+function ftpdelete(st,user,domain,deluser) {
+    if(st==0){
+        var btsfooter='<button type="button" class="btn btn-white" data-dismiss="modal">{{ langmod.FTPNO }}</button>\n' +'<button type="button" class="btn btn-primary" id="btnyesdel" onclick="return ftpdelete(1,\''+user+'\',\''+domain+'\',\''+deluser+'\')">{{ langmod.FTPYES }}</button>';
+        var btsheader='<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{ langmod.FTPLABEL2 }}</span></button><h4 class="modal-title">{{ langmod.FTPLABEL3 }}</h4><small class="font-bold">You are about to eliminate the next task, are you sure you want to do it?</small>';
+        $("#deletemodal .modal-footer").html(btsfooter);
+        $("#deletemodal .modal-header").html(btsheader);
+        $("#deletemodal .modal-body").html('<p class="text-center"><strong id="descron">'+user+'</strong></p>');
+        $("#deletemodal").modal('toggle');
+        return false
+    }
+    if(st==1){
+        btnporcess('off','btnyesdel','{{ langmod.FTPLABEL6 }}');
+        $("#btnyesdel").attr('disabled',true);
+        $("#btnyesdel").addClass('disabled');
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=ftp_accounts&acc=ftpdelete",
+            data:"user="+user+"&domain="+domain+"&deluser"+deluser,
+            complete: function(datos){
+                ftprefres(user,domain);
+                refrespanelnew('ftp_accounts');
+                noti_bubble('{{langmod.FTPDELETEUSER}}','{{langmod.FTPDELETE}}','success',true,false,'3000',true);
+                btnporcess('on','btnyesdel','{{ langmod.FTPYES }}');
+                $("#deletemodal").modal('hide');
+                return false;
+            }
+        });
+    }
+    return false;
+}
+function changerrandom(inputdiv){
+    var long=$("#lengthpass").val();
+    var typepass=$("#typepass").val();
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=ftp_accounts&acc=changerrandom&long="+long+"&typepass="+typepass,
+        complete: function(datos){
+            $("#"+inputdiv).val(datos.responseText);
+            return false;
+        }
+    });
+    return false;
+}
+function settingmanual(user,domain){
+    //alert(user);
+    $("#userftp").html(user);
+    $("#serverftp").html(domain);
+    $("#aftpfilezilla").prop("href", "?module=ftp_accounts&acc=xmlfilezilla&client=filezilla&userftp="+user+"&domain="+domain);
+    $("#aftptransmit").prop("href", "?module=ftp_accounts&acc=xmlfilezilla&client=transmit&userftp="+user+"&domain="+domain);
+    $("#aftpcyberduck").prop("href", "?module=ftp_accounts&acc=xmlfilezilla&client=cyberduck&userftp="+user+"&domain="+domain);
+    return false;
+}
+function changepassftp(user){
+    $("#pass1ftp").val('');
+    $("#pass2ftp").val('');
+    $("#changepassftptitle").html('{{langene.MDCHANPASS}}  '+user);
+    $("#modal-changepassftp").modal('toggle');
+    $("#hidenuserftp").val(user);
+    return false;
+}
+function newvalidpassftp(pass1,pass2){
+    var expreg =/^[a-zA-Z0-9\_\.\-\/]+$/i;
+    var sw1=0;
+    var sw2=0;
+    if(pass1!=""){
+        var resp=expreg.test(pass1);
+        if(resp==false){
+            noti_bubble('{{langmod.ERROR1}}','{{langmod.ERROR2}}','error',true,false,'3000',true);
+            sw1=1;
+        }else{
+            sw1=3;
+        }
+    }
+    if(pass2!=""){
+        var resp=expreg.test(pass2);
+        if(resp==false){
+            noti_bubble('{{langmod.ERROR1}}','{{langmod.ERROR2}}','error',true,false,'3000',true);
+            sw2=1;
+            $("#btn-submitftp").hide();
+        }else{
+            sw2=3;
+        }
+    }
+    if((pass1==pass2)&&(sw1 + sw2)==6) {
+        $("#btn-submitftp").show();
+    }else{
+        $("#btn-submitftp").hide();
+    }
+
+}
+function newvalidpass(pass1,pass2){
+    var expreg =/^[a-zA-Z0-9\_\.\-\/]+$/i;
+    var sw1=0;
+    var sw2=0;
+    if(pass1!=""){
+        //var resp=expreg.test(pass1);
+        var resp = true;
+        if(resp==false){
+            noti_bubble('{{langmod.ERROR1}}','{{langmod.ERROR2}}','error',true,false,'3000',true);
+            sw1=1;
+        }else{
+            sw1=3;
+        }
+    }
+    if(pass2!=""){
+        //var resp=expreg.test(pass2);
+        var resp = true;
+        if(resp==false){
+            noti_bubble('{{langmod.ERROR1}}','{{langmod.ERROR2}}','error',true,false,'3000',true);
+            sw2=1;
+            $("#btn-submit").hide();
+        }else{
+            sw2=3;
+        }
+    }
+    if((pass1==pass2)&&(sw1 + sw2)==6) { $("#btn-submit").show(); }else{ $("#btn-submit").hide(); }
+}
+$("#btn_add_ftp").click(function () {
+    $("#modal-addfaccountftp").modal('toggle');
+    return false;
+});
+$("#btn_save_ftp").click(function (){
+    btnporcess('off','btn_save_ftp','{{ langmod.FTPLABEL6 }}');
+    var passlength=$("#ftppass1").val();
+    passlength=passlength.length;
+    $("#alertftp").hide('blind');
+    if($("#loginftp").val()=='' || $("#directoryftp").val()=='' || $("#ftppass1").val()=='' || $("#ftppass2").val()==''){
+        noti_bubble('{{langmod.FTPREQUERIDATE}}','{{langmod.ERROR1}}','error',true,false,'3000',true);
+        btnporcess('on','btn_save_ftp','{{ langmod.ADDFTPACCOUNT }}');
+        return false;
+    }else if($("#ftppass1").val()!=$("#ftppass2").val()){
+        noti_bubble('{{langmod.PASSDIF}}','{{langmod.ERROR1}}','error',true,false,'3000',true);
+        btnporcess('on','btn_save_ftp','{{ langmod.ADDFTPACCOUNT }}');
+        return false;
+    }else if(passlength <=6){
+        noti_bubble('{{langmod.FTPSECUREPASS}}','{{langmod.ERROR1}}','success',true,false,'3000',true);
+        btnporcess('on','btn_save_ftp','{{ langmod.ADDFTPACCOUNT }}');
+        return false;
+    }else{
+        var pass=Base64.encode($("#ftppass1").val());
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=ftp_accounts&acc=btn_save_ftp",
+            data: "login="+$("#loginftp").val()+"&dir="+$("#directoryftp").val()+"&pass="+pass+"&domain="+$("#domain").val(),
+            complete: function(datos){
+                //console.log(datos.responseText);
+                if(datos.responseText=='OK'){
+                    $("#loginftp").val('');
+                    $("#directoryftp").val('/public_html/');
+                    $("#directoryftp").val('/public_html/');
+
+                    ftprefres($("#loginftp").val()+'@'+$("#domain").val(),$("#domain").val());
+                    refrespanelnew('ftp_accounts');
+                    noti_bubble('{{langmod.FTPCREATE}}','{{langmod.SUCCESSFUL}}','success',true,false,'3000',true);
+                    btnporcess('on','btn_save_ftp','{{ langmod.ADDFTPACCOUNT }}');
+                    $("#modal-addfaccountftp").modal('hide');
+                }
+                if(datos.responseText=='Error'){
+                    noti_bubble('{{langmod.FTPERRORADD}}','{{langmod.ERROR1}}','error',true,false,'3000',true);
+                    btnporcess('on','btn_save_ftp','{{ langmod.ADDFTPACCOUNT }}');
+                }
+                return false;
+            }
+        });
+    }
+});
+$("#btn-submitftp").click(function (){
+    $("#btn-submitftp").attr('disalbled',true);
+    $("#btn-submitftp").addClass('disalbled');
+    $("#btn-submitftp").html('<i class="fa fa-spinner"></i> {{langene.MDBTN_SAVE}}');
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=ftp_accounts&acc=changepassftp",
+        data: "pass="+$("#pass1ftp").val()+"&hidenuserftp="+$("#hidenuserftp").val(),
+        complete: function(datos){
+            console.log(datos.responseText);
+            changepassftp($("#hidenuserftp").val());
+            noti_bubble('{{langmod.SUCCESSFUL}}','{{langmod.FTPEXITPASS}}','success',false,false,'3000',true);
+
+            $("#modal-changepassftp").modal('hide');
+            $("#btn-submitftp").attr('disalbled',false);
+            $("#btn-submitftp").removeClass('disalbled');
+            return false;
+        }
+    });
+    return false;
+});
+$("#btn_cancel_ftp").click(function (){
+    $("#modal-addfaccountftp").modal('hide');
+    return false;
+});
+$("#pass2ftp").keyup(function() {
+    if($("#pass2ftp").val()==$("#pass1ftp").val()){
+        $("#btn-submitftp").show();
+        newvalidpassftp($("#pass1ftp").val(),$("#pass2ftp").val());
+    }else{
+        newvalidpassftp($("#pass1ftp").val(),$("#pass2ftp").val());
+        $("#btn-submitftp").hide();
+    }
+});
+$("#pass1ftp").keyup(function() {
+    var color1=0;
+    var color2=0;
+    var color3=0;
+    var color4=0;
+    var classpar='';
+    var msj='';
+    // set password variable
+    var pswd = $(this).val();
+    //validate the length
+    if(pswd.length<8){ color1=0;}else{ color1=1; msj=msj+' largo 1';  }
+    //validate letter
+    if(pswd.match(/[A-z]/gi)){color2=1; msj=msj+' letras 1'; }else{ color2=0;}
+    //validate capital letter
+    if(pswd.match(/[A-Z]/gi)){ msj=msj+' Mayusculas 1'; color3=1; } else { color3=0; }
+    //validate number
+    if (pswd.match(/[0-9]/gi)){color4=1; msj=msj+' Numeros 1';}else{  color4=0; }
+    var sum=(color1+color2+color3+color4);
+    newvalidpassreseller($("#pass1ftp").val(),$("#pass2ftp").val());
+    //alert(sum+' M:'+msj);
+    if(sum==0){ classpar='progress-bar-danger';}
+    if(sum==1){ classpar='progress-bar-warning';}
+    if(sum==2){ classpar='progress-bar-danger';}
+    if(sum==3){ classpar='progress-bar-info';}
+    if(sum==4){ classpar='progress-bar-success';}
+    var barra='<div class="progress-bar '+classpar+'" style="width: '+((pswd.length)*10)+'%;"></div>';
+    $("#progresspassftp").html(barra);
+});

@@ -1,0 +1,287 @@
+
+function btnaddautof(){
+    if(($("#emailautof").val()=='') || ($("#domainautof").val()=='') || ($("#subjectautof").val()=='') || ($("#messajeautof").val()=='')){
+        noti_bubble('','{{langmod.ARERRO1}}','error',false,false,'3000',true);
+        return false;
+    }else{
+        btnporcess('off','btnaddautof2','{{ langmod.AULABEL5 }}');
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=mail_autoreply&acc=addautof",
+            data: "emailautof="+$("#emailautof").val()+"&domainautof="+$("#domainautof").val()+"&subjectautof="+$("#subjectautof").val()+"&messajeautof="+$("#messajeautof").val()+"&start_date="+$("#start_date").val()+"&end_date="+$("#end_date").val()+"&start_time="+$("#start_time").val()+"&end_time="+$("#end_time").val()+"&sendonlydate="+$("#sendonlydate").val(),
+            complete: function(datos){
+                if((datos.responseText==6) || (datos.responseText==10)){
+                    if(datos.responseText==6){ var msj='{{langmod.ARERROR6}}';}
+                    if(datos.responseText==10){ var msj='{{langmod.ARERROR10}}';}
+                    noti_bubble(msj,'{{langmod.ARMERROR}}','error',false,false,'3000',true);
+                    btnporcess('on','btnaddautof2','{{ langmod.ARADD }}');
+                    $("#addautofbtn").hide();
+                    return false;
+                }else{
+                    listautof();
+                    $("#emailautof").val('');
+                    $("#subjectautof").val('');
+                    $("#messajeautof").val('');
+                    noti_bubble('{{langmod.AROKADD}}','{{langmod.ARSUCCT}}','success',false,false,'3000',true);
+                    btnporcess('on','btnaddautof2','{{ langmod.ARADD }}');
+                    refrespanelnew('mail_autoreply');
+                    $("#addmodal").modal('hide');
+                    return false;
+                }
+            }
+        });
+        return false;
+    }
+
+}
+function autofdelete(st,email,pos){
+    if(st==0){
+        var headeradd='<h4>{{langmod.ARDELETEAT}}</h4>';
+        var bodyadd='<p class="text-center">'+email+'</p><input type="hidden" value="'+email+'" id="deleteemailf">';
+        var footeradd='<button class="btn btn-default btn-xs mr5 mb10"  id="btn-cancelfemail"  onclick="return cancelfemail()">{{langmod.ARCANCEL}}</button>   <button class="btn btn-primary btn-xs mr5 mb10" id="autofdelete" onclick="return autofdelete(1,\''+email+'\','+pos+')">{{langmod.ARDELETE}}</button>';
+        $("#deletemodal .modal-header").html(headeradd);
+        $("#deletemodal .modal-body").html(bodyadd);
+        $("#deletemodal .modal-footer").html(footeradd);
+        $("#deletemodal").modal('toggle');
+        return false;
+    }
+    if(st==1){
+        btnporcess('off','autofdelete','{{ langmod.AULABEL5 }}');
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=mail_autoreply&acc=autofdelete",
+            data:"email="+$("#deleteemailf").val(),
+            complete: function(datos){
+                btnporcess('on','autofdelete','{{ langmod.ARDELETE }}');
+                listautof();
+                refrespanelnew('mail_autoreply');
+                $("#deletemodal").modal('hide');
+                return false;
+            }
+        });
+    }
+    return false;
+}
+function autofchangest(email,pos){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=mail_autoreply&acc=autofchangest",
+        data:"email="+email+"&pos="+pos,
+        complete: function(datos){
+            listautof();
+            if(datos.responseText==1){
+                noti_bubble('{{langmod.ARACTIVEEMAIL}}','{{langmod.ARSUCCT}}','success',false,false,'3000',true);
+                return false;
+            }
+            if(datos.responseText==5){
+                noti_bubble('{{langmod.ARDESACTIVEEMAIL}}','{{langmod.ARSUCCT}}','success',false,false,'3000',true);
+                return false;
+            }
+            return false;
+        }
+    });
+}
+function autofedit(email,pos){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=mail_autoreply&acc=autofedit",
+        data:"email="+email,
+        complete: function(datos){
+            var str=datos.responseText;
+            var res = str.split("||");
+            $("#editmodal .modal-title").html('{{ langmod.AULABEL3 }}  '+email);
+            $("#modsubjectautof").val(res[0]);
+            $("#modmessajeautof").val(res[1]);
+            $("#start_date").val(res[2]);
+            $("#start_time").val(res[3]);
+            $("#end_date").val(res[4]);
+            $("#end_time").val(res[5]);
+
+            var datehour1=res[2];
+            var datehour2=res[3];
+            if(res[2]!=''){
+                $("#start_date-edit").val(res[2]);
+                $("#start_time-edit").val(res[3]);
+            }else{
+                $("#start_date-edit").val('');
+                $("#start_time-edit").val('');
+            }
+            if(res[4]!=''){
+                $("#end_date-edit").val(res[4]);
+                $("#end_time-edit").val(res[5]);
+            }else{
+                $("#end_date-edit").val('');
+                $("#end_time-edit").val('');
+            }
+            if(res[6]==1){
+                $("#sendonlydate-edit").attr('checked',true);
+                $("#sendonlydate-edit").val(1);
+                $("#start_date-edit").attr('disabled',false);
+                $("#start_time-edit").attr('disabled',false);
+                $("#end_date-edit").attr('disabled',false);
+                $("#end_time-edit").attr('disabled',false);
+            }else{
+                $("#sendonlydate-edit").removeAttr('checked');
+                $("#sendonlydate-edit").val(0);
+                $("#start_date-edit").attr('disabled',true);
+                $("#start_time-edit").attr('disabled',true);
+                $("#end_date-edit").attr('disabled',true);
+                $("#end_time-edit").attr('disabled',true);
+            }
+            $("#modemailautof").val(email+'||'+pos);
+            $("#addautofbtn").hide();
+            $("#modautofdiv").show('blind');
+            //alert();
+            $("#editmodal").modal('toggle');
+            return false;
+        }
+    });
+    return false;
+}
+function listautof(){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=mail_autoreply&acc=listautof",
+        complete: function(datos){
+            //$('.dataTables-example').DataTable().destroy();
+            $('#listtrf').DataTable().destroy();
+            $("#contenttr").html(datos.responseText);
+            $('#listtrf').DataTable();
+            //$('.dataTables-example').DataTable();
+            return false;
+        }
+    });
+}
+$("#btn-addautof").click(function (){
+    var headervar='<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{ langmod.DOMLABLE3 }}</span></button><h4 class="modal-title">{{ langmod.ARBTNADD }}</h4>';
+    var bodyvar='<div  style="display: block;" id="addautofdiv">';
+    bodyvar+='<div class="row" style="margin-left: 15px;">';
+    bodyvar+='<div class="col-lg-3">';
+    bodyvar+='<input id="emailautof" class="form-control" value="" placeholder="{{ langmod.AEEMAIL2 }}">';
+    bodyvar+='</div>';
+    bodyvar+='<div class="col-sm-3">';
+    bodyvar+='<select id="domainautof" class="form-control">';
+    bodyvar+='<option value="">{{ langmod.ARCHOOD }}</option>';
+    {% for email2 in mod.email2 %}
+    bodyvar+='<option value="{{ email2.domain }}">@{{ email2.domain }}</option>';
+    {% endfor %}
+    bodyvar+='</select>';
+    bodyvar+='</div>';
+    bodyvar+='<div class="col-sm-6">';
+    bodyvar+='<input id="subjectautof" class="form-control" value="{{ mod.rand }}" placeholder="{{ langmod.ARTHESUBJ }}">';
+    bodyvar+='</div>';
+    bodyvar+='</div>';
+    bodyvar+='<div class="row" style="margin-left: 15px; margin-top: 15px">';
+    bodyvar+='<div class="col-sm-12">';
+    bodyvar+='<textarea id="messajeautof" class="form-control" rows="6" placeholder="{{ langmod.ARMSJ1 }}"></textarea>';
+    bodyvar+='</div>';
+    bodyvar+='</div>';
+    bodyvar+='<div class="row"  style="margin-left: 30px">';
+    bodyvar+='<div class="toggle-custom">';
+    //bodyvar+='<label class="toggle" data-on="ON" data-off="OFF">';
+    bodyvar+='<input type="checkbox" id="sendonlydate" name="sendonlydate" onchange="return sendonlydate(0)" value="0">';
+    //bodyvar+='<span class="button-checkbox"></span>';
+    //bodyvar+='</label>';
+    bodyvar+='<label for="sendonlydate">{{ langmod.ARRANGETIME }}</label>';
+    bodyvar+='</div>';
+    bodyvar+='</div>';
+    bodyvar+='<form class="form-horizontal group-border stripped" role="form">';
+    bodyvar+='<label class="control-label text-center" for=""><b>{{ langmod.ARINITIO }}</b></label>';
+    bodyvar+='<label class="control-label text-center" for=""><b>{{ langmod.ARFIN }}</b></label>';
+    bodyvar+='<div class="row" style="margin-left: 15px">';
+    bodyvar+='<div class="col-lg-3">';
+    bodyvar+='<div class="input-group">';
+    bodyvar+='<span class="input-group-addon"><i class="fa fa-calendar"></i></span>';
+    bodyvar+='<input id="start_date" type="text" class="form-control" disabled>';
+    bodyvar+='</div>';
+    bodyvar+='</div>';
+    bodyvar+='<div class="col-lg-3">';
+    bodyvar+='<div class="input-group bootstrap-timepicker"><div class="bootstrap-timepicker-widget dropdown-menu"><table><tbody><tr><td><a href="#" data-action="incrementHour"><i class="fa fa-angle-up"></i></a></td><td class="separator">&nbsp;</td><td><a href="#" data-action="incrementMinute"><i class="fa fa-angle-up"></i></a></td><td class="separator">&nbsp;</td><td class="meridian-column"><a href="#" data-action="toggleMeridian"><i class="fa fa-angle-up"></i></a></td></tr><tr><td><input type="text" name="hour" class="bootstrap-timepicker-hour form-control" maxlength="2"></td> <td class="separator">:</td><td><input type="text" name="minute" class="bootstrap-timepicker-minute form-control" maxlength="2"></td> <td class="separator">&nbsp;</td><td><input type="text" name="meridian" class="bootstrap-timepicker-meridian form-control" maxlength="2"></td></tr><tr><td><a href="#" data-action="decrementHour"><i class="fa fa-angle-down"></i></a></td><td class="separator"></td><td><a href="#" data-action="decrementMinute"><i class="fa fa-angle-down"></i></a></td><td class="separator">&nbsp;</td><td><a href="#" data-action="toggleMeridian"><i class="fa fa-angle-down"></i></a></td></tr></tbody></table></div>';
+    bodyvar+='<div class="input-group clockpicker" data-autoclose="true">';
+    bodyvar+='<span class="input-group-addon"><i class="fa fa-clock-o"></i></span>';
+    bodyvar+='<input id="start_time" type="text" class="form-control clockpicker" disabled>';
+    bodyvar+='</div></div>';
+    bodyvar+='</div>';
+    //bodyvar+='<div class="input-group clockpicker" data-autoclose="true"><input type="text" id="start_time" class="form-control" value="09:30" ><span class="input-group-addon"><span class="fa fa-clock-o"></span></span></div>';
+    bodyvar+='<!--/div>';
+    bodyvar+='</div-->';
+    //
+    //bodyvar+='<div class="row" style="margin-left: 15px">';
+    bodyvar+='<div class="col-lg-3">';
+    bodyvar+='<div class="input-group">';
+    bodyvar+='<span class="input-group-addon"><i class="fa fa-calendar"></i></span>';
+    bodyvar+='<input id="end_date" type="text" class="form-control" disabled>';
+    bodyvar+='</div>';
+    bodyvar+='</div>';
+    bodyvar+='<div class="col-lg-3">';
+    bodyvar+='<div class="input-group bootstrap-timepicker"><div class="bootstrap-timepicker-widget dropdown-menu"><table><tbody><tr><td><a href="#" data-action="incrementHour"><i class="fa fa-angle-up"></i></a></td><td class="separator">&nbsp;</td><td><a href="#" data-action="incrementMinute"><i class="fa fa-angle-up"></i></a></td><td class="separator">&nbsp;</td><td class="meridian-column"><a href="#" data-action="toggleMeridian"><i class="fa fa-angle-up"></i></a></td></tr><tr><td><input type="text" name="hour" class="bootstrap-timepicker-hour form-control" maxlength="2"></td> <td class="separator">:</td><td><input type="text" name="minute" class="bootstrap-timepicker-minute form-control" maxlength="2"></td> <td class="separator">&nbsp;</td><td><input type="text" name="meridian" class="bootstrap-timepicker-meridian form-control" maxlength="2"></td></tr><tr><td><a href="#" data-action="decrementHour"><i class="fa fa-angle-down"></i></a></td><td class="separator"></td><td><a href="#" data-action="decrementMinute"><i class="fa fa-angle-down"></i></a></td><td class="separator">&nbsp;</td><td><a href="#" data-action="toggleMeridian"><i class="fa fa-angle-down"></i></a></td></tr></tbody></table></div>';
+    bodyvar+='<span class="input-group-addon"><i class="fa fa-clock-o"></i></span>';
+    bodyvar+='<input id="end_time" type="text" class="form-control clockpicker" disabled>';
+    bodyvar+='</div>';
+    bodyvar+='</div>';
+    bodyvar+='</div>';
+    bodyvar+='</div>';
+    bodyvar+='</form>';
+    bodyvar+='<!--div class="bs-callout bs-callout-info fade in" style="margin-right: 25px; margin-left: 25px; display: block" id="divnoti"><button type="button" class="close" id="closebtc" >×</button>';
+    bodyvar+='<p>{{ langmod.ARDESCRIP2 }}</p></div-->';
+    bodyvar+='</div>';
+    var btnvar='<button class="btn btn-default btn-xs mr5 mb10" id="btn-cancelautof" style="" onclick="return btncancelemail()">{{ langmod.ARCANCEL }}</button><button type="button" class="btn btn-success btn-xs mr5 mb10" id="btnaddautof2" onclick="return btnaddautof()">{{ langmod.ARADD }}</button>';
+    $("#addmodal .modal-header").html(headervar);
+    $("#addmodal .modal-body").html(bodyvar);
+    $("#addmodal .modal-footer").html(btnvar);
+    $("#addmodal").modal('toggle');
+});
+$("#btn-updautof").click(function (){
+    var sujbj=$("#modsubjectautof").val();
+    var msj=$("#modmessajeautof").val();
+    var str=$("#modemailautof").val();
+    var res= str.split("||");
+    var email=res[0];
+    var pos=res[1];
+    if($("#sendonlydate-edit").val()==1){
+        if(($("#start_date-edit").val()=='')||($("#start_time-edit").val()=='')||($("#end_date-edit").val()=='')||($("#end_time-edit").val()=='')){
+            noti_bubble('{{langmod.ARERRO1}}','{{langmod.ARERROR}}','error',false,false,'3000',true);
+            return false;
+        }
+    }
+    if($("#sendonlydate-edit").attr('checked')){
+        var sendonlydate=1;
+        var start_dateedit=$("#start_date-edit").val();
+        var start_timeedit=$("#start_time-edit").val();
+        var end_dateedit=$("#end_date-edit").val();
+        var end_timeedit=$("#end_time-edit").val();
+    }else{
+        var sendonlydate=0;
+        var start_dateedit='';
+        var start_timeedit='';
+        var end_dateedit='';
+        var end_timeedit='';
+    }
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    btnporcess('off','btn-updautof','{{ langmod.AULABEL5 }}');
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=mail_autoreply&acc=updautof",
+        data:"email="+email+"&sujbj="+sujbj+"&msj="+msj+"&sendonlydate="+sendonlydate+"&start_date="+start_dateedit+"&start_time="+start_timeedit+"&end_date="+end_dateedit+"&end_time="+end_timeedit,
+        complete: function(datos){
+            //alert(datos.responseText);
+            if(datos.responseText==0){
+                $("#sj"+pos).html(sujbj);
+                btnporcess('on','btn-updautof','{{ langmod.ARUPDATE }}');
+                $("#editmodal").modal('hide');
+                listautof();
+            }else{
+                noti_bubble('{{langmod.ARERROR6}}','{{langmod.ARERROR}}','error',false,false,'3000',true);
+                btnporcess('on','btn-updautof','{{ langmod.ARUPDATE }}');
+                return false;
+            }
+            return false;
+        }
+    });
+    return false;
+});

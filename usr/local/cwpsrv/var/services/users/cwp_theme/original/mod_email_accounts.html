@@ -1,0 +1,221 @@
+<style media="screen">
+  .deleting_tr {
+    background-color: #f5f5f566;
+    color: #e7eaec;
+  }
+
+  .email-accounts-table,
+  #DataTables_Table_0_wrapper {
+    width: 100% !important;
+  }
+
+  .DataTables_Table_0 {
+    display: none;
+  }
+
+  .actions-td {
+    width: 180px !important;
+    text-align: center;
+  }
+
+  #table_email_container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+  }
+
+  #accounts_loader {
+    position: absolute;
+    background-color: #ffffff;
+    width: 20rem;
+    z-index: 1000;
+    height: auto;
+    border-radius: 5px;
+    border: 1px solid #cecece;
+    padding: .5rem 0px;
+  }
+
+  .catch-all-record {
+    background-color: #1c84c6 !important;
+    color: #fff;
+  }
+
+  .catch-all-record .btn-success {
+    border-color: #9ed2ff !important;
+  }
+
+  .mail-contracted {
+    top: -8.9rem;
+  }
+
+  .ibox-title-mail {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px;
+  }
+
+  .dataTables_wrapper {
+    padding-bottom: 0px;
+  }
+</style>
+<div class="row  border-bottom white-bg dashboard-header">
+  {% if mod.fsl == 1 %}
+  {% set stflalert ='block' %}
+  {% else %}
+  {% set stflalert ='none' %}
+  {% endif %}
+
+  {% if mod.fordwars_stats.account < mod.fordwars_stats.pack or mod.fordwars_stats.pack == -1%}
+  {% set sefol='block' %}
+  {% else %}
+  {% set sefol='none' %}
+  {% endif %}
+  <div class="row  alert alert-warning col-lg-12" style="margin-left: 5px; padding-right: 5px;display:{{stflalert}}"
+    id="alertfl">
+    <strong>{{langene.GALARTFILEBLOCK}}</strong>
+  </div>
+  <div class="col-lg-10">
+    <h2>{{langmod.ETITLE}} ({{users}})</h2>
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="?">Home</a></li>
+      <li class="breadcrumb-item active"><strong>{{langmod.ETITLE}}</strong></li>
+    </ol>
+  </div>
+</div>
+<div class="row">
+  <div class="col-lg-9">
+    <div class="row mail-info-tab-container">
+      {% if mod.emaccounts_stats.pack >= 0 %}
+      {% set emailbar = 100 / mod.emaccounts_stats.pack * mod.emaccounts_stats.account %}
+      {% set email_package = mod.emaccounts_stats.pack %}
+      {% set emailbar_forw = 100 / mod.fordwars_stats.pack * mod.fordwars_stats.account %}
+      {% set emailfor_package_label = mod.fordwars_stats.pack %}
+      {% else %}
+      {% set email_package = '&infin;' %}
+      {% set emailbar = 0 %}
+      {% set emailbar_forw = 0 %}
+      {% set emailfor_package_label = '&infin;' %}
+      {% endif %}
+
+    </div>
+    <div class="row">
+      <div class="col-lg-12">
+        <div class="mail-contracted">
+          <div class="ibox-content" id="indemail" style="display: block">
+            <ul class="stat-list">
+              <li>
+                <input type="hidden" id="emaccount_plan" value="{{mod.emaccounts_stats.pack}}">
+                <h2 class="no-margins" style="vertical-align: inherit;" id="tlftpind">{{langene.PGEMAIL}} <span
+                    id="emaccountused">{{mod.email_accounts}}</span> / {{email_package|raw}}</h2>
+                <small style="vertical-align: inherit;">{{langmod.EMLABEL4}} / {{langmod.EMLABEL5}} </small>
+                <div class="stat-percent" id="stat-percent-accounts">{{emailbar|round}}%</div>
+                <div class="progress progress-mini">
+                  <div class="progress-bar progress-bar-success" id="baremailind"></div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="ibox" id="list_wrapper">
+          <div class="ibox-title ibox-title-mail">
+            <h3>Mail accounts management{{langmod.FTPLABEL1}}</h3>
+            {% if mod.emaccounts_stats.account < mod.emaccounts_stats.pack or mod.emaccounts_stats.pack == -1 %}
+            {% set swver =''%}
+            {% else %}
+            {% set swver ='disabled'%}
+            {% endif %}
+            <div id="divbtnadd">
+              <button type="button" id="addemailbtn" data-pass="{{mod.pass}}" {{swver}}
+                class="btn btn-success btn-xs mr5 mb10 {{swver}}"> {{langmod.EBNTADD}}</button>
+            </div>
+          </div>
+          <div class="ibox-content" id="table_email_container">
+            <div class="table_cron_loader" id="accounts_loader"><span><i
+                  class="fa fa-circle-o-notch fa-spin"></i></span></div>
+
+          </div>
+        </div>
+        <div>
+          <div class="ibox collapsed border-bottom" style="margin-bottom: 0px;margin-top: 2rem;">
+            <div class="ibox-title">
+              <h5>Manual Settings for commons Mail Clients</h5>
+            </div>
+          </div>
+          <div class="ibox-content" style="display: block;">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="panel panel-info">
+                  <div class="panel-heading">
+                    <i class="fa fa-lock"></i> {{langmod.EMAILSET}} {{langmod.ESSL}}
+                  </div>
+                  <div class="panel-body">
+                    <table width="100%">
+                      <tbody>
+                        <tr>
+                          <td><b>{{langmod.EUSERNA}}</b>: {{langmod.EYOURMAIL}}</td>
+                        </tr>
+                        <tr>
+                          <td><b>{{langmod.EINCONM}}</b>: {{mod.configEmail}}</td>
+                        </tr>
+                        <tr>
+                          <td><b>{{langmod.EIMAP}}</b>: 993</td>
+                        </tr>
+                        <tr>
+                          <td><b>{{langmod.EPOP3}}</b>: 995</td>
+                        </tr>
+                        <tr>
+                          <td><b>{{langmod.EOUT}}</b>: {{mod.configEmail}}</td>
+                        </tr>
+                        <tr>
+                          <td><b>{{langmod.ESMTP}}</b>: 465</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="panel panel-info">
+                  <div class="panel-heading">
+                    <i class="fa fa-unlock-alt"></i> {{langmod.EMAILSET}} {{langmod.ENOSSL}} (not recommended)
+                  </div>
+                  <div class="panel-body">
+                    <table width="100%">
+                      <tbody>
+                        <tr>
+                          <td><b>{{langmod.EUSERNA}}</b>: {{langmod.EYOURMAIL}}</td>
+                        </tr>
+                        <tr>
+                          <td><b>{{langmod.EINCONM}}</b>: {{mod.configEmail}}</td>
+                        </tr>
+                        <tr>
+                          <td><b>{{langmod.EIMAP}}</b>: 143</td>
+                        </tr>
+                        <tr>
+                          <td><b>{{langmod.EPOP3}}</b>: 110</td>
+                        </tr>
+                        <tr>
+                          <td><b>{{langmod.EOUT}}</b>: {{mod.configEmail}}</td>
+                        </tr>
+                        <tr>
+                          <td><b>{{langmod.ESMTP}}</b>: 25</td>
+                        </tr>
+
+                      </tbody>
+                    </table>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  {% include 'sidebar.html' %}
+</div>
+{% include 'footer.html' %}

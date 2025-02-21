@@ -1,0 +1,160 @@
+let lv_table = null;
+let lv_list = null;
+function lvTable(list){
+    lv_list = list;
+    if(lv_list.length > 0){
+        let html_content = '';
+        let index = 0;
+        lv_list.forEach(function(installation){
+            let insturl = installation.hasOwnProperty('url') ? installation.url : 'http://' + installation.domain;
+            let dbinf = '';
+            if(installation.hasOwnProperty('db_result') && installation.db_result.result != 'success'){
+                let dbtitle = '{{langmod.ADDDBNOT}}: ' + handleDBError(installation.db_result.code);
+
+                dbinf = '<span class="fa-stack fa-xs" title="' + dbtitle + '" data-toggle="tooltip" data-placement="top" aria-hidden="true">' +
+                    '<i class="fa fa-circle fa-stack-2x"></i>' +
+                    '<i class="fa fa-info fa-stack-1x fa-inverse"></i>' +
+                    '</span>';
+            }
+            html_content += '<tr id="tdlv_' + index + '">' +
+                '<td>' + installation.domain + '<br>' +
+                '<a href="' + insturl + '" target="_blank">' + insturl + '</a></td>' +
+                '<td><div class="addon-td-item">' + installation.path + '</div></td>' +
+                '<td><div class="addon-td-item">' + installation.version + '</div></td>' +
+                '<td>' +
+                '<div class="database-info-td">' +
+                '<div><b>{{langmod.ADDSHORTDB}}: </b> ' + installation.lvbd + '<br><b>{{langmod.ADDSHORTUDB}}: </b>' + installation.lvuserdb + '</div>' +
+                dbinf +
+                '</div>' +
+                '</td>' +
+                '<td>' +
+                '<div class="addon-td-item text-center"><button title="{{langmod.ADDDWP3}}" data-traddon="#tdlv_' + index + '" data-type="laravel" data-installation=\'' + JSON.stringify(installation) + '\' data-toggle="tooltip" data-placement="top" aria-hidden="true" class="btn btn-danger btn-xs btn-delete" onclick="return deleteAddon(this, 0)">' +
+                '<i aria-hidden="true" class="fa fa-trash"></i>' +
+                '</button></div>' +
+                '</td>' +
+                '</tr>';
+            index++;
+        });
+        let table_html = '<table class="table table-striped lv-table">' +
+            '<thead>' +
+            '<tr>' +
+            '<th>{{langmod.ADDDOMLAB}}</th>' +
+            '<th>{{langmod.ADDPATHLAB}}</th>' +
+            '<th>{{langmod.ADDVERLAB}}</th>' +
+            '<th>{{langmod.ADDBDUDB}}</th>' +
+            '<th class="text-center"></th>' +
+            '</tr>' +
+            '</thead>' +
+            '<tbody id="trpaneljl">' +
+            html_content +
+            '</tbody>' +
+            '</table>';
+        $('#table_lv_container').html(table_html);
+        $('.lv-table').DataTable().destroy();
+        lv_table = $('.lv-table').DataTable();
+    }else{
+        $('#table_lv_container').html('<div class="empty_list"><h4 class="text-success">Thre\'s not Laravel installations</h4></div>');
+    }
+    $('[data-toggle="tooltip"]').tooltip();
+}
+function lvInit(){
+    if(lv_list == null){
+        lvReList();
+    }
+}
+function lvReList(){
+    $('#table_lv_container').html(loader);
+    getList('laravel', function(response){
+        lvTable(response);
+    });
+}
+function cancelLV(idCollapse){
+    uchip.slideToggle('#lv_list','#lv_form', function(){
+
+    });
+    $('#lvdomain').val('');
+    $('#lvpach').val('lv');
+    $('#lvpassbd').val('');
+    $('#lvpassbd').pwstrength('forceUpdate');
+    $('#lvbd').val('lv{{mod.extra_data.randbd}}');
+    $('#lvuserdb').val('lv{{mod.extra_data.randbd}}');
+    uchip.validator('.reqlv', true);
+    cancelGeneral(idCollapse);
+}
+function addLaravel(){
+    if(uchip.validator('.reqlv')){
+        let psurl = $("#lvurl").val();
+        let psdomain = $("#lvdomain").val();
+        let psbd = $("#lvbd").val();
+        let psuserdb = $("#lvuserdb").val();
+        let pspassbd = $("#lvpassbd").val();
+        let pspach = $("#lvpach").val();
+        let dompath =  $('#lvdomain option:selected').data('path');
+        let domssl =  $('#lvdomain option:selected').data('ssl');
+        let data = 'lvurl=' + psurl + '&lvdomain=' + psdomain + '&lvbd=' + psbd + '&lvuserdb=' + psuserdb + '&lvpassbd=' + Base64.encode(pspassbd) +
+            '&lvpach=' + pspach + '&dompath=' + dompath + '&domssl=' + domssl;
+        let details = [
+            {
+                title : '{{langmod.ADDDOMLAB}}',
+                value : psdomain
+            },
+            {
+                title : '{{langmod.ADDURLLAB}}',
+                value : (domssl == 1 ? 'https' : 'http') + '://' + psdomain + '/' + pspach
+            },
+            {
+                title : '{{langmod.ADDPATHLAB}}',
+                value : dompath + '/' + pspach
+            },
+            {
+                title : '{{langmod.ADDDWP20}}',
+                value : psbd
+            },
+            {
+                title : '{{langmod.ADDDBUSERLAB}}',
+                value : psuserdb
+            }
+        ];
+        confirmInstallation({
+            type: 'laravel',
+            script: 'Laravel',
+            data : data,
+            wholepath: dompath + '/' + pspach,
+            callback: function(response){
+                if(response.hasOwnProperty('result') && response.result == 'success'){
+                    if(response.db_result.result != 'success'){
+                        noti_bubble('{{langmod.ADDINSTALLDET}} ' + handleDBError(response.db_result.code),'{{langmod.ADDATENTION}}!','warning',false,false,'6500',true);
+                    }else{
+                        noti_bubble('{{langmod.ADDINSTALLSUCC}}','{{langmod.SUCCESS}}','success',false,false,'3000',true);
+                    }
+                }else{
+                    noti_bubble('{{langmod.ADDERRORGEN}}','{{langmod.FERROR}}','error',false,false,'3000',true);
+                }
+                var variableHTML='';
+                var modulin='lv';
+                if($("#instaled_"+modulin).html()==undefined){
+                    variableHTML+='<div class="panel panel-default" id="instaled_'+modulin+'">'+
+                        ' <div class="panel-heading white-bg script-container-title">'+
+                        '<a class="accordion-toggle" style="width: 100%" data-toggle="collapse"  ' +
+                        'aria-expanded="true" aria-controls="panel_'+modulin+'_container" ' +
+                        'data-parent="#accordion1" data-target="#panel_'+modulin+'_container">'+
+                        '<h4 class="panel-title"><i class="more-less glyphicon-plus font-weight-bolder"></i></h4>' +
+                        '<h4 class="panel-title">Laravel Installations</h4></a></div>' +
+                        '<div id="panel_'+modulin+'_container"  class="panel-collapse collapse">' +
+                        '<div class="panel-body" id="table_'+modulin+'_container"><div class="table_cron_loader"><span>' +
+                        '<i class="fa fa-circle-o-notch fa-spin"></i></span></div></div></div></div>'
+                    $( "#accordion1" ).append( variableHTML );
+                    $(".accordion-toggle").click(function(){
+                        $("#"+$(this).prop('data-target')).slideToggle('slow');
+                    });
+                }
+                $("#instaledEmpty").hide();
+                lvTable(response.list);
+                cancelLV('lv');
+            },
+            details: details
+        });
+    }else{
+        noti_bubble('{{langmod.ADDREQFIELDS}}','{{langmod.FERROR}}','error',false,false,'3000',true);
+    }
+}

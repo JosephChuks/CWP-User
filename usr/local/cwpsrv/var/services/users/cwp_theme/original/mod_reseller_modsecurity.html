@@ -1,0 +1,161 @@
+<div class="ibox" id="modseg_container">
+    <div id="_reseller_modsec_main">
+        <div class="ibox-title">
+            <h4>Your domains & subdomains list</h4>
+            {% if (mod.mod_status == 1) %}
+            <button type="button" onclick="showLogs()" class="btn btn-success btn-xs" name="button"><i class="fa fa-ban"></i>
+                {{langmod.SECLABEL12}}</button>
+            {% endif %}
+        
+        </div>
+        <div class="ibox-content">
+            <div class="table_cron_loader" id="loader_modseg"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+            <div id="modseg_wrapper" class="mod-security-wrapper" style="display: none">
+                <table class="table packages_table table-striped table-bordered table-hover dataTable no-footer"
+                    id="tablemodseg">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Domian</th>
+                            <th scope="col">Tipo</th>
+                            <th scope="col">Username</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodylistmodseg">
+        
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div id="_reseller_modsec_rules" style="display: none">
+        <div class="ibox mod-security-rules" id="ibox mod-security-rules">
+            <div class="ibox-title">
+                <h4>{{langmod.SECLABEL35}} <span id="rules_title_domain"></span>.</h4>
+                <button type="button" id="btn_back_ruler_editor" onclick="backFrom('#_reseller_modsec_rules')"
+                    class="btn btn-success btn-xs" name="button"><i class="fa fa-arrow-left"></i>
+                    {{langmod.SECLABEL13}}</button>
+            </div>
+            <div class="ibox-content" id="rules_editor_wrapper">
+                <div class="table_cron_loader" id="rules_loader">
+                    <span><i class="fa fa-circle-o-notch fa-spin"></i></span>
+                    <h3>{{langmod.SECLABEL36}} <span id="rules_editor_domain_loader"></span></h3>
+                </div>
+                <div id="rules_logs_wrapper">
+                    <div class="alert alert-warning" id="file_domain_editor_warning">
+                        {{langmod.SECLABEL39}} /usr/local/apache/conf/userdata/{{users}}/<span
+                            id="file_domain_editor"></span>/modsec.conf {{langmod.SECLABEL40}}
+                    </div>
+                    <div class="rules-wrapper-success">
+                        <div class="panel-body">
+                            <div class="row">
+                                <div class="col-md-7" id="rules_list_wrapper">
+        
+                                </div>
+                                <div class="col-md-5 new-rule-form">
+                                    <h4 class="rules-editor-title">{{langmod.SECLABEL41}}</h4>
+                                    <div class="">
+                                        <div class="">
+                                            <input type="hidden" id="usernameregla">
+                                            <input type="text" style="margin-top:10px;" class="form-control"
+                                                data-required="true" id="addID" maxlength="6" placeholder="Rule ID to Add"
+                                                name="addID">
+                                        </div>
+                                        <button type="button" style="margin:10px 0px;" onclick="addNeRuleID(this)"
+                                            class="btn btn-success btn-block" name="button" id="bt_add_rule"><i
+                                                class="fa fa-floppy-o"></i> {{langmod.SECLABEL42}}</button>
+                                        <div class="alert alert-info">
+                                            {{langmod.SECLABEL43}}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+        
+                    </div>
+                    <div class="rules-wrapper-error">
+                        <div class="IPlogs-wrapper-error-content">
+                            <span class="fa-stack fa-lg text-danger">
+                                <i class="fa fa-square fa-stack-2x"></i>
+                                <i class="fa fa-exclamation-circle fa-stack-1x fa-inverse"></i>
+                            </span>
+                            <h5>{{langmod.SECLABEL44}}</h5>
+                            <button id="rules_retry_logs_btn" class="btn btn-warning" name="button"><i
+                                    class="fa fa-refresh"></i> {{langmod.SECLABEL18}}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="ibox mod-security-ipchecker" style="display: none">
+        <div class="ibox-title">
+            <h4>{{langmod.SECLABEL32}}</h4>
+            <button type="button" onclick="backFrom('.mod-security-ipchecker')" class="btn btn-success btn-xs"
+                name="button"><i class="fa fa-arrow-left"></i> {{langmod.SECLABEL13}}</button>
+        </div>
+        <div class="ibox-content">
+            <div class="table_cron_loader" id="logip_loader">
+                <span><i class="fa fa-circle-o-notch fa-spin"></i></span>
+                <h3>{{langmod.SECLABEL33}} <span id="ip_checker_address"></span> in <span
+                        id="ip_checker_domain"></span>.error.log</h3>
+            </div>
+            <div id="IP_logs_wrapper">
+                <div class="IPlogs-wrapper-success">
+                    <h4>{{langmod.SECLABEL34}} <span id="ip_checker_domain2"></span></h4>
+                    <div class="row controls">
+                        <div class="col-md-4">
+                            <div class="input-group input-icon">
+                                <span class="input-group-addon"><i class="fa fa-search s16"></i></span>
+                                <input type="text" class="form-control" id="check_ip_field" size="30"
+                                    style="top: 0px!important">
+                            </div>
+                        </div>
+                        <!--<div class="col-md-4">
+                                            &lt;!&ndash;<select class="form-control" id="check_ip_domain" name="">
+                                            </select>&ndash;&gt;
+                                        </div>-->
+                        <div class="col-md-2">
+                            <button type="button" onclick="reCheckIP()" class="btn btn-primary" name="button"><i
+                                    class="fa fa-sitemap"></i> {{langmod.SECLABEL5}}</button>
+                        </div>
+                    </div>
+                    <input type="hidden" id="domainhidd">
+                    <pre id="IPlog_area_viewer" class="mod-security-log-display" style="margin-top: 10px"></pre>
+                </div>
+                <div class="Iplogs-wrapper-error">
+                    <div class="IPlogs-wrapper-error-content">
+                        <span class="fa-stack fa-lg text-danger">
+                            <i class="fa fa-square fa-stack-2x"></i>
+                            <i class="fa fa-exclamation-circle fa-stack-1x fa-inverse"></i>
+                        </span>
+                        <h5>{{langmod.SECLABEL17}}</h5>
+                        <button id="IPretry_logs_btn" class="btn btn-warning" name="button"><i class="fa fa-refresh"></i>
+                            {{langmod.SECLABEL18}}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="deleterule" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm" style="width:300px">
+        <div class="modal-content animated fadeIn">
+            <div class="modal-header" style="padding: 10px;">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">×</span>
+                    <span class="sr-only">Close</span>
+                </button>
+                <h4 class="modal-title" style="font-size:2rem">Confirm  Delete</h4>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+
+            </div>
+            <div class="modal-footer">
+
+            </div>
+        </div>
+    </div>
+</div>

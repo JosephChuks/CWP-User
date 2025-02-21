@@ -1,0 +1,218 @@
+<!------------------------PS------------------------------->
+<div id="tab_swsmf" class="tab-pane fade {{dicsmf}} {{swsmf}}">
+    <!--<div class="script-container" id="smf_list">
+        <div class="panel panel-default" id="smftap1">
+            <div class="panel-heading white-bg script-container-title">
+                <h4 class="panel-title">{{langmod.ADDDTLTAB7}}</h4>
+                <span class="btn-primary btn-xs btn pull-right" onclick="addonsChangeView('#smf_form','#smf_list')">
+          <i class="fa fa-plus"></i> {{langmod.ADDWHNEW}}
+        </span>
+            </div>
+            <div class="panel-body" id="table_smf_container">
+                <div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+            </div>
+        </div>
+    </div>-->
+    <div class="script-container" id="smf_form">
+        <div class="panel panel-default" id="smftap1">
+            <div class="panel-heading white-bg script-container-title">
+                <h4 class="panel-title">{{langmod.ADDDWP4}}</h4>
+                <div class="">
+                    <span class="btn-success btn-xs btn" onclick="addsmf()"><i class="fa fa-download" aria-hidden="true"></i> {{langmod.ADDDWP24}}</span>
+                    <span class="btn-warning btn-xs btn" onclick="cancelsmf()"><i class="fa fa-ban"></i> {{langmod.ADDCANCELLAB}}</span>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="form-group row">
+                    <div class="col-sm-6 addon-row-label">
+                        <b>{{langmod.ADDDWP7}}</b>
+                        <p>{{langmod.ADDDWP8}}</p>
+                    </div>
+                    <div class="col-sm-4">
+                        <select  class="form-control reqsmf" data-required="true" id="smfdomain">
+                            <option value="">{{langmod.ADDDWP9}}</option>
+                            {% for domains in mod.domains %}
+                            <option data-path="{{domains.path}}" data-ssl="{{domains.ssl}}" value="{{domains.domain}}">{{domains.domain}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-sm-6 addon-row-label">
+                        <b>{{langmod.ADDDWP10}}</b>
+                        <p>{{langmod.ADDDWP11}}</p>
+                    </div>
+                    <div class="col-sm-4">
+                        <input type="text" class="form-control" maxlength="20" id="smfpach" value="smf">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="panel panel-default" id="smftap2">
+            <div class="panel-heading white-bg script-container-title">
+                <h4 class="panel-title">{{langmod.ADDADMINACCOUNT}}</h4>
+            </div>
+            <div class="panel-body">
+                <div class="form-group row">
+                    <div class="col-sm-6 addon-row-label">
+                        <b>{{langmod.ADDSMF03}}</b>
+                    </div>
+                    <div class="col-sm-4">
+                        <input type="text" class="form-control" id="smfadminuser" value="" placeholder="{{langmod.ADDSMF01}}">
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-sm-6 addon-row-label">
+                        <b>{{langmod.ADDPS03}}</b>
+                    </div>
+                    <div class="col-sm-4">
+                        <input type="text" class="form-control" id="smfadminemail" value="" placeholder="{{langmod.ADDPS01}}">
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-sm-6 addon-row-label">
+                        <b>{{langmod.ADDPS04}}</b>
+                    </div>
+                    <div class="col-sm-6 pass_form_div">
+                        <div class="pass_container">
+                            <input type="text" class="form-control" id="smfadminpass" maxlength ="20" value="" placeholder="{{langmod.ADDPS02}}">
+                            <div class="pwstrength_viewport_progress"></div>
+                            <span class="btn btn-default btn-xs copy-pass-btn" title="{{langmod.ADDCOPYPASS}}" data-toggle="tooltip" data-placement="top" aria-hidden="true" onclick="copyPass('smfadminpass')"><i class="fa fa-copy"></i></span>
+                        </div>
+                        <div>
+                            <span class="btn btn-default" title="{{langmod.ADDGENRPASS}}" data-toggle="tooltip" data-placement="top" aria-hidden="true" onclick="generateNewPass(this)"><i class="fa fa-key" aria-hidden="true"></i></span>
+                            <div class="btn-group dropdown show_options_adps">
+                                <button type="button" class="btn btn-default" title="{{langmod.ADDCHOPTPAS}}" onclick="openPGOPT('#pass_smfadmin', '.show_options_adps')">{{langmod.FTPENCRYTED}}<span class="caret" style="margin-left:10px"></span></button>
+                                <div class="general-password-generator-options mysql_generator" id="pass_smfadmin" style="display: none;z-index: 20;box-shadow: 3px 7px 10px -6px #777;">
+                                    <!-- <span class="general-password-generator-options-title"><b>Options</b></span>
+                                    <span class="general-password-generator-options-close" onclick="closePGOPT()" style="cursor:pointer">s<i class="fa fa-window-close"></i></span> -->
+                                    <ul class="right animated fadeIn">
+                                        <li>
+                                            <select class="form-control pwlength" id="lengthpass2" title="{{langmod.FTPLENGTH}}" style="margin-bottom: 5px;">
+                                                <option value="7"> {{langmod.FTPLENGTH}}  7</option>
+                                                <option value="8"> {{langmod.FTPLENGTH}}  8</option>
+                                                <option value="9"> {{langmod.FTPLENGTH}}  9</option>
+                                                <option value="10"> {{langmod.FTPLENGTH}} 10</option>
+                                                <option value="11"> {{langmod.FTPLENGTH}} 11</option>
+                                                <option value="12" selected=""> {{langmod.FTPLENGTH}} 12</option>
+                                                <option value="13"> {{langmod.FTPLENGTH}} 13</option>
+                                                <option value="14"> {{langmod.FTPLENGTH}} 14</option>
+                                                <option value="15"> {{langmod.FTPLENGTH}} 15</option>
+                                            </select>
+                                        </li>
+                                        <li>
+                                            <select class="form-control pwtype" id="typepass2" title="Type">
+                                                <option value="alf">{{langmod.FTPTYPE}} {{langmod.FTPALF}}</option>
+                                                <option value="num" selected="">{{langmod.FTPTYPE}} {{langmod.FTPALFNUM}}</option>
+                                                <option value="def">{{langmod.FTPTYPE}} {{langmod.FTPALFNUMSIG}}</option>
+                                            </select>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="panel panel-default" id="smftap7">
+            <div class="panel-heading white-bg script-container-title">
+                <h4 class="panel-title">{{langmod.ADDACOMPCCOUNT}}</h4>
+            </div>
+            <div class="panel-body">
+                <div class="form-group row">
+                    <div class="col-sm-6 addon-row-label">
+                        <b>{{langmod.ADDABOARDNAME}}</b>
+                    </div>
+                    <div class="col-sm-4">
+                        <input type="text" class="form-control" id="smfcompname" value="" placeholder="{{langmod.ADDABOARDNAME}}">
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <div class="col-sm-6 addon-row-label">
+                        <b>{{langmod.ADDACOMPEMAIL}}</b>
+                    </div>
+                    <div class="col-sm-4">
+                        <input type="text" class="form-control" id="smfcompemail" value="" placeholder="{{langmod.ADDPLACOMPEMAIL}}">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="panel panel-default" id="smftap4">
+            <div class="panel-heading white-bg script-container-title">
+                <h4 class="panel-title">{{langmod.ADDDWP19}}</h4>
+            </div>
+            <div class="panel-body">
+                <div class="form-group row">
+                    <div class="col-sm-6 addon-row-label">
+                        <b>{{langmod.ADDDWP20}} </b>
+                        <p>{{langmod.ADDDWP21}}</p>
+                    </div>
+                    <div class="col-sm-4">
+                        <input type="text" class="form-control reqsmf" data-required="true" id="smfbd" maxlength="7" value="smf{{mod.extra_data.randbd}}">
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-sm-6 addon-row-label">
+                        <b>{{langmod.ADDDWP22}}</b>
+                    </div>
+                    <div class="col-sm-4">
+                        <input type="text" class="form-control reqsmf" data-required="true" id="smfuserdb" maxlength="7" value="smf{{mod.extra_data.randbd}}">
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-sm-6 addon-row-label">
+                        <b>{{langmod.ADDDWP23}}</b>
+                    </div>
+                    <div class="col-sm-6 pass_form_div">
+                        <!-- <input type="text" class="form-control" id="smfpassbd" maxlength="20" value="" placeholder="{{langmod.ADDDWP25}}"> -->
+                        <div class="pass_container">
+                            <input type="text" class="form-control reqsmf" data-required="true" id="smfpassbd" maxlength="20" value="" placeholder="{{langmod.ADDDWP25}}">
+                            <div class="pwstrength_viewport_progress"></div>
+                            <span class="btn btn-default btn-xs copy-pass-btn" title="{{langmod.ADDCOPYPASS}}" data-toggle="tooltip" data-placement="top" aria-hidden="true" onclick="copyPass('smfpassbd')"><i class="fa fa-copy"></i></span>
+                        </div>
+                        <div>
+                            <span class="btn btn-default" title="{{langmod.ADDGENRPASS}}" data-toggle="tooltip" data-placement="top" aria-hidden="true" onclick="generateNewPass(this)"><i class="fa fa-key" aria-hidden="true"></i></span>
+                            <div class="btn-group dropdown show_options_ps">
+                                <button type="button" class="btn btn-default" title="{{langmod.ADDCHOPTPAS}}" onclick="openPGOPT('#pass_smfdb', '.show_options_ps')">{{langmod.FTPENCRYTED}}<span class="caret" style="margin-left:10px"></span></button>
+                                <div class="general-password-generator-options mysql_generator" id="pass_smfdb" style="display: none;z-index: 20;box-shadow: 3px 7px 10px -6px #777;">
+                                    <!-- <span class="general-password-generator-options-title"><b>Options</b></span>
+                                    <span class="general-password-generator-options-close" onclick="closePGOPT()" style="cursor:pointer">s<i class="fa fa-window-close"></i></span> -->
+                                    <ul class="right animated fadeIn">
+                                        <li>
+                                            <select class="form-control pwlength" id="lengthpass2" title="{{langmod.FTPLENGTH}}" style="margin-bottom: 5px;">
+                                                <option value="7"> {{langmod.FTPLENGTH}}  7</option>
+                                                <option value="8"> {{langmod.FTPLENGTH}}  8</option>
+                                                <option value="9"> {{langmod.FTPLENGTH}}  9</option>
+                                                <option value="10"> {{langmod.FTPLENGTH}} 10</option>
+                                                <option value="11"> {{langmod.FTPLENGTH}} 11</option>
+                                                <option value="12" selected=""> {{langmod.FTPLENGTH}} 12</option>
+                                                <option value="13"> {{langmod.FTPLENGTH}} 13</option>
+                                                <option value="14"> {{langmod.FTPLENGTH}} 14</option>
+                                                <option value="15"> {{langmod.FTPLENGTH}} 15</option>
+                                            </select>
+                                        </li>
+                                        <li>
+                                            <select class="form-control pwtype" id="typepass2" title="Type">
+                                                <option value="alf">{{langmod.FTPTYPE}} {{langmod.FTPALF}}</option>
+                                                <option value="num" selected="">{{langmod.FTPTYPE}} {{langmod.FTPALFNUM}}</option>
+                                                <option value="def">{{langmod.FTPTYPE}} {{langmod.FTPALFNUMSIG}}</option>
+                                            </select>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-footer text-right">
+                <span class="btn-success btn-xs btn" onclick="addsmf()"><i class="fa fa-download" aria-hidden="true"></i> {{langmod.ADDDWP24}}</span>
+                <span class="btn-warning btn-xs btn" onclick="cancelsmf()"><i class="fa fa-ban"></i> {{langmod.ADDCANCELLAB}}</span>
+            </div>
+        </div>
+    </div>
+</div>

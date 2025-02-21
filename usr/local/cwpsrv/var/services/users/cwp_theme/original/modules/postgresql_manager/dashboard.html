@@ -1,0 +1,58 @@
+<div class="col-md-12"> 
+    {% if mod.pgresql_status == 'running' %}
+        {% if mod.pgresql_quota > -1 %}
+            {% set pgre_sql_quota_bar=100/mod.pgresql_quota*mod.pgresql_qty %}
+            {% if pgre_sql_quota_bar >=26 and pgre_sql_quota_bar <=50 %} 
+                {% set classbar='progress-bar progress-bar-success' %} 
+            {% elseif pgre_sql_quota_bar>=51 and pgre_sql_quota_bar <=75 %} 
+                {% set classbar='progress-bar progress-bar-warning' %} 
+            {% elseif pgre_sql_quota_bar>75 %}
+                {% set classbar = 'progress-bar progress-bar-danger' %}
+            {% else %}
+                {% set classbar = 'progress-bar' %}
+            {% endif %}
+            {% set label_dom = mod.pgresql_quota %}
+        {% else %}
+            {% set pgre_sql_quota_bar = 0 %}
+            {% set classbar = 'progress-bar' %}
+            {% set label_dom = '&infin;' %}
+        {% endif %}
+        <div class="pgresql-quota-wrapper">
+            <div class="ibox-content" id="indemail" style="display: block">
+                <ul class="stat-list">
+                    <li>
+                        <h2 class="no-margins" style="vertical-align: inherit;" id="tlftpind">Postgre SQL Databases {{langmod.LABPGRE80}} <span id="pgresql_used">{{mod.pgresql_qty}}</span> / {{mod.pgresql_quota}}</h2>
+                        <small style="vertical-align: inherit;">{{langmod.LABPGRE81}} / {{langmod.LABPGRE82}}</small>
+                        <div id="stat-percent" style="display: inline;">{{pgre_sql_quota_bar|round}}%</div>
+                        <div class="progress progress-mini">
+                            <div style="width: {{pgre_sql_quota_bar|round}}%;" class="{{classbar}}" id="_bar_pgresql_quota_"></div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="ibox" id="_pgre_tabs_wrapper_">
+            <ul class="nav nav-tabs">
+                <li class="active"><a class="nav-link"  data-toggle="tab" href="#_pgre_database_tab_"><i class="fa fa-database"></i> {{langmod.LABPGRE1}}</a></li>
+                <li><a data-toggle="tab" class="nav-link" onclick="showUsesrTab()" href="#_pgresql_users_tab_"><i class="fa fa-users"></i> {{langmod.LABPGRE2}}</a></li>
+            </ul>  
+            
+            <div class="tab-content">
+                {% include 'modules/postgresql_manager/databases.html' %}
+                <div id="_pgresql_users_tab_" class="tab-pane fade">
+                    <div class="ibox-content" id="_pgresql_users_list_wrapper_">
+                        
+                    </div>
+                    <!-- <div class="ibox-content" id="_pgresql_users_loader_">
+                        <div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+                    </div> -->
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="ibox-content" id="_pgresql_not_running_wrapper_">
+            <i class="fa fa-ban text-warning"></i>
+            <h5>{{langmod.LABPGRE79}}</h5>
+        </div>
+    {% endif %}
+</div>

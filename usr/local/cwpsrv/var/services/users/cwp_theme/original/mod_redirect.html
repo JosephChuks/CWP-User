@@ -1,0 +1,380 @@
+<div class="row  border-bottom white-bg dashboard-header">
+    {% if mod.fsl == 1 %}
+    {% set stflalert ='block' %}
+    {% else %}
+    {% set stflalert ='none' %}
+    {% endif %}
+    <div class="row  alert alert-warning col-lg-12" style="margin-left: 5px; padding-right: 5px;display:{{stflalert}}"
+        id="alertfl">
+        <strong>{{langene.GALARTFILEBLOCK}}</strong>
+    </div>
+    <div class="col-lg-10">
+        <h2>{{langmod.REDTITLE}} ({{users}})</h2>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="?">Home</a></li>
+            <li class="breadcrumb-item active"><strong>{{langmod.REDTITLE}}</strong></li>
+        </ol>
+    </div>
+</div>
+<div class="row" style="margin-top:2rem">
+    <div class="col-lg-9">
+        <div class="row">
+            <div class="col-lg-12">
+                <div id="licensepro" class="col-lg-12">
+                    {% if mod.license == 0 %}
+                    <div class="alert alert-danger" style="margin: 15px">
+                        -<b>{{langmod.RDLABEL10}}</b>
+                    </div>
+                    {% set license = 'disabled'%}
+                    {% else %}
+                    {% set license = ''%}
+                    {% endif %}
+                </div>
+                <div id="form_redirect" style="display: none">
+                    <div class="col-lg-12">
+                        <div class="ibox-title domain-header-title">
+                            <h4>{{langmod.RDLABEL13}}</h4>
+                            <div class="actions-btn text-right">
+                                <span onclick="saveNewRedirect()"
+                                    class="btn btn-w-m btn-sm btn-success btnsave disabled"><i class="fa fa-floppy-o"
+                                        aria-hidden="true"></i> {{langmod.RDLABEL14}}</span>
+                                <span onclick="cancelNewForm()" class="btn btn-w-m btn-sm btn-warning "><i
+                                        class="fa fa-ban" aria-hidden="true"></i> {{langmod.RDLABEL15}}</span>
+                            </div>
+                        </div>
+                        <form id="myForm">
+                            <div class="ibox-content new-form-flex">
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="new-form-flex-form">
+                                            <div class="form-group row">
+                                                <div class="col-sm-3"><b>{{langmod.RDLABEL23}}:</b></div>
+                                                <div class="col-sm-9">
+                                                    <!--input type="text" class="form-control" data-required="true"  id="type"-->
+                                                    <select class="form-control typeForm" id="type">
+                                                        <option value="permanent">{{langmod.RDLABEL24}} (301)</option>
+                                                        <option value="temp">{{langmod.RDLABEL25}} (302)</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="new-form-flex-form">
+                                            <div class="form-group row">
+                                                <div class="col-sm-3"><b>https?://(www.)?:</b></div>
+                                                <div class="col-sm-9">
+                                                    <!--input type="text" class="form-control" data-required="true"  id="domain"-->
+                                                    <select class="form-control typeForm" id="domain">
+
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="new-form-flex-form">
+                                            <div class="form-group row">
+                                                <div class="col-sm-3"><b>{{langmod.RDLABEL26}}:</b></div>
+                                                <div class="col-sm-9 directory-selector-btn">
+                                                    <span class="btn btn-white dir-sel-btn" data-toggle="tooltip"
+                                                        data-placement="bottom" title="" onclick="showExplorer()"
+                                                        data-original-title="{{langmod.RDLABEL27}}"><i
+                                                            class="fa fa-home" aria-hidden="true"></i>
+                                                        <div id="dirsel">/</div>
+                                                    </span>
+                                                    <input type="text" id="path" class="form-control typeForm">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="new-form-flex-form">
+                                            <div class="form-group row">
+                                                <div class="col-sm-3"><b>{{langmod.RDLABEL28}}:</b></div>
+                                                <div class="col-sm-9"><input type="text" class="form-control typeForm"
+                                                        data-required="true" data-http="true"
+                                                        data-httpmessage="{{langene.VALIDATORHTTP}}"
+                                                        onkeyup="return validatedata('redirect')" id="redirect"></div>
+                                            </div>
+                                        </div>
+                                        <div class="new-form-flex-form">
+                                            <div class="form-group row">
+                                                <div class="col-sm-3"><b>{{langmod.RDLABEL29}}:</b></div>
+                                                <div class="col-sm-9 directory-selector-btn">
+                                                    <fieldset class="form-group">
+                                                        <div class="row" style="margin-top: 15px">
+                                                            <div class="col-sm-12">
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input typeForm redirection"
+                                                                        type="radio" name="redirection"
+                                                                        id="onlyredirect" value="onlyredirect">
+                                                                    <label class="form-check-label"
+                                                                        style="font-weight: 200" for="onlyredirect">
+                                                                        {{langmod.RDLABEL30}}
+                                                                    </label>
+                                                                </div>
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input typeForm redirection"
+                                                                        type="radio" name="redirection" id="gridRadios2"
+                                                                        value="redirectwithout" checked>
+                                                                    <label class="form-check-label"
+                                                                        style="font-weight: 200" for="gridRadios2">
+                                                                        {{langmod.RDLABEL31}}
+                                                                    </label>
+                                                                </div>
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input typeForm redirection"
+                                                                        type="radio" name="redirection" id="gridRadios3"
+                                                                        value="notredirect">
+                                                                    <label class="form-check-label"
+                                                                        style="font-weight: 200" for="gridRadios3">
+                                                                        {{langmod.RDLABEL32}}
+                                                                    </label>
+                                                                </div>
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input typeForm"
+                                                                        type="checkbox" id="WildCardRedirect">
+                                                                    <label class="form-check-label"
+                                                                        style="font-weight: 200" for="WildCardRedirect">
+                                                                        {{langmod.RDLABEL33}}
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </fieldset>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="alert alert-info" style="margin-bottom: 0px;">
+                                                    <span class="fa-stack">
+                                                        <i class="fa fa-circle fa-stack-2x"></i>
+                                                        <i class="fa fa fa-info fa-stack-1x fa-inverse"></i>
+                                                    </span> <b>{{langmod.RDLABEL17}}:</b> {{langmod.RDLABEL16}}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row" style="margin-top: 15px">
+                                            <div class="col-md-12">
+                                                <div class="alert alert-warning" style="margin-bottom: 0px;">
+                                                    <span><b>{{langmod.RDLABEL18}}:</b></span>
+                                                    <p><b>* </b>{{langmod.RDLABEL19}}</p>
+                                                    <p><b>* </b>{{langmod.RDLABEL20}}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="ibox-footer">
+                        <div class="text-right">
+                            <span onclick="saveNewRedirect()" class="btn btn-w-m btn-sm btn-success btnsave disabled"><i
+                                    class="fa fa-floppy-o" aria-hidden="true"></i> {{langmod.RDLABEL14}}</span>
+                            <span onclick="cancelNewForm()" class="btn btn-w-m btn-sm btn-warning "><i class="fa fa-ban"
+                                    aria-hidden="true"></i> {{langmod.RDLABEL15}}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tbl_list">
+                    <div class="ibox-title">
+                        <h4>
+                            {{langmod.RDLABEL12}}
+                            <span id="btn_add_domain" onclick="showNewRediretForm()"
+                                class="btn btn-success btn-xs mr5 mb10 pull-right {{license}}">
+                                {{langmod.RDLABEL13}}</span>
+                        </h4>
+                    </div>
+                    <div class="col-lg-12 ibox-content">
+                        <div class="row col-lg-12">
+                            <table id="tabRedirect" class="table table-striped table-bordered table-hover  display"
+                                style="width:100%">
+                                <thead>
+                                    <tr>
+                                        <th>{{langmod.RDLABEL1}}</th>
+                                        <th>{{langmod.RDLABEL2}}</th>
+                                        <th>{{langmod.RDLABEL3}}</th>
+                                        <th>{{langmod.RDLABEL4}}</th>
+                                        <th>{{langmod.RDLABEL5}}</th>
+                                        <th>{{langmod.RDLABEL6}}</th>
+                                        <th>{{langmod.RDLABEL7}}</th>
+                                        <th>{{langmod.RDLABEL8}}</th>
+                                        <th>{{langmod.RDLABEL9}}</th>
+                                    </tr>
+                                </thead>
+                                <tfoot>
+
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% include 'sidebar.html' %}
+</div>
+{% include 'footer.html' %}
+<div class="modal" id="deletemodal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content animated fadeIn">
+            <div class="modal-header">
+
+            </div>
+            <div class="modal-body small-pad-modal">
+
+            </div>
+            <div class="modal-footer">
+
+            </div>
+        </div>
+    </div>
+</div>
+<style media="screen">
+    .mail-contracted {
+        min-width: 20vw;
+        top: -7.9rem;
+    }
+
+    #new_form_wrapper {
+        display: none;
+    }
+
+    .domain-header-title {
+        display: flex;
+        padding-right: 15px;
+        justify-content: space-between;
+    }
+
+    .ibox-footer {
+        font-size: 100%;
+    }
+
+    #new_form_wrapper .form-group {
+        display: flex;
+        align-items: center;
+    }
+
+    .directory-selector-btn {
+        display: flex;
+    }
+
+    #dir_explorer_domain .modal-body {
+        max-height: 70vh;
+        min-height: 40vh;
+        scroll: auto;
+    }
+
+    #dir_explorer_domain .dir-item:nth-child(even) {
+        background-color: #f3f3f3;
+    }
+
+    #dir_explorer_domain .dir-item:hover {
+        background-color: #cccccc;
+        cursor: pointer;
+        color: #333;
+    }
+
+    #dir_explorer_domain .dir-item {
+        padding: 5px;
+    }
+
+    .dir-item .fa {
+        margin-right: 5px;
+    }
+
+    .current-path-div {
+        padding-bottom: 10px;
+        padding-top: 10px;
+    }
+
+    #dir_list {
+        padding-bottom: 10px;
+    }
+
+    #dirsel {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 25rem;
+        /* border: 1px solid #999; */
+        direction: rtl;
+        text-align: left;
+        line-height: 1.5rem;
+        padding: 0px;
+        display: inline-block;
+        margin-bottom: 0px;
+    }
+
+    .dir-sel-btn .fa {
+        font-size: 2rem;
+        margin-right: 5px;
+    }
+
+    .dir-sel-btn {
+        display: flex;
+        align-items: center;
+    }
+
+    .new-form-flex {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .new-form-flex-form {
+        width: 100%;
+        padding-right: 2rem;
+    }
+
+    .new-form-flex-info {
+        width: 30%;
+    }
+
+    .error-field {
+        color: #ff0000;
+        margin-top: 5px;
+        font-size: 12px;
+        display: block;
+        margin-bottom: -10px;
+    }
+
+    #san_selector {
+        display: none;
+    }
+
+    .san-list {
+        list-style: none;
+        margin: 0px;
+        padding: 0px;
+    }
+
+    .san-selector-title {
+        border-bottom: 1px solid #e7eaec;
+        padding-bottom: 5px;
+        font-weight: 600;
+    }
+</style>
+
+<div class="modal" id="dir_explorer" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" style="width:500px;">
+        <div class="modal-content animated fadeIn">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
+                </button>
+                <h4>Select the directory</h4>
+            </div>
+            <div class="modal-body" style="padding:0px">
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" disabled class="btn btn-success btn-block disabled" id="sel_path_btn"
+                    onclick="selCurrentPath()">
+                    <i class="fa fa-thumb-tack" aria-hidden="true"></i> Choose current path
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

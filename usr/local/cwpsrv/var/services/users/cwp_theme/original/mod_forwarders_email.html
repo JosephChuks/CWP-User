@@ -1,0 +1,505 @@
+<style media="screen">
+  .deleting_tr {
+    background-color: #f5f5f566;
+    color: #e7eaec;
+  }
+
+  .email-accounts-table,
+  #DataTables_Table_0_wrapper {
+    width: 100% !important;
+  }
+
+  .DataTables_Table_0 {
+    display: none;
+  }
+
+  .actions-td {
+    width: 150px !important;
+    text-align: center;
+  }
+
+  #table_email_container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+  }
+
+  #accounts_loader {
+    position: absolute;
+    background-color: #ffffff;
+    width: 20rem;
+    z-index: 1000;
+    height: auto;
+    border-radius: 5px;
+    border: 1px solid #cecece;
+    padding: .5rem 0px;
+  }
+
+  .catch-all-record {
+    background-color: #1c84c6 !important;
+    color: #fff;
+  }
+
+  .catch-all-record .btn-success {
+    border-color: #9ed2ff !important;
+  }
+
+  .dataTables_wrapper {
+    padding-bottom: 0px;
+  }
+
+  #new_pipe_form {
+    display: none;
+  }
+
+  .mail-forward-pipe-top {
+    border-bottom: 2px solid #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .mail-forward-pipe-top h3 {
+    margin: 0px;
+  }
+
+  .panel-body-pipe {
+    padding-top: 5px !important;
+  }
+
+  .file-selector {
+    display: flex;
+    cursor: pointer;
+  }
+
+  .file-selector .input-group-addon {
+    line-height: 2.3rem;
+    border-left: 1px solid #e5e6e7;
+    padding-top: 5px;
+  }
+
+  .file-selector .form-control {
+    top: 0px !important;
+    cursor: pointer;
+  }
+
+  #dir_explorer_domain .modal-body {
+    max-height: 70vh;
+    min-height: 40vh;
+    overflow: auto;
+  }
+
+  #dir_explorer_domain .dir-item:nth-child(even) {
+    background-color: #f3f3f3;
+  }
+
+  #dir_explorer_domain .dir-item:hover {
+    background-color: #cccccc;
+    cursor: pointer;
+    color: #333;
+  }
+
+  #dir_explorer_domain .dir-item {
+    padding: 5px;
+  }
+
+  .dir-item .fa {
+    margin-right: 5px;
+  }
+
+  .current-path-div {
+    padding-bottom: 10px;
+    padding-top: 10px;
+  }
+
+  #dir_list {
+    padding-bottom: 10px;
+  }
+
+  #dirsel {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 25rem;
+    /* border: 1px solid #999; */
+    direction: rtl;
+    text-align: left;
+    line-height: 1.5rem;
+    padding: 0px;
+    display: inline-block;
+    margin-bottom: 0px;
+  }
+
+  .dir-sel-btn .fa {
+    font-size: 2rem;
+    margin-right: 5px;
+  }
+
+  .dir-sel-btn {
+    display: flex;
+    align-items: center;
+  }
+
+  .file-item-listing {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .file-item-listing .label-info {
+    padding-top: 5px;
+  }
+
+  .php-file-warning {
+    font-weight: 600;
+    padding-top: 3.3rem;
+    display: block;
+  }
+
+  #new_pipe_form .form-group {
+    margin-bottom: 5px;
+  }
+
+  .new-forwarder-warning {
+    font-weight: 600;
+    margin-top: 10px;
+    display: block;
+  }
+</style>
+<div class="modal" id="dir_explorer_domain" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" style="width:500px;">
+    <div class="modal-content animated fadeIn">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span><span class="sr-only">{{langene.MDCLOSE}}</span>
+        </button>
+        <h4>{{langmod.MFWLAB7}}</h4>
+      </div>
+      <div class="modal-body" style="padding:0px">
+
+      </div>
+      <div class="modal-footer">
+        <span>{{langmod.MFWLAB10}} <span class="label label-info">{{langmod.MFWLAB9}}</span> {{langmod.MFWLAB11}}</span>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row  border-bottom white-bg dashboard-header">
+  {% if mod.fsl == 1 %}
+  {% set stflalert ='block' %}
+  {% else %}
+  {% set stflalert ='none' %}
+  {% endif %}
+
+  {% if mod.fordwars_stats.account < mod.fordwars_stats.pack or mod.fordwars_stats.pack == -1%}
+  {% set sefol='block' %}
+  {% else %}
+  {% set sefol='none' %}
+  {% endif %}
+  <div class="row  alert alert-warning col-lg-12" style="margin-left: 5px; padding-right: 5px;display:{{stflalert}}"
+    id="alertfl">
+    <strong>{{langene.GALARTFILEBLOCK}}</strong>
+  </div>
+  <div class="col-lg-10">
+    <h2>{{langmod.ETITLE}} ({{users}})</h2>
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="?">Home</a></li>
+      <li class="breadcrumb-item active"><strong>{{langmod.ETITLE}}</strong></li>
+    </ol>
+  </div>
+</div>
+<div class="row">
+  <div class="col-lg-9">
+    <div class="row mail-info-tab-container">
+      {% if mod.emaccounts_stats.pack >= 0 %}
+      {% set emailbar = 100 / mod.emaccounts_stats.pack * mod.emaccounts_stats.account %}
+      {% set email_package = mod.emaccounts_stats.pack %}
+      {% set emailbar_forw = 100 / mod.fordwars_stats.pack * mod.fordwars_stats.account %}
+      {% set emailfor_package_label = mod.fordwars_stats.pack %}
+      {% else %}
+      {% set email_package = '&infin;' %}
+      {% set emailbar = 0 %}
+      {% set emailbar_forw = 0 %}
+      {% set emailfor_package_label = '&infin;' %}
+      {% endif %}
+
+    </div>
+    <div class="row">
+      <div class="col-lg-12">
+        <div class="mail-contracted">
+          <div class="ibox-content" id="indemail" style="display: none">
+            <ul class="stat-list">
+              <li>
+                <input type="hidden" id="emaccount_plan" value="{{mod.emaccounts_stats.pack}}">
+                <h2 class="no-margins" style="vertical-align: inherit;" id="tlftpind">{{langene.PGEMAIL}} <span
+                    id="emaccountused">{{mod.email_accounts}}</span> / {{email_package|raw}}</h2>
+                <small style="vertical-align: inherit;">{{langmod.EMLABEL4}} / {{langmod.EMLABEL5}}</small>
+                <div class="stat-percent" id="stat-percent-accounts">{{emailbar|round}}%</div>
+                <div class="progress progress-mini">
+                  <div class="progress-bar progress-bar-success" id="baremailind"></div>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <div class="ibox-content" id="indforw" style="display: block">
+            <ul class="stat-list">
+              <li>
+                <h2 class="no-margins" style="vertical-align: inherit;" id="tlforwind">{{langmod.PGFORWA}} <span
+                    id="forwardused">{{mod.fordwars_stats.account}}</span> / {{emailfor_package_label|raw}}</h2>
+                <small style="vertical-align: inherit;">{{langmod.EMLABEL4}} / {{langmod.EMLABEL5}}</small>
+                <div class="stat-percent" id="stat_percent_forw">{{emailbar_forw|round}}%</div>
+                <div class="progress progress-mini">
+                  {% if emailbar_forw >=26 and emailbar_forw <=50 %}
+                  {% set classbar = 'progress-bar progress-bar-success' %}
+                  {% elseif emailbar_forw >=51 and emailbar_forw <=75 %}
+                  {% set classbar = 'progress-bar progress-bar-warning' %}
+                  {% elseif emailbar_forw >75 %}
+                  {% set classbar = 'progress-bar progress-bar-danger' %}
+                  {% else %}
+                  {% set classbar = 'progress-bar' %}
+                  {% endif %}
+                  <div style="width: {{emailbar_forw|round(1, 'floor')}}%;" class="{{classbar}}" id="barforwind"></div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="tabs-container mail-tabs">
+          <ul class="nav nav-tabs" role="tablist">
+            {% if ("mail_forwarders" in rmenu )or(swmenu==1) %}
+            <li><a class="nav-link active" data-toggle="tab" href="#tab-2"
+                onclick="return chancetabemail(1)">{{langmod.EFORWARDER}}</a></li>
+            {% endif %}
+            {% if ("mail_forwarders_pipe" in rmenu )or(swmenu==1) %}
+            <li><a class="nav-link" data-toggle="tab" href="#tab-3"
+                onclick="return chancetabemail(2)">{{langmod.EMLABEL11}}</a></li>
+            {% endif %}
+          </ul>
+          <div class="tab-content">
+
+            {% if mod.fordwars_stats.account < mod.fordwars_stats.pack or mod.fordwars_stats.pack == -1%}
+            {% set sefol='' %}
+            {% else %}
+            {% set sefol='disabled' %}
+            {% endif %}
+            {% if ("mail_forwarders" in rmenu )or(swmenu==1) %}
+            <div role="tabpanel" id="tab-2" class="tab-pane active">
+              <div class="panel-body">
+                <div class="mail-heading" style="margin-bottom: 0px;">
+                  <div class="row" id="forwbtnadd">
+                    <div class="col-lg-10">
+                      <h3>{{langmod.MFWLAB1}}</h3>
+                    </div>
+                    <div class="col-lg-2" style="text-align:right;">
+                      <button type="button" id="addforwarbtn" {{sefol}} onclick="return addforwarbtn()"
+                        class="btn-adder btn btn-success btn-xs mr5 mb10 {{sefol}}"><i class="fa fa-plus"></i>
+                        {{langmod.EBNTADDFW}}</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="ibox-content" id="table_forw_container">
+                  <div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+                  <!-- <div class="table-responsive" style="overflow: hidden; width: 100%; height: auto;">
+                                            <table  class="table table-striped table-bordered table-hover dataTables-example dataTable" id="dataTables-examplefor" width="100%">
+                                                <thead>
+                                                <tr role="row">
+                                                    <th class="per5">#</th>
+                                                    <th>{{langmod.ETITLEFW}}</th>
+                                                    <th>{{langmod.ETITLEFWTO}}</th>
+                                                    <th>{{langmod.ETITLEDOMAIN}}</th>
+                                                    <th>{{langmod.EACTION}}</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody id="contenttrfo">
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div class="slimScrollBar ui-draggable" style="background: rgb(243, 243, 243); height: 5px; position: absolute; bottom: 3px; opacity: 0.4; display: none; border-radius: 5px; z-index: 99; width: 826px;"></div>
+                                        <div class="slimScrollRail" style="width: 100%; height: 5px; position: absolute; bottom: 3px; display: none; border-radius: 5px; background: rgb(51, 51, 51); opacity: 0.3; z-index: 90;"></div> -->
+                </div>
+              </div>
+            </div>
+            {% endif %}
+            {% if ("mail_forwarders_pipe" in rmenu )or(swmenu==1) %}
+            <div role="tabpanel" id="tab-3" class="tab-pane">
+              <div class="panel-body panel-body-pipe" id="main_pipe_view">
+                <div class="mail-forward-pipe-top">
+                  <h3>{{langmod.MFWLAB2}}</h3>
+                  <div class="forwbtnadd">
+                    <button type="button" id="btn_pipeadd_form" onclick="addnewPipe()" {{sefol}}
+                      class="btn-adder btn btn-success btn-xs mr5 mb10 {{sefol}}"><i class="fa fa-plus"></i>
+                      {{langmod.MFWLAB3}}</button>
+                  </div>
+                </div>
+                <div class="" id="pipe_table_container">
+                  <div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+                </div>
+              </div>
+
+              <div class="panel-body" id="new_pipe_form">
+                <div class="mail-forward-pipe-top">
+                  <h3>{{langmod.MFWLAB5}}</h3>
+                  <div>
+                    <button type="button" id="btn_pipecnl" onclick="cancelnewPipe()"
+                      class="btn btn-warning btn-xs mr5 mb10 {{sefol}}"><i class="fa fa-floppy-o"></i>
+                      {{langmod.MFWLAB6}}</button>
+                    <button type="button" id="btn_pipeadd" class="btn btn-success btn-xs mr5 mb10 {{sefol}}"><i
+                        class="fa fa-floppy-o"></i> {{langmod.MFWLAB4}}</button>
+                  </div>
+                </div>
+                <div class="">
+                  <div class="row">
+                    <div class="col-md-4">
+                      <div class="form-group">
+                        <label>{{langmod.ETITLEFW}}</label>
+                        <input type="text" class="form-control" id="forw">
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="form-group">
+                        <label for="">{{langmod.ETITLEDOMAIN}}</label>
+                        <select class="form-control" id="domainforw">
+                          <option value="">{{langmod.ECHOOSE }}</option>
+                          {% for email2 in mod.email2 %}
+                          {% if loop.index	 == 1 %}
+                          <option value="{{ email2.domain }}" selected>@{{ email2.domain }}</option>
+                          {% else %}
+                          <option value="{{ email2.domain }}">@{{ email2.domain }}</option>
+                          {% endif %}
+                          {% endfor %}
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <!-- <div class="row">
+                                                  <p align="center"><b>{{langmod.EMLABEL12}}</b></p>
+                                              </div>
+                                              <div class="row" style="padding-right: 3px">
+
+                                              </div> -->
+                      <div class="form-group">
+                        <label for="">{{langmod.EMLABEL12}}</label>
+                        <select class="form-control" id="phpversionfor">
+                          {% for verphp in mod.vphp %}
+                          <option value="/usr/local/bin/php">php (default)</option>
+                          {% endfor %}
+                          {% for verphpcgi in mod.vphpcgi %}
+                          <option value="/opt/alt/php{{ verphpcgi }}/usr/bin/php">php{{ verphpcgi }} (selector)</option>
+                          {% endfor %}
+                          {% for verphpfpm in mod.vphpfpm %}
+                          <option value="/opt/alt/php-fpm{{ verphpfpm }}/usr/bin/php">php-fpm{{ verphpfpm }} (selector)
+                          </option>
+                          {% endfor %}
+
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="">{{langmod.EMLABEL14}}</label>
+                        <!-- <input type="text" class="form-control" id="filepipe"> -->
+                        <div class="input-group m-b file-selector" id="pipe_file_selector" data-dir="/"
+                          onclick="showFileSelector()">
+                          <div class="input-group-prepend">
+                            <span class="input-group-addon"><i class="fa fa-sitemap" aria-hidden="true"></i></span>
+                          </div>
+                          <input type="text" placeholder="{{langmod.MFWLAB8}}" id="filepipe" readonly
+                            class="form-control">
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <span class="text-warning php-file-warning">* {{langmod.MFWLAB12}} pipe</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+
+
+        </div>
+        <!-- <div>
+                      <div class="ibox collapsed border-bottom" style="margin-bottom: 0px;margin-top: 2rem;">
+                          <div class="ibox-title">
+                              <h5>Manual Settings for commons Mail Clients</h5>
+                              </div>
+                          </div>
+                          <div class="ibox-content" style="display: block;">
+                            <div class="row">
+                              <div class="col-md-6">
+                                <div class="panel panel-info">
+                                    <div class="panel-heading">
+                                        <i class="fa fa-lock"></i> {{langmod.EMAILSET}} {{langmod.ESSL}}
+                                    </div>
+                                    <div class="panel-body">
+                                      <table width="100%">
+                                          <tbody>
+                                          <tr>
+                                              <td><b>{{langmod.EUSERNA}}</b>: {{langmod.EYOURMAIL}}</td>
+                                          </tr>
+                                          <tr>
+                                              <td><b>{{langmod.EINCONM}}</b>: {{mod.hostname}}</td>
+                                          </tr>
+                                          <tr>
+                                              <td><b>{{langmod.EIMAP}}</b>: 993</td>
+                                          </tr>
+                                          <tr>
+                                              <td><b>{{langmod.EPOP3}}</b>: 995</td>
+                                          </tr>
+                                          <tr>
+                                              <td><b>{{langmod.EOUT}}</b>: {{mod.hostname}}</td>
+                                          </tr>
+                                          <tr>
+                                              <td><b>{{langmod.ESMTP}}</b>: 465</td>
+                                          </tr>
+                                          </tbody></table>
+                                    </div>
+
+                                </div>
+                              </div>
+                              <div class="col-md-6">
+                                <div class="panel panel-info">
+                                    <div class="panel-heading">
+                                        <i class="fa fa-unlock-alt"></i> {{langmod.EMAILSET}} {{langmod.ENOSSL}} (not recommended)
+                                    </div>
+                                    <div class="panel-body">
+                                      <table width="100%">
+                                          <tbody>
+                                          <tr>
+                                              <td><b>{{langmod.EUSERNA}}</b>: {{langmod.EYOURMAIL}}</td>
+                                          </tr>
+                                          <tr>
+                                              <td><b>{{langmod.EINCONM}}</b>: {{langmod.EDOMAIN}}</td>
+                                          </tr>
+                                          <tr>
+                                              <td><b>{{langmod.EIMAP}}</b>: 143</td>
+                                          </tr>
+                                          <tr>
+                                              <td><b>{{langmod.EPOP3}}</b>: 110</td>
+                                          </tr>
+                                          <tr>
+                                              <td><b>{{langmod.EOUT}}</b>: {{langmod.EDOMAIN}}</td>
+                                          </tr>
+                                          <tr>
+                                              <td><b>{{langmod.ESMTP}}</b>: 25</td>
+                                          </tr>
+
+                                          </tbody></table>
+                                    </div>
+
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                      </div> -->
+      </div>
+    </div>
+
+  </div>
+
+  {% include 'sidebar.html' %}
+</div>
+{% include 'footer.html' %}

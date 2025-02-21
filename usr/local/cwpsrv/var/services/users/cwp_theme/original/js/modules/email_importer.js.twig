@@ -1,0 +1,657 @@
+
+console.log();
+let importer = {};
+Dropzone.options.importerDropZone = {
+    init: function () {
+        this.on("removedfile", function (file) {
+            $('.for-csv').fadeOut('fast');
+            $('.step2-next-btn').prop('disabled', true);
+        });
+    },
+    paramName: "importer-file", // The name that will be used to transfer the file
+    maxFilesize: 2, // MB
+    acceptedFiles: '.csv,.xls',
+    maxFiles: 1,
+    addRemoveLinks: true,
+    dictInvalidFileType: '{{langmod.LABIMP41}}',
+    dictMaxFilesExceeded: '{{langmod.LABIMP42}}',
+    dictDefaultMessage: '<span>{{langmod.LABIMP43}} <span class="dropzone-mutted">({{langmod.LABIMP44}})</span></span>',
+    success: function (file, response) {
+        if (response.result !== undefined && response.result === 'success') {
+            if (file.type === 'text/csv') {
+                $('.for-csv').fadeIn('fast');
+            } else {
+                $('.for-csv').fadeOut('fast');
+            }
+            console.log(response);
+            importer.identifier = response.identifier;
+            // $('#_file_identifier').val(response.identifier);
+            // importer.identifier = response.identifier;
+            // $('#_file_identifier').val('response.identifier');
+            $('.step2-next-btn').prop('disabled', false);
+        } else {
+            let message_error = '{{langmod.LABIMP45}}';
+            if (response.hasOwnProperty('code')) {
+                if (response.code == 2) {
+                    message_error = '{{langmod.LABCLAM59}}';
+                } else if (response.code == 1) {
+                    message_error = '{{langmod.LABIMP46}}';
+                }
+            }
+            noti_bubble(message_error, '{{langmod.LABIMP47}}', 'error', false, false, '5000', true);
+            this.removeAllFiles(true);
+        }
+    }
+};
+let step2_buttons = '';
+let step3_buttons = '';
+let last_step_buttons = '';
+let uchip = null;
+
+$(document).ready(function () {
+    {% if mod.isie == 1 %}
+    uchip = new $.Uchip();
+    {% else %}
+    uchip = new Uchip();
+    {% endif %}
+    importer.first_row = false;
+    importer.promote = false;
+    importer.alias_append = false; 
+    $('.for-csv').fadeOut('fast');
+    // console.log('step2_buttons', step2_buttons);
+    step2_buttons = $('#_step_2_buttons').html();
+    step3_buttons = $('#_step_3_buttons').html();
+    last_step_buttons = $('#_step_4_buttons').html();
+    $('#_promote_domain_selector_').select2();
+    $('#_promote_domain_selector_').on('select2:select', function (e) {
+        var data = e.params.data;
+        importer.promote_to = data.id;
+        if (data.id != '') {
+            $('#select2-_promote_domain_selector_-container').addClass('val-selected');
+        } else {
+            $('#select2-_promote_domain_selector_-container').removeClass('val-selected');
+        }
+    });
+    // console.log('step2_buttons', step2_buttons);
+    $('[data-toggle="tooltip"]').tooltip();
+});
+function changeFirstCol(elem) {
+    if ($(elem).is(':checked')) {
+        importer.first_row = $(elem).val() === "yes";
+    }
+}
+function changeAppendAlias(elem) {
+    if ($(elem).is(':checked')) {
+        importer.alias_append = $(elem).val() === "yes";
+    }
+}
+function promoteCheck(elem) {
+    if ($(elem).is(':checked')) {
+        importer.promote = $(elem).val() === "yes";
+        $('#_promote_domain_selector_wrapper').slideUp('fast');
+    }
+    if (importer.promote === true) {
+        $('#_promote_domain_selector_wrapper').slideDown('fast');
+    }
+}
+function browseFile() {
+    $('#importer-drop-zone').trigger('click');
+}
+function changeDelimiter(elem) {
+    let other_delimiter = $('#_other_delimiter');
+    if ($(elem).val() === '*') {
+        other_delimiter.removeClass('error');
+        other_delimiter.fadeIn('fast');
+        other_delimiter.focus();
+    } else {
+        other_delimiter.fadeOut('fast');
+    }
+}
+function gtoStep1() {
+    let active_elem = $('.importer-step-ibox.active-step');
+    let title = $('#_step_title_container');
+    title.fadeOut('fast');
+    $('#_fr_ch_no').prop('checked', true);
+    $('#_promote_no').prop('checked', true);
+    $('#_promote_domain_selector_wrapper').hide();
+    $('#_sel_delim_column').val(',');
+    $('#_promote_domain_selector_').val('');
+    $('#_promote_domain_selector_').select2().trigger('change');
+    Dropzone.forElement("#importer-drop-zone").removeAllFiles(true);
+    $(active_elem).slideUp('fast', function () {
+        $('.importer-main-flex').removeClass('step-extended');
+        let httml_title = '<h4>{{langmod.LABIMP2}}: <span class="text-mutted">{{langmod.LABIMP3}}</span></h4>';
+        title.html(httml_title);
+        title.fadeIn('fast');
+        $('.step-footer').fadeOut('fast');
+        $('#_how_to_use').slideDown('fast');
+        $('.importer-step1').slideDown('fast', function () {
+            active_elem.removeClass('active-step');
+            $('.importer-step1').addClass('active-step');
+        });
+    });
+}
+function gtoStep2(type) {
+    let other_delimiter = $('#_other_delimiter');
+    importer.type = type === undefined ? importer.type : type;
+    // $('#_fr_ch_no').prop('checked', true);
+    // $('#_promote_no').prop('checked', true);
+    $('#_importer_type_file').text(type === 'accounts' ? 'accounts' : 'forwarders');
+    let active_elem = $('.importer-step-ibox.active-step');
+    let title = $('#_step_title_container');
+    title.fadeOut('fast');
+    $('#_how_to_use').slideUp('fast');
+    other_delimiter.removeClass('error');
+    other_delimiter.hide();
+    $('.btn-import-pass').hide();
+    $('#_importer_gen_pass_').val('no');
+    other_delimiter.val('');
+    // $('#_promote_domain_selector_wrapper').hide();
+    $('#_promote_domain_selector_wrapper').removeClass('error-field');
+    // $('#_sel_delim_column').val(',');
+    // $('#_promote_domain_selector_').val('');
+    // $('#_promote_domain_selector_').select2().trigger('change');
+    $(active_elem).slideUp('fast', function () {
+        $('.importer-main-flex').addClass('step-extended');
+        $('.step-footer-content').html(step2_buttons);
+        if (importer.type === 'accounts') {
+            $('.just-account').show();
+            $('.just-aliases').hide()
+        } else {
+            $('.just-account').hide();
+            $('.just-aliases').show();
+        }
+        $('.step-footer').fadeIn('fast');
+        //Dropzone.forElement("#importer-drop-zone").removeAllFiles(true);
+        //RENIICIARCIALAR DROPZONE
+        let httml_title = '<h4>{{langmod.LABIMP48}}: <span class="text-mutted">{{langmod.LABIMP49}}</span></h4>' +
+            '<div>' + step2_buttons + '</div>';
+        title.html(httml_title);
+        if (Dropzone.forElement("#importer-drop-zone").getAcceptedFiles().length > 0) {
+            $('.step2-next-btn').prop('disabled', false);
+        }
+        title.fadeIn('fast');
+        $('.importer-step2').slideDown('fast', function () {
+            active_elem.removeClass('active-step');
+            $('.importer-step2').addClass('active-step');
+        });
+    });
+}
+function validStep2() {
+    let sel_elem = $('#_sel_delim_column');
+    let other_delim = $('#_other_delimiter');
+    let valid = true;
+    if (sel_elem.is(':visible') && sel_elem.val() === '*' && other_delim.val() === '') {
+        other_delim.addClass('error');
+        other_delim.focus();
+        valid = false;
+    } else {
+        other_delim.removeClass('error');
+    }
+    if (importer.promote === true && (importer.promote_to === undefined || importer.promote_to === '')) {
+        $('#_promote_domain_selector_wrapper').addClass('error-field');
+        valid = false;
+    } else {
+        $('#_promote_domain_selector_wrapper').removeClass('error-field');
+    }
+    if (!valid) {
+        noti_bubble('{{langmod.LABIMP50}}', '{{langmod.LABIMP47}}', 'error', false, false, '5000', true);
+        return false;
+    }
+    importer.genpass = false;
+    let autopass_value = $('#_importer_gen_pass_').val();
+    if (autopass_value !== 'no') {
+        importer.genpass = {
+            occurence: autopass_value,
+            length: $('#_importer_pass_length_').val(),
+            type: $('#_importer_pass_type').val(),
+        }
+    }
+    return true;
+}
+function gtoStep3() {
+    let sel_elem = $('#_sel_delim_column');
+    let other_delim = $('#_other_delimiter');
+    if (!validStep2()) {
+        return
+    }
+    if (sel_elem.is(':visible') && sel_elem.val() === '*' && other_delim.val() === '') {
+        noti_bubble('{{langmod.LABIMP51}}', '{{langmod.LABIMP47}}', 'error', false, false, '5000', true);
+        other_delim.addClass('error');
+        other_delim.focus();
+        return false;
+    }
+    importer.delim = sel_elem.is(':visible') && sel_elem.val() === '*' ? other_delim.val() : sel_elem.val();
+    let active_elem = $('.importer-step-ibox.active-step');
+    let title = $('#_step_title_container');
+    title.fadeOut('fast');
+    $('.step-footer-content').html(step3_buttons);
+    $('#_screen_step_3').hide();
+    $('#_loader_step_3').show();
+    $(active_elem).slideUp('fast', function () {
+        analizeFile();
+        let httml_title = '<h4>{{langmod.LABIMP52}}: <span class="text-mutted">{{langmod.LABIMP53}}</span></h4>' +
+            '<div>' + step3_buttons + '</div>';
+        title.html(httml_title);
+        title.fadeIn('fast');
+        $('.importer-step3').slideDown('fast', function () {
+            active_elem.removeClass('active-step');
+            $('.importer-step3').addClass('active-step');
+        });
+    });
+}
+function lastStep(result) {
+    noti_bubble('{{langmod.LABIMP54}}', '{{langmod.LABIMP55}}', 'success', false, false, '5500', true);
+    $('.step-footer-content').html(last_step_buttons);
+    $('#_step_title_container').html('<h4>{{langmod.LABIMP56}} <span class="text-mutted">{{langmod.LABIMP57}}</span></h4>' +
+        '<div>' + last_step_buttons + '</div>');
+    uchip.slideToggle('#_screen_step_3', '#_loader_step_3', function () {
+        renderLastStep(result);
+    });
+}
+function importResultParser(rescode) {
+    let reasons = [
+        '{{langmod.LABIMP58}}',
+        '{{langmod.LABIMP59}}',
+    ];
+    let html = '<span class="label label-success"><i class="fa fa-check"></i> {{langmod.LABIMP60}}</span>';
+    if (rescode != 0) {
+        let reason = reasons[rescode - 1] !== undefined ? reasons[rescode - 1] : '{{langmod.LABIMP61}}';
+        html = '<span class="label label-danger">' +
+            '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i> ' +
+            reason +
+            '</span>';
+    }
+    return html;
+}
+function downloadLog() {
+    window.location.href = "?module=email_importer&acc=downloadlog";
+}
+function renderLastStep(result) {
+    let html_records = '';
+    if (importer.type === 'accounts') {
+        result.added.forEach(function (record) {
+            html_records += '<div class="row importer-result-item">' +
+                '<div class="col-md-5">' +
+                '<span>' + record.account + '</span>' +
+                '</div>' +
+                '<div class="col-md-4">' +
+                '<span>' + (record.password === undefined ? '' : record.password) + '</span>' +
+                '</div>' +
+                '<div class="col-md-3 importer-result-store">' +
+                importResultParser(record.code) +
+                '</div>' +
+                '</div>';
+        });
+    } else {
+        result.added.forEach(function (record) {
+            html_records += '<div class="row importer-result-item">' +
+                '<div class="col-md-5">' +
+                '<span>' + record.account + '</span>' +
+                '</div>' +
+                '<div class="col-md-4">' +
+                '<span>' + record.redirects + '</span>' +
+                '</div>' +
+                '<div class="col-md-3 importer-result-store">' +
+                importResultParser(record.code) +
+                '</div>' +
+                '</div>';
+        });
+    }
+    let html = '<div class="container-fluid">' +
+        '<div class="row">' +
+        '<div class="col-md-12">' +
+        '<h4 class="title-result-last-step">{{langmod.LABIMP62}}</h4>' +
+        (result.auto_generated === true ?
+            '<div class="alert alert-warning">' +
+            '{{langmod.LABIMP63}}' +
+            '</div >'
+            :
+            ''
+        ) +
+        '</div>' +
+        '</div>' +
+        '<div style="padding:0px 15px;"><div class="row importer-result-row">' +
+        '<div class="col-md-5">' + (importer.type === 'accounts' ? '{{langmod.LABIMP64}}' : '{{langmod.LABIMP65}}') + '</div>' +
+        '<div class="col-md-4">' + (importer.type === 'accounts' ? '{{langmod.LABIMP66}}' : '{{langmod.LABIMP67}}') + '</div>' +
+        '<div class="col-md-3 importer-result-store">Result</div>' +
+        '</div>' +
+        html_records +
+        '</div></div>';
+    $('#_screen_step_3').html(html);
+}
+
+function renderAnalysis(analysis) {
+    $('.step-3-btn-back').prop('disabled', false);
+    if (analysis.toadd !== undefined && analysis.toadd.length > 0) {
+        $('.step-3-btn').prop('disabled', false);
+    }
+    let qty = analysis.toadd.length;
+    if (importer.type != 'accounts'){
+        qty = analysis.toadd.filter(function(item){
+            return item.append !== true;
+        });
+    }
+    let quota_message = '';
+    if (analysis.available < 1 && qty > 0) {
+        quota_message = '<div class="alert alert-danger">' +
+            (importer.type == "accounts" ? '{{langmod.LABIMP107}}' : '{{langmod.LABIMP110}}') +
+            '</div>';
+    } else if (qty > analysis.available) {
+        quota_message = '<div class="alert alert-warning">' +
+            '{{langmod.LABIMP74}} ' + (importer.type == "accounts" ? '{{langmod.LABIMP69}}' : '{{langmod.LABIMP70}}') + ' {{langmod.LABIMP75}} ' + analysis.available + ' {{langmod.LABIMP76}}' +
+            '</div>';
+    }
+    console.log('importer.type', importer.type);
+    let html = '<div class="container-fluid">' +
+        '<div class="row">' +
+        '<div class="col-md-12">' +
+        '<h4 class="step-3-title">{{langmod.LABIMP68}} ' + (importer.type == "accounts" ? '{{langmod.LABIMP69}}' : '{{langmod.LABIMP70}}') + '</h4>' +
+        '</div>' +
+        '</div>' +
+        '<div class="row" style="margin-bottom:1.5rem">' +
+        '<div class="col-md-4">' +
+        '<span class="result-title">{{langmod.LABIMP71}}:</span>' +
+        '<span class="result-value">' + analysis.readed + '</span>' +
+        '</div>' +
+        '<div class="col-md-4">' +
+        '<span class="result-title">{{langmod.LABIMP72}}:</span>' +
+        '<span class="result-value">' + analysis.toadd.length + '</span>' +
+        '</div>' +
+        '<div class="col-md-4">' +
+        '<span class="result-title">{{langmod.LABIMP73}}:</span>' +
+        '<span class="result-value">' + analysis.rejecteds.length + '</span>' +
+        '</div>' +
+        '</div>' +
+        quota_message +
+        '<div class="row">' +
+        '<div class="col-md-12">' +
+        '<div class="tabs-container" id="_importer_results_tabs_">' +
+        '<ul class="nav nav-tabs" role="tablist">' +
+        '<li><a class="nav-link' + (analysis.toadd.length > 0 ? ' active' : '') + '" data-toggle="tab" href="#tab-1"> {{langmod.LABIMP77}} ' +
+        '<span class="badge badge-primary">' + analysis.toadd.length + '</span>' +
+        '</a></li>' +
+        '<li><a class="nav-link' + (analysis.toadd.length === 0 ? ' active' : '') + '" data-toggle="tab" href="#tab-2">{{langmod.LABIMP78}} ' +
+        '<span class="badge badge-warning">' + analysis.rejecteds.length + '</span>' +
+        '</a></li>' +
+        '</ul>' +
+        '<div class="tab-content">' +
+        '<div role="tabpanel" id="tab-1" class="tab-pane' + (analysis.toadd.length > 0 ? ' active' : '') + '">' +
+        '<div class="panel-body">' +
+        renderAcceptedList(analysis.toadd) +
+        '</div>' +
+        '</div>' +
+        '<div role="tabpanel" id="tab-2" class="tab-pane' + (analysis.toadd.length === 0 ? ' active' : '') + '">' +
+        '<div class="panel-body">' +
+        renderRejectedList(analysis.rejecteds) +
+        '</div>' +
+        '</div>' +
+        '</div>' +
+        '</div>' +
+        '</div>' +
+        '</div>' +
+        '</div>';
+    $('#_screen_step_3').html(html);
+    $('#_importer_results_tabs_ li a').click(function (e) {
+        $('#_importer_results_tabs_ li a.active').removeClass('active')
+        $(this).addClass('active')
+    })
+    uchip.slideToggle('#_screen_step_3', '#_loader_step_3');
+}
+function accountRejectedReason(code) {
+    let codes = [
+        '{{langmod.LABIMP79}}',
+        '{{langmod.LABIMP80}}',
+        '{{langmod.LABIMP81}}',
+        '{{langmod.LABIMP82}}',
+        '{{langmod.LABIMP83}}',
+        '{{langmod.LABIMP84}}',
+        '{{langmod.LABIMP85}}',
+        '{{langmod.LABIMP86}}',
+        '{{langmod.LABIMP87}}',
+    ];
+    return codes[code - 1] !== undefined ? codes[code - 1] : '{{langmod.LABIMP61}}';
+}
+function aliasRejectedReason(code) {
+    let codes = [
+        '{{langmod.LABIMP79}}',
+        '{{langmod.LABIMP88}}',
+        '{{langmod.LABIMP81}}',
+        '{{langmod.LABIMP89}}',
+        '{{langmod.LABIMP90}}',
+        '{{langmod.LABIMP87}}',
+    ];
+    return codes[code - 1] !== undefined ? codes[code - 1] : '{{langmod.LABIMP61}}';
+}
+function renderRejectedList(rejected) {
+    let html_records = '';
+    if (rejected.length === 0) {
+        return '<div class="container-fluid"><div class="row"><div class="col-md-12 empty-result">' +
+            '<h4>{{langmod.LABIMP91}}</h4>' +
+            '</div></div></div>';
+    }
+    if (importer.type === 'accounts') {
+        rejected.forEach(function (record) {
+            html_records += '<div class="row importer-result-item">' +
+                '<div class="col-md-1">' +
+                '<span>' + record.line + '</span>' +
+                '</div>' +
+                '<div class="col-md-6">' +
+                '<span>' + record.account + '</span>' +
+                '</div>' +
+                '<div class="col-md-5">' +
+                '<span class="label label-danger"><i class="fa fa-exclamation-circle" aria-hidden="true"></i> ' + accountRejectedReason(record.reason) + '</span>' +
+                '</div>' +
+                '</div>';
+        });
+    } else {
+        rejected.forEach(function (record) {
+            html_records += '<div class="row importer-result-item">' +
+                '<div class="col-md-1">' +
+                '<span>' + record.line + '</span>' +
+                '</div>' +
+                '<div class="col-md-5">' +
+                '<span>' + record.account + '</span>' +
+                '</div>' +
+                '<div class="col-md-6">' +
+                '<span class="label label-danger"><i class="fa fa-exclamation-circle" aria-hidden="true"></i> ' + aliasRejectedReason(record.reason) + '</span>' +
+                '</div>' +
+                '</div>';
+        });
+    }
+    let html = '<div class="container-fluid">' +
+        '<div class="row importer-result-row">' +
+        (importer.type === 'accounts' ?
+            '<div class="col-md-1">' +
+            '<span>{{langmod.LABIMP92}}</span>' +
+            '</div>' +
+            '<div class="col-md-6">' +
+            '<span>{{langmod.LABIMP93}}</span>' +
+            '</div>' +
+            '<div class="col-md-5">' +
+            '<span>{{langmod.LABIMP94}}</span>' +
+            '</div>'
+            :
+            '<div class="col-md-1">' +
+            '<span>{{langmod.LABIMP92}}</span>' +
+            '</div>' +
+            '<div class="col-md-5">' +
+            '<span>{{langmod.LABIMP95}}</span>' +
+            '</div>' +
+            '<div class="col-md-6">' +
+            '<span>{{langmod.LABIMP94}}</span>' +
+            '</div>'
+        ) +
+        '</div>' +
+        html_records +
+        '</div>';
+    return html;
+}
+function proccessFile() {
+    uchip.handleButton('.step-3-btn-back', 'fa-chevron-left');
+    uchip.handleButton('.step-3-btn', 'fa-cogs');
+    $('#_step_3_title').html('{{langmod.LABIMP96}}');
+    uchip.slideToggle('#_loader_step_3', '#_screen_step_3', function () {
+        let importer_json = encodeURIComponent(JSON.stringify(importer));
+        uchip.call('module=email_importer&acc=proccessfile', {
+            data: 'importer=' + importer_json,
+            callback: function (response) {
+                if (response.hasOwnProperty('result') && response.result === 'success') {
+                    lastStep(response.analysis);
+                } else {
+                    let message_error = '{{langmod.LABIMP97}}';
+                    if (response.hasOwnProperty('code')) {
+                        if (response.code == 2) {
+                            message_error = '{{langmod.LABIMP46}}';
+                        } else if (response.code == 1) {
+                            message_error = '{{langmod.LABIMP98}}';
+                        }
+                    }
+                    noti_bubble(message_error, '{{langmod.LABIMP47}}', 'error', false, false, '4000', true);
+                    uchip.handleButton('.step-3-btn-back', 'fa-chevron-left', true);
+                    uchip.handleButton('.step-3-btn', 'fa-cogs', true);
+                    uchip.slideToggle('#_screen_step_3', '#_loader_step_3');
+                }
+            }
+        });
+    });
+}
+function renderAcceptedList(toadd) {
+    let html_records = '';
+    if (toadd.length === 0) {
+        return '<div class="container-fluid"><div class="row"><div class="col-md-12 empty-result">' +
+            '<h4>{{langmod.LABIMP99}}</h4>' +
+            '</div></div></div>';
+    }
+    if (importer.type === 'accounts') {
+        toadd.forEach(function (record) {
+            html_records += '<div class="row importer-result-item">' +
+                '<div class="col-md-1">' +
+                '<span>' + record.line + '</span>' +
+                '</div>' +
+                '<div class="col-md-5">' +
+                '<span>' + record.account + '</span>' +
+                '</div>' +
+                '<div class="col-md-4">' +
+                (record.password === 'CWP_AUTOGEN' ? '<span class="label label-success"><i class="fa fa-key"></i> {{langmod.LABIMP100}}</span>' : '<span>' + record.password + '</span>') +
+                '</div>' +
+                '<div class="col-md-2">' +
+                '<span>' + record.quota + '</span>' +
+                '</div>' +
+                '</div>';
+        });
+    } else {
+        toadd.forEach(function (record) {
+            html_records += '<div class="row importer-result-item">' +
+                '<div class="col-md-1">' +
+                '<span>' + record.line + '</span>' +
+                '</div>' +
+                '<div class="col-md-5">' +
+                '<span>' + record.account + '</span>' +
+                '</div>' +
+                '<div class="col-md-6">' +
+                '<span>' + record.redirects + 
+                    (record.hasOwnProperty('append') && record.append == true ?
+                    ' <span class="label label-success"><i class="fa fa-plus-circle" aria-hidden="true"></i> Existing record, add redirect.</span>'
+                    :
+                        '') 
+                +'</span>' +
+                '</div>' +
+                '</div>';
+        });
+    }
+    let html = '<div class="container-fluid">' +
+        '<div class="row importer-result-row">' +
+        (importer.type === 'accounts' ?
+            '<div class="col-md-1">' +
+            '<span>{{langmod.LABIMP92}}</span>' +
+            '</div>' +
+            '<div class="col-md-5">' +
+            '<span>{{langmod.LABIMP93}}</span>' +
+            '</div>' +
+            '<div class="col-md-4">' +
+            '<span>{{langmod.LABIMP101}}</span>' +
+            '</div>' +
+            '<div class="col-md-2">' +
+            '<span>{{langmod.LABIMP102}}</span>' +
+            '</div>'
+            :
+            '<div class="col-md-1">' +
+            '<span>{{langmod.LABIMP92}}</span>' +
+            '</div>' +
+            '<div class="col-md-5">' +
+            '<span>{{langmod.LABIMP95}}</span>' +
+            '</div>' +
+            '<div class="col-md-6">' +
+            '<span>{{langmod.LABIMP67}}</span>' +
+            '</div>'
+        ) +
+        '</div>' +
+        html_records +
+        '</div>';
+    return html;
+}
+function analizeFile() {
+    let importer_json = encodeURIComponent(JSON.stringify(importer));
+    uchip.call('module=email_importer&acc=analizefile', {
+        data: 'importer=' + importer_json,
+        callback: function (response) {
+            if (response.hasOwnProperty('result') && response.result === 'success') {
+                renderAnalysis(response.analysis);
+            } else {
+                let message_error = '{{langmod.LABIMP104}}';
+                if (response.hasOwnProperty('code')) {
+                    if (response.code == 2) {
+                        message_error = '{{langmod.LABIMP46}}';
+                    } else if (response.code == 1) {
+                        message_error = '{{langmod.LABIMP105}}';
+                    }
+                }
+                noti_bubble(message_error, '{{langmod.LABIMP47}}', 'error', false, false, '4000', true);
+                gtoStep2(importer.type)
+            }
+        }
+    });
+}
+function autoPassCheck(elem) {
+    let val_checked = $(elem).val();
+    if (val_checked !== "no") {
+        $('.btn-import-pass').fadeIn('fast');
+    } else {
+        $('.btn-import-pass').fadeOut('fast');
+    }
+}
+
+function openPGOPT(type, second) {
+    let divelem = type;
+    if ($(divelem).is(':visible')) {
+        $(divelem).slideUp('fast');
+    } else {
+        $(divelem).slideDown('fast');
+        hideOnClickOutside(divelem, second);
+    }
+}
+function hideOnClickOutside(selector, second) {
+    let forhide = true;
+    if (second === undefined) {
+        second = '.show_options_button';
+        forhide = true;
+    }
+    function outsideClickListener(event) {
+        $target = $(event.target);
+        if (!$target.closest(selector).length && !$target.closest(second).length && $(selector).is(':visible')) {
+            $(selector).slideUp('fast');
+            removeClickListener();
+        }
+    }
+    $('.btn-close-pass').unbind('click');
+    $('.btn-close-pass').click(function () {
+        $(selector).slideUp('fast');
+        removeClickListener();
+    });
+
+    function removeClickListener() {
+        document.removeEventListener('click', outsideClickListener)
+    }
+    document.addEventListener('click', outsideClickListener)
+}

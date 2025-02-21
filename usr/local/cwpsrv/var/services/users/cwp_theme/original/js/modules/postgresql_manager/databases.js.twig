@@ -1,0 +1,197 @@
+function ShowDeleteConfirmModal(elem, index) {
+    let db_name = $(elem).data('name')
+    let db_user = $(elem).data('user')
+    $('#_pgre_sql_deleting_index_').val(index);
+    $('#_pgresql_database_to_remove_').text(db_name);
+    $('#_pgre_delete_confirm_modal_').modal('show');
+}
+function pgreListDatabases() {
+    let html_list = '';
+    if (database_list.length > 0) {
+        let html_content = '';
+        index = 0;
+        database_list.forEach(function (db) {
+            let html_users = '';
+            if (db.users.length > 0) {
+                db.users.forEach(function (user, uindex) {
+                    // let footprint = index + '_' + uindex;
+                    let footprint = db.name + '_' + user.uname;
+                    html_users += renderUserDBItem(user, db.name, db.users.length, footprint, uindex);
+                });
+            } else {
+                html_users = '<div class="pgre-userdb-not-users"><h5>{{langmod.LABPGRE55}}</h5></div>';
+            }
+
+            html_users += '<div class="pgresql-users-display-control"' + (db.users.length > 2 ? '' : ' style="display:none"') + '>' +
+                                '<button class="btn btn-xs btn-default vmore-users-btn" onclick="showMoreOrLessUsers(this)">{{langmod.LABPGRE56}}</button>' +
+                                '<button class="btn btn-xs btn-default vless-users-btn" onclick="showMoreOrLessUsers(this,true)">{{langmod.LABPGRE57}}</button>' +
+                            '</div>';
+            html_content += '<tr class="pgresql-db-list-item" id="_pgre_sql_item_' + index + '" data-name="' + db.name + '">' +
+                                '<td>' + db.name + '</td>' +
+                                '<td style="width:40rem" class="pgre-userdb-items">' +
+                                    html_users +
+                                '</td>' +
+                                '<td style="width:100px">' +
+                                    '<div class="pgre-sql-actions">' +
+                                        '<button title="{{langmod.LABPGRE58}}" data-dbname="' + db.name + '" data-owner="' + db.system_user + '" data-toggle="tooltip" data-placement="top" onclick="AddpgresqlUser(this, ' + index + ')" class="btn btn-success btn-md"><i class="fa fa-user"></i></button>' +
+                                        '<button class="btn btn-warning btn-md btn-delete-pgresql" data-name="' + db.name + '" data-user="' + db.system_user + '" title="{{langmod.LABPGRE59}}" data-toggle="tooltip" data-placement="top" onclick="ShowDeleteConfirmModal(this,' + index + ')"><i class="fa fa-trash"></i></button>' +
+                                    '</div>'
+                                '</td>' +
+                            '</tr>';
+            index++;
+        });
+        html_list = '<table class="table pgre_sql_table table-striped table-bordered table-hover">' +
+                        '<thead>' +
+                            '<tr role="row">' +
+                                '<th>{{langmod.LABPGRE61}}</th>' +
+                                '<th>{{langmod.LABPGRE63}}</th>' +
+                                '<th>{{langmod.LABPGRE64}}</th>' +
+                            '</tr>' +
+                        '</thead>' +
+                        '<tbody id="contenttr">' +
+                            html_content +
+                        '</tbody>' +
+                    '</table>';
+        $('#_pgre_sql_table_wrapper_').html(html_list);
+        pgre_sql_table = $('.pgre_sql_table').DataTable({
+            "bAutoWidth": false,
+            scrollX: false,
+        });
+    } else {
+        html_list = '<div class="pgresql-empty-list-database">' +
+            '<h4>{{langmod.LABPGRE65}}</h4>' +
+            '</div>';
+        $('#_pgre_sql_table_wrapper_').html(html_list);
+    }
+    $('[data-toggle="tooltip"]').tooltip();
+}
+function pgreAddDBForm() {
+    $('#_pgre_new_db_user_modal_').modal('show');
+}
+function pgreDeletionConfirmed() {
+    $('#_pgre_delete_confirm_modal_').modal('hide');
+    let db_index = $('#_pgre_sql_deleting_index_').val();
+    let tr_deleting = $('#_pgre_sql_item_' + db_index);
+    tr_deleting.addClass('deleting_tr');
+    tr_deleting.find('.btn-success').prop('disabled', true);
+    let btn_delete = tr_deleting.find('.btn-delete-pgresql');
+    let db_data = {
+        name: btn_delete.data('name'),
+        user: btn_delete.data('user'),
+    }
+    uchip.handleButton(btn_delete, 'fa-trash');
+    sendpgresqlDeletion(db_data, function () {
+        tr_deleting.slideUp('fast', function () {
+            pgre_sql_table.row(this).remove().draw();
+        });
+        database_list.splice(db_index, 1);
+        calculateQuota();
+        noti_bubble('{{langmod.LABPGRE22}}', '{{langmod.LABPGRE18}}', 'success', false, false, '3000', true);
+    }, function () {
+        tr_deleting.removeClass('deleting_tr');
+        tr_deleting.find('.btn-success').prop('disabled', false);
+        uchip.handleButton(btn_delete, 'fa-trash', true)
+    });
+
+}
+function pgreGetDBData() {
+    let valid = true;
+    let user = $('#_pgre_sql_user_select_').val();
+    if (user == '') {
+        valid = false;
+        $('.select2-container .select2-choice').addClass('error-field');
+    } else {
+        $('.select2-container .select2-choice').removeClass('error-field');
+    }
+    let db_name = $('#_pgre_sql_name_input_').val();
+    if (/^[A-Za-z0-9\_\-]+$/.test(db_name) === false) {
+        valid = false;
+        $('#_pgre_sql_name_input_').addClass('error-field');
+    } else {
+        $('#_pgre_sql_name_input_').removeClass('error-field');
+    }
+
+    return valid === true ? {
+        'name': db_name,
+        'user': '{{users}}'
+    } : false;
+}
+function updateDBTable(db_data) {
+    database_list.push({
+        name: db_data.user + '_' + db_data.name,
+        system_user: db_data.user,
+        users: []
+    });
+    pgreListDatabases();
+}
+function savepgreForm() {
+    let db_data = pgreGetDBData();
+    if (db_data) {
+        $('.btn-cancel-form').prop('disabled', true);
+        uchip.handleButton('.btn-save-pgre-sql', 'fa-floppy-o');
+        function cleaner() {
+            $('.btn-cancel-form').prop('disabled', false);
+            uchip.handleButton('.btn-save-pgre-sql', 'fa-floppy-o', false);
+        }
+        sendSavepgresql(db_data, function () {
+            noti_bubble('{{langmod.LABPGRE19}}', '{{langmod.LABPGRE18}}', 'success', false, false, '3500', true);
+            cleaner();
+            updateDBTable(db_data);
+            cancelForm();
+            $('#_pgre_new_db_user_modal_').modal('hide');
+            calculateQuota();
+        }, function () {
+            cleaner();
+        });
+    } else {
+        noti_bubble('{{langmod.LABPGRE21}}', '{{langmod.LABPGRE20}}', 'error', false, false, '3500', true);
+    }
+}
+function sendSavepgresql(db_data, success, cleaner) {
+    uchip.call('module=postgresql_manager&acc=save_pgre_sql', {
+        data: 'name=' + db_data.name + '&user={{users}}',
+        callback: function (response) {
+            if (response.hasOwnProperty('result') && response.result === 'success') {
+                success(response);
+            } else {
+                let message_error = '{{langmod.LABPGRE23}}';
+                if (response.hasOwnProperty('code')) {
+                    if (response.code == 1) {
+                        message_error = '{{langmod.LABPGRE24}}';
+                    } else if (response.code == 2) {
+                        message_error = '{{langmod.LABPGRE25}}';
+                    } else if (response.code == 3) {
+                        message_error = '{{langmod.LABPGRE26}}';
+                    } else if (response.code == 4) {
+                        message_error = '{{langmod.LABPGRE27}}';
+                    } else if (response.code == 5) {
+                        message_error = 'Postgre SQL Database quota exceeded.';
+                    }
+                }
+                noti_bubble(message_error, '{{langmod.LABPGRE20}}', 'error', false, false, '4000', true);
+                cleaner();
+            }
+        }
+    });
+}
+function sendpgresqlDeletion(db_data, success, cleaner) {
+    uchip.call('module=postgresql_manager&acc=delete_pgre_sql', {
+        data: 'name=' + db_data.name,
+        callback: function (response) {
+            if (response.hasOwnProperty('result') && response.result === 'success') {
+                success(response);
+            } else {
+                let message_error = '{{langmod.LABPGRE23}}';
+                if (response.hasOwnProperty('code')) {
+                    if (response.code == 2) {
+                        message_error = '{{langmod.LABPGRE28}}';
+                    } else if (response.code == 1) {
+                        message_error = '{{langmod.LABPGRE29}}';
+                    }
+                }
+                noti_bubble(message_error, '{{langmod.LABPGRE20}}', 'error', false, false, '4000', true);
+                cleaner();
+            }
+        }
+    });
+}

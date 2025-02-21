@@ -1,0 +1,478 @@
+<style media="screen">
+  .new-backup-btns{
+    display:flex;
+    margin-bottom:10px;
+  }
+  .new-backup-btns button{
+    margin-right:10px;
+  }
+  #gen_whole_window{
+    display:none;
+  }
+  #gen_whole_window h3{
+    border-bottom: 1px solid #e7eaec;
+    padding: 10px 0px;
+  }
+  #DataTables_Table_0_wrapper{
+    padding-bottom: 0px;
+  }
+  #backup_table_container{
+    padding:10px 0px;
+  }
+  .backup_title{
+    padding-left:0px;
+    border-top: 1px solid #e7eaec;
+  }
+  .backup-panel{
+    padding: 0px;
+    background-color:transparent;
+    border-top:none;
+  }
+  .info-backup{
+    display: flex;
+    align-items: center;
+    padding: 10px 10px;
+    margin-bottom: 10px;
+    margin-top: 10px;
+  }
+  .info-backup .fa-stack{
+    margin-right:10px;
+  }
+  .other-backup{
+    padding: 15px 0px;
+  }
+  .other-backup-options{
+    display:flex;
+  }
+  .other-backup-options .btn-wrapper{
+    margin-right:10px;
+  }
+  /* .autobackup-panel{
+    padding-bottom:15px !important;
+  } */
+  .autobackup-configurations-heading-location{
+    border-top: 1px solid #e7eaec;
+    padding-top: 10px;
+    margin-top: 10px;
+  }
+  .autobackup-configurations{
+    margin-top:15px;
+    padding-top:15px;
+    border-top:2px solid #e7eaec;
+  }
+  .autobackup-panel.not-pro::before{
+    content: "";
+    background-color: #ffffffad;
+    width: 99%;
+    height: 95%;
+    position: absolute;
+    margin-left: -1.5rem;
+    z-index: 100;
+  }
+  .notpro-message{
+    position: absolute;
+    top: 6rem;
+    z-index: 110;
+    right: 3rem;
+    padding: 0px 2rem;
+    border-radius: 5px;
+  }
+  .notpro-message h2{
+    font-weight: 500;
+    font-size: 2.1rem;
+    margin-bottom: 5px;
+  }
+  .autobackup-configurations::before {
+    content: "";
+    background-color: #ffffffad;
+    width: 99%;
+    height: 70%;
+    position: absolute;
+    z-index: 100;
+  }
+  .autobackup-configurations.max-height::before {
+    height: 75%;
+  }
+  .autobackup-configurations.active-autobackup::before {
+    display:none;
+  }
+  .autobackup-configurations-freq .checkbox-primary{
+    margin: 25px 0px !important;
+  }
+  .option-all-included{
+    border-bottom: 1px solid #e7eaec;
+    padding-bottom: 5px;
+  }
+  .option-all-included label{
+    font-weight: 600;
+  }
+  .autobackup-configurations-box{
+    border-right: 1px solid #e7eaec;
+  }
+
+  .autobackup-configurations-heading{
+    border-bottom: 1px solid #e7eaec;
+    padding-bottom: 10px;
+  }
+  .autobackup-configurations-notify .checkbox-primary{
+    margin: 5px 0px !important;
+  }
+  .autobackup-configurations-freq .checkbox-primary:last-child {
+    margin-bottom:10px !important;
+  }
+  .autobackup-configurations-options .checkbox-primary{
+    margin: 5px 0px !important;
+  }
+  .autobackup-with-info{
+    display:flex;
+    align-items:center;
+  }
+  .autobackup-with-info .fa-stack, .backup_title .fa-stack,.restore-with-info .fa-stack, .backup_title .fa-stack {
+    font-size: 10px;
+    margin-left: 10px;
+    color: #f48513;
+    cursor:pointer;
+  }
+  #backup_table_files, #backup_mysql_files{
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 3px 8px;
+  }
+
+  #backup_ftp_configuration .input-group-addon{
+    height:34px;
+  }
+  #backup_ftp_configuration .input-group-addon .fa{
+    color: #999999;
+  }
+  #backup_ftp_configuration .input-group input{
+    margin-top:-2rem;
+  }
+  #backup_ftp_configuration .form-group{
+    margin-bottom:0px
+  }
+  .ftpmb{
+    margin-bottom:10px;
+  }
+  #backup_ftp_configuration{
+    display:none;
+  }
+  .restore-with-info, .restore_files_mysql{
+      display: none;
+  }
+  .autobackup-configurations-footer{
+    border-top: 2px solid #e7eaec;
+    margin-top: 15px;
+    padding-top: 15px;
+  }
+  .backup-right-col{
+    padding-top: 4rem;
+  }
+  .backup-stat-separator{
+    margin: 10px 0px;
+  }
+  .error-field{
+    color: #ff0000;
+    margin-top: 5px;
+    font-size: 12px;
+    display: block;
+    margin-bottom: -10px;
+  }
+  .new-file{
+    display:none;
+  }
+  .deleting_tr{
+    background-color: #f5f5f566;
+    color: #e7eaec;
+  }
+  .deleting_tr .new-file{
+    background-color: #b4d5ea;
+    color: #efefef;
+  }
+  .deleting_tr .backup-link{
+    color: #e7eaec;
+  }
+  .tooltip.top .tooltip-inner {
+    max-width:200px;
+  }
+
+  .more-less {
+      float: right;
+      font-size: 20px;
+      font-weight: bold;
+      color:#f48513;
+  }
+</style>
+<div class="row border-bottom white-bg dashboard-header">
+    {% if mod.fsl == 1 %}
+    {% set stflalert ='block' %}
+    {% else %}
+    {% set stflalert ='none' %}
+    {% endif %}
+    <div class="row  alert alert-warning col-lg-12" style="margin-left: 5px; padding-right: 5px;display:{{stflalert}}" id="alertfl">
+        <strong>{{langene.GALARTFILEBLOCK}}</strong>
+    </div>
+    <div class="col-lg-10">
+        <h2>{{langmod.BCTITLE}} ({{users}})</h2>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="?">Home</a></li>
+            <li class="breadcrumb-item active"><strong>{{langmod.BCTITLE}}</strong></li>
+        </ol>
+    </div>
+</div>
+<div class="row" style="margin-top:2rem;">
+    <div class="col-lg-9">
+        <div class="row">
+            <div class="col-md-12">
+              <div class="ibox">
+                  <div class="ibox-content backup-panel">
+                    <div class="tabs-container">
+                      <ul class="nav nav-tabs" role="tablist">
+                          {% if ("backup_manager" in rmenu )or(swmenu==1) %}
+                            <li class="active"><a data-toggle="tab" class="nav-link" href="#tab-1" aria-expanded="true"> {{langmod.BDTAB1}}</a></li>
+                          {% endif %}
+                          <!--li class="" id="tab2link"><a data-toggle="tab" href="#tab-2" aria-expanded="false" >{{langmod.BDTAB2}}</a></li-->
+                          {% if ("automatic_backup" in rmenu )or(swmenu==1) %}
+                            <li><a data-toggle="tab" class="nav-link" href="#tab-3" aria-expanded="false" >{{langmod.BCAUTOMATICTIT}}</a></li>
+                          {% endif %}
+                          {% if ("restore_backup" in rmenu )or(swmenu==1) %}
+                          <li><a data-toggle="tab" class="nav-link" href="#tab-4" aria-expanded="false" >{{langmod.RESTCAUTOMATICTIT}}</a></li>
+                          {% endif %}
+                      </ul>
+                      <div class="tab-content">
+                          {% if ("backup_manager" in rmenu )or(swmenu==1) %}
+                                <div id="tab-1" class="tab-pane active">
+                          <div class="panel-body" style="padding-top: 0px;">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                  {% set account_icon = 'fa-hdd-o' %}
+                                  {% if mod.initial_state.account_st == 1 %}
+                                    {% set account_state = 'disabled' %}
+                                    {% set account_icon = 'fa-spinner fa-spin' %}
+                                  {% endif %}
+                                  {% set homedir_icon = 'fa-home' %}
+                                  {% if mod.initial_state.homedir_st == 1 %}
+                                    {% set homedir_state = 'disabled' %}
+                                    {% set homedir_icon = 'fa-spinner fa-spin' %}
+                                  {% endif %}
+                                  {% set mysql_icon = 'fa-database' %}
+                                  {% if mod.initial_state.mysql_st == 1 %}
+                                    {% set mysql_state = 'disabled' %}
+                                    {% set mysql_icon = 'fa-spinner fa-spin' %}
+                                  {% endif %}
+                                  {% set mail_icon = 'fa-envelope-o' %}
+                                  {% if mod.initial_state.mail_st == 1 %}
+                                    {% set mail_state = 'disabled' %}
+                                    {% set mail_icon = 'fa-spinner fa-spin' %}
+                                  {% endif %}
+                                  {% set ssl_icon = 'fa-lock' %}
+                                  {% if mod.initial_state.ssl_st == 1 %}
+                                    {% set ssl_state = 'disabled' %}
+                                    {% set ssl_icon = 'fa-spinner fa-spin' %}
+                                  {% endif %}
+                                  <div id="new_backup_btns">
+                                    <h4 style="margin-top:10px;">{{langmod.BCCREATENB}}</h4>
+                                    <div class="new-backup-btns">
+                                      <button type="button" id="btn-account" onclick="displayCreationWindow(this)" class="btn btn-success btn-xs btn-genwhole {{account_state}}" data-typeback="account" {{account_state}} data-icon="fa-hdd-o"><i class="fa {{account_icon}}" aria-hidden="true"></i> {{langmod.BCLABEL1}}</button>
+                                      <button type="button" class="btn btn-primary btn-xs mr5 mb10 {{homedir_state}}" {{homedir_state}} data-toggle="tooltip" data-placement="top" data-typeback="homedir" title="{{langmod.BDBTC1DESC}}" id="btn-homedir" data-icon="fa-home" onclick="displayCreationWindow(this)"><i class="fa {{homedir_icon}}" aria-hidden="true"></i> {{langmod.BCHOMEDIR}}</button>
+                                      <button type="button" class="btn btn-primary btn-xs mr5 mb10 {{mysql_state}}" {{mysql_state}} data-toggle="tooltip" data-placement="top" data-typeback="mysql" title="{{langmod.BDDATABASEDESC}}" id="btn-mysql" data-icon="fa-database" onclick="displayCreationWindow(this)"><i class="fa {{mysql_icon}}" aria-hidden="true"></i> {{langmod.BDALLDB}}</button>
+                                      <button type="button" class="btn btn-primary btn-xs mr5 mb10 {{mail_state}}" {{mail_state}} data-toggle="tooltip" data-placement="top" data-typeback="mail" title="{{langmod.BDALLEMAILBA}}" id="btn-mail" data-icon="fa-envelope-o" onclick="displayCreationWindow(this)"><i class="fa {{mail_icon}}" aria-hidden="true"></i> {{langmod.DBALLEMAIL}}</button>
+                                      <button type="button" class="btn btn-primary btn-xs mr5 mb10 {{ssl_state}}" {{ssl_state}} data-toggle="tooltip" data-placement="top" data-typeback="ssl" title="{{langmod.BDALLSSLBATT}}" id="btn-ssl" data-icon="fa-lock" onclick="displayCreationWindow(this)"><i class="fa {{ssl_icon}}" aria-hidden="true"></i> {{langmod.BDALLSSLBA}}</button>
+                                    </div>
+                                  </div>
+                                  <div class="" id="gen_whole_window" style="margin-bottom:10px">
+                                    <h3><span id="backup_creation_title"></span> {{langmod.BCCREATETIT}}.</h3>
+                                    <div class="checkbox checkbox-primary">
+                                      <input type="checkbox" name="send_backup_email" onchange="sendEmailBackup(this)" checked class="checkbox checkbox-danger" value="1" id="send_backup_email">
+                                      <label for="send_backup_email">
+                                        {{langmod.DBNOTIFI}}
+                                      </label>
+                                    </div>
+                                    <div class="form-group" id="emaddress_backup_wrapper">
+                                      <label for="emaddress_backup">{{langmod.DBEMAIL}}</label>
+                                      <input type="text" class="form-control" id="emaddress_backup" data-reqemail="true" data-required="true" value="{{mod.email_username}}" style="width:300px;">
+                                    </div>
+
+                                    <button type="button" class="btn btn-warning btn-xs" onclick="cancelNewBack()"><i class="fa fa-ban" aria-hidden="true"></i> {{langmod.DBCANCEL}}</button>
+                                    <button type="button" class="btn btn-primary btn-xs" id="create_backup_btn" onclick="createBackup(this)"><i class="fa fa-cog" aria-hidden="true"></i> {{langmod.DBGENERATE}} (<span id="bck_crea_btn_title"></span>)</button>
+                                    <div class="alert alert-info info-backup">
+                                      <span class="fa-stack fa-sm">
+                                        <i class="fa fa-circle fa-stack-2x"></i>
+                                        <i class="fa fa-info fa-stack-1x fa-inverse"></i>
+                                      </span>
+                                      <span>{{langmod.BCLABELBACKPRO}}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <!-- <div class="col-lg-offset-1 col-sm-8">
+                                    <div class="input-group m-b"><span class="input-group-btn">
+                                        <button type="button" class="btn btn-primary btn-xs" style="margin-right: 5px">{{langmod.DBNOTIFI}}</button> </span>
+                                        <input type="text" class="form-control">
+                                    </div>
+                                </div> -->
+                            </div>
+                            <!-- <p>{{langmod.BCDESC}}</p> -->
+                            <div class="row">
+                              <div class="col-lg-12">
+                                  <div class="ibox" style="margin-bottom:0px;">
+                                      <div class="ibox-title backup_title">
+                                          <h5>{{langmod.DBBACKAV}}
+                                            <span class="fa-stack fa-xs" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{langmod.BCDOWNLOADMESS}}">
+                                              <i class="fa fa-circle fa-stack-2x"></i>
+                                              <i class="fa fa-info fa-stack-1x fa-inverse"></i>
+                                            </span></h5>
+                                      </div>
+                                      <div class="ibox-content" id="backup_table_container">
+                                        <div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+                                      </div>
+                                  </div>
+                              </div>
+                              <!-- <div class="col-lg-12">
+                                  <div class="ibox" style="margin-bottom:0px;">
+                                      <div class="ibox-title backup_title">
+                                          <h5>{{langmod.BDRESPPA}}</h5>
+                                      </div>
+                                      <div class="ibox-content other-backup">
+                                          <div class="other-backup-options">
+
+                                          </div>
+                                          <div class="alert alert-info info-backup" style="margin-bottom: 0px;">
+                                            <span class="fa-stack fa-sm">
+                                              <i class="fa fa-circle fa-stack-2x"></i>
+                                              <i class="fa fa-info fa-stack-1x fa-inverse"></i>
+                                            </span>
+                                            <span>{{langmod.BCLABELBACKPRO2}}</span>
+                                          </div>
+                                      </div>
+                                  </div>
+                              </div> -->
+                              <div class="col-lg-12">
+                                <div class="ibox" style="margin-bottom:0px;">
+                                  <div class="ibox-title backup_title">
+                                      <h5>{{langmod.DBONLYMYSQL}}</h5>
+                                  </div>
+                                  <div class="ibox-content other-backup" style="padding-bottom: 0px;">
+                                    <div class="row">
+                                      <div class="col-md-5">
+                                        <select class="form-control" id="backup_db" data-required="true" data-reqmess="{{langmod.BCDBSELERR}}" name="">
+                                          <option value="">Select a Database to backup</option>
+                                          {% for mysql in mod.mysql %}
+                                            <option value="{{mysql}}">{{mysql}}</option>
+                                          {% endfor %}
+                                        </select>
+                                      </div>
+                                      <div class="col-md-3">
+                                        <button type="button" class="btn btn-primary" onclick="dumpSql(this)" name="button"><i class="fa fa-download"></i> Download</button>
+                                      </div>
+                                    </div>
+                                  </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                          {% endif %}
+                          {% if ("automatic_backup" in rmenu )or(swmenu==1) %}
+                              <div id="tab-3" class="tab-pane">
+                                {% include 'mod_backups_auto.html' %}
+                              </div>
+                          {% endif %}
+                          {% if ("restore_backup" in rmenu )or(swmenu==1) %}
+                          <div id="tab-4" class="tab-pane">
+                              {% include 'modules/backups/backups_restore.html' %}
+                          </div>
+                          {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-4">
+              <div class="ibox">
+                <div class="ibox-title">
+                  <h5>Disk Usage</h5>
+                </div>
+                <div class="ibox-content" id="stats_backup">
+
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-lg-4">
+              <div class="ibox">
+                <div class="ibox-title">
+                  <h5 class="panel-title">
+                      {{langmod.BCTITLE}}
+                  </h5>
+                </div>
+                <div class="ibox-content">
+                  {{langmod.DBTITLETAB}}
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-lg-4">
+              <div class="ibox">
+                <div class="ibox-title">
+                  <h5 class="panel-title">
+                    {{langmod.BCAUTOMATICTIT}}
+                  </h5>
+                </div>
+                <div class="ibox-content">
+                  {{langmod.BCAUTOMATICLENG}}
+                </div>
+              </div>
+            </div>
+            
+            
+        </div>
+    </div>
+    {% include 'sidebar.html' %}
+<input type="hidden" id="hiddenvalue">
+<!-- Modal -->
+<div id="myModaldetail" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">{{langmod.BCLABEL20}}</h4>
+            </div>
+            <div class="modal-body">
+                <div class="col-lg-12" style="margin-bottom: 15px">
+                    <div class="row">
+                        <div class="checkbox-custom checkbox-inline">
+                            <input type="checkbox" value="home" id="homeuser2" onclick="return valiarbackuser(0)"><label for="homeuser">Home</label>
+                        </div>
+                        <div class="checkbox-custom checkbox-inline">
+                            <input type="checkbox" value="mysql" id="mysqluser2" onclick="return valiarbackuser(1)"><label for="mysqluser">Mysql / MariaDB</label>
+                        </div>
+                        <div class="checkbox-custom checkbox-inline">
+                            <input type="checkbox" value="mail" id="mailuser2" onclick="return valiarbackuser(2)"><label for="mailuser">Mail / Alias</label>
+                        </div>
+                        <div class="checkbox-custom checkbox-inline">
+                            <input type="checkbox" value="ftp" id="ftpaccounts2" onclick="return valiarbackuser(3)"><label for="ftpaccounts">Accounts FTP</label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="checkbox-custom checkbox-inline">
+                            <input type="checkbox" value="named" id="nameds2" onclick="return valiarbackuser(4)"><label for="nameds">DNS records</label>
+                        </div>
+                        <div class="checkbox-custom checkbox-inline">
+                            <input type="checkbox" value="passaccount" id="passaccount" onclick="return valiarbackuser(5)"><label for="passaccount">Account password</label>
+                        </div>
+                    </div>
+                </div>
+                <br><br>
+            </div>
+            <div class="modal-footer">
+                <!--button type="button" class="btn btn-success" onclick="return restoreback(3,'','')">{{langmod.BCLABEL19}}</button-->
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{langmod.DBCANCEL}}</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+</div>
+{% include 'footer.html' %}

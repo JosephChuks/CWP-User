@@ -1,0 +1,206 @@
+<div class="modal fade" id="_playList_confirm_modal_" tabindex="-1" role="dialog" aria-labelledby="videoModal" aria-hidden="true">
+    <div class="vertical-alignment-helper">
+        <div class="modal-dialog vertical-align-center" style="width: 600px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="playlist-modal-title modal-title text-center">
+                        Configurar Playlist
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <form id="playlistForm">
+                        <div class="row" style="margin-top:10px">
+                            <div class="col-lg-4">Station name: <i class="fa fa-info-circle" style="color:#1c84c6 !important;" data-toggle="tooltip" data-placement="right" title="Enter the name of your radio station"></i></div>
+                            <div class="col-lg-8">
+                                <input type="text" class="form-control" id="stationName" name="stationName" placeholder="My Station">
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top:10px">
+                            <div class="col-lg-4">Gender:  <i class="fa fa-info-circle" style="color:#1c84c6 !important;" data-toggle="tooltip" data-placement="right" title="Please indicate the genre of music from your radio station. Ex: ROCK"></i></div>
+                            <div class="col-lg-8">
+                                <input type="text" class="form-control" id="gender" name="gender" placeholder="Rock">
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top:10px">
+                            <div class="col-lg-4">Url:  <i class="fa fa-info-circle" style="color:#1c84c6 !important;" data-toggle="tooltip" data-placement="right" title="Enter the url of your radio station. Ex: www.mystation.com"></i></div>
+                            <div class="col-lg-8">
+                                <input type="text" class="form-control" id="url" name="url" placeholder="www.mystation.com">
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top:10px">
+                            <div class="col-lg-4">Clase de Configuracion:</div>
+                            <div class="col-lg-8">
+                                <select class="form-control" id="type" name="type">
+                                    <option value="basic">Basic</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top:10px">
+                            <div class="col-lg-4">Rotating: <i class="fa fa-info-circle" style="color:#1c84c6 !important;" data-toggle="tooltip" data-placement="right" title="List of press to play"></i></div>
+                            <div class="col-lg-8">
+                                <select class="form-control" id="myplaylist" name="myplaylist">
+
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top:10px">
+                            <div class="col-lg-4">Mode: <i class="fa fa-info-circle" style="color:#1c84c6 !important;" data-toggle="tooltip" data-placement="right" title="Play mode"></i></div>
+                            <div class="col-lg-8">
+                                <select class="form-control" id="myplaylistMode" name="myplaylistMode">
+                                    <option value="normal">Normal</option>
+                                    <option value="randomize">Aleatorio</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top:10px">
+                            <div class="col-lg-4">Jingles: <i class="fa fa-info-circle" style="color:#1c84c6 !important;" data-toggle="tooltip" data-placement="right" title="List of press to play"></i></div>
+                            <div class="col-lg-8">
+                                <select class="form-control" id="jingles" name="jingles">
+
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top:10px">
+                            <div class="col-lg-4">Mode: <i class="fa fa-info-circle" style="color:#1c84c6 !important;" data-toggle="tooltip" data-placement="right" title="Play mode"></i></div>
+                            <div class="col-lg-8">
+                                <select class="form-control" id="myjinglesMode" name="myjinglesMode">
+                                    <option value="normal">Normal</option>
+                                    <option value="randomize">Aleatorio</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top:10px">
+                            <div class="col-lg-4">Audio Error: <i class="fa fa-info-circle" style="color:#1c84c6 !important;" data-toggle="tooltip" data-placement="right" title="Audio that will be played when the station is OFF due to an error"></i></div>
+                            <div class="col-lg-8">
+                                <select class="form-control" id="audio_error" name="audio_error">
+
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top:10px">
+                            <div class="col-lg-12">jingles programming:</div>
+                        </div>
+                        <div class="row" style="margin-top:10px">
+                            <div class="col-lg-12">
+                                <div class="row">
+                                    <div class="col-lg-2" style="padding-top:7px">
+                                        After
+                                    </div>
+                                    <div class="col-lg-2">
+                                        <input class="form-control" id="jinglesAfter" name="jinglesAfter" type="text" value="4">
+                                    </div>
+                                    <div class="col-lg-4 text-center" style="padding-top:7px">
+                                        Songs, launch
+                                    </div>
+
+                                    <div class="col-lg-2">
+                                        <input class="form-control"  id="after" name="after"  type="text" value="1">
+                                    </div>
+                                    <div class="col-lg-2  text-center" style="padding-top:7px">
+                                        Wedges
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal" id="">
+                        <i class="fa fa-ban" aria-hidden="true"></i>
+                        Cancel
+                    </button>
+                    <button id="btnsave" onclick="return savePlaylistConf()" class="btn btn-success">
+                        <i id="btnconfiplay" class="fa fa-check-circle" aria-hidden="true"></i>
+                        Save
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal" id="uploadModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true"  >&times;</button>
+                <h4>Upload Files</h4>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    The maximum size per file allowed to upload is: <b>500M</b><br>
+                </div>
+                <form action="#" name="demoform" id="demoform" method="POST" class="dropzone dz-clickable" enctype="multipart/form-data">
+                    <div class="" style="margin-bottom: 15px">
+                        <select id="media_galery" name="media_galery" class="form-control">
+                            <option value="media">/MEDIA</option>
+                            <option value="intro">/MEDIA/INTRO</option>
+                            <option value="ondemand">/MEDIA/ONDEMAND</option>
+                        </select>
+                    </div>
+                    <div class="dropzone-custom-content">
+                        <h3 class="dropzone-custom-title text-center">Drag and drop to upload content!</h3>
+                        <div class="subtitle  text-center">...or click to select a file from your computer</div>
+                    </div>
+                    <div id="dropzoneDragArea" class="dz-default dz-message dropzoneDragArea">
+                        <span>Upload file</span>
+                    </div>
+                    <div class="dropzone-previews"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <a href="#"  data-dismiss="modal" class="btn btn-default">Close</a>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal" id="deletePlayList">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <input type="hidden" id="playlistname" value="">
+                <input type="hidden" id="typeplaylist" value="">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true"  >&times;</button>
+                <h4>Eliminar Lista de Reproduccion</h4>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger text-center" role="alert">
+                    You want to delete the playlist <p id="name_playlist" style="margin-top:7px"></p><br>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="#"  class="btn btn-danger" id="btn_delete_playlist">Delete</a>
+                <a href="#"  data-dismiss="modal" class="btn btn-default">Close</a>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modal_delete_file_media" tabindex="-1" role="dialog" aria-labelledby="videoModal" aria-hidden="true">
+    <div class="vertical-alignment-helper">
+        <div class="modal-dialog vertical-align-center  modal-sm">
+            <div class="modal-content">
+                <input type="hidden" id="idfile" value="" >
+                <div class="modal-header hide-in-modal">
+                    <h5 class="nodejs-modal-title modal-title text-center">
+                        Delete audio file
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-11">
+                            It is going to delete the audio file <p id="filename" class="text-center" style="font-weight: bold; padding-top:15px">xxxx</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer hide-in-modal">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal" id="">
+                        <i class="fa fa-ban" aria-hidden="true"></i>
+                        Cancel
+                    </button>
+                    <button  id="_btn_delete_FileAudio" class="btn btn-danger">
+                        <i class="fa fa-trash" aria-hidden="true"></i> Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

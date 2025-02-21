@@ -1,0 +1,988 @@
+
+console.log();
+function generatePasswordRand(length,type) {
+    switch(type){
+        case 'num':
+            characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            break;
+        case 'alf':
+            characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            break;
+        case 'rand':
+            //FOR ↓
+            break;
+        default:
+            characters = "0123456789/-_%*!^><.abcdefghijklmnopqrstuvwxyz/-_%*!^><.ABCDEFGHIJKLMNOPQRSTUVWXYZ/-_%*!^><.";
+            break;
+    }
+    var pass = "";
+    for (i=0; i < length; i++){
+        if(type == 'rand'){
+            pass += String.fromCharCode((Math.floor((Math.random() * 100)) % 94) + 33);
+        }else{
+            pass += characters.charAt(Math.floor(Math.random()*characters.length));
+        }
+    }
+    return pass;
+}
+
+const ValidateIPaddress = (ipaddress) => {
+ if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ipaddress)){
+    return true;
+  }
+  return false;
+}
+class Uchip {
+  constructor() {
+    this.name = 'name';
+  }
+  handleButton = (elem, icon_fa, type) => {
+    let icon = $(elem).find('.fa');
+    if(type == undefined){
+      $(elem).addClass('disabled');
+      $(elem).prop('disabled', true);
+      icon.removeClass(icon_fa);
+      icon.addClass('fa-spinner fa-spin');
+    }else{
+      icon.removeClass('fa-spinner fa-spin');
+      icon.addClass(icon_fa);
+      $(elem).removeClass('disabled');
+      $(elem).prop('disabled', false);
+    }
+  }
+  call(path, settings){
+    settings = {
+      data: '',
+      callback : (resp) => {},
+      ...settings,
+    };
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: './{{users}}/index.php?' + path,
+        //data: "datebase="+$("#newdb").val()+"&collation="+$("#collationonly").val()+"&charset="+$("#charsetonly").val(),
+        data: settings.data,
+        complete: function(response){
+          settings.callback(response.responseJSON);
+        }
+    });
+  }
+}
+
+function noti_bubble(title,msj,type,bar,button,timer,repeat) { //
+    toastr.options = {
+        closeButton: button,
+        progressBar: bar,
+        showMethod: 'slideDown',
+        preventDuplicates:repeat,
+        timeOut: timer
+    };
+    if(type =='success'){ toastr.success(title, msj); }
+    if(type =='error'){ toastr.error(title, msj); }
+    if(type =='info'){ toastr.info(title, msj); }
+    if(type =='warning'){ toastr.warning(title, msj); }
+    validatesound();
+}
+function validatesound(){
+    var stsound = {{ confi.SOUNDALERT }};
+    if(stsound==1){
+        errorsound();
+    }
+}
+function newpass(){
+    var pass1 =Base64.encode($("#pass1").val());
+    var pass2 =Base64.encode($("#pass2").val());
+    if((pass1!='')&&(pass2!='')){
+        if($("#pass1").val()==$("#pass2").val()){
+            $("#btn-submit").attr('disabled',true);
+            $("#btn-submit").addClass('disabled');
+            $("#btn-submit").html('<i class="fa fa-spinner fa-spin"></i>  {{ langene.MDBTN_SAVE }}');
+            $.ajax({
+                type: "POST",
+                url: "./{{users}}/index.php?acc=newpass",
+                data:"pass1="+pass1+"&pass2="+pass2+"&user={{users}}",
+                complete: function(datos){
+                    //console.log(datos.responseText);
+                    if(datos.responseText==0){
+                        $("#btn-submit").attr('disabled',false);
+                        $("#btn-submit").removeClass('disabled');
+                        $("#btn-submit").html('{{ langene.MDBTN_SAVE }}');
+
+                        $("#modal-changepass").modal('toggle');
+                        $("#pass1").val('');
+                        $("#pass2").val('');
+                    }else{
+                        window.location.href="/login/?acc=logon";
+                    }
+                    return false;
+                }
+            });
+        }else{
+            noti_bubble('{{langmod.EMERROR}}','{{langmod.EMERROR14}}','error',true,false,'3000',true);
+        }
+    }else{
+        noti_bubble('{{langmod.EMERROR}}','{{langmod.EMERROR14}}','error',true,false,'3000',true);
+    }
+    return false;
+}
+function processlist(sw){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?acc=mod_process_list",
+        complete: function(datos){
+            $("#contentmodalpl").html(datos.responseText);
+            if(sw==1){
+                timer = setTimeout('processlist(1)', 4000);
+            }else{
+                return false;
+            }
+        }
+    });
+}
+function changstpublic(){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=files_system_lock&acc=changstpublic",
+        data:"st="+st,
+        complete: function(datos){
+            if(datos.state==0){
+                $("#imglock").removeClass('label-success');
+                $("#imglock").addClass('label-warning');
+                $("#imglock").html('{{langene.FSL_UNLOCKED}}');
+                $("#alertfl").hide('blind');
+                $("#contfl").html('<a class="btn btn-success btn-rounded btn-block" href="#" onclick="return changstpublic()"><i class="fa fa-unlock-alt"></i> {{langene.FSL_BTN_UNLOCKED}}</a>');
+            }else if(datos.state==1) {
+                $("#imglock").removeClass('label-warning');
+                $("#imglock").addClass('label-success');
+                $("#imglock").html('{{langene.FSL_LOCKED}}');
+                $("#alertfl").show('blind');
+                $("#contfl").html('<a class="btn btn-warning btn-rounded btn-block" href="#" onclick="return changstpublic()"><i class="fa fa-lock"></i> {{langene.FSL_BTN_LOCKED}}</a>');
+                $("#contfl").html('<a class="btn btn-warning btn-rounded btn-block" href="#" onclick="return changstpublic()"><i class="fa fa-lock"></i> {{langene.FSL_BTN_LOCKED}}</a>');
+            }
+        }
+    });
+}
+function save_lang(){
+    var lang=$('input:radio[name=lang]:checked').val();
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?acc=save_lang",
+        data:"lang="+lang,
+        complete: function(datos){
+            //alert(datos.responseText);
+            window.location.href=datos.responseText;
+            return true;
+        }
+    });
+    return false;
+}
+function refrespanelnew(module){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?acc=refrespanel",
+        data: "module="+module,
+        complete: function(datos){
+            if(module=='mysql_manager'){
+                //alert(datos.responseText);
+                var string=datos.responseText;
+                var trozo=string.split('||');
+                var package=trozo[0];
+                var used=trozo[1];
+                var sw=trozo[2];
+                var porc=((100/package)*used);
+                porc=Math.round(porc);
+
+                $("#tlmysqlind").html('{{langene.PGMYSQL}} '+used+'/'+package);
+                $("#indmysql .stat-percent").html(porc+'%');
+                $("#barmysqlind").attr('width',porc+'%');
+
+                if(porc <= 25){ var newclass='progress-bar';}
+                if((porc >= 26) && (porc <= 50)){ var newclass='progress-bar-success';}
+                if((porc >= 51) && (porc <= 75)){ var newclass='progress-bar-warning';}
+                if(porc > 75){ var newclass='progress-bar-danger'; }
+                $("#barmysqlind").removeClass('progress-bar-success');
+                $("#barmysqlind").removeClass('progress-bar-warning');
+                $("#barmysqlind").removeClass('progress-bar-danger');
+                if(porc >25){
+                    $("#barmysqlind").addClass(newclass);
+                }
+            }
+            if(module=='ftp_accounts'){
+                var string=datos.responseText;
+                var trozo=string.split('||');
+                var package=trozo[0];
+                var used=trozo[1];
+                var porc=parseInt(((100/package)*used));
+
+                $("#tlftpind").html('{{langene.PGFTP}} '+used+'/'+package);
+                $("#indftp .stat-percent").html(porc+'%');
+                $("#barftpind").attr('width',porc+'%');
+
+                if(porc <= 25){ var newclass='progress-bar';}
+                if((porc >= 26) && (porc <= 50)){ var newclass='progress-bar-success';}
+                if((porc >= 51) && (porc <= 75)){ var newclass='progress-bar-warning';}
+                if(porc > 75){ var newclass='progress-bar-danger'; }
+                $("#barftpind").removeClass('progress-bar-success');
+                $("#barftpind").removeClass('progress-bar-warning');
+                $("#barftpind").removeClass('progress-bar-danger');
+                if(porc >25){
+                    $("#barftpind").addClass(newclass);
+                }
+            }
+            if(module=='domains'){
+                var string=datos.responseText;
+                var trozo=string.split('||');
+                var package=trozo[0];
+                var used=trozo[1];
+                var porc=parseInt(((100/package)*used));
+                if(Math.round(used) < Math.round(package)){$("#divbtnadd").html('<button type="button" id="btn_add_domain" onclick="return btnadddomain()" class="btn btn-success btn-xs mr5 mb10"> {{langmod.DBNTADD}}</button>');}else{$("#divbtnadd").html('');}
+                $("#tldomind").html('{{langene.PGDOMAINS}} '+used+'/'+package);
+                $("#inddom .stat-percent").html(porc+'%');
+                $("#bardomindpor").attr('width',porc+'%');
+
+                if(porc <= 25){ var newclass='progress-bar';}
+                if((porc >= 26) && (porc <= 50)){ var newclass='progress-bar-success';}
+                if((porc >= 51) && (porc <= 75)){ var newclass='progress-bar-warning';}
+                if(porc > 75){ var newclass='progress-bar-danger'; }
+                $("#bardomind").removeClass('progress-bar-success');
+                $("#bardomind").removeClass('progress-bar-warning');
+                $("#bardomind").removeClass('progress-bar-danger');
+                if(porc >25){
+                    $("#bardomind").addClass(newclass);
+                }
+            }
+            if(module=='email_accounts'){
+                //console.log(datos.responseText);
+                var string=datos.responseText;
+                var trozo=string.split('||');
+                var package=trozo[0];
+                var used=trozo[1];
+                var sw=trozo[2];
+                var porc=((100/package)*used);
+                porc=Math.round(porc);
+
+                if(Math.round(used) < Math.round(package)){$("#divbtnadd").show();}else{$("#divbtnadd").hide();}
+                $("#tlftpind").html('{{langene.PGEMAIL}} '+used+' / '+package);
+                $("#indemail .stat-percent").html(porc+'%');
+                $("#baremailind").attr('width',porc+'%');
+
+                if(porc <= 25){ var newclass='progress-bar';}
+                if((porc >= 26) && (porc <= 50)){ var newclass='progress-bar-success';}
+                if((porc >= 51) && (porc <= 75)){ var newclass='progress-bar-warning';}
+                if(porc > 75){ var newclass='progress-bar-danger'; }
+                $("#baremailind").removeClass('progress-bar-success');
+                $("#baremailind").removeClass('progress-bar-warning');
+                $("#baremailind").removeClass('progress-bar-danger');
+                if(porc >25) {
+                    $("#baremailind").addClass(newclass);
+                }
+            }
+            if(module=='subdomains'){
+                //alert(datos.responseText);
+                var string=datos.responseText;
+                var trozo=string.split('||');
+                var package=trozo[0].trim();
+                var used=trozo[1].trim();
+                var porc=parseInt(((100/package)*used));
+                //alert(used+' - '+package);
+                if(Math.round(used) < Math.round(package)){$("#divbtnadd").html('<button type="button" id="btn_add_subdomain" class="btn btn-success btn-xs mr5 mb10" onclick="return btnaddsubdomain()"> {{langmod.SDBNTADD}}</button>');}else{$("#divbtnadd").html('');}
+                $("#tldomind").html('{{langene.SUBDOMAIN}} '+used+'/'+package);
+                $("#inddom .stat-percent").html(porc+'%');
+                //$("#bardomindpor").attr('width',porc+'%');
+                $("#bardomindpor").css('width',porc+'%');
+
+                if(porc <= 25){ var newclass='progress-bar';}
+                if((porc >= 26) && (porc <= 50)){ var newclass='progress-bar-success';}
+                if((porc >= 51) && (porc <= 75)){ var newclass='progress-bar-warning';}
+                if(porc > 75){ var newclass='progress-bar-danger'; }
+                $("#bardomind").removeClass('progress-bar-success');
+                $("#bardomind").removeClass('progress-bar-warning');
+                $("#bardomind").removeClass('progress-bar-danger');
+                if(porc >25){
+                    $("#bardomind").addClass(newclass);
+                }
+            }
+            if(module=='email_forwarders'){
+                var string=datos.responseText;
+                var trozo=string.split('||');
+                var package=trozo[0];
+                var used=trozo[1];
+                var sw=trozo[2];
+                var porc=((100/package)*used);
+                porc=Math.round(porc);
+                $("#tlforwind").html('{{langmod.PGFORWA}} '+used+' / '+package);
+                if(Math.round(used) < Math.round(package)){
+                    $(".forwbtnadd").show();
+                }else{
+                    $(".forwbtnadd").hide();
+                }
+                $("#indforw .stat-percent").html(porc+'%');
+                $("#barforwind").attr('width',porc+'%');
+
+                if(porc <= 25){ var newclass='progress-bar';}
+                if((porc >= 26) && (porc <= 50)){ var newclass='progress-bar-success';}
+                if((porc >= 51) && (porc <= 75)){ var newclass='progress-bar-warning';}
+                if(porc > 75){ var newclass='progress-bar-danger'; }
+                $("#barforwind").removeClass('progress-bar-success');
+                $("#barforwind").removeClass('progress-bar-warning');
+                $("#barforwind").removeClass('progress-bar-danger');
+                if(porc >25) {
+                    $("#barforwind").addClass(newclass);
+                }
+            }
+            if(module=='mail_autoreply'){
+                var string=datos.responseText;
+                var trozo=string.split('||');
+                var package=trozo[0];
+                var used=trozo[1];
+                var sw=trozo[2];
+                var porc=((100/package)*used);
+                porc=Math.round(porc);
+                $("#tlftpind").html('{{langmod.EARESPONDER}} '+used+' / '+package);
+                if(Math.round(package) > Math.round(used)){
+                    $("#btn-addautof").show();
+                }
+                if(Math.round(package) <= Math.round(used)){
+                    $("#btn-addautof").hide();
+                }
+                $("#indemail .stat-percent").html(porc+'%');
+                $("#baremailind").attr('width',porc+'%');
+
+                if(porc <= 25){ var newclass='progress-bar';}
+                if((porc >= 26) && (porc <= 50)){ var newclass='progress-bar-success';}
+                if((porc >= 51) && (porc <= 75)){ var newclass='progress-bar-warning';}
+                if(porc > 75){ var newclass='progress-bar-danger'; }
+                $("#baremailind").removeClass('progress-bar-success');
+                $("#baremailind").removeClass('progress-bar-warning');
+                $("#baremailind").removeClass('progress-bar-danger');
+                if(porc >25) {
+                    $("#baremailind").addClass(newclass);
+                }
+            }
+            return false;
+        }
+    });
+}
+function changeradio(sw){
+
+    if(sw==0){
+        $("#exploret").hide();
+        $("#manual").show('blind');
+    }
+    if(sw==1){
+        $("#manual").hide();
+        $("#exploret").show('blind');
+    }
+}
+
+function btnporcess(sw,id,text){
+    if(sw=='off'){
+        $("#"+id).html('<i class="fa fa-spinner fa-spin"></i>   '+text);
+        $("#"+id).addClass('disabled');
+        $("#"+id).attr('disabled',true);
+    }
+    if(sw=='on'){
+        $("#"+id).html(text);
+        $("#"+id).removeClass('disabled');
+        $("#"+id).attr('disabled',false);
+    }
+}
+function changesttypephp(sw){
+    if(sw=='php-fpm'){ $("#typephp").attr('checked',true);}else{$("#typephp").attr('checked',false);}
+}
+function errorsound(){
+    $('<audio id="chatAudio"><source src="{{url}}/sound/End_note.ogg" type="audio/ogg"><source src="{{url}}/sound/End_note.mp3" type="audio/mpeg"><source src="{{url}}/sound/End_note.wav" type="audio/wav"></audio>').appendTo('body');
+    $('#chatAudio')[0].play();
+}
+function cancelfemail(){
+    $("#deletemodal").modal('hide');
+    return false;
+}
+function sendonlydate(sw){
+    $("#start_date").datepicker();
+    $("#end_date").datepicker();
+    $("#start_time").clockpicker();
+    $("#end_time").clockpicker();
+
+    if(sw==0){
+        if($("#sendonlydate").prop('checked')){
+            $("#start_date").prop('disabled',false);
+            $("#end_date").prop('disabled',false);
+            $("#start_time").prop('disabled',false);
+            $("#end_time").prop('disabled',false);
+            $("#sendonlydate").val(1);
+        }else{
+            $("#start_date").prop('disabled',true);
+            $("#end_date").prop('disabled',true);
+            $("#start_time").prop('disabled',true);
+            $("#end_time").prop('disabled',true);
+            $("#sendonlydate").val(0);
+        }
+    }else{
+        if($("#sendonlydate-edit").attr('checked')){
+            $("#start_date-edit").attr('disabled',false);
+            $("#end_date-edit").attr('disabled',false);
+            $("#start_time-edit").attr('disabled',false);
+            $("#end_time-edit").attr('disabled',false);
+            $("#sendonlydate-edit").val(1);
+        }else{
+            $("#start_date-edit").attr('disabled',true);
+            $("#end_date-edit").attr('disabled',true);
+            $("#start_time-edit").attr('disabled',true);
+            $("#end_time-edit").attr('disabled',true);
+            $("#sendonlydate-edit").val(0);
+        }
+    }
+}
+function valiarbackuser(sw){
+    var swbtn=0;
+    if($("#homeuser").attr('checked')){
+        if(sw==0){ noti_bubble('{{langmod.BACKALER1}}','{{langmod.BCARNING}}','error',false,false,'3000',true); }
+        if(sw==1){ noti_bubble('{{langmod.BACKALER2}}','{{langmod.BCARNING}}','error',false,false,'3000',true); }
+
+        $("#btnretore").attr('disabled',false);
+        $("#btnretore").removeClass('disabled');
+        $("#errorbackup").hide('blind');
+        swbtn=swbtn+1;
+    }else{
+        //$("#alertbackup").hide('blind');
+        $("#alertbackup").html('');
+    }
+    if($("#mysqluser").attr('checked')){
+        $("#alertbackup2").html(msj2);
+        $("#alertbackup2").show('blind');
+        $("#btnretore").attr('disabled',false);
+        $("#btnretore").removeClass('disabled');
+        $("#errorbackup").hide('blind');
+        swbtn=swbtn+1;
+    }else{
+        $("#alertbackup2").hide('blind');
+        $("#alertbackup2").html('');
+    }
+    if($("#mailuser").attr('checked')){
+        $("#btnretore").attr('disabled',false);
+        $("#btnretore").removeClass('disabled');
+        $("#errorbackup").hide('blind');
+        swbtn=swbtn+1;
+    }
+    if($("#ftpaccounts").attr('checked')){
+        $("#btnretore").attr('disabled',false);
+        $("#btnretore").removeClass('disabled');
+        $("#errorbackup").hide('blind');
+        swbtn=swbtn+1;
+    }
+    if($("#nameds").attr('checked')){
+        $("#btnretore").attr('disabled',false);
+        $("#btnretore").removeClass('disabled');
+        $("#errorbackup").hide('blind');
+        swbtn=swbtn+1;
+    }
+    //if(swbtn>0){ $("#btnretoreuser").show('blind'); }else{ $("#btnretoreuser").hide('blind'); }
+}
+function logon(){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?acc=logon",
+        complete: function(datos){
+            window.location = '/login/?acc=logon';
+            return false;
+        }
+    });
+}
+
+{#
+function statistic(){
+    $('#filename').load("/home/luna/stats/goaccess/html/stats.html");
+}
+#}
+function googlefa(){
+    if($("#GOOGLEFA").prop('checked')){
+        $("#divimggoogle").html('<i class="fa fa-spinner fa-spin"></i>');
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?acc=googlefa",
+            complete: function(datos){
+                var obj = jQuery.parseJSON( datos.responseText );
+                $("#divimggoogle").html('<img src="'+obj.imgqr+'" width="200" height="200" border="0" id="googleqrimg">'+obj.secretcode);
+
+                //$("#googleqrimg").attr("src",);
+            }
+        });
+        $("#divqr").show('blind');
+    }else{
+        $("#divqr").hide('blind');
+    }
+    return false;
+}
+function markpath(path,namemark){
+    //$("#pathselect").html('<strong>'+Base64.decode(path)+'</strong>');
+    $("#pathselect").val(Base64.decode(path));
+    $("#namemark").val(namemark);
+    return false;
+}
+$("#verphp").change(function (){
+    var cadena = $("#verphp").val();
+    var termi = "-";
+    var posicion = cadena.indexOf(termi);
+    if (posicion !== -1){ var tipo='php-fpm';}else{ var tipo='php-cgi'; }
+    //if($("#phptypehidden").val()!=tipo){
+        if(tipo=='php-cgi'){
+            $("#exploret").show();
+        }else{
+            $("#exploret").hide();
+        }
+    //}
+    return false;
+
+});
+$("#newdb").keyup(function(){
+    var valuename=$("#newdb").val();
+    var strclear=valuename.replace(/[^a-z0-9\s]/gi, '');
+    $("#newdb").val(strclear);
+});
+$("#bdname").keyup(function(){
+    var valuename=$("#bdname").val();
+    var strclear=valuename.replace(/[^a-z0-9\s]/gi, '');
+    $("#bdname").val(strclear);
+});
+$("#domainini").change(function(){
+    validatetypephp();
+});
+$("#storage").click(function(){
+    $("#contspace").toggle('blind');
+    $("#divstorage").show('blind');
+    if($("#sw").hasClass('fa-sort-desc')){
+        $("#sw").removeClass('fa-sort-desc');
+        $("#sw").addClass('fa-sort-asc');
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?acc=disk_space",
+            complete: function(datos){
+                console.log(datos.responseText);
+                var str=datos.responseText;
+                var trozo=str.split('||');
+                var backup = trozo[0];
+                var home = trozo[1];
+                var mysql = Math.round(trozo[2]/1024);
+                var email = Math.round(trozo[3]/10240);
+                var quota = Math.round(trozo[4]);
+                //var totalhost=home+mysql+email+backup;
+                var totalhost=Math.round(trozo[5]);
+                var homediv=Math.round((100/quota)*home);
+                var mysqldiv=Math.round((100/quota)*mysql);
+                var emaildiv=Math.round((100/quota)*email);
+                var backupdiv=Math.round((100/quota)*backup);
+
+                $("#bp-backup").css({'width':''+backupdiv+'%'});
+                $("#pullbackup").html(Math.round(backupdiv)+'%');
+                $("#stat-backup").html(backup+' MB / '+quota+' MB');
+                if(backupdiv<50) { $("#bp-backup").addClass('progress-bar-success'); }else if((backupdiv>=50) || (backupdiv<=75)) { $("#bp-backup").addClass('progress-bar-warning'); }else{ $("#bp-backup").addClass('progress-bar-danger'); }
+
+                $("#bp-mysql").css({'width':''+mysqldiv+'%'});
+                if(mysqldiv>70){$("#bp-mysql").css({'background-color':'#F48C46'});}
+                $("#pullmysql").html(Math.round(mysqldiv)+'%');
+                $("#stat-mysql").html(mysql+' MB / '+quota+' MB');
+                if(mysqldiv<50) { $("#bp-mysql").addClass('progress-bar-success'); }else if((mysqldiv>=50) || (mysqldiv<=75)) { $("#bp-mysql").addClass('progress-bar-warning'); }else{ $("#bp-mysql").addClass('progress-bar-danger'); }
+
+                $("#bp-email").css({'width':''+emaildiv+'%'});
+                if(emaildiv>70){$("#bp-email").css({'background-color':'#F48C46'});}
+                $("#pullemail").html(Math.round(emaildiv)+'%');
+                $("#stat-email").html(email+' MB / '+quota+' MB');
+                if(emaildiv<50) { $("#bp-email").addClass('progress-bar-success'); }else if((emaildiv>=50) || (emaildiv<=75)) { $("#bp-email").addClass('progress-bar-warning'); }else{ $("#bp-email").addClass('progress-bar-danger'); }
+
+                $("#bp-home").css({'width':''+homediv+'%'});
+                if(homediv>70){$("#bp-home").css({'background-color':'#F48C46'});}
+                $("#pullhome").html(Math.round(homediv)+'%');
+                $("#stat-home").html(home+' MB / '+quota+' MB');
+                return false;
+            }
+        });
+    }else{
+        $("#sw").addClass('fa-sort-desc');
+        $("#sw").removeClass('fa-sort-asc');
+        $("#contspace").toggle('blind');
+    }
+    return false;
+});
+$("#regaddnew").click(function () {
+    $("#addnew_tex").val('');
+    $("#addnew_tex").toggle('blind');
+    $("#addnew_sel").toggle('blind');
+    return false;
+});
+$(".logon").click(function () {
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?acc=logon",
+        complete: function(datos){
+            window.location = '/login/?acc=logon';
+            return false;
+        }
+    });
+});
+$('#litab1').on('click', function(){
+    $("#litab1").addClass('active');
+    $("#litab2").removeClass('active');
+    $("#litab3").removeClass('active');
+    $("#tab-1").addClass('active');
+    $("#tab-2").removeClass('active');
+    $("#tab-3").removeClass('active');
+});
+$('#litab2').on('click', function(){
+    $("#litab1").removeClass('active');
+    $("#litab2").addClass('active');
+    $("#litab3").removeClass('active');
+    $("#tab-1").removeClass('active');
+    $("#tab-2").addClass('active');
+    $("#tab-3").removeClass('active');
+});
+$('#litab3').on('click', function(){
+    $("#litab1").removeClass('active');
+    $("#litab2").removeClass('active');
+    $("#litab3").addClass('active');
+    $("#tab-1").removeClass('active');
+    $("#tab-2").removeClass('active');
+    $("#tab-3").addClass('active');
+});
+$("#pass2").keyup(function() {
+    if($("#pass2").val()==$("#pass1").val()){
+        $("#btn-submit").show();
+        newvalidpass($("#pass1").val(),$("#pass2").val());
+    }else{
+        $("#btn-submit").hide();
+        newvalidpass($("#pass1").val(),$("#pass2").val());
+    }
+});
+$("#btn-process-list-on").click(function(){
+    $("#btn-process-list-on").hide();
+    $("#btn-process-list-off").show();
+    timer = setTimeout('processlist(1)', 4000);
+});
+$("#btn-process-list-off").click(function(){
+    $("#btn-process-list-off").hide();
+    $("#btn-process-list-on").show();
+    clearTimeout(timer);
+});
+$("#notiemail").click(function (){
+    if( $("#notiemail").attr('checked') ) {
+        $("#contdivemail1").show();
+        $("#contdivemail2").show();
+    }else{
+        $("#contdivemail1").hide();
+        $("#contdivemail2").hide();
+    }
+});
+$("#notiview").click(function (){
+    if( $("#notiview").attr('checked') ) {
+        $("#notiview-h").val(1);
+        noti_bubble('{{langmod.NCALERTDEMO}}','{{langmod.NCALERTEERROR}}','warning',true,false,'5000',true);
+    }else{
+        $("#notiview-h").val(0);
+    }
+});
+$(".files_system_lock").click(function(){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=files_system_lock&acc=status",
+        //data:"typescan="+avtype,
+        complete: function(datos){
+            if(datos.responseText==1){
+                var btn='<div id="contfl"><a class="btn btn-warning btn-rounded btn-block" href="#" onclick="return changstpublic()"><i class="fa fa-lock"></i> {{langene.FSL_BTN_LOCKED}}</a></div><br><p align="center">{{langene.FSL_DETAIL}}</p>';
+            }else{
+                var btn='<div id="contfl"><a class="btn btn-success btn-rounded btn-block" href="#" onclick="return changstpublic()"><i class="fa fa-unlock-alt"></i> {{langene.FSL_BTN_UNLOCKED}}</a></div><br><p align="center">{{langene.FSL_DETAIL}}</p>';
+            }
+            $("#modal-fsl .modal-body").html(btn);
+            $("#modal-fsl").modal('toggle');
+            return false;
+        }
+    });
+});
+$(".clam").click(function(){
+    $("#antivirus-modalnew").modal();
+    return false;
+});
+$("#btn-star-antivirus2").click(function(){
+    var avtype=$('input:radio[name=avtype2]:checked').val();
+    $("#btn-star-antivirus2").hide();
+    $("#btn-star-antivirus_process2").show();
+    $("#alerbtn_av2").html('');
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=clam&acc=antivirus",
+        data:"typescan="+avtype,
+        complete: function(datos){
+            //alert(datos.responseText);
+            if(datos.responseText==11){
+                var msj="{{langene.AVALERT1}}";
+                var sw=1;
+            }else if(datos.responseText==12){
+                var msj="{{langene.AVALERT2}}";
+                var sw=1;
+            }else if(datos.responseText==31){
+                var msj="{{langene.AVALERT3}}";
+                var sw=1;
+            }else{
+                var msj=datos.responseText;
+                $("#antivirus-modal .modal-body").html(datos.responseText);
+                $("#antivirus-modalnew").modal('toggle');
+                $("#antivirus-modal").modal();
+                var sw=0;
+            }
+            $("#btn-star-antivirus_process2").hide();
+            $("#btn-star-antivirus2").show();
+            if(sw==1){
+                $("#alerbtn_av2").html(msj);
+                $("#alerbtn_av2").show();
+            }
+            return false;
+        }
+    });
+});
+$("#btn-save-theme").click(function (){
+    $("#btn-save-theme").addClass('disabled');
+    $("#btn-save-theme").attr('disabled',true);
+    $("#btn-save-theme").html('<i class="fa fa-spinner fa-spin"></i> {{langene.PGCHANGTHEME}}');
+    var theme_new=$('input:radio[name=theme-save]:checked').val();
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?acc=changethemesave",
+        data: "theme="+theme_new,
+        complete: function(datos){
+            //alert(datos.responseText);
+            window.location.href=datos.responseText;
+            return false;
+        }
+    });
+    return false;
+});
+$("#btn_add_domain_OLD").click(function (){
+    alert();
+    var headervar='<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{ langmod.DOMLABLE3 }}</span></button><h4 class="modal-title">{{ langmod.DBNTADD }}</h4>';
+    var bodyvar='<div class="row"><div class="col-sm-5"><b>Domain:</b></div><div class="col-sm-7"><input type="text" class="form-control" style="padding:3px 0px;" id="newdomain" onkeyup="return newdomainkeyup()"></div></div><div class="row" style="padding-top: 5px"><div class="col-sm-5" style="padding-top: 3px"><b>Path:</b> /home/{{ users }}/</div><div class="col-sm-7"><input type="text" class="form-control" style="padding:3px 0px;" id="pathdomain" value="public_html/"></div></div>';
+    var btnvar='<button type="button"  class="btn btn-default btn-block mb10" onclick ="return canceladd()">{{ langmod.DCANDELDOMAIN }}</button></div><div class="col-sm-6"><button type="button" onclick="return btn_save_domain()" id="btn_save_domain" class="btn btn-primary btn-block mb10">{{ langmod.DBNTADD }}</button>';
+    $("#addmodal .modal-header").html(headervar);
+    $("#addmodal .modal-body").html(bodyvar);
+    $("#addmodal .modal-footer").html(btnvar);
+    $("#addmodal").modal('toggle');
+});
+$("#btn-updsettings").click(function (){
+    if($("#GOOGLEFA").prop('checked')){ var googlefa =1;}else{var googlefa =0;}
+    $("#btn-updsettings").attr('disabled',true);
+    $("#btn-updsettings").addClass('disabled');
+    $("#btn-updsettings").html('<i class="fa fa-spinner fa-spin"></i> {{langene.GNBTN3}}');
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?acc=change_settings",
+        data: "sessiontime="+$("#sessiontime").val()+"&listrow="+$("#listrow").val()+"&soundalert="+$("#soundalert").val()+"&googlefa="+googlefa,
+        complete: function(datos){
+            noti_bubble('{{langene.NSACCSUCCESS}}','{{langene.GNLABEL20}}','success',false,false,'3000',true);
+            $("#btn-updsettings").attr('disabled',false);
+            $("#btn-updsettings").removeClass('disabled');
+            $("#btn-updsettings").html('{{langene.GNBTN3}}');
+            $("#modal-settings").modal('toggle');
+            return false;
+        }
+    });
+});
+$("#tab1link").click(function (){
+    $("#tab2link").removeClass('active');
+    $("#tab2link").removeClass('show');
+    $("#tab1link").addClass('active');
+    $("#tab1link").addClass('show');
+    $("#tab-2").hide();
+    $("#tab-1").show();
+});
+$("#tab2link").click(function (){
+    $("#tab1link").removeClass('active');
+    $("#tab1link").removeClass('show');
+    $("#tab2link").addClass('active');
+    $("#tab2link").addClass('show');
+    $("#tab-1").hide();
+    $("#tab-2").show();
+});
+$(".mysql_processes").click(function (){
+    processlistmysql(1);
+    $("#mysqlprocesslist").modal('toggle');
+});
+$("#btn-delete-filemanager").click(function (){
+    var btsfooter='<button type="button" class="btn btn-white" data-dismiss="modal">{{ langmod.TNOT }}</button><button type="button" class="btn btn-primary" onclick="return alertdeletefilemanager(1)">{{ langmod.TYES }}</button>';
+    var btsheader='<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only"></span></button><h4 class="modal-title"></h4><small class="font-bold"></small>';
+    $("#deletemodal .modal-footer").html(btsfooter);
+    $("#deletemodal .modal-header").html(btsheader);
+    $("#deletemodal .modal-body").html('<p class="text-center"><strong>{{ langmod.DESINTALL }}</strong></p>');
+    $("#deletemodal").modal('toggle');
+});
+$("#dbtab1").click(function (){
+    $("#litab1").addClass('active');
+    $("#tab-1").addClass('active');
+    $("#tab-1").addClass('show');
+    $("#litab2").removeClass('active');
+    $("#tab-2").removeClass('active');
+    $("#tab-2").removeClass('show');
+    $("#dbtab2").removeClass('show');
+    $("#dbtab2").removeClass('active');
+    $("#dbtab1").addClass('show');
+    $("#dbtab1").addClass('active');
+    $("#tab-2").hide();
+    $("#tab-1").show();
+});
+$("#dbtab2").click(function (){
+    $("#litab1").removeClass('active');
+    $("#tab-1").removeClass('active');
+    $("#tab-1").removeClass('show');
+    $("#litab2").addClass('active');
+    $("#tab-2").addClass('active');
+    $("#tab-2").addClass('show');
+    $("#dbtab1").removeClass('show');
+    $("#dbtab1").removeClass('active');
+    $("#dbtab2").addClass('show');
+    $("#dbtab2").addClass('active');
+    $("#tab-1").hide();
+    $("#tab-2").show();
+});
+
+var Base64 = {
+
+    // private property
+    _keyStr : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+
+    // public method for encoding
+    encode : function (input) {
+        var output = "";
+        var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+        var i = 0;
+
+        input = Base64._utf8_encode(input);
+
+        while (i < input.length) {
+
+            chr1 = input.charCodeAt(i++);
+            chr2 = input.charCodeAt(i++);
+            chr3 = input.charCodeAt(i++);
+
+            enc1 = chr1 >> 2;
+            enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+            enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+            enc4 = chr3 & 63;
+
+            if (isNaN(chr2)) {
+                enc3 = enc4 = 64;
+            } else if (isNaN(chr3)) {
+                enc4 = 64;
+            }
+
+            output = output +
+                this._keyStr.charAt(enc1) + this._keyStr.charAt(enc2) +
+                this._keyStr.charAt(enc3) + this._keyStr.charAt(enc4);
+
+        }
+
+        return output;
+    },
+
+    // public method for decoding
+    decode : function (input) {
+        var output = "";
+        var chr1, chr2, chr3;
+        var enc1, enc2, enc3, enc4;
+        var i = 0;
+
+        input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+
+        while (i < input.length) {
+
+            enc1 = this._keyStr.indexOf(input.charAt(i++));
+            enc2 = this._keyStr.indexOf(input.charAt(i++));
+            enc3 = this._keyStr.indexOf(input.charAt(i++));
+            enc4 = this._keyStr.indexOf(input.charAt(i++));
+
+            chr1 = (enc1 << 2) | (enc2 >> 4);
+            chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+            chr3 = ((enc3 & 3) << 6) | enc4;
+
+            output = output + String.fromCharCode(chr1);
+
+            if (enc3 != 64) {
+                output = output + String.fromCharCode(chr2);
+            }
+            if (enc4 != 64) {
+                output = output + String.fromCharCode(chr3);
+            }
+
+        }
+
+        output = Base64._utf8_decode(output);
+
+        return output;
+
+    },
+
+    // private method for UTF-8 encoding
+    _utf8_encode : function (string) {
+        string = string.replace(/\r\n/g,"\n");
+        var utftext = "";
+
+        for (var n = 0; n < string.length; n++) {
+
+            var c = string.charCodeAt(n);
+
+            if (c < 128) {
+                utftext += String.fromCharCode(c);
+            }
+            else if((c > 127) && (c < 2048)) {
+                utftext += String.fromCharCode((c >> 6) | 192);
+                utftext += String.fromCharCode((c & 63) | 128);
+            }
+            else {
+                utftext += String.fromCharCode((c >> 12) | 224);
+                utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+                utftext += String.fromCharCode((c & 63) | 128);
+            }
+
+        }
+
+        return utftext;
+    },
+
+    // private method for UTF-8 decoding
+    _utf8_decode : function (utftext) {
+        var string = "";
+        var i = 0;
+        var c = c1 = c2 = 0;
+
+        while ( i < utftext.length ) {
+
+            c = utftext.charCodeAt(i);
+
+            if (c < 128) {
+                string += String.fromCharCode(c);
+                i++;
+            }
+            else if((c > 191) && (c < 224)) {
+                c2 = utftext.charCodeAt(i+1);
+                string += String.fromCharCode(((c & 31) << 6) | (c2 & 63));
+                i += 2;
+            }
+            else {
+                c2 = utftext.charCodeAt(i+1);
+                c3 = utftext.charCodeAt(i+2);
+                string += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
+                i += 3;
+            }
+
+        }
+
+        return string;
+    }
+
+}

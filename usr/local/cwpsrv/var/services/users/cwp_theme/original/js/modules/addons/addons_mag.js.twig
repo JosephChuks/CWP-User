@@ -1,0 +1,180 @@
+let mag_table = null;
+let mag_list = null;
+function magTable(list){
+    mag_list = list;
+    if(mag_list.length > 0){
+        let html_content = '';
+        let index = 0;
+        mag_list.forEach(function(installation){
+            let insturl = installation.hasOwnProperty('url') ? installation.url : 'http://' + installation.domain;
+            let dbinf = '';
+            if(installation.hasOwnProperty('db_result') && installation.db_result.result != 'success'){
+                let dbtitle = '{{langmod.ADDDBNOT}}: ' + handleDBError(installation.db_result.code);
+
+                dbinf = '<span class="fa-stack fa-xs" title="' + dbtitle + '" data-toggle="tooltip" data-placement="top" aria-hidden="true">' +
+                    '<i class="fa fa-circle fa-stack-2x"></i>' +
+                    '<i class="fa fa-info fa-stack-1x fa-inverse"></i>' +
+                    '</span>';
+            }
+            html_content += '<tr id="tdmag_' + index + '">' +
+                '<td>' + installation.domain + '<br>' +
+                '<a href="' + insturl + '" target="_blank">' + insturl + '</a></td>' +
+                '<td><div class="addon-td-item">' + installation.path + '</div></td>' +
+                '<td><div class="addon-td-item">' + installation.version + '</div></td>' +
+                '<td>' +
+                '<div class="database-info-td">' +
+                '<div><b>{{langmod.ADDSHORTDB}}: </b> ' + installation.magbd + '<br><b>{{langmod.ADDSHORTUDB}}: </b>' + installation.maguserdb + '</div>' +
+                dbinf +
+                '</div>' +
+                '</td>' +
+                '<td>' +
+                '<div class="addon-td-item text-center"><button title="{{langmod.ADDDWP3}}" data-traddon="#tdmag_' + index + '" data-type="magento" data-installation=\'' + JSON.stringify(installation) + '\' data-toggle="tooltip" data-placement="top" aria-hidden="true" class="btn btn-danger btn-xs btn-delete" onclick="return deleteAddon(this, 0)">' +
+                '<i aria-hidden="true" class="fa fa-trash"></i>' +
+                '</button></div>' +
+                '</td>' +
+                '</tr>';
+            index++;
+        });
+        let table_html = '<table class="table table-striped mag-table">' +
+            '<thead>' +
+            '<tr>' +
+            '<th>{{langmod.ADDDOMLAB}}</th>' +
+            '<th>{{langmod.ADDPATHLAB}}</th>' +
+            '<th>{{langmod.ADDVERLAB}}</th>' +
+            '<th>{{langmod.ADDBDUDB}}</th>' +
+            '<th class="text-center"></th>' +
+            '</tr>' +
+            '</thead>' +
+            '<tbody id="trpaneljl">' +
+            html_content +
+            '</tbody>' +
+            '</table>';
+        $('#table_mag_container').html(table_html);
+        $('.mag-table').DataTable().destroy();
+        mag_table = $('.mag-table').DataTable();
+    }else{
+        $('#table_mag_container').html('<div class="empty_list"><h4 class="text-success">Thre\'s not Magento installations</h4></div>');
+    }
+    $('[data-toggle="tooltip"]').tooltip();
+}
+function magInit(){
+    if(mag_list == null){
+        magReList();
+    }
+}
+function magReList(){
+    $('#table_mag_container').html(loader);
+    getList('magento', function(response){
+        magTable(response);
+    });
+}
+function cancelMag(idCollapse){
+    uchip.slideToggle('#mag_list','#mag_form', function(){
+
+    });
+    $('#magdomain').val('');
+    $('#magpach').val('mag');
+    $('#magadminemail').val('');
+    $('#magadminpass').val('');
+    $('#magadminpass').pwstrength('forceUpdate');
+    $('#magpassbd').val('');
+    $('#magpassbd').pwstrength('forceUpdate');
+    $('#magbd').val('mag{{mod.extra_data.randbd}}');
+    $('#maguserdb').val('mag{{mod.extra_data.randbd}}');
+    uchip.validator('.reqmag', true);
+    cancelGeneral(idCollapse);
+}
+function addMagento(){
+    if(uchip.validator('.reqmag')){
+       let p = $("#magadminpass").val();
+        if (p.search(/[a-z]/i) < 0) {
+            noti_bubble('Your password must include both numeric and alphabetic characters.','{{langmod.FERROR}}','error',false,false,'3000',true);
+           return false
+        }
+        if (p.search(/[0-9]/) < 0) {
+            noti_bubble('Your password must include both numeric and alphabetic characters.','{{langmod.FERROR}}','error',false,false,'3000',true);
+            return false
+        }
+        let magurl = $("#magurl").val();
+        let magdomain = $("#magdomain").val();
+        let magbd = $("#magbd").val();
+        let maguserdb = $("#maguserdb").val();
+        let magpassbd = $("#magpassbd").val();
+        let magpach = $("#magpach").val();
+        let magadminemail = $("#magadminemail").val();
+        let magadminpass = $("#magadminpass").val();
+        let magfolderadmin= $("#magfolderadmin").val();
+        let magadminuser= $("#magadminuser").val();
+        let dompath =  $('#magdomain option:selected').data('path');
+        let domssl =  $('#magdomain option:selected').data('ssl');
+        let data = 'magadminuser='+magadminuser+'&magfolderadmin='+magfolderadmin+'&magurl=' + magurl + '&magdomain=' + magdomain + '&magbd=' + magbd + '&maguserdb=' + maguserdb + '&magpassbd=' + Base64.encode(magpassbd) +
+            '&magpach=' + magpach + '&magadminemail=' + magadminemail + '&magadminpass=' + Base64.encode(magadminpass) + '&dompath=' + dompath + '&domssl=' + domssl;
+        let details = [
+            {
+                title : '{{langmod.ADDDOMLAB}}',
+                value : magdomain
+            },
+            {
+                title : '{{langmod.ADDURLLAB}}',
+                value : (domssl == 1 ? 'httmag' : 'http') + '://' + magdomain + '/' + magpach
+            },
+            {
+                title : '{{langmod.ADDPATHLAB}}',
+                value : dompath + '/' + magpach
+            },
+            {
+                title : '{{langmod.ADDPS03}}',
+                value : magadminemail
+            },
+            {
+                title : '{{langmod.ADDDWP20}}',
+                value : magbd
+            },
+            {
+                title : '{{langmod.ADDDBUSERLAB}}',
+                value : maguserdb
+            }
+        ];
+        confirmInstallation({
+            type: 'magento',
+            script: 'Magento',
+            data : data,
+            wholepath: dompath + '/' + magpach,
+            callback: function(response){
+                if(response.hasOwnProperty('result') && response.result == 'success'){
+                    if(response.db_result.result != 'success'){
+                        noti_bubble('{{langmod.ADDINSTALLDET}} ' + handleDBError(response.db_result.code),'{{langmod.ADDATENTION}}!','warning',false,false,'6500',true);
+                    }else{
+                        noti_bubble('{{langmod.ADDINSTALLSUCC}}','{{langmod.SUCCESS}}','success',false,false,'3000',true);
+                    }
+                }else{
+                    noti_bubble('{{langmod.ADDERRORGEN}}','{{langmod.FERROR}}','error',false,false,'3000',true);
+                }
+                var variableHTML='';
+                var modulin='mag';
+                if($("#instaled_"+modulin).html()==undefined){
+                    variableHTML+='<div class="panel panel-default" id="instaled_'+modulin+'">'+
+                        ' <div class="panel-heading white-bg script-container-title">'+
+                        '<a class="accordion-toggle" style="width: 100%" data-toggle="collapse"  ' +
+                        'aria-expanded="true" aria-controls="panel_'+modulin+'_container" ' +
+                        'data-parent="#accordion1" data-target="#panel_'+modulin+'_container">'+
+                        '<h4 class="panel-title"><i class="more-less glyphicon-plus font-weight-bolder"></i></h4>' +
+                        '<h4 class="panel-title">Magento Installations</h4></a></div>' +
+                        '<div id="panel_'+modulin+'_container"  class="panel-collapse collapse">' +
+                        '<div class="panel-body" id="table_'+modulin+'_container"><div class="table_cron_loader"><span>' +
+                        '<i class="fa fa-circle-o-notch fa-spin"></i></span></div></div></div></div>'
+                    $( "#accordion1" ).append( variableHTML );
+                    $(".accordion-toggle").click(function(){
+                        $("#"+$(this).prop('data-target')).slideToggle('slow');
+                    });
+                }
+                $("#instaledEmpty").hide();
+                magTable(response.list);
+                cancelMag();
+            },
+            details: details
+        });
+    }else{
+        noti_bubble('{{langmod.ADDREQFIELDS}}','{{langmod.FERROR}}','error',false,false,'3000',true);
+    }
+}

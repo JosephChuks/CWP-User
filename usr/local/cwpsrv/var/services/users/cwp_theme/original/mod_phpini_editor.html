@@ -1,0 +1,233 @@
+<style media="screen">
+  .deleting_tr{
+    background-color: #f5f5f566;
+    color: #e7eaec;
+  }
+  .conf_item td{
+    vertical-align: middle !important;
+  }
+  .save-btn-div{
+    margin-bottom: 0px;
+  }
+  .save-btn-div .ibox-title{
+    padding: 7px 15px 5px 15px;
+    border-top: none;
+    min-height: fit-content;
+    font-weight: bold;
+    text-align: center;
+  }
+  .save-btn-div .ibox-title h5{
+    font-weight:bold;
+  }
+</style>
+<div class="row  border-bottom white-bg dashboard-header">
+    {% if mod.fsl == 1 %}
+    {% set stflalert ='block' %}
+    {% else %}
+    {% set stflalert ='none' %}
+    {% endif %}
+    <div class="row  alert alert-warning col-lg-12" style="margin-left: 5px; padding-right: 5px;display:{{stflalert}}" id="alertfl">
+        <strong>{{langene.GALARTFILEBLOCK}}</strong>
+    </div>
+    <div class="col-lg-10">
+        <h2>{{langmod.NAMEMOD}}  ({{users}})</h2>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="?">Home</a></li>
+            <li class="breadcrumb-item active"><strong>{{langmod.NAMEMOD}}</strong></li>
+        </ol>
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-9">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="ibox ">
+                    <div class="row ibox-title">
+                        <div class="col-lg-1">
+                            <b>{{langmod.PHPLABEL7}}</b>
+                        </div>
+                        <div class="col-lg-4">
+                            <select class="form-control" id="domainini" onchange="changeFileConf(this)">
+                                {% for domain in mod.domain %}
+                                    <option value="{{ domain }}">{{ domain }}</option>';
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-lg-1">
+                        </div>
+                        <div class="col-lg-1">
+                            <b>{{langmod.PHPLABEL8}}</b>
+                        </div>
+                        {% if mod.php == 'php-fpm' %}
+                            {% set filename= '.user.ini' %}
+                        {% else %}
+                            {% set filename= 'php.ini' %}
+                        {% endif %}
+                        <div class="col-lg-5" id="pathini">
+                            {{mod.path}}{{filename}}
+                        </div>
+                        <input id="hfilename" type="hidden" value="{{mod.path}}{{filename}}">
+                        <input id="valuehidden" type="hidden" value="{{mod.valuehidden}}">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="ibox ">
+                    <div class="ibox-title">
+                        <!-- <h5>{{langmod.PHPLABEL5}}</h5> -->
+                        <h5>php.ini {{langmod.PHPINICONFFOR}} <span id="domain_listing">{{mod.domain[0]}}</span></h5>
+                    </div>
+                    <div class="ibox-content">
+                        <!-- <p class="m-b-lg" style="margin-bottom: 15px">
+                            {{langmod.PHPLABEL4}}
+                        </p> -->
+                        <div class="tabs-container">
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li><a class="nav-link active show" data-toggle="tab" href="#tab_basic"> {{langmod.PHPLABEL5}}</a></li>
+                            <li><a class="nav-link" data-toggle="tab" onclick="advanceTab()" href="#tab_advance"> {{langmod.PHPELABEL}}</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div role="tabpanel" id="tab_basic" class="tab-pane active">
+                                <div class="panel-body" style="padding-bottom: 0px;">
+                                  <div class="row">
+                                    <div class="col-md-9" id="phpini_table_container">
+                                      <table id="phpini_table" class="table" style="margin-bottom: 0px;">
+                                          <thead>
+                                          <tr>
+                                              <th class="text-center"><b>{{langmod.SETTING}}</b></th>
+                                              <th class="text-center"><b>{{langmod.VALUE}}</b></th>
+                                              <th class="text-center"><b>Actions</b></th>
+                                          </tr>
+                                          </thead>
+                                          <tbody id="conteditphp">
+                                              {% for tab in mod.tab %}
+                                              <tr id="phpconf_line_{{tab.line}}" class="conf_item">
+                                                  <td>
+                                                    <label class="col-form-label">{{tab.name|replace({'__': '.'})}}</label>
+                                                    <input type="hidden" id="pc_item_{{tab.line}}" class="conf_item_tag" value="{{tab.name2}}">
+                                                  </td>
+                                                  <td>{% if tab.name2 =='date__timezone' %}
+                                                          <input type="text" autocomplete="off" id="tag_value_{{tab.name2|replace({'__': '.'})|replace({';;': ''})}}" value="{{tab.value|replace({'{DQ_CWP}': '"'})|replace({'{SQ_CWP}': "'"})}}"  placeholder="{{langmod.PHPELABEL3}}" class="typeahead_3 form-control conf_item_value">
+                                                      {% else %}
+                                                          <input type="text" autocomplete="off" id="tag_value_{{tab.name2|replace({'__': '.'})|replace({';;': ''})}}" value="{{tab.value|replace({'{DQ_CWP}': '"'})|replace({'{SQ_CWP}': "'"})}}"  class="form-control conf_item_value">
+                                                      {% endif %}
+                                                  </td>
+                                                  <td class="text-center">
+                                                    {% if tab.st ==1 %}
+                                                      {% set st_conf = 'checked' %}
+                                                      {% set class_btn = 'success' %}
+                                                      {% set icon_btn = 'fa-check' %}
+                                                      {% set icon_title = langmod.BTN_ENABLE %}
+                                                    <!-- <button type="button" class="btn btn-default btn-xs" onclick="return disablephpini({{tab.st}},{{tab.line}})">{{langmod.BTN_ENABLE}}</button> -->
+                                                    {% else %}
+                                                      {% set st_conf = '' %}
+                                                      {% set class_btn = 'warning' %}
+                                                      {% set icon_btn = 'fa-ban' %}
+                                                      {% set icon_title = langmod.BTN_DISABLE %}
+                                                    <!-- <button type="button" class="btn btn-warning btn-xs" onclick="return disablephpini({{tab.st}},{{tab.line}})">{{langmod.BTN_DISABLE}}</button> -->
+                                                    {% endif %}
+                                                    <div class="">
+                                                      <button type="button" class="btn btn-{{class_btn}} btn-xs item_status_button" title="{{icon_title}}" data-line="{{tab.line}}" data-status="{{tab.st}}" onclick="return disableConf(this)"><i class="fa {{icon_btn}}"></i></button>
+                                                      <button type="button" class="btn btn-danger btn-xs" title="{{langmod.BTN_DELETE}}" id="pc_button_delete_{{tab.line}}" onclick="return deletephpini(0,{{tab.line}},'{{tab.name2}}')"><i class="fa fa-trash"></i></button>
+                                                    </div>
+                                                  </td>
+                                              </tr>
+                                              {% endfor %}
+                                          </tbody>
+                                      </table>
+                                    </div>
+                                    <div class="col-md-3">
+                                      <div id="sidebar_phpini" style="position:relative;background-color:#ffffff">
+                                        <div class="ibox save-btn-div">
+                                          <div class="ibox-title">
+                                              <h5>Save your changes</h5>
+                                          </div>
+                                          <div class="ibox-content">
+                                            <span class="btn btn-success btn-block" style="font-size:1.2rem;" onclick="updatePHPConf(this)"><i class="fa fa-save"></i> {{langmod.PHPUPDATECHG}}</span>
+                                          </div>
+                                        </div>
+                                        <div class="ibox">
+                                          <div class="ibox-title">
+                                            <h5 class="text-center">{{langmod.BTNADDNRED}}</h5>
+                                          </div>
+                                          <div class="ibox-content">
+                                            <div class="" id="available_confs">
+                                              <select class="form-control" id="addnew_sel" onchange="changeNewConf(this)">
+                                                <option value="">{{langmod.CHOOSE}}</option>
+                                              </select>
+                                              <input type="text" class="form-control" id="custom_conf" style="display:none" value="" placeholder="{{langmod.PHPINICUSTC1}}">
+                                              <p class="text-right" style="margin-bottom: 0px;margin-top: 5px;font-size: 1.2rem;cursor: pointer;" onclick="addCustom(this)"><i class="fa fa-edit"></i> <span>{{langmod.PHPINICUSTCONF}}</span></p>
+                                            </div>
+                                            <div class="" id="control_new" style="display:none;margin-top: -1.2rem;">
+                                              <div class="form-group"><label class="form-label" style="margin-top: 5px;">{{langmod.PHPELABEL2}}</label>
+                                                  <div>
+                                                      <input type="text" class="form-control" id="addvalue"  value="" placeholder="{{langmod.PHPINICONFVAL}}">
+                                                  </div>
+                                              </div>
+                                              <span class="btn btn-primary btn-sm btn-block" onclick="addNewRecord(this)"><i class="fa fa-plus"></i> {{langmod.BTN_ADD}}</span>
+                                              <span class="btn btn-warning btn-sm btn-block" onclick="cancelNewRecord()"><i class="fa fa-ban"></i> {{langmod.BTN_CANCEL}}</span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <!-- <table class="table" style="margin-bottom: 5px;">
+                                          <tr>
+                                            <td>
+
+                                            </td>
+                                          </tr>
+                                        </table> -->
+                                      </div>
+                                      <!-- <div  class="text-center">
+                                          <button class="btn btn-primary btn-xs" id="addphpini" type="button"><i class="fa fa-check"></i>&nbsp;{{langmod.BTNADDNRED}}</button>   <button type="button" class="btn btn-success btn-xs" id="btn_update_editphpini">{{langmod.BTN_UPDATE}}</button>
+                                      </div> -->
+                                    </div>
+                                  </div>
+                                </div>
+                            </div>
+                            <div role="tabpanel" id="tab_advance" class="tab-pane">
+                                <div class="panel-body" style="padding-bottom: 0px;">
+                                  <div class="table_cron_loader" id="advanced_editor_loader" style="display:none"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+                                  <div id="advanced_editor_container">
+                                    <p class="m-b" style="line-height: 3.5rem;">
+                                        {{langmod.PHPLABEL4}}
+                                        <span class="pull-right btn btn-success btn-sm save-from-editor" onclick="saveFromEditor(this)"><i class="fa fa-floppy-o"></i> {{langmod.PHPINISVBTN}}</span>
+                                    </p>
+                                    <textarea id="code1" style="display: none;">{{mod.phpini|replace({'__': '.'})}}</textarea>
+                                    <textarea id="code1hiden" class="codemirror-area" style="display: none;"></textarea>
+                                    <p class="m-t" style="line-height: 3.5rem;">&nbsp;
+                                        <span class="pull-right btn btn-success btn-sm save-from-editor" onclick="saveFromEditor(this)"><i class="fa fa-floppy-o"></i> {{langmod.PHPINISVBTN}}</span>
+                                    </p>
+                                  </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- <div class="col-lg-6">
+                <div class="ibox ">
+                    <div class="ibox-title">
+                        <h5>{{langmod.PHPELABEL}}</h5>
+                    </div>
+                    <div class="ibox-content">
+                        <p class="m-b-lg">
+                            {{langmod.PHPLABEL4}}
+                        </p>
+                        <textarea id="code1" style="display: none;">{{mod.phpini}}</textarea>
+                        <textarea id="code1hiden" class="codemirror-area" style="display: none;"></textarea>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <button class="btn btn-success btn-xs" id="addphpiniadv" type="button"><i class="fa fa-check"></i>&nbsp;{{langmod.UPDATEREG}}</button>
+                </div>
+            </div> -->
+        </div>
+    </div>
+    {% include 'sidebar.html' %}
+</div>
+{% include 'footer.html' %}

@@ -1,0 +1,145 @@
+
+console.log('');
+$("#domain_stats").change(function () {
+    if($("#domain_stats").val()!=''){
+        $("#frecuen").attr('disabled',false);
+        $("#file").attr('disabled',true);
+        $("#frecuen").removeClass('disabled');
+        $("#file").html('');
+        $("#file").addClass('disabled');
+
+    }else{
+        $("#frecuen").attr('disabled',true);
+        $("#file").attr('disabled',true);
+        $("#frecuen").addClass('disabled');
+        $("#file").html('');
+        $("#file").addClass('disabled');
+    }
+});
+$("#frecuen").change(function () {
+    if($("#frecuen").val()!=''){
+        $("#file").html('<option>loading...!</option>');
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=statistics&acc=files",
+            data:"domain="+$("#domain_stats").val()+"&frecuen="+$("#frecuen").val(),
+            complete: function(datos){
+                console.log(datos.responseText);
+                var obj =JSON.parse(datos.responseText);
+                if(obj.status!="OK"){
+                    $("#file").html('');
+                    if(obj.cod=="10001"){
+                        var mjs ='{{langmod.SLABEL17}}';
+                    }else if(obj.cod=="10002"){
+                        var mjs ='{{langmod.SLABEL18}}';
+                    }
+                    noti_bubble(mjs,'{{langmod.SLABEL11}}','error',false,false,'3000',true);
+                }else if(obj.status=="OK"){
+                    $("#file").html(obj.sel);
+                    $("#file").attr('disabled',false);
+                    $("#file").removeClass('disabled');
+                }
+                return false;
+            }
+        });
+    }else{
+        $("#file").attr('disabled',true);
+        $("#file").html('');
+        $("#file").addClass('disabled');
+    }
+});
+$("#file").change(function () {
+    if($("#file").val()!=''){
+        $("#btn-generate").removeClass('disabled');
+        $("#btn-generate").attr('disabled',false);
+    }else{
+        $("#btn-generate").addClass('disabled');
+        $("#btn-generate").attr('disabled',true);
+    }
+});
+$("#btn-generate").click(function () {
+    window.open('?module=statistics&view=1&domain='+$("#domain_stats").val()+'&frecuen='+$("#frecuen").val()+'&file='+$("#file").val(), 'statistics','_blank');
+});
+$("#mdomains").change(function (){
+    if($("#mdomains").val()==''){
+        $("#mfrequancy").attr('disabled',true);
+        $("#mfrequancy").addClass('disabled');
+
+        $("#mdate").attr('disabled',true);
+        $("#mdate").addClass('disabled');
+
+        $("#btndelete").attr('disabled',true);
+        $("#btndelete").addClass('disabled');
+
+    }else{
+        $("#mfrequancy").attr('disabled',false);
+        $("#mfrequancy").removeClass('disabled');
+        $("#frecuen").attr('disabled',true);
+        $("#file").attr('disabled',true);
+        $("#frecuen").addClass('disabled');
+        $("#file").html('');
+        $("#file").addClass('disabled');
+    }
+    return false;
+});
+$("#mfrequancy").change(function (){
+    if($("#mfrequancy").val()==''){
+        $("#mdate").attr('disabled',true);
+        $("#mdate").addClass('disabled');
+        $("#btndelete").attr('disabled',true);
+        $("#btndelete").addClass('disabled');
+    }else{
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=statistics&acc=getFilesDelete",
+            data:"domain="+$("#mdomains").val()+"&frecuen="+$("#mfrequancy").val(),
+            complete: function(datos){
+                console.log(datos.responseText);
+                var obj = JSON.parse(datos.responseText);
+                $("#mdate").html('<option value="">Choose</option>'+obj.files+'<option value="ALL">ALL</option>');
+                $("#mdate").attr('disabled',false);
+                $("#mdate").removeClass('disabled');
+                return false;
+            }
+        });
+    }
+    return false;
+});
+$("#mdate").change(function (){
+    if($("#mdate").val()==''){
+        $("#btndelete").attr('disabled',true);
+        $("#btndelete").addClass('disabled');
+    }else{
+        $("#btndelete").attr('disabled',false);
+        $("#btndelete").removeClass('disabled');
+    }
+    return false;
+});
+$("#btndelete").click(function (){
+    $("#btndelete").attr('disabled',true);
+    $("#btndelete").addClass('disabled');
+    $.ajax({
+        type: "POST",
+        data: "domain="+$("#mdomains").val()+"&frequancy="+$("#mfrequancy").val()+"&file="+$("#mdate").val(),
+        url: "./{{users}}/index.php?module=statistics&acc=filesDelete",
+        complete: function(datos){
+            console.log(datos.responseText);
+            $.ajax({
+                type: "POST",
+                url: "./{{users}}/index.php?module=statistics&acc=getFilesDelete",
+                data:"domain="+$("#mdomains").val()+"&frecuen="+$("#mfrequancy").val(),
+                complete: function(datos){
+                    var obj = JSON.parse(datos.responseText);
+                    $("#mdate").html('<option value="">Choose</option>'+obj.files+'<option value="ALL">ALL</option>');
+                    $("#mdate").attr('disabled',false);
+                    $("#mdate").removeClass('disabled');
+                    $("#btndelete").attr('disabled',false);
+                    $("#btndelete").removeClass('disabled');
+                    return false;
+                }
+            });
+            return false;
+        }
+    });
+});

@@ -1,0 +1,1021 @@
+
+console.log();
+(function ($) {
+    $.fn.inputFilter = function (inputFilter) {
+        return this.on("input keydown keyup mousedown mouseup select contextmenu drop", function () {
+            if (inputFilter(this.value)) {
+                this.oldValue = this.value;
+                this.oldSelectionStart = this.selectionStart;
+                this.oldSelectionEnd = this.selectionEnd;
+            } else if (this.hasOwnProperty("oldValue")) {
+                this.value = this.oldValue;
+                this.setSelectionRange(this.oldSelectionStart, this.oldSelectionEnd);
+            } else {
+                this.value = "";
+            }
+        });
+    };
+}(jQuery));
+String.prototype.isEmpty = function () {
+    return (this.length === 0 || !this.trim());
+};
+Array.prototype.subarray = function (start, end) {
+    if (!end) { end = -1; }
+    return this.slice(start, this.length + 1 - (end * -1));
+};
+const HISTOTY_TABLE_OPTS = {
+    "order": [[0, "desc"]],
+    "columnDefs": [
+        { "orderable": false, "targets": 5 }
+    ]
+};
+let uchip = null;
+let files_scan_time = null;
+let web_scan_loaded = false;
+let email_scan_loaded = false;
+let custom_scan_loaded = false;
+let btn_title = '{{langmod.LABCLAM36}} <span id="_btn_action_title_">home</span> {{langmod.LABCLAM37}}';
+let history_table = null;
+$(document).ready(function () {
+    {% if mod.isie == 1 %}
+    uchip = new $.Uchip();
+    {% else %}
+    uchip = new Uchip();
+    {% endif %}
+    {% if mod.clam_info.info.is_running == 1 %}
+    checkRunningState()
+    {% endif %}
+    {% if mod.clam_info.info.pending_action != 0 %}
+    pendingAction(JSON.parse('{{mod.clam_info.info.pending_action|json_encode|raw}}'))
+    {% endif %}
+    $('.clam-scan-option').click(function () {
+        $('.clam-scan-option.optactive .error-scan-option').removeClass('error-scan-option');
+        $('.clam-scan-option.optactive').removeClass('optactive');
+        $(this).addClass('optactive');
+        $('#_btn_action_title_').text($(this).data('title'));
+    });
+    $('[data-toggle="tooltip"]').tooltip()
+    $('.clam-parse-date').each(function () {
+        let date_text = $(this).data('date');
+        if (date_text !== 'never') {
+            let moment_date = $(this).data('seconds') !== undefined ? moment().subtract(parseInt(date_text), 'seconds') : moment.unix(date_text);
+            $(this).text(moment_date.fromNow());
+            $(this).data('toggle', 'tooltip');
+            $(this).data('placement', 'top');
+            $(this).data('title', moment_date.format('ddd, MMM DD YYYY, H:mm:ss'));
+            $(this).tooltip()
+        } else {
+            $(this).text('Never');
+        }
+    });
+    $("input[data-number='true']").inputFilter(function (value) {
+        return value === '' || /^((?!(0))[0-9]{1,4})$/.test(value);    // Allow digits only, using a RegExp
+    });
+});
+function checkRunningState() {
+    uchip.call('module=clam&acc=checkstate', {
+        callback: function (response) {
+            if (response.hasOwnProperty('result') && response.result === 'ended') {
+                $('#_scanning_loader').fadeOut('fast', function () {
+                    $('#_clam_scan_btn_wrapper').fadeIn();
+                    noti_bubble('{{langmod.LABCLAM47}}', '{{langmod.LABCLAM48}}', 'success', false, false, '3000', true);
+                    showResultsWindow(response.scan_results);
+                    renderScanHistory(response.history);
+                    $('#_last_scan_date_').text('{{langmod.LABCLAM49}}');
+                    $('#_last_scan_date_').attr('data-original-title', '{{langmod.LABCLAM49}}');
+                    if (history_table !== null){
+                        history_table.destroy()
+                    }
+                    history_table = $('.clam-scan-histoy-table').DataTable(HISTOTY_TABLE_OPTS);
+                    resetScanButton();
+                    $('#_files_scanning_status').fadeOut('fast');
+                    $('#_files_scanning_line').text('');
+                    if (files_scan_time !== null){
+                        clearTimeout(files_scan_time); 
+                    }
+                });
+            } else {
+                if (response.hasOwnProperty('lines')){
+                    setFileLinesUI(response.lines);
+                }
+                setTimeout(function () {
+                    checkRunningState()
+                }, 2000);
+            }
+        }
+    });
+}
+function setFileLinesUI(lines){
+    $('#_files_scanning_status').show();
+    function changeFile(index){
+        if (lines[index] != "" && lines[index] !== undefined){
+            let line = lines[index].split(':');
+            $('#_files_scanning_line').text(line[0].substring(1));
+        }
+        if (lines.length > index){
+            files_scan_time = setTimeout(function () {
+                changeFile(index + 1)
+            }, 33);
+        }
+    }
+    changeFile(0);
+}
+function markAllFiles(action) {
+    $('.scan-result-line').each(function () {
+        let index = $(this).data('index');
+        let selector = '#_scan_file_' + action + '_' + index;
+        $(selector).prop('checked', true);
+    });
+}
+function showResultsWindow(results, ready) {
+    // let html_files = '<div class="scan-results-empty">' +
+    //     '<div>' +
+    //     '<i class="fa fa-check"></i>' +
+    //     '<h4>Good news, No malware found!</h4>' +
+    //     '</div>' +
+    //     '</div>';
+    let html_files = '';
+    if (results.files.length > 0) {
+        html_files = '';
+        results.files.forEach(function (file, index) {
+            html_files += '<div class="row scan-result-line" data-index="' + index + '" id="_scan_result_file_' + index + '">' +
+                '<div class="col-md-' + (ready === undefined ? '6' : '7') + '"><span class="result-file-path">' + file.path + '</span></div>' +
+                '<div class="col-md-' + (ready === undefined ? '3' : '5') + '">' + file.virus + '</div>' +
+                    (ready === undefined ? 
+                        '<div class="col-md-1 text-center">' +
+                        '<div class="radio radio-primary">' +
+                        '<input class="radio-option-' + index + '" name="_scan_file_option_' + index + '" type="radio" value="q" id="_scan_file_q_' + index + '">' +
+                        '<label for="_scan_file_q_' + index + '"></label>' +
+                        '</div>' +
+                        '</div>' +
+                        '<div class="col-md-1 text-center">' +
+                        '<div class="radio radio-primary">' +
+                        '<input class="radio-option-' + index + '" name="_scan_file_option_' + index + '" type="radio" value="d" id="_scan_file_d_' + index + '">' +
+                        '<label for="_scan_file_d_' + index + '"></label>' +
+                        '</div>' +
+                        '</div>' +
+                        '<div class="col-md-1 text-center">' +
+                        '<div class="radio radio-primary">' +
+                        '<input class="radio-option-' + index + '" name="_scan_file_option_' + index + '" type="radio" value="s" id="_scan_file_s_' + index + '">' +
+                        '<label for="_scan_file_s_' + index + '"></label>' +
+                        '</div>'    
+                    : '') + 
+                '</div>' +
+                '</div>';
+        });
+        html_files = '<h4 class="scan-results-title">{{langmod.LABCLAM50}}</h4>' +
+            '<div class="container-fluid">' +
+            '<div class="row scan-result-header">' +
+            '<div class="col-md-' + (ready === undefined ? '6' : '7') + '">{{langmod.LABCLAM51}}</div>' +
+            '<div class="col-md-' + (ready === undefined ? '3' : '5') + '">{{langmod.LABCLAM52}}</div>' +
+            (ready === undefined ? 
+                '<div class="col-md-1 text-center">{{langmod.LABCLAM53}}</div>' +
+                '<div class="col-md-1 text-center">{{langmod.LABCLAM54}}</div>' +
+                '<div class="col-md-1 text-center">{{langmod.LABCLAM55}}</div>'
+            : '') + 
+            '</div>' +
+            '<div class="row scan-results-files-container">' +
+            html_files +
+            '</div>' +
+            (ready === undefined ? 
+                '<div class="row scan-result-buttons">' +
+                    '<div class="col-md-1 col-md-offset-9 text-center">' +
+                        '<button class="btn btn-primary btn-sm btn-block" id="_btn_all_q" onclick="markAllFiles(\'q\')">' +
+                        '<i class="fa fa-check-square-o" aria-hidden="true"></i> {{langmod.LABCLAM56}}' +
+                        '</button>' +
+                    '</div>' +
+                    '<div class="col-md-1 text-center">' +
+                        '<button class="btn btn-primary btn-sm btn-block" onclick="markAllFiles(\'d\')">' +
+                        '<i class="fa fa-check-square-o" aria-hidden="true"></i> {{langmod.LABCLAM56}}' +
+                        '</button>' +
+                    '</div>' +
+                    '<div class="col-md-1 text-center">' +
+                        '<button class="btn btn-primary btn-sm btn-block" onclick="markAllFiles(\'s\')">' +
+                        '<i class="fa fa-check-square-o" aria-hidden="true"></i> {{langmod.LABCLAM56}}' +
+                        '</button>' +
+                    '</div>'+
+                '</div>'
+            : '') + 
+        '</div>';
+    }
+    let general_info = renderScanResultGeneral(results.general_info);
+    $('#modal_scan_results .modal-body').html(general_info + (ready === true ? '<input type="hidden" id="_showed_result">' : '') + html_files);
+    $('#_btn_all_q').trigger('click');
+    $('#modal_scan_results').modal({
+        backdrop: 'static',
+        keyboard: false
+    });
+}
+function pendingAction(action) {
+    if (action.type == 'scan') {
+        showResultsWindow(action.results);
+    }
+}
+function getPostScanData(){
+    let actions = [];
+    $('.scan-result-line').each(function(){
+        let index = $(this).data('index');
+        let checked = $('.radio-option-' + index + ':checked').val();
+        actions.push(checked);
+    });
+    return actions;
+}
+function postScanActions() {
+    if($('#_showed_result').length > 0){
+        $('#modal_scan_results').modal('hide');
+        return; 
+    }
+    let action = getPostScanData();
+    uchip.handleButton('#_btn_post_actions', 'fa-check-circle');
+    uchip.call('module=clam&acc=postscan', {
+        data: 'actions=' + JSON.stringify(action),
+        callback: function (response) {
+            if (response.hasOwnProperty('result') && response.result === 'success') {
+                $('#modal_scan_results').modal('hide');
+                $('#_run_scan_btn').prop('disabled', false);
+                $('#_config_scan_btn').prop('disabled', false); 
+                noti_bubble('{{langmod.LABCLAM57}}', '{{langmod.LABCLAM48}}', 'success', false, false, '3000', true);
+            } else {
+                let message_error = '{{langmod.LABCLAM58}}';
+                if (response.hasOwnProperty('code')) {
+                    if (response.code == 2) {
+                        message_error = '{{langmod.LABCLAM59}}';
+                    } else if (response.code == 1) {
+                        message_error = '{{langmod.LABCLAM60}}';
+                    }
+                }
+                noti_bubble(message_error, '{{langmod.LABCLAM61}}', 'error', false, false, '5000', true);
+            }
+            uchip.handleButton('#_btn_post_actions', 'fa-check-circle', false);
+        }
+    });
+
+}
+function showScanDetails(){
+    let selector = '.details-scan-window';
+    $(selector).slideDown('fast', function(){
+        function outsideClickListener(event) {
+            $target = $(event.target);
+            if (!$target.closest(selector).length && $(selector).is(':visible')) {
+                hideElement();
+            }
+        }
+        function removeClickListener() {
+            document.removeEventListener('click', outsideClickListener)
+        }
+        function hideElement(){
+            $(selector).slideUp('fast');
+            removeClickListener();
+        }
+        document.addEventListener('click', outsideClickListener);
+        $('.details-scan-window .close-detail').click(function(){
+            hideElement();
+            $('.details-scan-window .close-detail').unbind('click');
+        });
+    });
+}
+function renderWebScanDetails(domains){
+    let details_html = '';
+    if (domains !== 'all'){
+        domains.forEach(function (domain) {
+            if (domain.is_sub === true) {
+                details_html += '<li class="domain-result-item issub"><i class="fa fa-caret-right" aria-hidden="true"></i> ' + domain.sub + '.' + domain.domain + '</li>';
+            } else {
+                details_html += '<li class="domain-result-item"><i class="fa fa-sitemap" aria-hidden="true"></i> ' + domain.domain + '</li>';
+            }
+        });
+    }else{
+        details_html = '<li style="padding: 10px 15px;">{{langmod.LABCLAM62}}</li>';
+    }
+    details_html = '<h4 class="scan-results-title">{{langmod.LABCLAM63}}</h4>' +
+                    '<ul class="domain-result-list">' +
+                        details_html +
+                    '</ul>';
+    return details_html;
+}
+function renderScanResultGeneral(general_info) {
+    let scan_info = general_info.scan_info;
+    let scan_mode = '{{langmod.LABCLAM23}}';
+    let scan_ico = 'home';
+    let details_html = '';
+    if (general_info.type === 'web'){
+        scan_mode = '{{langmod.LABCLAM26}}';
+        scan_ico = 'sitemap';
+        details_html = renderWebScanDetails(general_info.details);
+    }else if (general_info.type === 'email'){
+        scan_mode = '{{langmod.LABCLAM30}}';
+        scan_ico = 'envelope-o';
+        details_html = renderWebScanDetails(general_info.details);
+    } if (general_info.type === 'custom') {
+        scan_mode = '{{langmod.LABCLAM33}}';
+        scan_ico = 'cog';
+        details_html = '<div>' +
+                            '<span>{{langmod.LABCLAM64}}:</span>' +
+                            '<h5>' + general_info.details + '</h5>' +
+                        '</div>'
+    }
+    let qty_infected = scan_info[4];
+    let html = '<div class="details-scan-window">' +
+                    '<span class="close-detail"><i class="fa fa-times"></i></span>' +
+                    '<div class="details-scan-window-content">' + details_html + '</div>' +
+                '</div>' +
+        '<h4 class="scan-results-title" style="margin-top:10px">{{langmod.LABCLAM65}}</h4>' +
+        '<div class="container-fluid scan-results-general">' +
+            '<div class="row">' +
+                '<div class="col-md-4 scan-results-general-info result-mode-title">' +
+                '<span class="scan-results-general-title result-mode-title">{{langmod.LABCLAM66}}:</span>' +
+                '<span class="result-mode-title-pre label label-success">' + scan_mode + ' <i class="fa fa-' + scan_ico + '"></i></span> ' +
+                (details_html !== '' ? '<a class="result-mode-title-link" href="#" onclick="showScanDetails()">{{langmod.LABCLAM67}}</a>' : '') +
+                '</div>' +
+                '<div class="col-md-4 scan-results-general-info">' +
+                '<span class="scan-results-general-title">{{langmod.LABCLAM68}}:</span>' +
+                '<span>' + general_info.date + '</span>' +
+                '</div>' +
+                '<div class="col-md-4 scan-results-general-info">' +
+                '<span class="scan-results-general-title">{{langmod.LABCLAM69}}:</span>' +
+                '<span class="label label-' + (qty_infected > 0 ? 'danger' : 'primary') + '">' + qty_infected + '  Files ' +
+                    '<i class="fa fa-' + (qty_infected > 0 ? 'exclamation-triangle' : 'check-circle') + '"></i>' + 
+                '</span>' +
+                '</div>' +
+            '</div>' +
+            '<div class="row">' +
+                '<div class="col-md-4 scan-results-general-info">' +
+                '<span class="scan-results-general-title">{{langmod.LABCLAM70}}:</span>' +
+                '<span>' + scan_info[1] + '</span>' +
+                '</div>' +
+                '<div class="col-md-4 scan-results-general-info">' +
+                '<span class="scan-results-general-title">{{langmod.LABCLAM71}}:</span>' +
+                '<span>' + scan_info[2] + '</span>' +
+                '</div>' +
+                '<div class="col-md-4 scan-results-general-info">' +
+                '<span class="scan-results-general-title">{{langmod.LABCLAM72}}:</span>' +
+                '<span>' + scan_info[3] + '</span>' +
+                '</div>' +
+            '</div>' +
+            '<div class="row">' +
+                '<div class="col-md-4 scan-results-general-info">' +
+                '<span class="scan-results-general-title">{{langmod.LABCLAM73}}:</span>' +
+                '<span>' + scan_info[7] + '</span>' +
+                '</div>' +
+                '<div class="col-md-4 scan-results-general-info">' +
+                '<span class="scan-results-general-title">{{langmod.LABCLAM74}}:</span>' +
+                '<span>' + scan_info[5] + '</span>' +
+                '</div>' +
+                '<div class="col-md-4 scan-results-general-info">' +
+                '<span class="scan-results-general-title">{{langmod.LABCLAM75}}:</span>' +
+                '<span>' + scan_info[6] + '</span>' +
+                '</div>' +
+            '</div>' +
+            '<div class="row">' +
+                '<div class="col-md-4 scan-results-general-info">' +
+                '<span class="scan-results-general-title">{{langmod.LABCLAM76}}:</span>' +
+                '<span>' + scan_info[6] + '</span>' +
+                '</div>' +
+                '<div class="col-md-4 scan-results-general-info">' +
+                '<span class="scan-results-general-title">{{langmod.LABCLAM77}}:</span>' +
+                '<span><a href="?module=clam&acc=viewlog&log=' + general_info.scan_id + '">{{langmod.LABCLAM78}}</a></span>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    return html;
+}
+function isRunningState() {
+    $('#_clam_scan_btn_wrapper').fadeOut('fast', function () {
+        $('#_scanning_loader').fadeIn();
+    });
+    checkRunningState();
+}
+function validAndGetWeb(){
+    if ($('.checkbox-domain-web').length > 0){
+        let doms_selected = $('.checkbox-domain-web:checked');
+        if ($('.checkbox-domain-web').length > doms_selected.length){
+            if (doms_selected.length > 0) {
+                let data_dom = [];
+                doms_selected.each(function () {
+                    let sub = $(this).data('sub');
+                    data_dom.push({
+                        'domain': $(this).data('domain'),
+                        'is_sub': $(this).hasClass('is-sub'),
+                        'sub': sub !== undefined ? sub : null
+                    });
+                });
+                return '&web_domains=' + JSON.stringify(data_dom);
+            }
+            return false;
+        }
+    }
+    return '&web_domains=all';
+}
+function validAndGetMail(){
+    function getMailAdvOpts(){
+        let adv_mail_options = {};
+        if ($('.alert_phishing_cloakmail:checked').data('itemdef') === undefined) {
+            adv_mail_options.alert_phishing_cloak = $('.alert_phishing_cloakmail:checked').val();
+        }
+        if ($('.alert_phishing_sslmail:checked').data('itemdef') === undefined) {
+            adv_mail_options.alert_phishing_ssl = $('.alert_phishing_sslmail:checked').val();
+        }
+        if ($('.phishing_sigsmail:checked').data('itemdef') === undefined) {
+            adv_mail_options.phishing_sigs = $('.phishing_sigsmail:checked').val();
+        }
+        return JSON.stringify(adv_mail_options);
+    }
+    if ($('.checkbox-domain-mail').length > 0) {
+        if ($('.checkbox-domain-mail').length > $('.checkbox-domain-mail:checked').length){
+            if ($('.checkbox-domain-mail:checked').length > 0) {
+                let domains = [];
+                $('.checkbox-domain-mail:checked').each(function () {
+                    domains.push($(this).data('domain'));
+                });
+                return '&mail_domains=' + JSON.stringify(domains) + '&adv_mail_opts=' + getMailAdvOpts();
+            }
+            return false; 
+        }
+    }
+    return '&mail_domains=all&adv_mail_opts=' + getMailAdvOpts();
+}
+function runScan() {
+    let elem_selected = $('.clam-scan-option.optactive');
+    let type = elem_selected.data('title');
+    let data = '';
+    let valid = true;
+    let data_web = '';
+    let data_mail = '';
+    if(type === 'home'){
+
+    }else if(type === 'web'){
+        data_web = validAndGetWeb();
+        if (data_web === false){
+            $('#_web_layer').addClass('error-scan-option');
+            valid = false;
+        }else{
+            data += data_web;
+        }
+    } else if (type === 'email'){
+        data_mail = validAndGetMail();
+        if (data_mail === false) {
+            $('#_mail_layer').addClass('error-scan-option');
+            valid = false;
+        } else {
+            data += data_mail;
+        }
+    } else if (type === 'custom') {
+        let sel_path = $('#selected_path_dirsel').val() === undefined ? "" : $('#selected_path_dirsel').val();
+        if (sel_path === "") {
+            $('#_custom_layer').addClass('error-scan-option');
+            valid = false;
+        } else {
+            data += "&custom_path=" + sel_path;
+        }
+    }
+    if(!valid){
+        elem_selected.addClass('animated pulse');
+        setTimeout(function(){
+            elem_selected.removeClass('animated pulse');
+        }, 2000);
+        return false;
+    }
+    data = 'type=' + type + data + getScanGenOptions();
+    $('#_files_scanning_line').text('');
+    sendScan(data);
+}
+function getScanGenOptions(){
+    let adv_opts = {};
+    $('.gen-config-item').each(function(){
+        let type = $(this).data('type');
+        let defval = $(this).data('default');
+        let parameter = $(this).data('parameter');
+        if(type === "yesno"){
+            let val_check = $(this).find('.gen-opt-check-input:checked').val();
+            if(val_check !== defval){
+                adv_opts[parameter] = val_check;
+            }
+        }else if (type === "number"){
+            let val_field = $(this).find('.gen-opt-text-input').val();
+            if (val_field !== defval){
+                adv_opts[parameter] = val_field;
+            }
+        } else if (type === "logic") {
+            let val_check = $(this).find('.gen-opt-check-input:checked').val() == 'no' ? false : true;
+            if (val_check !== defval) {
+                adv_opts[parameter] = val_check;
+            }
+        }
+    });
+    return '&adv_options=' + JSON.stringify(adv_opts)
+}
+function renderScanHistory(history){
+    console.log(history);
+    let html = '<div class="empty-clam-scan-history clam-scan-histoy-wrapper">' +
+                    '<h4>{{langmod.LABCLAM79}}</h4>' +
+                '</div>';
+    if (history.length > 0){
+        let html_content = '';
+        history.forEach(function(his){
+            let scan_mode = 'Home Scan';
+            let scan_ico = 'home';
+            if (his.type === 'web') {
+                scan_mode = 'Web Scan';
+                scan_ico = 'sitemap';
+            } else if (his.type === 'email') {
+                scan_mode = 'Email Scan';
+                scan_ico = 'envelope-o';
+            } if (his.type === 'custom') {
+                scan_mode = 'Custom Scan';
+                scan_ico = 'cog';
+            }
+            let qty_infected = his.details[4];
+            html_content += '<tr>' +
+                                '<td>' + moment(his.date).format('YYYY/MM/DD H:mm:ss') + '</td>' +
+                                '<td><span class="result-mode-title-pre label label-success">' + scan_mode + ' <i class="fa fa-' + scan_ico + '"></i></span></td>' +
+                                '<td>' +
+                                    '<span class="label label-' + (qty_infected > 0 ? 'danger' : 'primary') + '">' + qty_infected + '  {{langmod.LABCLAM80}} ' +
+                                        '<i class="fa fa-' + (qty_infected > 0 ? 'exclamation-triangle' : 'check-circle') + '"></i>' + 
+                                    '</span>' +
+                                '</td>' +
+                                '<td style="text-align:right">' + his.details[3] + '</td>' +
+                                // '<td>' + his.details[2] + '</td>' +
+                                '<td style="text-align:right">' + his.details[7] + '</td>' +
+                                '<td style="text-align:center">' +
+                                    '<button onclick="downloadLogFile(\'' + his.id + '\')" title="{{langmod.LABCLAM81}}" data-toggle="tooltip" data-placement="top" class="btn btn-primary btn-sm" style="margin-right:5px;"><i class="fa fa-download" aria-hidden="true"></i></button>' +
+                                    '<button onclick="historyViewScan(\'' + his.id + '\')" title="{{langmod.LABCLAM82}}" data-toggle="tooltip" data-placement="top" class="btn btn-success btn-sm"><i class="fa fa-shield" aria-hidden="true"></i></button>' +
+                                '</td>' +
+                            '</tr>';
+        });
+        html = '<div class="clam-scan-histoy-wrapper" id="_history_list">' +
+                '<table class="table clam-scan-histoy-table table-striped table-bordered table-hover">' +
+                    '<thead>' +
+                        '<tr role="row">' +
+                            '<th style="width:140px;">{{langmod.LABCLAM83}}</th>' +
+                            '<th>{{langmod.LABCLAM84}}</th>' +
+                            '<th>{{langmod.LABCLAM85}}</th>' +
+                            '<th style="width:100px;">{{langmod.LABCLAM86}}</th>' +
+                            // '<th style="width:130px;">Scanned directories</th>' +
+                            '<th style="width:160px;text-align:right">{{langmod.LABCLAM87}}</th>' +
+                            '<th style="width:70px;">&nbsp;</th>' +
+                        '</tr>' +
+                    '</thead>' +
+                    '<tbody id="contenttr">' +
+                        html_content +
+                    '</tbody>' +
+                '</table></div>';
+    }
+    $('#content_history_table').html(html);
+    $('[data-toggle="tooltip"]').tooltip();
+}
+function historyViewScan(identifier){
+    $('#content_history_table').fadeOut('fast', function () {
+        $('#_loader_history_scan').fadeIn('fast');
+        uchip.call('module=clam&acc=historydetails', {
+            data: 'identifier=' + identifier,
+            callback: function (response) {
+                if (response.hasOwnProperty('result') && response.result === 'success') {
+                    showResultsWindow(response.results, true);
+                } else {
+                    let message_error = '{{langmod.LABCLAM58}}';
+                    if (response.hasOwnProperty('code')) {
+                        if (response.code == 2) {
+                            message_error = '{{langmod.EMFILTERSLAB143}}';
+                        } else if (response.code == 1) {
+                            message_error = '{{langmod.LABCLAM88}}';
+                        }
+                    }
+                    noti_bubble(message_error, '{{langmod.LABCLAM61}}', 'error', false, false, '5000', true);
+                }
+                $('#_loader_history_scan').fadeOut('fast', function () {
+                    $('#content_history_table').fadeIn('fast');
+                })
+            }
+        });
+    })
+}
+function downloadLogFile(identifier){
+    window.location.href = "?module=clam&acc=viewlog&log=" + identifier;
+}
+function viewScanDashboard(){
+    let show = '#_clam_main_screen_';
+    let hide = '#_clam_history_screen_';
+    uchip.slideToggle(show, hide);
+}
+function viewHistory(){
+    let show = '#_clam_history_screen_';
+    let hide = '#_clam_main_screen_';
+    // if ($(show).is(':visible')){
+    //     hide = '#_clam_history_screen_';
+    //     show = '#_clam_main_screen_';
+    // }
+    uchip.slideToggle(show, hide);
+    if($('#_history_list').length === 0){
+        uchip.call('module=clam&acc=scanhistory', {
+            callback: function (response) {
+                if (response.hasOwnProperty('result') && response.result === 'success') {
+                    renderScanHistory(response.history);
+                    $('#_loader_history_scan').fadeOut('fast', function(){
+                        if (history_table !== null) {
+                            history_table.destroy()
+                        }
+                        history_table = $('.clam-scan-histoy-table').DataTable(HISTOTY_TABLE_OPTS);
+                        $('#content_history_table').fadeIn('fast');
+                    })
+                } else {
+                    let message_error = '{{langmod.LABCLAM58}}';
+                    if (response.hasOwnProperty('code')) {
+                        if (response.code == 2) {
+                            message_error = '{{langmod.EMFILTERSLAB143}}';
+                        } else if (response.code == 1) {
+                            message_error = 'Antivirus already running!';
+                        }
+                    }
+                    uchip.slideToggle(show, hide);
+                    noti_bubble(message_error, '{{langmod.LABCLAM61}}', 'error', false, false, '5000', true);
+                }
+            }
+        });
+    }else{
+        $('#_loader_history_scan').hide();
+        $('#content_history_table').fadeIn('fast');
+    }
+}
+function sendScan(data){
+    uchip.handleButton('#_run_scan_btn', 'fa-search');
+    $('#_config_scan_btn').prop('disabled', true);
+    btn_title = $('#_run_scan_btn_title').html();
+    $('#_run_scan_btn_title').html('Starting scan');
+    uchip.call('module=clam&acc=executescan', {
+        data: data,
+        callback: function (response) {
+            if (response.hasOwnProperty('result') && response.result === 'success') {
+                isRunningState();
+            } else {
+                let message_error = '{{langmod.LABCLAM58}}';
+                if (response.hasOwnProperty('code')) {
+                    if (response.code == 2) {
+                        message_error = '{{langmod.EMFILTERSLAB143}}';
+                    } else if (response.code == 1) {
+                        message_error = '{{langmod.LABCLAM89}}';
+                    }
+                }
+                resetScanButton();
+                noti_bubble(message_error, '{{langmod.LABCLAM61}}', 'error', false, false, '5000', true);
+            }
+        }
+    });
+}
+function resetScanButton() {
+    $('#_run_scan_btn_title').html(btn_title);
+    uchip.handleButton('#_run_scan_btn', 'fa-search', true);
+    $('#_config_scan_btn').prop('disabled', false);
+}
+function notifyEmail(elem) {
+    if ($(elem).is(':checked')) {
+        $('#_email_to_notify_wrapper').slideDown('fast');
+    } else {
+        $('#_email_to_notify_wrapper').slideUp('fast');
+    }
+}
+function configEmailScan() {
+    if (email_scan_loaded === false) {
+        uchip.call('module=clam&acc=emailconfig', {
+            callback: function (response) {
+                if (response.hasOwnProperty('result') && response.result === 'success' && response.hasOwnProperty('domains') && response.domains.length > 0) {
+                    renderEmailScan(response.domains);
+                    email_scan_loaded = true;
+                    $('.mail-scan-config-list').fadeIn('fast');
+                    $('#_mail_scan_domains_control').fadeIn('fast');
+                } else {
+                    let message_error = '{{langmod.LABCLAM58}}';
+                    if (response.hasOwnProperty('code')) {
+                        // if (response.code == 2) {
+                        //     message_error = '{{langmod.EMFILTERSLAB143}}';
+                        // } else if (response.code == 1) {
+                        //     message_error = 'Antivirus already running!';
+                        // }
+                    }
+                    $('#modal_config_email').modal('hide');
+                    noti_bubble(message_error, 'Error', 'error', false, false, '5000', true);
+                }
+            }
+        });
+    }
+    $('#modal_config_email').modal('show');
+}
+function updateLayerMail() {
+    let newtext = '{{langmod.LABCLAM31}} ';
+    let newtooltip = '{{langmod.LABCLAM29}}';
+    let totaldom = $('.checkbox-domain-mail').length;
+    if (totaldom > 0) {
+        let doms_selected = $('.checkbox-domain-mail:checked');
+        if (doms_selected.length === 0) {
+            newtext = "{{langmod.LABCLAM90}}";
+            newtooltip = "{{langmod.LABCLAM91}}";
+        } else if (doms_selected.length < totaldom) {
+            newtext = doms_selected.length + " {{langmod.LABCLAM92}}";
+            newtooltip = doms_selected.length + " {{langmod.LABCLAM93}}";
+        }
+    }
+    $('#_mail_layer').parent().parent().attr('data-original-title', newtooltip);
+    $('#_mail_layer span').text(newtext);
+}
+function renderEmailScan(domains){
+    let html_list = '';
+    domains.forEach(function (domain, index) {
+        html_list += '<li>' +
+            '<div class="checkbox checkbox-primary">' +
+            '<input onchange="updateLayerMail()" class="checkbox-domain-mail" name=""' +
+            'id="_mail_scan_domain_' + index + '" data-domain="' + domain + '" value="0" type="checkbox" checked>' +
+            '<label for="_mail_scan_domain_' + index + '">' + domain + '</label>' +
+            '</div>' +
+            '</li>';
+    });
+    html_list = '<uL class="mail-scan-config-list">' +
+        html_list +
+        '</ul>';
+    $('#_mail_scan_domains_list').html(html_list);
+}
+function selUnselDomWeb(elem){
+    let newstate = true;
+    let newtype = 1;
+    let newico = 'fa-square-o';
+    let newtitle = '{{langmod.LABCLAM04}}';
+    if ($(elem).data('type') == '1'){
+        newstate = false;
+        newtype = 0;
+        newico = 'fa-check-square-o';
+        newtitle = '{{langmod.LABCLAM94}}';
+    }
+    $('#_btn_sel_all_dom_w').text(newtitle);
+    $(elem).data('type', newtype);
+    $(elem).find('i').removeClass();
+    $(elem).find('i').addClass('fa ' + newico);
+    $('.checkbox-domain-web').prop('checked', newstate);
+    updateLayerWeb();
+}
+function selUnselDomMail(elem){
+    let newstate = true;
+    let newtype = 1;
+    let newico = 'fa-square-o';
+    let newtitle = '{{langmod.LABCLAM04}}';
+    if ($(elem).data('type') == '1'){
+        newstate = false;
+        newtype = 0;
+        newico = 'fa-check-square-o';
+        newtitle = '{{langmod.LABCLAM94}}';
+    }
+    $('#_btn_sel_all_dom_m').text(newtitle);
+    $(elem).data('type', newtype);
+    $(elem).find('i').removeClass();
+    $(elem).find('i').addClass('fa ' + newico);
+    $('.checkbox-domain-mail').prop('checked', newstate);
+    updateLayerMail();
+}
+function renderSubdomains(sub_list, index){
+    let html = '<ul class="ul-subdomain-list">';
+    sub_list.forEach(function(sub){
+        html += '<li>' +
+                    '<div class="checkbox checkbox-primary">' +
+                    '<input onchange="updateLayerWeb()" class="checkbox-domain-web is-sub" data-sub="' + sub.sub + '" data-domain="' + sub.domain + '" name=""' +
+                    'id="_web_scan_domain_' + index + '" value="0" type="checkbox" checked>' +
+                    '<label for="_web_scan_domain_' + index + '">' + sub.sub + '.' + sub.domain + '</label>' +
+                    '</div>' +
+                '</li>';
+        index++
+    });
+    return html + '</ul>';
+}
+function updateLayerWeb(){
+    let newtext = '{{langmod.LABCLAM27}}';
+    let newtooltip = '{{langmod.LABCLAM25}}';
+    let totaldom = $('.checkbox-domain-web').length;
+    if (totaldom > 0) {
+        let doms_selected = $('.checkbox-domain-web:checked');
+        if (doms_selected.length === 0) {
+            newtext = "{{langmod.LABCLAM90}}";
+            newtooltip = "{{langmod.LABCLAM91}}"
+        } else if (doms_selected.length < totaldom){
+            newtext = doms_selected.length + " {{langmod.LABCLAM92}}";
+            newtooltip = doms_selected.length + " {{langmod.LABCLAM95}}"
+        }
+    }
+    $('#_web_layer').parent().parent().attr('data-original-title', newtooltip);
+    $('#_web_layer span').text(newtext);
+}
+function rednderWebScan(domain_list){
+    let html_list = '';
+    let index = 0;
+    domain_list.forEach(function(domain){
+        html_list += '<li ' + (domain.sub > 0 ? 'class="web-scan-config-list-withchild"' : '') + '>' +
+                        '<div class="checkbox checkbox-primary">' +
+                            '<input onchange="updateLayerWeb()" class="checkbox-domain-web" name=""' +
+                                'id="_web_scan_domain_' + index + '" data-domain="' + domain.domain + '" value="0" type="checkbox" checked>' +
+                            '<label for="_web_scan_domain_' + index + '">' + domain.domain + '</label>' +
+                        '</div>' +
+                        (domain.sub > 0 ? renderSubdomains(domain.sub_list, index + 1) : '') +
+                    '</li>';
+        index += domain.sub + 1;
+    });
+    html_list = '<uL class="web-scan-config-list">' +
+                   html_list + 
+                '</ul>';
+    $('#_web_scan_domains_list').html(html_list);
+}
+function configWebScan() { 
+    if (web_scan_loaded === false){
+        uchip.call('module=clam&acc=domainlist', {
+            callback: function (response) {
+                if (response.hasOwnProperty('result') && response.result === 'success' && response.hasOwnProperty('domains') && response.domains.length > 0) {
+                    rednderWebScan(response.domains);
+                    $('#_loader_web_scan').fadeOut('fast', function(){
+                        web_scan_loaded = true;
+                        $('#_web_scan_domains_list').fadeIn('fast');
+                        $('#modal_config_web .modal-footer').fadeIn('fast');
+                    });
+                } else {
+                    let message_error = '{{langmod.LABCLAM58}}';
+                    if (response.hasOwnProperty('code')) {
+                        // if (response.code == 2) {
+                        //     message_error = '{{langmod.EMFILTERSLAB143}}';
+                        // } else if (response.code == 1) {
+                        //     message_error = 'Antivirus already running!';
+                        // }
+                    }
+                    $('#modal_config_web').modal('hide');
+                    noti_bubble(message_error, 'Error', 'error', false, false, '5000', true);
+                }
+            }
+        });
+    }
+    $('#modal_config_web').modal('show');
+}
+function customScanList(list){
+    let html_list = '';
+    list.forEach(function (dir) {
+        html_list += '<li onclick="gotoDir(this)" data-dir="' + dir + (dir !== '..' ? '/' : '') + '">' +
+            '<i class="fa fa-folder-o" aria-hidden="true"></i>' +
+            dir +
+            '</li>';
+    });
+    return html_list;
+}
+function renderCustomScan(list){
+    let html_list = customScanList(list);
+    let html_window = '<div id="_custom_scan_dir" class="container-fluid" style="display:none">' +
+                        '<div class="row">' +
+                            '<div class="col-md-12 current-path-div">' +
+                                '<label class="form-label">{{langmod.LABCLAM96}}</label>' +
+                                '<input type="text" id="current_path_dirsel" class="form-control" value="/" readonly="">' +
+                                '<input type="hidden" id="selected_path_dirsel" value="">' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="row">' +
+                            '<div class="col-md-12">' +
+                                '<ul id="_custom_scan_dir_list" class="custom-scan-dir-list">' +
+                                    html_list +
+                                '</ul>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+    $('#_custom_scan_selector').append(html_window);
+}
+function selPathCustomScan(){
+    let selected = $('#current_path_dirsel').val();
+    $('#_flex_path_container').html(selected);
+    $('#selected_path_dirsel').val(selected);
+    $('#modal_config_custom').modal('hide');
+    $('#_custom_layer').parent().parent().attr('data-original-title', 'Scan ' + selected);
+}
+function gotoDir(elem){
+    let dir = '';
+    if ($(elem).data('dir') === '..'){
+        dir = $('#current_path_dirsel').val().split('/').slice(0, -2).join('/') + '/';
+    }else{
+        dir = $('#current_path_dirsel').val() + $(elem).data('dir');
+    }
+    $('#_custom_scan_dir').fadeOut('fast', function(){
+        $('#_loader_custom_scan').fadeIn('fast');
+        callDirListCustomScan(dir, function(response){
+            $('#_custom_scan_dir_list').html(customScanList(response.list));
+            $('#_loader_custom_scan').fadeOut('fast', function(){
+                $('#current_path_dirsel').val(dir);
+                $('#_custom_scan_dir').fadeIn('fast');
+                $('#modal_config_custom .modal-footer').fadeIn('fast');
+            });
+        })
+    });
+    $('#modal_config_custom .modal-footer').fadeOut('fast');
+}
+function callDirListCustomScan(path, callback){
+    uchip.call('module=clam&acc=customselector', {
+        data: 'path=' + path,
+        callback: function (response) {
+            if (response.hasOwnProperty('result') && response.result === 'success' && response.hasOwnProperty('list') && response.list.length > 0) {
+                callback(response);
+                custom_scan_loaded = true;
+            } else {
+                custom_scan_loaded = false;
+                let message_error = '{{langmod.LABCLAM58}}';
+                if (response.hasOwnProperty('code')) {
+                    // if (response.code == 2) {
+                    //     message_error = '{{langmod.EMFILTERSLAB143}}';
+                    // } else if (response.code == 1) {
+                    //     message_error = 'Antivirus already running!';
+                    // }
+                }
+                $('#modal_config_custom').modal('hide');
+                noti_bubble(message_error, '{{langmod.LABCLAM61}}', 'error', false, false, '5000', true);
+            }
+        }
+    }); 
+}
+function configCustomScan(){
+    $('#modal_config_custom').modal('show');
+    if (custom_scan_loaded === false){
+        let dirpath = $('#selected_path_dirsel').val() === undefined ? '' : $('#selected_path_dirsel').val()
+        callDirListCustomScan(dirpath, function(response){
+            renderCustomScan(response.list);
+            $('#_loader_custom_scan').fadeOut('fast', function () {
+                $('#_custom_scan_dir').fadeIn('fast');
+                $('#modal_config_custom .modal-footer').fadeIn('fast');
+            });
+        });
+        
+    }
+}
+function configGeneralScan() {
+    $('#modal_config_general').modal({
+        backdrop: 'static',
+        keyboard: false
+    });
+}
+function resetDefaultSettings() {
+    $('.clam-config-parameters-wrapper .clam-config-item').each(function () {
+        let key = $(this).data('key');
+        let default_value = $(this).data('default');
+        let type_param = $(this).data('type');
+        if (type_param === 'yesno') {
+            let selector = '#' + key + '_' + default_value;
+            $(selector).prop('checked', true);
+        } else if (type_param === 'logic') {
+            let selector = '#' + key + '_' + (default_value == 'true' ? 'yes' : 'no');
+            $(selector).prop('checked', true);
+        } else if (type_param === 'number' || type_param === 'regex') {
+            let selector = '#' + key + '_value';
+            $(selector).val('');
+        }
+    });
+}
+function placeError(elem, title, container) {
+    if (!$(elem).hasClass('error')) {
+        $(elem).addClass('error');
+        $(container).append('<span class="error-field">' + title + '</span>');
+    }
+}
+function removeError(elem, container) {
+    $(container).find('.error-field').remove();
+    $(elem).removeClass('error');
+}
+function validateRegex(pattern) {
+    var parts = pattern.split('/'),
+        regex = pattern,
+        options = "";
+    if (parts.length > 1) {
+        regex = parts[1];
+        options = parts[2];
+    }
+    try {
+        new RegExp(regex, options);
+        return true;
+        //just remove this return and return true instead
+    }
+    catch (e) {
+        return false;
+    }
+}
+function validGeneralConfiguration() {
+    let mail_test = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+    let valid = true;
+    if ($('#_notify_scan').is(':checked') && !mail_test.test($('#_email_to_notify').val())) {
+        valid = false;
+        $('#_email_to_notify').focus();
+        placeError('#_email_to_notify', '{{langmod.LABCLAM97}}', '#_email_to_notify_wrapper');
+    } else {
+        removeError('#_email_to_notify', '#_email_to_notify_wrapper')
+    }
+    $("input[data-regex='true']").each(function () {
+        let regex_val = $(this).val();
+        if (!regex_val.isEmpty() && !validateRegex(regex_val)) {
+            if (valid) {
+                if (!$('#_gen_adv_content').is(':visible')) {
+                    $('#_show_adv_gen').trigger('click');
+                }
+                $(this).focus();
+            }
+            valid = false;
+            placeError(this, '{{langmod.LABCLAM98}}', $(this).parent());
+        } else {
+            removeError(this, $(this).parent());
+        }
+    });
+    if (valid) {
+        $('#modal_config_general').modal('hide');
+    }
+}

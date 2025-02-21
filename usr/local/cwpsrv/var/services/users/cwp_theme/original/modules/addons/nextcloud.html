@@ -1,0 +1,181 @@
+<!------------------------LARAVEL------------------------------->
+<div id="tab_swnext" class="tab-pane fade {{dicnext}} {{swnext}}">
+
+    <div class="script-container" id="next_form">
+        <div class="panel panel-default" id="nextap1">
+            <div class="panel-heading white-bg script-container-title">
+                <h4 class="panel-title">{{langmod.ADDDWP4}}</h4>
+                <div class="">
+                    <span class="btn-success btn-xs btn" onclick="addNext()"><i class="fa fa-download" aria-hidden="true"></i> {{langmod.ADDDWP24}}</span>
+                    <span class="btn-warning btn-xs btn" onclick="cancelnext()"><i class="fa fa-ban"></i> {{langmod.ADDCANCELLAB}}</span>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="form-group row">
+                    <div class="col-sm-6 addon-row-label">
+                        <b>{{langmod.ADDDWP7}}</b>
+                        <p>{{langmod.ADDDWP8}}</p>
+                    </div>
+                    <div class="col-sm-4">
+                        <select  class="form-control reqnext" data-required="true" id="nextdomain">
+                            <option value="">{{langmod.ADDDWP9}}</option>
+                            {% for domains in mod.domains %}
+                            <option data-path="{{domains.path}}" data-ssl="{{domains.ssl}}" value="{{domains.domain}}">{{domains.domain}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-sm-6 addon-row-label">
+                        <b>{{langmod.ADDDWP10}}</b>
+                        <p>{{langmod.ADDDWP11}}</p>
+                    </div>
+                    <div class="col-sm-4">
+                        <input type="text" class="form-control" maxlength="20" id="nextpach" value="next">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="panel panel-default" id="nexttap2">
+            <div class="panel-heading white-bg script-container-title">
+                <h4 class="panel-title">{{langmod.ADDADMINACCOUNT}}</h4>
+            </div>
+            <div class="panel-body">
+                <div class="form-group row">
+                    <div class="col-sm-6 addon-row-label">
+                        <b>{{langmod.ADDSMF03}}</b>
+                    </div>
+                    <div class="col-sm-4">
+                        <input type="text" class="form-control" id="nextuseradmin" value="" placeholder="{{langmod.ADDSMF01}}">
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-sm-6 addon-row-label">
+                        <b>{{langmod.ADDPS03}}</b>
+                    </div>
+                    <div class="col-sm-4">
+                        <input type="text" class="form-control" id="nextuseremail" value="" placeholder="{{langmod.ADDPS01}}">
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-sm-6 addon-row-label">
+                        <b>{{langmod.ADDPS04}}</b>
+                    </div>
+                    <div class="col-sm-6 pass_form_div">
+                        <div class="pass_container">
+                            <input type="text" class="form-control" id="nextuserpass" maxlength ="20" value="" placeholder="{{langmod.ADDPS02}}">
+                            <div class="pwstrength_viewport_progress"></div>
+                            <span class="btn btn-default btn-xs copy-pass-btn" title="{{langmod.ADDCOPYPASS}}" data-toggle="tooltip" data-placement="top" aria-hidden="true" onclick="copyPass('nextuserpass')"><i class="fa fa-copy"></i></span>
+                        </div>
+                        <div>
+                            <span class="btn btn-default" title="{{langmod.ADDGENRPASS}}" data-toggle="tooltip" data-placement="top" aria-hidden="true" onclick="generateNewPass(this)"><i class="fa fa-key" aria-hidden="true"></i></span>
+                            <div class="btn-group dropdown show_options_adps">
+                                <button type="button" class="btn btn-default" title="{{langmod.ADDCHOPTPAS}}" onclick="openPGOPT('#pass_nextadmin', '.show_options_adps')">{{langmod.FTPENCRYTED}}<span class="caret" style="margin-left:10px"></span></button>
+                                <div class="general-password-generator-options mysql_generator" id="pass_nextadmin" style="display: none;z-index: 20;box-shadow: 3px 7px 10px -6px #777;">
+                                    <!-- <span class="general-password-generator-options-title"><b>Options</b></span>
+                                    <span class="general-password-generator-options-close" onclick="closePGOPT()" style="cursor:pointer">s<i class="fa fa-window-close"></i></span> -->
+                                    <ul class="right animated fadeIn">
+                                        <li>
+                                            <select class="form-control pwlength" id="lengthpass2" title="{{langmod.FTPLENGTH}}" style="margin-bottom: 5px;">
+                                                <option value="7"> {{langmod.FTPLENGTH}}  7</option>
+                                                <option value="8"> {{langmod.FTPLENGTH}}  8</option>
+                                                <option value="9"> {{langmod.FTPLENGTH}}  9</option>
+                                                <option value="10"> {{langmod.FTPLENGTH}} 10</option>
+                                                <option value="11"> {{langmod.FTPLENGTH}} 11</option>
+                                                <option value="12" selected=""> {{langmod.FTPLENGTH}} 12</option>
+                                                <option value="13"> {{langmod.FTPLENGTH}} 13</option>
+                                                <option value="14"> {{langmod.FTPLENGTH}} 14</option>
+                                                <option value="15"> {{langmod.FTPLENGTH}} 15</option>
+                                            </select>
+                                        </li>
+                                        <li>
+                                            <select class="form-control pwtype" id="typepass2" title="Type">
+                                                <option value="alf">{{langmod.FTPTYPE}} {{langmod.FTPALF}}</option>
+                                                <option value="num" selected="">{{langmod.FTPTYPE}} {{langmod.FTPALFNUM}}</option>
+                                                <option value="def">{{langmod.FTPTYPE}} {{langmod.FTPALFNUMSIG}}</option>
+                                            </select>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="panel panel-default" id="nextap4">
+            <div class="panel-heading white-bg script-container-title">
+                <h4 class="panel-title">{{langmod.ADDDWP19}}</h4>
+            </div>
+            <div class="panel-body">
+                <div class="form-group row">
+                    <div class="col-sm-6 addon-row-label">
+                        <b>{{langmod.ADDDWP20}} </b>
+                        <p>{{langmod.ADDDWP21}}</p>
+                    </div>
+                    <div class="col-sm-4">
+                        <input type="text" class="form-control reqnext" data-required="true" id="nextbd" maxlength="7" value="next{{mod.extra_data.randbd}}">
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-sm-6 addon-row-label">
+                        <b>{{langmod.ADDDWP22}}</b>
+                    </div>
+                    <div class="col-sm-4">
+                        <input type="text" class="form-control reqnext" data-required="true" id="nextuserdb" maxlength="7" value="next{{mod.extra_data.randbd}}">
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-sm-6 addon-row-label">
+                        <b>{{langmod.ADDDWP23}}</b>
+                    </div>
+                    <div class="col-sm-6 pass_form_div">
+                        <!-- <input type="text" class="form-control" id="pspassbd" maxlength="20" value="" placeholder="{{langmod.ADDDWP25}}"> -->
+                        <div class="pass_container">
+                            <input type="text" class="form-control reqnext" data-required="true" id="nextpassbd" maxlength="20" value="" placeholder="{{langmod.ADDDWP25}}">
+                            <div class="pwstrength_viewport_progress"></div>
+                            <span class="btn btn-default btn-xs copy-pass-btn" title="{{langmod.ADDCOPYPASS}}" data-toggle="tooltip" data-placement="top" aria-hidden="true" onclick="copyPass('nextpassbd')"><i class="fa fa-copy"></i></span>
+                        </div>
+                        <div>
+                            <span class="btn btn-default" title="{{langmod.ADDGENRPASS}}" data-toggle="tooltip" data-placement="top" aria-hidden="true" onclick="generateNewPass(this)"><i class="fa fa-key" aria-hidden="true"></i></span>
+                            <div class="btn-group dropdown show_options_ps">
+                                <button type="button" class="btn btn-default" title="{{langmod.ADDCHOPTPAS}}" onclick="openPGOPT('#pass_nextdb', '.show_options_next')">{{langmod.FTPENCRYTED}}<span class="caret" style="margin-left:10px"></span></button>
+                                <div class="general-password-generator-options mysql_generator" id="pass_nextdb" style="display: none;z-index: 20;box-shadow: 3px 7px 10px -6px #777;">
+                                    <!-- <span class="general-password-generator-options-title"><b>Options</b></span>
+                                    <span class="general-password-generator-options-close" onclick="closePGOPT()" style="cursor:pointer">s<i class="fa fa-window-close"></i></span> -->
+                                    <ul class="right animated fadeIn">
+                                        <li>
+                                            <select class="form-control pwlength" id="lengthpass2" title="{{langmod.FTPLENGTH}}" style="margin-bottom: 5px;">
+                                                <option value="7"> {{langmod.FTPLENGTH}}  7</option>
+                                                <option value="8"> {{langmod.FTPLENGTH}}  8</option>
+                                                <option value="9"> {{langmod.FTPLENGTH}}  9</option>
+                                                <option value="10"> {{langmod.FTPLENGTH}} 10</option>
+                                                <option value="11"> {{langmod.FTPLENGTH}} 11</option>
+                                                <option value="12" selected=""> {{langmod.FTPLENGTH}} 12</option>
+                                                <option value="13"> {{langmod.FTPLENGTH}} 13</option>
+                                                <option value="14"> {{langmod.FTPLENGTH}} 14</option>
+                                                <option value="15"> {{langmod.FTPLENGTH}} 15</option>
+                                            </select>
+                                        </li>
+                                        <li>
+                                            <select class="form-control pwtype" id="typepass2" title="Type">
+                                                <option value="alf">{{langmod.FTPTYPE}} {{langmod.FTPALF}}</option>
+                                                <option value="num" selected="">{{langmod.FTPTYPE}} {{langmod.FTPALFNUM}}</option>
+                                                <option value="def">{{langmod.FTPTYPE}} {{langmod.FTPALFNUMSIG}}</option>
+                                            </select>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-footer text-right">
+                <span class="btn-success btn-xs btn" onclick="addNext()"><i class="fa fa-download" aria-hidden="true"></i> {{langmod.ADDDWP24}}</span>
+                <span class="btn-warning btn-xs btn" onclick="cancelnext()"><i class="fa fa-ban"></i> {{langmod.ADDCANCELLAB}}</span>
+            </div>
+        </div>
+    </div>
+</div>
+

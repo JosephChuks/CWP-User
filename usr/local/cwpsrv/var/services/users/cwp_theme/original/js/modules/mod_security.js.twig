@@ -1,0 +1,375 @@
+
+console.log('mod');
+let domain_list = JSON.parse('{{mod.domain_list|json_encode|raw}}');
+let domain_table = null;
+let mod_status = {{mod.mod_status}};
+let timeout_search = null;
+let editor_mirror = null;
+String.prototype.isEmpty = function() {
+    return (this.length === 0 || !this.trim());
+};
+$(document).ready(function() {
+  {% if mod.isie == 1 %}
+    uchip = new $.Uchip();
+  {% else %}
+    uchip = new Uchip();
+  {% endif %}
+  if(mod_status == 1){
+    listDomains(domain_list);
+  }
+});
+function listDomains(list){
+  domain_list = list;
+  if(domain_list.length > 0){
+    let html_content = '';
+    let index = 0;
+    let options_select = '';
+    domain_list.forEach(function(item){
+      let whole_domain = (item.type == 'domain' ? item.domain : item.subdomain + '.' + item.domain);
+      options_select += '<option value="' + whole_domain + '">' + whole_domain + '</option>';
+      html_content += '<tr id="trdomain_' + index + '" class="gradeA odd" role="row">' +
+                        '<td class="td-table-domain">' + whole_domain + '</td>' +
+                        '<td align="center" class="td-table-domain">' + (item.type == 'domain' ? '{{langmod.SECLABEL30}}' : '{{langmod.SECLABEL31}}') + '</td>' +
+                        '<td align="center" class="td-table-domain-btn">' +
+                          '<div class="security-table-btn">' +
+                            '<div class="switch">' +
+                              '<div class="onoffswitch">' +
+                                '<input data-domain="' + whole_domain + '" onchange="handleStatus(this)" type="checkbox" ' + (item.security_active === true ? 'checked' : '') + ' class="onoffswitch-checkbox" id="item_dom_' + index + '">' +
+                                '<label class="onoffswitch-label" for="item_dom_' + index + '">' +
+                                  '<span class="onoffswitch-inner"></span>' +
+                                  '<span class="onoffswitch-switch"></span>' +
+                                '</label>' +
+                              '</div>' +
+                            '</div>' +
+                            '<button type="button" title="{{langmod.SECLABEL9}}" data-toggle="tooltip" data-placement="top" aria-hidden="true" class="btn btn-success btn-xs" onclick="editRules(\'' + whole_domain + '\')">' +
+                              '<i class="fa fa-pencil-square-o"></i> {{langmod.SECLABEL4}}' +
+                            '</button>' +
+                            '<button type="button" title="{{langmod.SECLABEL10}}" data-toggle="tooltip" data-placement="top" aria-hidden="true" class="btn btn-primary btn-xs" onclick="checkIp(\'{{mod.ip_address}}\', \'' + whole_domain + '\')">' +
+                              '<i class="fa fa-sitemap"></i> {{langmod.SECLABEL5}}' +
+                            '</button>' +
+                            // '<button type="button" id="btn_del_' + index + '" title="{{langmod.DBTNDELETE}}" class="btn btn-danger btn-xs" onclick="">' +
+                            //   '<i class="fa fa-trash"></i> Log' +
+                            // '</button>' +
+                          '</div>' +
+                        '</td>' +
+                      '</tr>';
+      index++;
+    });
+    $('#check_ip_domain').append(options_select);
+    let table_html = '<table class="table domain_table table-striped table-bordered table-hover">' +
+                        '<thead>' +
+                          '<tr role="row">' +
+                            '<th>{{langmod.SECLABEL6}}</th>' +
+                            '<th>{{langmod.SECLABEL7}}</th>' +
+                            '<th style="width:260px">{{langmod.SECLABEL8}}</th>' +
+                          '</tr>' +
+                        '</thead>' +
+                        '<tbody id="contenttr">' +
+                          html_content +
+                        '</tbody>' +
+                      '</table>';
+    $('#table_domain_wrapper').html(table_html);
+    $('.domain_table').DataTable().destroy();
+    domain_table = $('.domain_table').DataTable();
+    $('[data-toggle="tooltip"]').tooltip()
+  }else{
+    $('#table_domain_wrapper').html('<div class="empty_list"><h4 class="text-success">{{langmod.DOMNOTCREATED}}</h4></div>');
+  }
+}
+function editRules(domain){
+  uchip.slideToggle('.mod-security-rules', '.mod-security-wrapper', function(){
+    rulesEditor(domain);
+  });
+}
+function displayEditor(){
+  setTimeout(function(){
+    if(editor_mirror != null){
+      editor_mirror.toTextArea();
+    }
+    editor_mirror = CodeMirror.fromTextArea(document.getElementById("rules_editor_mirror"), {
+        lineNumbers: true
+    });
+  }, 10);
+}
+function addNeRuleID(elem){
+  if(!(/^\d{6}$/gm.test($('#addID').val()))){
+    noti_bubble('Invalid RuleID','{{langmod.SECLABEL2}}','error',false,false,'3000',true);
+    return false;
+  }
+  if(uchip.validator('#addID')){
+    uchip.handleButton(elem, 'fa-floppy-o');
+    uchip.handleButton('#btn_back_ruler_editor', 'fa-arrow-left');
+    let domain = $(elem).data('domain');
+    uchip.call('module=mod_security&acc=addrule', {
+      data: 'domain=' + domain + '&ruleid=' + $('#addID').val(),
+      callback: function(response){
+        if(response.hasOwnProperty('result') && response.result == 'success'){
+          $('#addID').val('');
+          renderRulesEditor(response, domain);
+          noti_bubble('{{langmod.SECLABEL23}}','{{langmod.SECLABEL21}}','success',false,false,'3000',true);
+        }else{
+          noti_bubble('{{langmod.SECLABEL22}}','{{langmod.SECLABEL2}}','error',false,false,'3000',true);
+        }
+        uchip.handleButton(elem, 'fa-floppy-o', true);
+        uchip.handleButton('#btn_back_ruler_editor', 'fa-arrow-left', true);
+      }
+    });
+  }
+}
+function updateEditor(file_content){
+  if(editor_mirror == null){
+    $('#rules_editor_mirror').val(file_content);
+  }else{
+    editor_mirror.setValue(file_content);
+  }
+}
+function renderRulesEditor(response, domain){
+  $('.nav-tabs a[href="#rules_basic_editor"]').tab('show');
+  $('#file_domain_editor_warning').hide();
+  uchip.validator('#addID', true);
+  $('#bt_add_rule').data('domain', domain);
+  let rules_html = '';
+  updateEditor(response.file_content);
+  if(response.rules.length > 0){
+    rules_html = '<div class="rules-list-top">' +
+                        '<h4 class="rules-editor-title">{{langmod.SECLABEL24}}</h4>' +
+                        '<div class="input-group input-icon">' +
+                          '<span class="input-group-addon"><i class="fa fa-search s16"></i></span>' +
+                          '<input type="text" class="form-control" id="search_rule" size="30">' +
+                        '</div>' +
+                    '</div>';
+    response.rules.forEach(function(rule){
+      rules_html += '<div class="rules-editor-line" id="rule_line_' + rule.line + '" data-search="' + rule.value + '">' +
+                      '<span class="rules-editor-value"><i class="fa fa-caret-right" aria-hidden="true"></i> SecRuleRemoveById <b>' + rule.value + '</b></span>' +
+                      '<div class="rules-editor-actions"><button title="{{langmod.SECLABEL25}}" id="btn_del_rule_' + rule.line + '" onclick="deleteRule(\'' + domain + '\',\'' + rule.value + '\',' + rule.line + ', 0)" class="btn btn-danger btn-xs"><i class="fa fa-trash"></i></button></div>' +
+                    '</div>';
+    });
+    rules_html += '<div class="rules-editor-nosearch">' +
+                    '<div class="rules-editor-nosearch-content"><h4>{{langmod.SECLABEL26}}</h4></div>' +
+                  '</div>';
+  }else{
+    rules_html = '<div class="rules-list-empty">' +
+                  '<div class="rules-list-empty-content">' +
+                    '<h4>{{langmod.SECLABEL27}} ' + domain + '</h4>' +
+                    '<button class="btn btn-primary" onclick="foucsNewRule()">{{langmod.SECLABEL28}}</button>' +
+                  '</div>'
+                '</div>';
+  }
+  $('.file-domain-editor').text(domain);
+  if(response.file_exists !== true){
+    $('#file_domain_editor').text(domain);
+    $('#file_domain_editor_warning').show();
+  }else{
+    $('#file_domain_editor_warning').slideUp('fast');
+  }
+  $('#rules_list_wrapper').html(rules_html);
+  $('#search_rule').keyup(function() {
+    if(timeout_search !== null ){
+      clearTimeout(timeout_search);
+    }
+    let elem = $(this);
+    timeout_search = setTimeout(function(){
+      let term = elem.val();
+      $('.rules-editor-line').each(function(){
+        let item_value = $(this).data('search').toString();
+        if(term.isEmpty()){
+          $(this).slideDown('fast');
+          $('.rules-editor-nosearch').fadeOut('fast');
+        }else if(item_value.search(term) < 0){
+          $(this).slideUp('fast');
+        }else{
+          $(this).slideDown('fast');
+          $('.rules-editor-nosearch').fadeOut('fast');
+        }
+      });
+      setTimeout(function(){
+        if($('.rules-editor-line:visible').length < 1){
+          $('.rules-editor-nosearch').fadeIn('fast');
+        }
+      },300);
+    }, 300);
+  });
+}
+function saveFromEditor(){
+  let domain = $('#bt_add_rule').data('domain');
+  uchip.handleButton('.btn-save-editor', 'fa-floppy-o');
+  let content = Base64.encode(editor_mirror.getValue());
+  uchip.call('module=mod_security&acc=savefromeditor', {
+    data: 'domain=' + domain + '&content=' + content,
+    callback: function(response){
+      if(response.hasOwnProperty('result') && response.result == 'success'){
+        renderRulesEditor(response, domain);
+        noti_bubble('Rules file saved','{{langmod.SECLABEL21}}','success',false,false,'3000',true);
+      }else{
+        noti_bubble('{{langmod.SECLABEL3}}','{{langmod.SECLABEL2}}','error',false,false,'3000',true);
+      }
+      uchip.handleButton('.btn-save-editor', 'fa-floppy-o', true);
+    }
+  });
+}
+function deleteRule(domain, value, line, status){
+  if(status == 0){
+    let strbody = '<h4>{{langmod.SECLABEL45}} <b>' +
+                    value + '</b> {{langmod.SECLABEL46}} <b>' + domain + '</b></h4><br>' +
+                    '<h4>{{langmod.SECLABEL47}}</h4>';
+    let strfooter = '<button type="button" class="btn btn-white" data-dismiss="modal">{{langmod.SECLABEL48}}</button>' +
+                    '<button type="button" class="btn btn-primary" id="btnyesdel" onclick="deleteRule(\'' + domain + '\', \'' + value + '\', ' + line + ', 1)">{{langmod.SECLABEL49}}</button>';
+    $("#deleterule .modal-footer").html(strfooter);
+    $("#deleterule .modal-body").html(strbody);
+    $('#deleterule').modal('show');
+  }else{
+    $("#deleterule").modal('hide');
+    uchip.handleButton('#btn_del_rule_' + line,'fa-trash');
+    let line_rule = $('#rule_line_' + line);
+    line_rule.addClass('deleting_tr');
+    uchip.call('module=mod_security&acc=deleteline', {
+      data: 'domain=' + domain + '&line=' + line,
+      callback: function(response){
+        if(response.hasOwnProperty('result') && response.result == 'success'){
+          renderRulesEditor(response, domain);
+          noti_bubble('Rule ID deleted','{{langmod.SECLABEL21}}','success',false,false,'3000',true);
+        }else{
+          uchip.handleButton('#btn_del_rule_' + line,'fa-trash', true);
+          line_rule.removeClass('deleting_tr');
+          noti_bubble('{{langmod.SECLABEL3}}','{{langmod.SECLABEL2}}','error',false,false,'3000',true);
+        }
+      }
+    });
+  }
+}
+function foucsNewRule(){
+  $('#addID').focus();
+}
+function rulesEditor(domain){
+  $('#rules_editor_wrapper').removeClass('with-tabs');
+  $('#rules_editor_domain_loader').text(domain);
+  $('#rules_title_domain').text(domain);
+  uchip.slideToggle('#rules_loader', '#rules_logs_wrapper');
+  $('#top_wrapper').focus();
+  uchip.call('module=mod_security&acc=loadrules', {
+    data: 'domain=' + domain,
+    callback: function(response){
+      if(response.hasOwnProperty('result') && response.result == 'success'){
+        uchip.slideToggle('#rules_logs_wrapper', '#rules_loader', function(){
+          $('.rules-wrapper-error').hide();
+          $('.rules-wrapper-success').show();
+          $('#rules_editor_wrapper').addClass('with-tabs');
+          renderRulesEditor(response, domain);
+        });
+      }else{
+        uchip.slideToggle('#rules_logs_wrapper', '#rules_loader',function(){
+          $('.rules-wrapper-error').show();
+          $('.rules-wrapper-success').hide();
+          $('#rules_retry_logs_btn').unbind('click');
+          $('#rules_retry_logs_btn').click(function(){
+            rulesEditor(domain);
+          });
+        });
+        noti_bubble('{{langmod.SECLABEL29}}','{{langmod.SECLABEL2}}','error',false,false,'3000',true);
+      }
+    }
+  });
+}
+function showLogs(type){
+  uchip.slideToggle('.mod-security-logs', '.mod-security-wrapper', function(){
+    loadLogs(type);
+  });
+}
+function logLiner(elem){
+  loadLogs($(elem).data('type'), $(elem).val());
+}
+function checkIp(ip, domain){
+  uchip.slideToggle('.mod-security-ipchecker', '.mod-security-wrapper', function(){
+    loadIpLog(ip, domain);
+  });
+}
+function reCheckIP(){
+  let ip = $('#check_ip_field').val();
+  let domain = $('#check_ip_domain').val();
+  loadIpLog(ip, domain)
+}
+function loadIpLog(ip, domain){
+  if(!ValidateIPaddress(ip)){
+    $('#check_ip_field').focus();
+    noti_bubble('Invalid IP Address','{{langmod.SECLABEL2}}','error',false,false,'3000',true);
+    return false;
+  }
+  $('#ip_checker_address').text(ip);
+  $('#ip_checker_domain').text(domain);
+  uchip.slideToggle('#logip_loader', '#IP_logs_wrapper');
+  $('#top_wrapper').focus();
+  uchip.call('module=mod_security&acc=checkip', {
+    data: 'ip=' + ip + '&domain=' + domain,
+    callback: function(response){
+      if(response.hasOwnProperty('result') && response.result == 'success'){
+        uchip.slideToggle('#IP_logs_wrapper', '#logip_loader', function(){
+          $('#ip_checker_domain2').text(domain);
+          $('#check_ip_domain').val(domain);
+          let logip = '{{langmod.SECLABEL20}} /usr/local/apache/domlogs/' + domain +'.error.log'
+          if(response.log != 'empty'){
+            logip = response.log;
+          }
+          $('#check_ip_field').val(ip);
+          $('#IPlog_area_viewer').text(logip);
+          $('.Iplogs-wrapper-error').hide();
+          $('.IPlogs-wrapper-success').show();
+        });
+      }else{
+        uchip.slideToggle('#IP_logs_wrapper', '#logip_loader',function(){
+          $('.Iplogs-wrapper-error').show();
+          $('.IPlogs-wrapper-success').hide();
+          $('#IPretry_logs_btn').unbind('click');
+          $('#IPretry_logs_btn').click(function(){
+            loadIpLog(ip, domain);
+          });
+        });
+        noti_bubble('{{langmod.SECLABEL3}}','{{langmod.SECLABEL2}}','error',false,false,'3000',true);
+      }
+    }
+  });
+}
+function backFrom(selector){
+  uchip.slideToggle('.mod-security-wrapper', selector);
+}
+function handleStatus(elem){
+  let status = 1;
+  if(!$(elem).is(':checked')){
+    status = 0;
+  }
+  let domain = $(elem).data('domain');
+  uchip.call('module=mod_security&acc=handlestatus', {
+    data: 'status=' + status + '&domain=' + domain,
+    callback: function(response){
+
+    }
+  });
+}
+function loadLogs(type, num_records){
+  uchip.slideToggle('#log_loader', '#logs_wrapper');
+  type = type == undefined ? 'general' : type;
+  num_records = num_records == undefined ? 20 : num_records;
+  let domain = $('#log_domain').val();
+  $('#log_liner').data('type');
+  uchip.call('module=mod_security&acc=loadlog', {
+    data: 'type=' + type + '&num_records=' + num_records + '&domain=' + domain,
+    callback: function(response){
+      if(response.hasOwnProperty('result') && response.result == 'success'){
+        uchip.slideToggle('#logs_wrapper', '#log_loader', function(){
+          $('#log_area_viewer').text(response.log == '' ? 'No data found in logs' : response.log);
+          $('.logs-wrapper-error').hide();
+          $('.logs-wrapper-success').show();
+        });
+      }else{
+        uchip.slideToggle('#logs_wrapper', '#log_loader', function(){
+          $('.logs-wrapper-error').show();
+          $('.logs-wrapper-success').hide();
+          $('#retry_logs_btn').unbind('click');
+          $('#retry_logs_btn').click(function(){
+            loadLogs(type, num_records);
+          });
+        });
+        noti_bubble('{{langmod.SECLABEL3}}','{{langmod.SECLABEL2}}','error',false,false,'3000',true);
+      }
+    }
+  });
+}

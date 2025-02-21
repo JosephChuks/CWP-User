@@ -1,0 +1,833 @@
+
+console.log();
+let uchip = null;
+let backup_table = null;
+let backup_list = JSON.parse('{{mod.backup|json_encode|raw}}');
+let initial_state = JSON.parse('{{mod.initial_state|json_encode|raw}}');
+let new_files = [];
+$(document).ready(function() {
+  {% if mod.isie == 1 %}
+    uchip = new $.Uchip();
+  {% else %}
+    uchip = new Uchip();
+  {% endif %}
+  listBackup(backup_list);
+  listBackupSelect(backup_list);
+  backupStats();
+  handleInitialState();
+    $('#accordion1').on('hidden.bs.collapse', toggleIcon);
+    $('#accordion1').on('shown.bs.collapse', toggleIcon);
+});
+function toggleIcon(e) {
+    $(e.target)
+        .prev('.panel-heading')
+        .find(".more-less")
+        .toggleClass('glyphicon-plus glyphicon-minus');
+}
+function handleInitialState(){
+  if(initial_state.account_st == 1){
+    checkState('account', '#btn-account');
+  }
+  if(initial_state.mysql_st == 1){
+    checkState('mysql', '#btn-mysql');
+  }
+  if(initial_state.homedir_st == 1){
+    checkState('homedir', '#btn-homedir');
+  }
+  if(initial_state.mail_st == 1){
+    checkState('mail', '#btn-mail');
+  }
+  if(initial_state.ssl_st == 1){
+    checkState('ssl', '#btn-ssl');
+  }
+}
+function show_options_restore(typevalue){
+    if(typevalue!=''){
+        $(".restore-with-info").slideDown('slow');
+    }else{
+        $(".restore-with-info").slideUp('slow');
+    }
+    $(".restore_files_mysql").slideUp('slow');
+    $("#restore_all_content").prop("checked",true);
+    $("#restore_partial_content").prop("checked",false);
+}
+
+function checkState(type, button){
+  uchip.call('module=backups&acc=checkstate', {
+    data: "&type=" + type,
+    callback: function(res){
+      if(res.changed === true){
+        if(res.file != false){
+          new_files.push(res.file)
+          listBackup(res.backup_list);
+          noti_bubble($(button).text() + ' {{langmod.BCSUCCALCRE}}','{{langmod.BCSUCCT}}','success',false,false,'3000',true);
+        }else{
+          noti_bubble('{{langmod.BCERROALCRE1}} ' + $(button).text() + ' {{langmod.BCERROALCRE2}}','{{langmod.BCLABEL12}}','error',false,false,'3000',true);
+        }
+        let icon = $(button).data('icon');
+        uchip.handleButton(button, icon, false);
+      }else{
+        setTimeout(function(){
+          checkState(type, button);
+        },5000)
+      }
+    }
+  });
+}
+function ajaxcreatebackup(elem){
+  $(elem).parent().find('.tooltip').remove();
+  let icon = $(elem).data('icon');
+  let type = $(elem).data('type');
+  uchip.handleButton(elem, icon);
+  uchip.call('module=backups&acc=test', {
+    data: "&typefile=" + type,
+    callback: function(res){
+      checkState(type, elem);
+    }
+  });
+}
+function testFTPConnection(elem){
+  if(uchip.validator('.ftp_config')){
+    uchip.handleButton(elem, 'fa-plug');
+    let pass = Base64.encode($('#backup_ftp_pass').val());
+    uchip.call('module=backups&acc=testftp', {
+      data: "server=" + $('#backup_ftp_server').val() + "&port=" + $('#backup_ftp_port').val() + "&user=" + $('#backup_ftp_user').val() + "&pass=" + pass,
+      callback: function(res){
+        if(res.result == 'success'){
+          noti_bubble('{{langmod.BCTESTFTPS}}','{{langmod.BCSUCCT}}','success',false,false,'3000',true);
+        }else{
+          noti_bubble('{{langmod.BCTESTFTPE}}','{{langmod.BCLABEL12}}','error',false,false,'3000',true);
+        }
+        uchip.handleButton(elem, 'fa-plug', true);
+      }
+    });
+  }
+}
+function saveAutoBackup(elem){
+  let valid = true;
+  if(!uchip.validator('.email-required')){
+    valid = false;
+  }
+  if($('#auto_location_ftp').is(':checked') && !uchip.validator('.ftp_config')){
+    valid = false;
+  }
+  if(!valid){
+    return;
+  }
+  let data = '';
+  $('.auto-backup-input').each(function(){
+    let input = $(this);
+    data += input.attr('id') + '=';
+    if(input.attr('type') === 'checkbox' || input.attr('type') === 'radio'){
+      data += input.is(':checked') ? 1 : 0;
+    }else if(input.attr('type') === 'text' || input.hasClass('auto-backup-input-select')){
+      data += input.val();
+    }
+    data += '&';
+  });
+  uchip.handleButton(elem, 'fa-floppy-o');
+  uchip.call('module=backups&acc=saveauto', {
+    data: data,
+    callback: function(response){
+      uchip.handleButton(elem, 'fa-floppy-o', true);
+      noti_bubble('{{langmod.BCAUTOCONFOK}}','{{langmod.BCSUCCT}}','success',false,false,'3000',true);
+    }
+  });
+}
+function backupStats(){
+  let html_stats = '';
+  let size='{{mod.sizehome}}';
+   size=(size!='')?size:1;
+    let quota='{{mod.packquota}}';
+    quota=(quota!='')?quota:1;
+
+  let homedir = size / 1024;
+  let total_quota = quota * 1024 * 1024;
+  let homedir_percent = (homedir * 100) / total_quota;
+  html_stats = '<h4 class="no-margins">Homedir</h4>' +
+                '<small>' + uchip.humanFileSize(homedir, true) + ' / ' + uchip.humanFileSize(total_quota, true) + '</small>' +
+                '<div class="stat-percent">' + homedir_percent.toFixed(2) + '%</div>' +
+                '<div class="backup-stat-progress rogress progress-mini">' +
+                  '<div style="width: ' + homedir_percent + '%;" class="' + uchip.getBarColor(homedir_percent) + '"></div>' +
+                '</div><hr class="backup-stat-separator" />';
+    let mysqlSize='{{mod.sizemysql}}';
+    mysqlSize=(mysqlSize!='')?mysqlSize:1;
+
+  let sizemysql = mysqlSize * 1024;
+  let sizemysql_percent = (sizemysql * 100) / total_quota;
+  html_stats += '<h4 class="no-margins">MySQL</h4>' +
+                '<small>' + uchip.humanFileSize(sizemysql, true) + ' / ' + uchip.humanFileSize(total_quota, true) + '</small>' +
+                '<div class="stat-percent">' + sizemysql_percent.toFixed(2) + '%</div>' +
+                '<div class="backup-stat-progress rogress progress-mini">' +
+                  '<div style="width: ' + sizemysql_percent + '%;" class="' + uchip.getBarColor(sizemysql_percent) + '"></div>' +
+                '</div><hr class="backup-stat-separator" />';
+
+    let emailSize='{{mod.sizemail}}';
+    emailSize=(emailSize!='')?emailSize:1;
+
+  let sizemail = emailSize * 1024;
+  let sizemail_percent = (sizemail * 100) / total_quota;
+  html_stats += '<h4 class="no-margins">Email Accounts</h4>' +
+                '<small>' + uchip.humanFileSize(sizemail, true) + ' / ' + uchip.humanFileSize(total_quota, true) + '</small>' +
+                '<div class="stat-percent">' + sizemail_percent.toFixed(2) + '%</div>' +
+                '<div class="backup-stat-progress rogress progress-mini">' +
+                  '<div style="width: ' + sizemail_percent + '%;" class="' + uchip.getBarColor(sizemail_percent) + '"></div>' +
+                '</div>';
+  $('#stats_backup').html(html_stats);
+}
+function automAllOpt(elem){
+  if($(elem).is(':checked')){
+    $('.opt-checkbox').prop('checked', true);
+  }else{
+    $('.opt-checkbox').prop('checked', false);
+  }
+}
+function activateAutomatic(elem){
+  if($(elem).is(':checked')){
+    $('#autobackup_configurations').addClass('active-autobackup');
+  }else{
+    $('#autobackup_configurations').removeClass('active-autobackup');
+  }
+}
+function updateOptions(elem){
+  if(!$(elem).is(':checked')){
+    $('#auto_opt_whole').prop('checked', false);
+  }else if($('.opt-checkbox:checked').length == $('.opt-checkbox').length){
+    $('#auto_opt_whole').prop('checked', true);
+  }
+}
+function changeBackupLocation(){
+  if($('#auto_location_ftp').is(':checked')){
+    $('#autobackup_configurations').addClass('max-height');
+    $('#backup_ftp_configuration').slideDown('fast');
+  }else{
+    $('#autobackup_configurations').removeClass('max-height');
+    $('#backup_ftp_configuration').slideUp('fast');
+  }
+}
+function hide_divs(){
+    $(".restore_files_mysql").slideUp('fast');
+    $(".restore_allaccount").slideDown('slow');
+    $("#restore_all_content").prop("checked",true);
+    $("#restore_partial_content").prop("checked",false);
+    $('#backup_mysql_files').html('<div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>');
+    $('#backup_table_files').html('<div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>');
+}
+function listBackupSelect(list){
+    backup_list = list;
+    if(backup_list.length > 0) {
+
+        let index = 0;
+        backup_list.forEach(function (backup) {
+            $("#selectBack").append('<option value="'+backup.file+'">'+backup.file+'</option>');
+        });
+    }
+}
+function restoreDatabase(pathfile,cont){
+    $("#deletemodalmail").modal('hide');
+    let filesSend='';
+    if(pathfile==''){
+        if($(".checkdb").filter(':checked').length == 0){
+            noti_bubble('Please select a database to restore','Error','error',false,false,'3000',true);
+            return false;
+        }
+        $(".restbtndb i").removeClass("fa-check-square").addClass("fa-spinner fa-spin");
+        $(".checkdb").each(function(){
+            if($(this).is(":checked")){
+                filesSend +=  '&filesSelected[]='+$(this).val();
+            }
+        });
+    }else{
+        $(".btd"+cont+" i").removeClass("fa-download").addClass("fa-spinner fa-spin");
+        $(".btd"+cont+"").addClass("disabled");
+        filesSend =  '&filesSelected[]='+pathfile
+    }
+    uchip.call('module=backups&acc=restoremysql', {
+        data: 'nameFile='+$("#selectBack").val()+filesSend,
+        callback: function(response){
+            $(".btd"+cont+"").removeClass("disabled");
+            $(".btd"+cont+" i").removeClass("fa-spinner fa-spin").addClass("fa-download");
+            noti_bubble('{{ langmod.LABELSUCCESSRESDB02 }}','Success','success',false,false,'3000',true);
+            $(".restbtndb i").removeClass("fa-spinner fa-spin").addClass("fa-check-square");
+            $(".checkdb").prop("checked",false);
+        }
+    });
+}
+function listMysqlback(){
+    let table_content='';
+    $('#backup_mysql_files').html('<div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>');
+    $('#panel_database_container .panelbuttons').hide();
+    uchip.call('module=backups&acc=listfilestargz', {
+        data: 'nameFile='+$("#selectBack").val()+'&path=mysql/',
+        callback: function(response){
+            let cont=0;
+            response.forEach(function(backup){
+                cont++;
+                table_content += '<tr><td><input type="checkbox" class="checkdb"  onclick="verify_checboxdb()" name="file[]" value="'+backup.link+'" /></td>';
+                if(backup.directory==1){
+                    table_content +='<td><a onclick="listFilesback(\''+backup.link+'\')">' + backup.name + '</a></td>';
+                }else{
+                    table_content +='<td>' + backup.name + '</td>';
+                }
+                table_content +='<td><button type="button" class="btn btn-primary btn-outline-primary btn-xs mr5 mb10 btd'+cont+'" style="float:right;" onclick="confirmModal(\'restoreDatabase\',\'\',\''+backup.name+'\','+cont+')"><i class="fa fa-download" aria-hidden="true"></i></button></td>';
+                table_content +='</tr>';
+
+            });
+            let html_table = '<table class="table table-striped table-hover">' +
+                '<thead>' +
+                '<tr role="row">' +
+                '<th></th>' +
+                '<th>{{ langmod.LABELDB02 }}</th>' +
+                '<th></th>' +
+                '</tr>' +
+                '</thead>' +
+                '<tbody id="">' +
+                table_content +
+                '</tbody>' +
+                '</table>';
+            $('#backup_mysql_files').html(html_table);
+            $('#panel_database_container .panelbuttons').show();
+        }
+    });
+}
+function uplevelfile(){
+    if($("#lastPath").val()!=''){
+      listFilesback($("#lastPath").val());
+    }
+}
+function verify_checboxfile(typecheck){
+  if($(".checkfiles:checked").length > 0){
+     $(".restbtnfile").removeClass('disabled');
+  }else{
+     $(".restbtnfile").addClass('disabled');
+  }
+}
+function confirmModal(funcion,mensaje,file,cont){
+    if(funcion=='restorefiles' && cont==''){
+        if($(".checkfiles").filter(':checked').length == 0){
+            noti_bubble('{{ langmod.LABELSELECT02 }}','Error','error',false,false,'3000',true);
+            return false;
+        }
+    }
+    if(funcion=='restoreDatabase' && cont==''){
+        if($(".checkdb").filter(':checked').length == 0){
+            noti_bubble('{{ langmod.LABELSELECT01 }}','Error','error',false,false,'3000',true);
+            return false;
+        }
+    }
+    var strheader = '<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{ langmod.EMLABEL6 }}</span></button><h4 class="modal-title">{{langmod.EWARNING}}</h4>';
+    var strbody = '<p class="text-center"><small class="font-bold">{{langmod.EDELETEEMAIL}}</small></p>';
+    var strfooter = '<button type="button" class="btn btn-white" data-dismiss="modal">{{langmod.ENO}}</button><button type="button" class="btn btn-primary" id="btnyesdel" onclick="return '+funcion+'(\''+file+'\',\''+cont+'\')">{{langmod.EYES}}</button>';
+    $("#deletemodalmail .modal-header").html(strheader);
+    $("#deletemodalmail .modal-body").html(strbody);
+    $("#deletemodalmail .modal-footer").html(strfooter);
+    $("#deletemodalmail").modal('toggle');
+}
+function verify_checboxdb(typecheck){
+    if($(".checkdb:checked").length > 0){
+        $(".restbtndb").removeClass('disabled');
+    }else{
+        $(".restbtndb").addClass('disabled');
+    }
+}
+function restoreallaccount(){
+    $("#deletemodalmail").modal('hide');
+    $(".allaccount i").removeClass("fa-download").addClass("fa-spinner fa-spin");
+    $(".allaccount").addClass("disabled");
+    uchip.call('module=backups&acc=restoreallaccount', {
+        data: 'nameFile='+$("#selectBack").val(),
+        callback: function(response){
+            $(".allaccount i").removeClass("fa-spinner fa-spin").addClass("fa-download");
+            $(".allaccount").removeClass("disabled");
+            noti_bubble('{{ langmod.LABELSUCCESSRES02 }}','{{ langmod.LABELSUCEES02 }}','success',false,false,'3000',true);
+        }
+    });
+}
+function restoreAlldatabase(){
+    $("#deletemodalmail").modal('hide');
+    $(".alldb i").removeClass("fa-download").addClass("fa-spinner fa-spin");
+    uchip.call('module=backups&acc=restoreAlldatabase', {
+        data: 'nameFile='+$("#selectBack").val(),
+        callback: function(response){
+            $(".alldb i").removeClass("fa-spinner fa-spin").addClass("fa-download");
+            noti_bubble('{{ langmod.LABELSUCCESSRESDB02 }}','{{ langmod.LABELSUCEES02 }}','success',false,false,'3000',true);
+        }
+    });
+}
+function restoreallFiles(){
+    $("#deletemodalmail").modal('hide');
+    $(".allfiles i").removeClass("fa-download").addClass("fa-spinner fa-spin");
+    uchip.call('module=backups&acc=restoreallFile', {
+        data: 'nameFile='+$("#selectBack").val(),
+        callback: function(response){
+            $(".allfiles i").removeClass("fa-spinner fa-spin").addClass("fa-download");
+            noti_bubble('{{ langmod.LABELSUCCESSRESFIL02 }}','{{ langmod.LABELSUCEES02 }}','success',false,false,'3000',true);
+        }
+    });
+}
+function restorefiles(pathfile,cont){
+    $("#deletemodalmail").modal('hide');
+    let filesSend='';
+
+    if(pathfile==''){
+
+        if($(".checkfiles").filter(':checked').length == 0){
+            noti_bubble('{{ langmod.LABELERRORFILE02 }}','{{ langmod.LABELERROR02 }}','error',false,false,'3000',true);
+            return false;
+        }
+
+        $(".restbtnfile i").removeClass("fa-check-square").addClass("fa-spinner fa-spin");
+        $(".checkfiles").each(function(){
+            if($(this).is(":checked")){
+                filesSend +=  '&filesSelected[]='+$(this).val();
+            }
+        });
+    }else{
+        $(".btf"+cont+" i").removeClass("fa-download").addClass("fa-spinner fa-spin");
+        $(".btf"+cont+"").addClass("disabled");
+        filesSend =  '&filesSelected[]='+pathfile
+    }
+    uchip.call('module=backups&acc=restoreFile', {
+        data: 'nameFile='+$("#selectBack").val()+filesSend,
+        callback: function(response){
+            $(".btf"+cont+"").removeClass("disabled");
+            $(".btf"+cont+" i").removeClass("fa-spinner fa-spin").addClass("fa-download");
+            noti_bubble('{{ langmod.LABELSUCCESSRESFIL02 }}','{{ langmod.LABELSUCEES02 }}','success',false,false,'3000',true);
+            $(".restbtnfile i").removeClass("fa-spinner fa-spin").addClass("fa-check-square");
+            $(".checkfiles").prop("checked",false);
+        }
+    });
+}
+function listFilesback(pathFile){
+    if(pathFile!='home/'){
+        $(".backbtn").removeClass('disabled');
+    }else{
+        $(".backbtn").addClass('disabled');
+    }
+    $(".restore_files_mysql").slideDown('slow');
+    $(".restore_allaccount").slideUp('fast');
+    $('#backup_table_files').html('<div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>');
+    $('#panel_home_container .panelbuttons').hide();
+    let table_content='';
+    uchip.call('module=backups&acc=listfilestargz', {
+        data: 'nameFile='+$("#selectBack").val()+'&path='+pathFile,
+        callback: function(response){
+            let charspath = pathFile.split('/');
+            let result = pathFile.replace(charspath[(charspath.length - 2)]+"/", "");
+            let cont=0;
+            response.forEach(function(backup){
+                cont++;
+                table_content += '<tr><td><input type="checkbox" class="checkfiles" onclick="verify_checboxfile()" name="file[]" value="'+backup.link+'" /></td>';
+                if(backup.directory==1){
+                    table_content +='<td><a onclick="listFilesback(\''+backup.link+'\')"><i class="fa fa-folder"></i> ' + backup.name + '</a></td>';
+                }else{
+                    table_content +='<td><i class="fa fa-file"></i> ' + backup.name + '</td>';
+                }
+                table_content +='<td><button type="button" class="btn btn-primary btn-outline-primary btn-xs mr5 mb10 btf'+cont+'" style="float:right;" onclick="confirmModal(\'restorefiles\',\'\',\''+backup.link+'\','+cont+')"><i class="fa fa-download" aria-hidden="true"></i></button></td>';
+                table_content +='</tr>';
+
+            });
+            let html_table = '<input type="hidden" id="lastPath" value="'+result+'" /><table class="table table-striped table-hover">' +
+                '<thead>' +
+                '<tr role="row">' +
+                '<th></th>' +
+                '<th>{{ langmod.LABELFILETIT02 }}</th>' +
+                '<th></th>' +
+                '</tr>' +
+                '</thead>' +
+                '<tbody id="">' +
+                table_content +
+                '</tbody>' +
+                '</table>';
+            $('#backup_table_files').html(html_table);
+            $('#panel_home_container .panelbuttons').show();
+        }
+    });
+}
+function listBackup(list){
+  backup_list = list;
+  if(backup_list.length > 0){
+    let table_content = '';
+    let index = 0;
+    backup_list.forEach(function(backup){
+      let new_tag = '';
+      if(new_files.indexOf(backup.file) > -1){
+        new_tag = ' <span class="badge badge-success new-file"><i class="fa fa-tag" aria-hidden="true"></i>  New</span>';
+      }
+      table_content += '<tr id="tr_bckfile_' + index + '">' +
+                        '<td><a class="backup-link" href="javascript:void(0)" data-toggle="tooltip" data-placement="top" title="{{langmod.BCDOWNLOADMESS}}"><i class="fa fa-download"></i> ' + backup.file + '</a>' + new_tag + '</td>' +
+                        '<td class="text-right">' + uchip.humanFileSize(backup.size, true) + '</td>' +
+                        '<td class="text-center">' + backup.date + '</td>' +
+                        '<td style="width:50px;text-align:center;">' +
+                          '<button type="button" data-toggle="tooltip" onclick="deletetar(0,\'' + backup.file + '\',' + index + ')" data-placement="top" class="btn btn-danger btn-xs mr5 mb10" id="btn_del_' + index + '" title="{{langmod.DBDELETE}}"><i class="fa fa-trash"></i></button>' +
+                        '</td>' +
+                      '</tr>';
+      index++;
+    });
+    let html_table = '<table class="table backup_table table-striped table-bordered table-hover">' +
+                        '<thead>' +
+                          '<tr role="row">' +
+                            '<th>File</th>' +
+                            '<th class="text-right">Size</th>' +
+                            '<th class="text-center">Creation date</th>' +
+                            '<th style="width:50px;text-align:center;">Actions</th>' +
+                          '</tr>' +
+                        '</thead>' +
+                        '<tbody id="contftp">' +
+                          table_content +
+                        '</tbody>' +
+                      '</table>';
+    $('#backup_table_container').html(html_table);
+    $('.backup_table').DataTable().destroy();
+    backup_table = $('.backup_table').DataTable({
+        "order": [[ 2, "desc" ]]
+    });
+    $('[data-toggle="tooltip"]').tooltip();
+    $('.new-file').fadeIn('fast');
+  }else{
+    $('#backup_table_container').html('<div class="empty_list"><h4 class="text-success">{{langmod.BCEMPTYL}}</h4></div>');
+  }
+}
+function sendEmailBackup(elem){
+  if($(elem).is(':checked')){
+    $('#emaddress_backup_wrapper').slideDown('fast');
+  }else{
+    $('#emaddress_backup_wrapper').slideUp('fast');
+  }
+}
+function displayCreationWindow(elem){
+  let title = $(elem).text();
+  $('#backup_creation_title').text(title);
+  $('#bck_crea_btn_title').text(title.toLowerCase());
+  let type = $(elem).data('typeback');
+  $('#create_backup_btn').data('type', type);
+  $('#new_backup_btns').slideUp('fast', function(){
+    $('#gen_whole_window').slideDown('fast');
+  });
+
+}
+function createBackup(elem){
+  let send_email = $('#emaddress_backup_wrapper').is(':visible') ? 1 : 0;
+  if(send_email == 1 && !uchip.validator('#emaddress_backup')){
+    return;
+  }
+  let type = $(elem).data('type');
+  let btn = $('#btn-' +  type);
+  btn.parent().find('.tooltip').remove();
+  let icon = btn.data('icon');
+  let type_file = btn.data('typeback');
+  uchip.handleButton(btn, icon);
+  cancelNewBack();
+  uchip.call('module=backups&acc=test', {
+    data: "&typefile=" + type_file + "&send_email=" + send_email + "&email=" + $('#emaddress_backup').val(),
+    callback: function(res){
+      checkState(type_file, btn);
+    }
+  });
+}
+$("#btn-generatenow").click(function (){
+  $('#gen_whole_window').slideDown('fast');
+    // $("#notemailb").hide('blind');
+    // $("#btn-genenow").hide();
+    // $("#textbackok").show();
+    // $("#btn-fullbackup").addClass('disabled');
+    // var email=$("#notiemail").val();
+    // var typefile='all';
+    // btnporcess('off','btn-generatenow','{{ langmod.BCLABEL4 }}');
+    // ajaxcreatebackup(email,typefile,'btn-fullbackup');
+    // btnporcess('on','btn-generatenow','{{ langmod.BCLABEL1 }}');
+    // return false;
+});
+function cancelNewBack(){
+  $('#gen_whole_window').slideUp('fast', function(){
+    $('#new_backup_btns').slideDown('fast');
+  });
+}
+function deletetar(st,file,index){
+  if(st==0){
+    var strheader = '<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{langmod.BCARNING}}</span></button><h4 class="modal-title" style="font-size: 2rem;">{{langmod.BCDELETEFILE}}</h4>';
+    var strbody = '<p>{{langmod.BCDELTIT1}}</p>';
+    strbody += '<p><b>' + file + '</b></p>';
+    strbody += '<p>{{langmod.BCDELTIT2}}</p>';
+    var strfooter = '<button type="button" class="btn btn-white" data-dismiss="modal">{{langmod.BCNO}}</button><button type="button" class="btn btn-primary" id="btnyesdel" onclick="return deletetar(\'1\',\''+file+'\',\''+index+'\')">{{langmod.BCYES}}</button>';
+    $("#deletemodal .modal-footer").html(strfooter);
+    $("#deletemodal .modal-body").html(strbody);
+    $("#deletemodal .modal-header").html(strheader);
+    ///btnporcess('on','btnyesdel','{{ langmod.DYES }}');
+    $("#deletemodal").modal('toggle');
+    return false;
+  }else{
+    $("#deletemodal").modal('hide');
+    let btn = '#btn_del_' + index;
+    let tr = $('#tr_bckfile_' + index);
+    tr.addClass('deleting_tr');
+    uchip.handleButton(btn, 'fa-trash');
+    uchip.call('module=backups&acc=delete', {
+      data: "file=" + file,
+      callback: function(res){
+        if(res.result == 'success'){
+          noti_bubble('{{langmod.BCDELETEOK}}','{{langmod.BCSUCCT}}','success',false,false,'3000',true);
+          tr.slideUp('fast', function(){
+            backup_table.row(this).remove().draw();
+          });
+        }else{
+          tr.removeClass('deleting_tr');
+          uchip.handleButton(btn,'fa-trash', true);
+          noti_bubble('{{langmod.BCERRODEL}}','{{langmod.BCLABEL12}}','error',false,false,'3000',true);
+        }
+      }
+    });
+  }
+}
+function dumpSql(elem){
+  if(!uchip.validator('#backup_db')){
+    return false;
+  }
+  let db = $('#backup_db').val();
+  uchip.handleButton(elem, 'fa-database');
+  let data_send = "db=" + db;
+  uchip.call('module=mysql_manager&acc=dumpsql', {
+    data: data_send,
+    callback: function(response){
+      if(response.result == 'success'){
+        noti_bubble('{{langmod.BSBACKUPOK}}','{{langmod.BCSUCCT}}','success',false,false,'3000',true);
+        window.open('./{{users}}/index.php?module=mysql_manager&acc=download_backup&identifier=' + response.identifier, '_blank');
+      }else{
+        noti_bubble('{{langmod.BCGENERROR}}','{{langmod.BCLABEL12}}','error',false,false,'3000',true);
+      }
+      uchip.handleButton(elem, 'fa-database', true);
+    }
+  });
+}
+// CECILIO MORALES JS
+
+function searchbackup(){
+    var spin = '<i class="fa fa-spinner fa-spin"></i>';
+    $("#restselect").html(spin);
+    $("#restradio").html(spin);
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=backups&acc=type",
+        complete: function(datos){
+            //console.log(datos.responseText);
+            //alert(datos.responseText);
+            var str = datos.responseText;
+            var trozo = str.split('|@|');
+            $("#restselect").html(trozo[0]);
+            $("#restradio").html(trozo[1]);
+            return false;
+        }
+    });
+    return false;
+}
+function restoreback(st,file,row){
+    if(st==0){
+        $("#btndole"+row).hide();
+        $("#btnacition"+row).show();
+        $("#hiddenvalue").val(file+'||'+row);
+        $("#myModaldetail").modal('toggle');
+    }
+    if(st==1){
+        $("#hiddenvalue").val(file+'||'+row);
+        $("#myModaldetail").modal('toggle');
+        return false;
+    }
+    if(st==2){
+        $("#btnacition"+row).hide();
+        $("#btndole"+row).show();
+    }
+    if(st==3){
+        var sw='';
+        if($("#homeuser2").prop('checked')){sw=sw+'homeuser||';}
+        if($("#mysqluser2").prop('checked')){sw=sw+'mysqluser||';}
+        if($("#mailuser2").prop('checked')){sw=sw+'mailuser||';}
+        if($("#ftpaccounts2").prop('checked')){sw=sw+'ftpaccounts||';}
+        if($("#nameds2").prop('checked')){sw=sw+'nameds||';}
+        if($("#passaccount").prop('checked')){sw=sw+'passaccount||';}
+
+        if(sw!=''){
+            var trozval=$("#hiddenvalue").val();
+            var trozo =trozval.split('||');
+            var row =trozo[1];
+            var file =trozo[0];
+            $("#myModaldetail").modal('toggle');
+            $("#btn-restorenow"+row).html('<i class="fa fa-spinner fa-spin"></i> {{langmod.BCLABEL18}}');
+            $("#btn-restorenow"+row).addClass('disabled');
+            $("#btn-restorenow"+row).attr('disabled',true);
+            $("#btn-restorecancel"+row).hide();
+            $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+            $.ajax({
+                type: "POST",
+                url: "./{{users}}/index.php?module=backups&acc=restoreback",
+                data:"file="+file+"&options="+sw,
+                complete: function(datos){
+                    console.log(datos.responseText);
+                    if(datos.responseText==1){
+                        $("#btnacition"+row).hide();
+                        $("#btndole"+row).show();
+                        noti_bubble('{{ langmod.BCLABEL15 }}','{{  langmod.BCSUCCT }}','success',false,false,'3000',true);
+                    }else{
+                        noti_bubble('{{ langmod.BCLABEL22 }}','{{  langmod.BCLABEL12 }}','error',false,false,'5000',true);
+                        $("#btnacition"+row).hide();
+                        $("#btndole"+row).show();
+                    }
+                    return false;
+                }
+            });
+        }else{
+            noti_bubble('{{ langmod.BCLABEL21 }}','{{  langmod.BCLABEL12 }}','error',false,false,'5000',true);
+            return false;
+        }
+    }
+    return false;
+}
+function typerestore(sw){
+    if(sw==0){
+        $("#backupfile").hide('blind');
+        $("#serverbackup").show('blind');
+        $("#btnretoreuser").show();
+        searchbackup();
+
+    }else{
+        $("#serverbackup").hide('blind');
+        $("#backupfile").show('blind');
+        $("#btnretoreuser").hide();
+    }
+}
+$("#btnretoreuser").click(function(){
+    if($("#selecttypebackup").val()==''){
+        noti_bubble('{{langmod.BCLABEL11}}','{{langmod.BCLABEL12}}','error',false,false,'3000',true);
+        return false;
+    }
+    var restaure ='';
+    var homeuser =0;
+    var mysqluser =0;
+    var mailuser =0;
+    var ftp =0;
+    var named =0;
+    $("input:checkbox:checked").each(function() {
+        restaure=$(this).val();
+        if($(this).val()=='home'){ homeuser = 1;}
+        if($(this).val()=='mysql'){ mysqluser = 1;}
+        if($(this).val()=='mail'){ mailuser = 1;}
+        if($(this).val()=='ftp'){ ftp = 1;}
+        if($(this).val()=='named'){ named = 1;}
+    });
+    if(restaure==''){
+        noti_bubble('{{langmod.BCLABEL13}}','{{langmod.BCLABEL12}}','error',false,false,'3000',true);
+        return false;
+    }
+    var selecttypebackup = $("#selecttypebackup").val();
+    $("#btnretoreuser").attr('disabled',true);
+    $("#btnretoreuser").addClass('disabled');
+    $("#btnretoreuser").html('<i class="fa fa-spinner fa-spin"></i> {{ langmod.BCLABEL14 }}');
+    $("#btnretoreuser").removeClass('btn-success');
+    $("#btnretoreuser").addClass('btn-primary');
+
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=backups&acc=restoreuserbackup",
+        data:"homeuser="+homeuser+"&mysqluser="+mysqluser+"&mailuser="+mailuser+"&selecttypebackup="+selecttypebackup+"&ftp="+ftp+"&named="+named,
+        complete: function(datos){
+            //alert(datos.responseText);
+            if(datos.responseText=='OK'){
+                noti_bubble('{{langmod.BCLABEL15}}','{{langmod.BCSUCCT}}','success',false,false,'3000',true);
+            }else{
+                noti_bubble('{{langmod.BCLABEL16}}','{{langmod.BCLABEL12}}','error',false,false,'3000',true);
+            }
+            $("#btnretoreuser").attr('disabled',false);
+            $("#btnretoreuser").removeClass('disabled');
+            $("#btnretoreuser").html('{{ langmod.BTNRESTORE }}');
+            $("#btnretoreuser").removeClass('btn-primary');
+            $("#btnretoreuser").addClass('btn-success');
+            return false;
+        }
+    });
+
+});
+$("#restor_file").change(function() {
+    $("#btn_rest_file").hide();
+    var file = this.files[0];
+    var imagefile = file.type;
+    var match="application/gzip";
+    if(imagefile!=match){
+        noti_bubble('{{langmod.BCALERt1}}','','error',false,false,'3000',true);
+        return false;
+    }else{
+        $("#btn_rest_file ").show();
+        return false;
+    }
+});
+$("#restore_sql").change(function (){
+    $("#btn_rest_sql").hide();
+    var file = this.files[0];
+    var imagefile = file.type;
+    var match="application/sql";
+    if(imagefile!=match){
+        noti_bubble('{{langmod.BCALERt1}}','','error',false,false,'3000',true);
+        return false;
+    }else{
+        $("#btn_rest_sql ").show();
+        return false;
+    }
+});
+$('#btn_rest_sql').click(function () {
+    noti_bubble('{{langmod.BCLOADING}}','','warning',false,false,'3000',true);
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        url: "./{{users}}/index.php?module=backups&acc=restore_sql",
+        type: "POST",
+        data: new FormData(uploadsql),
+        contentType: false,
+        cache: false,
+        processData:false,
+        success: function(data){
+            //$("#message2").html('<b>{{langmod.BCBACKUPOK}}</b>');
+            noti_bubble('{{langmod.BCBACKUPOK}}','','success',false,false,'3000',true);
+            return false;
+        }
+    });
+    return false;
+});
+$('#btn_rest_file').click(function () {
+    noti_bubble('{{langmod.BCLOADING}}','','warning',false,false,'3000',true);
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    var uploadtargz =$("#restor_file");
+    $.ajax({
+        url: "./{{users}}/index.php?module=backups&acc=restore_file",
+        type: "POST",
+        data: new FormData(uploadtargz),
+        contentType: false,
+        cache: false,
+        processData:false,
+        success: function(datos){
+            if(datos.responseText==0){
+                noti_bubble('{{langmod.BCBACKUPOK}}','','success',false,false,'3000',true);
+            }else{
+                var errormsj=datos.responseText;
+                noti_bubble('{{langmod.BCBACKUPOK}}',errormsj,'error',false,false,'3000',true);
+            }
+            return false;
+        }
+    });
+    return false;
+});
+$("#btn_rest_file").on('submit',(function(e) {
+    e.preventDefault();
+    $("#message").empty();
+    $('#loading').show();
+    $.ajax({
+        url: "ajax_php_file.php", // Url to which the request is send
+        type: "POST",             // Type of request to be send, called as method
+        data: new FormData(this), // Data sent to server, a set of key/value pairs (i.e. form fields and values)
+        contentType: false,       // The content type used when sending data to the server.
+        cache: false,             // To unable request pages to be cached
+        processData:false,        // To send DOMDocument or non processed data file it is set to false
+        success: function(data)   // A function to be called if request succeeds
+        {
+            $('#loading').hide();
+            $("#message").html(data);
+        }
+    });
+}));

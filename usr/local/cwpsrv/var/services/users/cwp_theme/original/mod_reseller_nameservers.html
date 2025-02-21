@@ -1,0 +1,114 @@
+<div class="ibox" id="nameservers_wrapper_box">
+  <div class="ibox-title">
+    <h4>{{langmod.RSNSLAB1}}</h4>
+  </div>
+  <div class="ibox-content" id="features_wrapper">
+    <div class="table_cron_loader" id="loader_namerservers"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+    <div id="nameservers_wrapper">
+      <div>
+        <div class="checkbox checkbox-primary">
+          <input class="checkbox checkbox-danger" type="checkbox" id="main_nameserver" onchange="return main_nameserver()" checked>
+          <label for="main_nameserver">{{langmod.RSNSLAB2}}</label>
+        </div>
+      </div>
+      <div class="row">
+          <div class="col-lg-4">
+            <h4>{{langmod.RSLABEL81}}</h4>
+            <div class="re-nam-item">
+                <div class="re-nam-item-prefix">
+                    <input type="text" class="form-control ns-input ns-required" data-required="true" data-errorplace="none" maxlength="3" placeholder="ns1" value="ns1" id="ns1" disabled>
+                </div>
+                <div class="re-nam-item-domain">
+                    <select class="form-control ns-input ns-select ns-required" data-required="true" data-errorplace="none" id="domainnameserver1" disabled>
+
+                    </select>
+                </div>
+            </div>
+            <div class="re-nam-item">
+                <div class="re-nam-item-prefix">
+                    <input type="text" class="form-control ns-input ns-required" data-required="true" data-errorplace="none" placeholder="ns2"  maxlength="3" value="ns2" id="ns2" disabled>
+                </div>
+                <div class="re-nam-item-domain">
+                    <select class="form-control ns-input ns-select ns-required" data-required="true" data-errorplace="none" id="domainnameserver2" disabled>
+
+                    </select>
+                </div>
+            </div>
+            <div class="re-nam-item">
+                <div class="re-nam-item-prefix">
+                    <input type="text" class="form-control ns-input" maxlength="3" placeholder="ns3" value="ns3" id="ns3" disabled>
+                </div>
+                <div class="re-nam-item-domain">
+                    <select class="form-control ns-input ns-select" id="domainnameserver3" disabled>
+
+                    </select>
+                </div>
+            </div>
+            <div class="re-nam-item">
+                <div class="re-nam-item-prefix">
+                    <input type="text" class="form-control ns-input" maxlength="3" placeholder="ns4" value="ns4" id="ns4" disabled>
+                </div>
+                <div class="re-nam-item-domain">
+                    <select class="form-control ns-input ns-select" id="domainnameserver4" disabled>
+
+                    </select>
+                </div>
+            </div>
+            <div class="re-nam-item">
+                <div class="re-nam-item-prefix">
+                    <input type="text" class="form-control ns-input" maxlength="3" placeholder="ns5" value="ns5" id="ns5" disabled>
+                </div>
+                <div class="re-nam-item-domain">
+                    <select class="form-control ns-input ns-select" id="domainnameserver5" disabled>
+
+                    </select>
+                </div>
+            </div>
+          </div>
+          <div class="col-lg-6 ns-current-config">
+            <h4>{{langmod.RSNSLAB3}}</h4>
+            <div><strong>{{langmod.RSNSLAB4}} 1:</strong>   <span id="ns1p"><i class="fa fa-spinner fa-spin"></i></span>  </div>
+            <div><strong>{{langmod.RSNSLAB4}} 2:</strong>   <span id="ns2p"><i class="fa fa-spinner fa-spin"></i></span>  </div>
+            <div><strong>{{langmod.RSNSLAB4}} 3:</strong>   <span id="ns3p"><i class="fa fa-spinner fa-spin"></i></span>  </div>
+            <div><strong>{{langmod.RSNSLAB4}} 4:</strong>   <span id="ns4p"><i class="fa fa-spinner fa-spin"></i></span>  </div>
+            <div><strong>{{langmod.RSNSLAB4}} 5:</strong>   <span id="ns5p"><i class="fa fa-spinner fa-spin"></i></span>  </div>
+          </div>
+      </div>
+      <div class="row" id="alertdiv">
+        <input type="hidden" id="returajax">
+        <div class="col-md-10">
+          <div class="alert alert-warning">
+
+          </div>
+        </div>
+      </div>
+      <div class="row">
+          <div class="col-lg-1" style="padding-top: 10px;padding-bottom: 5px">
+              <button class="btn btn-success" onclick="saveNS(this)" id="bntaddns"><i class="fa fa-floppy-o"></i> {{langmod.RSNSLAB5}}</button>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal" id="noupdate_ns" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content animated fadeIn">
+      <div class="modal-header" style="padding: 10px;">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">×</span>
+          <span class="sr-only">{{langene.MDCLOSE}}</span>
+        </button>
+        <h4 class="modal-title" style="font-size:1.5rem">{{langmod.RSLABEL98}}</h4>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <p>{{langmod.RSLABEL116}} <b><span id="alert_acc_qty"></span></b> {{langmod.RSLABEL68}} <b><span id="alert_zon_qty"></span></b> {{langmod.RSLABEL117}}</p>
+        <p>{{langmod.RSLABEL118}}</p>
+        <h4>{{langmod.RSLABEL93}}</h4>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-white" data-dismiss="modal">{{ langmod.RSLABEL42 }}</button>
+        <button type="button" class="btn btn-primary" onclick="btnnotalert(1)">{{langmod.RSLABEL94}}</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,19 @@
+<div id="_pgre_database_tab_" class="tab-pane fade in active">
+    <div class="ibox">
+        <div class="ibox-title">
+            <h4>Mongo Database List</h4>
+                {% if (mod.pgresql_qty < mod.pgresql_quota) or (mod.pgresql_quota==-1) %} 
+                    {% set swver='' %} 
+                {% else %} 
+                    {% set swver='disabled' %} 
+                {% endif %} 
+                <button onclick="pgreAddDBForm()" id="btn_add_pgresql_database_" {{swver}} style="font-size:90%" class="btn btn-success">
+                    <i class="fa fa-plus"></i>
+                    {{langmod.LABPGRE6}}
+                </button>
+        </div>
+        <div class="ibox-content" id="_pgre_sql_table_wrapper_">
+            <div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,71 @@
+
+console.log();
+let uchip = null;
+$(document).ready(function() {
+  uchip = new Uchip();
+});
+const setOptSelected = (selected, line, st) => {
+  $('#opt_selected_' + line).text(selected);
+  $('#opt_selected_' + line).data('selected', st);
+}
+const setOption = (elem) => {
+  uchip.handleButton(elem,'fa-floppy-o');
+  let index = $(elem).data('index');
+  let domain = $(elem).data('domain');
+  let selected = $('#opt_selected_' + index).data('selected');
+  uchip.call('module=mail_routing&acc=changetype', {
+    data: 'domain=' + domain + '&st=' + selected,
+    callback: (response) => {
+      uchip.handleButton(elem,'fa-floppy-o', true);
+      if(response.result == 'success'){
+          noti_bubble('{{langmod.MRSUCCES2}}','{{langmod.MRSUCCES}}','success',false,false,'3000',true);
+      }else{
+          noti_bubble('{{langmod.MRERRORT2}}','{{langmod.MRERRORT}}','error',false,false,'3000',true);
+      }
+    }
+  });
+}
+const statusdomiain = (domain, elem) => {
+  uchip.handleButton(elem,'fa-stethoscope');
+  uchip.call('module=mail_routing&acc=stdomain', {
+    data: 'domain=' + domain,
+    callback: (response) => {
+      uchip.handleButton(elem,'fa-stethoscope', true);
+      if(response.result == 'success'){
+          noti_bubble(response.status,'Status','warning',true,true,'3000',false);
+      }else{
+          noti_bubble('{{langmod.MRSTERROR}}','{{langmod.MRERRORT}}','error',false,false,'3000',true);
+      }
+    }
+  });
+}
+function changest(domain,st){
+    $(".btnchangest").attr('disabled',true);
+    $(".btnchangest").addClass('disabled');
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=mail_routing&acc=changest",
+        data: "domain=" + domain + "&st=" + st,
+        complete: function (datos) {
+            updatelistmxrouting();
+            if(datos.responseText==1){
+                noti_bubble('{{langmod.MRSUCCES2}}','{{langmod.MRSUCCES}}','success',false,false,'3000',true);
+            }else{
+                noti_bubble('{{langmod.MRERRORT2}}','{{langmod.MRERRORT}}','error',false,false,'3000',true);
+            }
+            $(".btnchangest").attr('disabled',false);
+            $(".btnchangest").removeClass('disabled');
+            return false;
+        }
+    })
+}
+function updatelistmxrouting(){
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=mail_routing&acc=updatelist",
+        complete: function (datos) {
+            $("#listtr").html(datos.responseText);
+            return false;
+        }
+    })
+}

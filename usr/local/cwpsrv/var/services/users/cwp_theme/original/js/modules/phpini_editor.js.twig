@@ -1,0 +1,557 @@
+
+console.log();
+let php_conf = JSON.parse('{{mod.confs_php|json_encode|raw}}');
+let initial_conf = JSON.parse('{{mod.tab|json_encode|raw}}');
+let timezone_data = JSON.parse('{{mod.timezone_data|json_encode|raw}}');
+let editor_one = null;
+let uchip = null;
+function disableConf(elem){
+  let id = $(elem).data('line');
+  let st = $(elem).data('status');
+  let fa_icon = 'fa-check';
+  let new_icon = 'fa-ban';
+  let css_class = 'btn-success';
+  let new_css_class = 'btn-warning';
+  let msg = '{{langmod.PHPINIDISABLED}}';
+  let new_st = 0;
+  if(st == 0){
+    msg = '{{langmod.PHPINIENABLED}}';
+    fa_icon = 'fa-ban';
+    new_icon = 'fa-check';
+    css_class = 'btn-warning';
+    new_css_class = 'btn-success';
+    new_st = 1;
+  }
+  uchip.handleButton(elem, fa_icon);
+  uchip.call('module=phpini_editor&acc=changestconf', {
+    data:"id=" + id + "&file=" + Base64.encode($("#hfilename").val()),
+    callback: function(response){
+      uchip.handleButton(elem, new_icon, true);
+      $(elem).removeClass(css_class);
+      $(elem).addClass(new_css_class);
+      noti_bubble(msg,'{{langmod.PHPINISUCCESS}}','success',true,false,'3000',true);
+      $(elem).data('status', new_st);
+      updateEditor();
+    }
+  });
+
+}
+function updateEditor(){
+  let content = '';
+  $('.conf_item').each(function(){
+    let tag = $(this).find('.conf_item_tag').val();
+    let value = $(this).find('.conf_item_value').val().replaceAll('&#34;','"');
+    let st = $(this).find('.item_status_button').data('status') != 1 && tag.substring(0, 2) != ';;' ? ';;' : '';
+    content += st + tag.replaceAll('__','.') + '=' + value + '\n';
+  });
+  editor_one.setValue(content);
+}
+String.prototype.replaceAll = function(search, replacement) {
+    var target = this;
+    return target.split(search).join(replacement);
+};
+function updatePHPConf(elem){
+  let confs = [];
+  let content = '';
+  $('.conf_item').each(function(){
+    let tag = $(this).find('.conf_item_tag').val();
+    let value = $(this).find('.conf_item_value').val();
+    confs.push({
+      tag : tag,
+      value : value
+    });
+    let st = $(this).find('.item_status_button').data('status') != 1 && tag.substring(0, 2) != ';;' ? ';;' : '';
+    content += st + tag.replaceAll('__','.') + '=' + value + '\n';
+  });
+  // console.log(JSON.stringify(confs).replaceAll('&', '{AMPERSAND}'));
+  let config_options = Base64.encode(JSON.stringify(confs).replaceAll('&', '{AMPERSAND}').replaceAll('__', '.'));
+  config_options = encodeURIComponent(config_options);
+  // console.log(Base64.decode(mamasita));
+  // return;
+  uchip.handleButton(elem, 'fa-floppy-o');
+  uchip.call('module=phpini_editor&acc=updateconf', {
+    data: 'data_conf=' + config_options + '&file=' + Base64.encode($('#hfilename').val()),
+    callback: function(response){
+      if(response.result == 'success'){
+        noti_bubble('{{langmod.PHPEXIT}}','{{langmod.PHPINISUCCESS}}','success',true,false,'3000',true);
+        editor_one.setValue(content);
+      }else if(response.result == 'warning'){
+        noti_bubble('{{langmod.PHPINVALIDINPUT2}}<br>' + response.errors.join(': {{langmod.PHPINVALIDINPUT}}<br>') + ': {{langmod.PHPINVALIDINPUT}}','{{langmod.PHPINISUCCESS}}','warning',true,false,'6000',true);
+        // editor_one.setValue(content);
+        response.errors.forEach(function(tagerror){
+          tagerror = tagerror.replaceAll(';;','').replaceAll('__','.');
+          $('#tag_value_' + tagerror).val('');
+        });
+        let content = '';
+        $('.conf_item').each(function(){
+          let tag = $(this).find('.conf_item_tag').val();
+          let value = $(this).find('.conf_item_value').val();
+          let st = $(this).find('.item_status_button').data('status') != 1 && tag.substring(0, 2) != ';;' ? ';;' : '';
+          content += st + tag.replaceAll('__','.') + '=' + value + '\n';
+        });
+        editor_one.setValue(content);
+      }else if(response.result == 'error'){
+        noti_bubble('{{langmod.ERRORINI}}','{{langmod.ERROR1}}','error',true,false,'3000',true);
+      }
+      uchip.handleButton(elem, 'fa-floppy-o', true);
+    }
+  });
+}
+function checkSideBar(){
+  let scroll = $(window).scrollTop();
+  let sidebar = $('#sidebar_phpini');
+  let phpini_table = $('#phpini_table');
+  let table_position = phpini_table.offset();
+  let table_height = phpini_table.height();
+  let table_bottom = table_height + table_position.top;
+  let sidebar_position = sidebar.offset();
+  let sidebar_bottom = sidebar.height() + sidebar_position.top;
+  if(sidebar_bottom > table_bottom){
+    let new_top = table_bottom - table_position.top - sidebar.height();
+    sidebar.animate({top:new_top}, 200);
+  }
+}
+function saveFromEditor(elem){
+  // console.log(editor_one.getValue());
+  uchip.handleButton('.save-from-editor', 'fa-floppy-o');
+  let conf_data = Base64.encode(editor_one.getValue().replaceAll('&', '{AMPERSAND}'));
+  conf_data = encodeURIComponent(conf_data);
+  uchip.call('module=phpini_editor&acc=updatefromeditor', {
+    data: 'data_conf=' + conf_data + '&file=' + Base64.encode($('#hfilename').val()),
+    callback: function(response){
+      if(response.result == 'success'){
+        noti_bubble('{{langmod.PHPEXIT}}','{{langmod.PHPINISUCCESS}}','success',true,false,'3000',true);
+        listConfiguration(response.list);
+      }else{
+        noti_bubble('{{langmod.ERRORINI}}','{{langmod.ERROR1}}','error',true,false,'3000',true);
+      }
+      uchip.handleButton('.save-from-editor', 'fa-floppy-o', true);
+    }
+  });
+}
+$(function () {
+    uchip = {% if mod.isie == 1 %} new $.Uchip(); {% else %} new Uchip(); {% endif %}
+
+    editor_one = CodeMirror.fromTextArea(document.getElementById("code1"), {
+        lineNumbers: true,
+        matchBrackets: true,
+        styleActiveLine: true,
+        theme: "ambiance"
+    });
+
+    editor_one.on('change', function (cMirror) {
+        code1hiden.value = cMirror.getValue();
+    });
+
+    $(window).scroll(function () {
+        let scroll = $(window).scrollTop();
+        let sidebar = $('#sidebar_phpini');
+        let phpini_table = $('#phpini_table');
+        let table_position = phpini_table.offset();
+        let table_bottom = phpini_table.height() + table_position.top;
+        let sidebar_position = sidebar.offset();
+        let sidebar_bottom = sidebar.height() + sidebar_position.top;
+
+        if (scroll > table_position.top) {
+            let new_top = scroll - table_position.top;
+            if (scroll < sidebar_position.top || sidebar_bottom < table_bottom) {
+                sidebar.css('top', new_top);
+            }
+        } else if (scroll < table_position.top) {
+            sidebar.css('top', 0);
+        }
+    });
+});
+
+
+function addNewRecord(elem){
+  let is_custom = $('#custom_conf').is(':visible');
+  let is_valid = true;
+  if(is_custom  && $('#custom_conf').val() == ''){
+    $('#custom_conf').addClass('error');
+    is_valid = false;
+  }else if(!is_custom && $('#addnew_sel').val() == ''){
+    $('#addnew_sel').addClass('error');
+    is_valid = false;
+  }
+  if($('#addvalue').val() == ''){
+    $('#addvalue').addClass('error');
+    is_valid = false;
+  }
+  if(!is_valid){
+    noti_bubble('{{langmod.PHPINIREQFILEDS}}','{{langmod.ERROR1}}','error',true,false,'3000',true);
+    return;
+  }else{
+    uchip.handleButton(elem,'fa-plus');
+    let label = is_custom ? $('#custom_conf').val() : $('#addnew_sel').val();
+    uchip.call('module=phpini_editor&acc=addlabelphpini', {
+      data: 'label=' + Base64.encode(label)+'&value=' + Base64.encode($('#addvalue').val().replaceAll('&', '{AMPERSAND}')) + '&file=' + Base64.encode($('#hfilename').val()),
+      callback: function(response){
+        if(response.result == 'success'){
+          noti_bubble('{{langmod.EXIST}}','{{langmod.EXITO}}','success',true,false,'3000',true);
+          if(!is_custom){
+            $("#addnew_sel option[value='" + response.conf.label + "']").remove();
+          }
+          // conf_value.replaceAll('{DQ_CWP}','"')
+          let val_new = response.conf.value.replaceAll('{SQ_CWP}',"'").replaceAll('{DQ_CWP}','&#34;');
+          let row_conf = '<tr id="phpconf_line_' + response.conf.line + '" class="conf_item">' +
+              '<td>' +
+                '<label class="col-form-label">' + response.conf.label.replaceAll('__','.').replaceAll(';;','') + '</label>' +
+                '<input type="hidden" id="pc_item_' + response.conf.line + '" class="conf_item_tag" value="' + response.conf.label + '">' +
+              '</td>' +
+              '<td>' +
+                '<input class="form-control conf_item_value" id="tag_value_' + response.conf.label.replaceAll('__','.').replaceAll(';;','') + '" value="' + val_new + '"></input>' +
+              '</td>' +
+              '<td class="text-center">' +
+                '<div class="">' +
+                  '<button type="button" class="btn btn-success btn-xs item_status_button" title="{{langmod.BTN_ENABLE}}" data-line="' + response.conf.line + '" data-status="1" onclick="return disableConf(this)"><i class="fa fa-check"></i></button>&nbsp;' +
+                  '<button type="button" class="btn btn-danger btn-xs" id="pc_button_delete_' + response.conf.line + '" title="{{langmod.BTN_DELETE}}" onclick="return deletephpini(0,' + response.conf.line + ',\'' + response.conf.label + '\')"><i class="fa fa-trash"></i></button>' +
+                '</div>' +
+              '</td>' +
+          '</tr>';
+          if($('#conteditphp').length > 0){
+            $('#conteditphp').append(row_conf);
+            updateEditor();
+          }else{
+            $('#phpini_table_container').slideUp('fast', function(){
+              $(this).html(conf_table.replaceAll('{TABLE_CONTENT}', row_conf));
+              updateEditor();
+              $(this).slideDown('fast');
+            });
+          }
+          cancelNewRecord();
+        }else{
+          if(response.code == '2'){
+            noti_bubble('{{langmod.LABELEXIST}}','{{langmod.ERROR1}}','error',true,false,'3000',true);
+          }else if(response.code == '3'){
+            noti_bubble('{{langmod.PHPINVALIDINPUT}}','{{langmod.ERROR1}}','error',true,false,'3000',true);
+          }else{
+            noti_bubble('{{langmod.ERRORINI}}','{{langmod.ERROR1}}','error',true,false,'3000',true);
+          }
+        }
+        uchip.handleButton(elem,'fa-plus', true);
+      }
+    });
+  }
+}
+let conf_list = [];
+let conf_table = '<table id="phpini_table" class="table" style="margin-bottom: 0px;">' +
+                  '<thead>' +
+                    '<tr>' +
+                      '<th class="text-center"><b>{{langmod.SETTING}}</b></th>' +
+                      '<th class="text-center"><b>{{langmod.VALUE}}</b></th>' +
+                      '<th class="text-center"><b>Actions</b></th>' +
+                    '</tr>' +
+                  '</thead>'+
+                  '<tbody id="conteditphp">' +
+                    '{TABLE_CONTENT}' +
+                  '</tbody>' +
+                '</table>';
+let conf_table_empty = '<div class="empty_list"><h4 class="text-success">{{langmod.PPININOSAVED}}</h4></div>';
+function listConfiguration(list){
+  conf_list = list;
+  let content_html = '';
+  if(conf_list.length > 0){
+    let table_html = '';
+    let index = 0;
+    let confg_raw = '';
+    conf_list.forEach(function(conf){
+      let button_state = '';
+      let conf_input = '';
+      let conf_value = conf.value.replaceAll('{SQ_CWP}',"'");
+      confg_raw += conf.name2.replaceAll('__','.') + '=' + conf_value.replaceAll('{DQ_CWP}','"') + '\n';
+      if(conf.name2 == 'date__timezone'){
+          conf_input = '<input type="text" id="tag_value_' + conf.name2.replaceAll('__','.').replaceAll(';;','') + '" autocomplete="off" value="' + conf_value.replaceAll('{DQ_CWP}','&#34;') + '" placeholder="{{langmod.PHPELABEL3}}" class="typeahead_3 form-control conf_item_value">';
+      }else{
+          conf_input = '<input type="text" id="tag_value_' + conf.name2.replaceAll('__','.').replaceAll(';;','') + '" autocomplete="off" value="' + conf_value.replaceAll('{DQ_CWP}','&#34;') + '"  class="form-control conf_item_value">';
+      }
+      if(conf.st == 1){
+        button_state = '<button type="button" class="btn btn-success btn-xs item_status_button" title="{{langmod.BTN_ENABLE}}" data-line="' + conf.line + '" data-status="' + conf.st + '" onclick="return disableConf(this)"><i class="fa fa-check"></i></button>';
+      }else{
+        button_state = '<button type="button" class="btn btn-warning btn-xs item_status_button" title="{{langmod.BTN_DISABLE}}" data-line="' + conf.line + '" data-status="' + conf.st + '" onclick="return disableConf(this)"><i class="fa fa-ban"></i></button>';
+      }
+      table_html += '<tr id="phpconf_line_' + conf.line + '" class="conf_item">' +
+                      '<td>' +
+                        '<label class="col-form-label">' + conf.name2.replaceAll('__','.').replaceAll(';;','') + '</label>' +
+                        '<input type="hidden" id="pc_item_' + conf.line + '" class="conf_item_tag" value="' + conf.name2 + '">' +
+                      '</td>' +
+                      '<td>' +
+                        conf_input +
+                      '</td>' +
+                      '<td class="text-center">' +
+                        button_state +
+                        '&nbsp;<button type="button" class="btn btn-danger btn-xs conf_item_value" title="{{langmod.BTN_DELETE}}" id="pc_button_delete_' + conf.line + '" onclick="return deletephpini(0,' + conf.line + ',\'' + conf.name2 + '\')"><i class="fa fa-trash"></i></button>' +
+                      '</td>' +
+                    '</tr>';
+      index++;
+    });
+    content_html = conf_table.replaceAll('{TABLE_CONTENT}', table_html);
+
+    $('#phpini_table_container').html(content_html);
+    $('.typeahead_3').typeahead({
+        source: timezone_data,
+    });
+    editor_one.setValue(confg_raw);
+    // $('#pipe_data_table').DataTable().destroy();
+    // pipe_table = $('#pipe_data_table').DataTable();
+  }else{
+    editor_one.setValue('');
+    content_html = conf_table_empty;
+    $('#phpini_table_container').html(content_html);
+  }
+}
+function advanceTab(){
+  setTimeout(function() {
+    editor_one.refresh();
+  },200);
+}
+function selectConfs(current) {
+    let html_select = '';
+    $('#addnew_sel').find('option').remove();
+    $('#addnew_sel').append('<option value="">{{langmod.CHOOSE}}</option>');
+    php_conf.forEach(function (conf) {
+        let isin = current.filter(function (curconf) {
+            return curconf.name == conf.label || curconf.name.replace(/__/g, '.') == conf.label;
+        })[0];
+        if (isin == undefined) {
+            $('#addnew_sel').append('<option value="' + conf.value + '">' + conf.label + '</option>');
+        }
+    });
+}
+function addCustom(elem){
+  let to_show = '#custom_conf';
+  let to_hide = '#addnew_sel';
+  let title = '{{langmod.PHPINIDEFCONF}}';
+  if($('#custom_conf').is(':visible')){
+    to_show = '#addnew_sel';
+    to_hide = '#custom_conf';
+    title = '{{langmod.PHPINICUSTCONF}}';
+  }
+  $(to_hide).fadeOut('fast', function(){
+    $(to_show).fadeIn('fast');
+  });
+  $(elem).find('span').text(title);
+  if(to_show == '#addnew_sel' && $('#addnew_sel').val() == ''){
+    $('#control_new').slideUp('fast');
+  }else{
+    $('#control_new').slideDown('fast', function(){
+      checkSideBar();
+    });
+  }
+}
+function changeNewConf(elem){
+  if($(elem).val() != ''){
+    $('#control_new').slideDown('fast');
+    if($(elem).val() == 'date.timezone'){
+      $('#addvalue').typeahead({
+          source: timezone_data,
+      });
+    }else{
+      $('#addvalue').typeahead("destroy");
+    }
+  }else{
+    $('#control_new').slideUp('fast', function(){
+      checkSideBar();
+    });
+  }
+}
+function deletephpini(st,id,name){
+    if(st==0){
+        var varheader='<h2 style="margin:10px;font-size:1.8rem;font-weight: 600;">{{ langmod.PHPLABEL6 }}</h2>';
+        var varbody='<p class="text-center">{{ langmod.ALERTDELETE }}  <b>' + name.replaceAll(';;','').replaceAll('__','.') + '</b> {{ langmod.ALERTDELETE2 }}</p>';
+        var varfooter='<button type="button" class="btn btn-white" data-dismiss="modal">{{langmod.BTN_NO}}</button>  <button type="button" class="btn btn-primary" onclick="return deletephpini(1,\''+id+'\',\''+name+'\')">{{langmod.BTN_YES}}</button>';
+        $("#deletemodal .modal-header").html(varheader);
+        $("#deletemodal .modal-body").html(varbody);
+        $("#deletemodal .modal-footer").html(varfooter);
+        $("#deletemodal").modal('toggle');
+    }else if(st==1){
+        uchip.handleButton('#pc_button_delete_' + id, 'fa-trash');
+        $('#phpconf_line_' + id).addClass('deleting_tr');
+        $("#deletemodal").modal('hide');
+        uchip.call('module=phpini_editor&acc=deletephpini', {
+          data: 'id=' + id + '&file=' + Base64.encode($('#hfilename').val()),
+          callback: function(response){
+            noti_bubble('{{langmod.PHPINIDELSUCC}}','{{langmod.PHPINISUCCESS}}','success',true,false,'3000',true);
+            $('#phpconf_line_' + id).slideUp('fast', function(){
+              $(this).remove();
+              updateEditor();
+              if($('#conteditphp tr').length < 1){
+                $('#phpini_table_container').slideUp('fast', function(){
+                  $(this).html(conf_table_empty);
+                  $(this).slideDown('fast');
+                });
+              }
+            });
+            let label = $('#pc_item_' + id).val().replaceAll('__','.');
+            $('#addnew_sel').append('<option value="' + label + '">' + label + '</option>');
+          }
+        });
+    }
+    return false;
+}
+selectConfs(initial_conf);
+$('.typeahead_3').typeahead({
+    source: timezone_data,
+});
+
+
+function cancelNewRecord(){
+  $('#addnew_sel').val('');
+  $('#addvalue').val('');
+  $('#custom_conf').val('');
+  $('#control_new').slideUp('fast');
+  if($('#custom_conf').is(':visible')){
+    $('#custom_conf').fadeOut('fast', function(){
+      $('#addnew_sel').fadeIn('fast');
+    });
+  }
+}
+function changeFileConf(elem){
+  let container = $('#phpini_table_container');
+  container.parent().find('.col-md-3').hide();
+  container.removeClass('col-md-9');
+  container.addClass('col-md-12');
+  container.html('<div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>');
+  $('#advanced_editor_container').fadeOut('fast', function(){
+    $('#advanced_editor_loader').fadeIn('fast');
+  });
+
+  /*uchip.call('module=phpini_editor&acc=changefileconf', {
+    data: 'domain=' + $(elem).val(),
+    callback: function(response){
+      if(response.result == 'success'){
+        $('#domain_listing').html(response.domain);
+        $("#hfilename").val(response.file);
+        $("#pathini").html('<h5>' + response.file + '</h5>');
+        container.removeClass('col-md-12');
+        container.addClass('col-md-9');
+        container.parent().find('.col-md-3').show();
+        listConfiguration(response.list);
+        selectConfs(response.list);
+        $('#advanced_editor_loader').fadeOut('fast', function(){
+          $('#advanced_editor_container').fadeIn('fast', function(){
+            setTimeout(function() {
+              editor_one.refresh();
+            },200);
+          });
+        });
+      }
+    }
+  });*/
+    $.ajax({
+        type: "POST",
+        url: "./{{ users }}/index.php?module=phpini_editor&acc=changefileconf",
+        data: 'domain=' + $(elem).val(),
+        complete: function (response) {
+            var responseData = JSON.parse(response.responseText);
+            if(responseData.result == 'success'){
+                $('#domain_listing').html(responseData.domain);
+                $("#hfilename").val(responseData.file);
+                $("#pathini").html('<h5>' + responseData.file + '</h5>');
+                container.removeClass('col-md-12');
+                container.addClass('col-md-9');
+                container.parent().find('.col-md-3').show();
+                listConfiguration(responseData.list);
+                selectConfs(responseData.list);
+                console.log(responseData.list);
+                $('#advanced_editor_loader').fadeOut('fast', function(){
+                    $('#advanced_editor_container').fadeIn('fast', function(){
+                        setTimeout(function() {
+                            editor_one.refresh();
+                        },200);
+                    });
+                });
+            }
+        }
+    });
+
+}
+
+function listregphpini(){
+    $.ajax({
+        type: "POST",
+        url: "./{{ users }}/index.php?module=phpini_editor&acc=listregphpini",
+        data: "file="+$("#hfilename").val(),
+        complete: function (datos) {
+            var trs='';
+            var str=datos.responseText;
+            var valuehidden=str.split('/*/');
+            var linet=valuehidden[0].split('/:');
+            var countline=linet.length;
+            for(i=0;i<(countline-1);i++){
+                trs+='<tr>';
+                var trozos=linet[i].split("|");
+                var namelabel=trozos[1];
+                var n = namelabel.indexOf(";;");
+                var btnst='';
+                if(n == -1){btnst='<button type="button" class="btn btn-warning btn-xs" onclick="return disablephpini(0,'+(i+1)+')" style="margin-left: 2px">Disable</button>  ';
+                }else{
+                    var fin = str.length;
+                    var res = namelabel.substring(2, fin);
+                    namelabel=res;
+                    btnst='<button type="button" class="btn btn-default btn-xs" onclick="return disablephpini(1,'+(i+1)+')" style="margin-left: 2px">Enable</button>  ';
+                }
+                trs+='<td><label class="col-form-label">'+namelabel+'</label></td>';
+                trs+='<td><input type="text" id="'+namelabel+'" value="'+trozos[3]+'" class="form-control"></td>';
+                trs+='<td class="text-center">'+btnst+'<button type="button" class="btn btn-danger btn-xs" onclick="return deletephpini(0,'+(i+1)+')">Delete</button></td>';
+                trs+='</tr>';
+                //}
+            }
+            noti_bubble('{{langmod.EXIST}}','{{langmod.EXITO}}','success',true,false,'3000',true);
+            $("#conteditphp").html(trs);
+            $("#addnew_tex").val('');
+            $("#valuehidden").val(valuehidden[1]);
+            return false;
+        }
+    });
+}
+
+function insertText(data){
+    var cm = $(".CodeMirror")[0].CodeMirror;
+    var doc = cm.getDoc();
+    var cursor = doc.getCursor(); // gets the line number in the cursor position
+    var line = doc.getLine(cursor.line); // get the line contents
+    var pos = {
+        line: cursor.line
+    };
+    if (line.length === 0) {
+        // check if the line is empty
+        // add the data
+        doc.replaceRange(data, pos);
+    } else {
+        // add a new line and the data
+        doc.replaceRange("\n" + data, pos);
+    }
+}
+
+
+
+$("#btn_update_editphpini").click(function () {
+    $("#btn_update_editphpini").html('<i class="fa fa-spinner  fa-spin"></i>&nbsp;{{ langmod.PHPLABEL9 }}');
+    var arr=$("#valuehidden").val();
+    var resp=[];
+    arr=arr.split(',');
+    var fin=((arr.length)-1);
+    for(i=0;i<fin;i++){
+        resp.push(encodeURIComponent($("#"+arr[i]).val()));
+    }
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=phpini_editor&acc=update",
+        data:"value="+resp+"&title="+arr+"&file="+$("#hfilename").val(),
+        complete: function(datos){
+            if(datos.responseText!=0){
+                noti_bubble('{{langmod.UPDATEREG}}','{{langmod.PHPEXIT}}','success',true,false,'3000',true);
+            }else{
+                noti_bubble('{{langmod.ERROR1}}','{{langmod.LABELVALUE}}','error',true,false,'3000',true);
+            }
+            $("#btn_update_editphpini").html('&nbsp;{{langmod.BTN_UPDATE}}');
+            return false;
+        }
+    });
+});
+$("#addphpini").click(function () {
+    $("#addphpinieditor").modal('toggle');
+    return false;
+});

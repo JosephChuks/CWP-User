@@ -1,0 +1,73 @@
+
+console.log();
+$("#btnallcahe").click(function () {
+    var textbtn =$("#btnallcahe").text();
+    $("#btnallcahe").addClass('disabled');
+    $("#btnallcahe").attr('disabled',true);
+    $("#btnallcahe").html('<i class="fa fa-spinner fa-spin"></i>  '+textbtn);
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+     $.ajax({
+         type: "POST",
+         url: "./{{users}}/index.php?module=vdomaincache&acc=drop&type=all",
+         complete: function(datos){
+             //console.log(datos.responseText);
+             noti_bubble('{{langmod.VDLABEL7}}','','success',false,false,'3000',true);
+             $("#btnallcahe").removeClass('disabled');
+             $("#btnallcahe").attr('disabled',false);
+             $("#btnallcahe").html(textbtn);
+             return false;
+         }
+     });
+});
+
+function clearcachedomins(domain){
+    var nameid = domain.replace(".", "");
+    var textbtn =$("#"+nameid).text();
+    $("#"+nameid).addClass('disabled');
+    $("#"+nameid).attr('disabled',true);
+    $("#"+nameid).html('<i class="fa fa-spinner fa-spin"></i>  '+textbtn);
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=vdomaincache&acc=drop&domain="+domain,
+        complete: function(datos){
+            //console.log(datos.responseText);
+            noti_bubble('{{langmod.VDLABEL7}}','','success',false,false,'3000',true);
+            $("#"+nameid).removeClass('disabled');
+            $("#"+nameid).attr('disabled',false);
+            $("#"+nameid).html(textbtn);
+            return false;
+        }
+    });
+}
+function loaderdatatable(){
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=vdomaincache&acc=list",
+        complete: function(datos){
+            if(datos.responseText==0){
+                $('#btnallcahe').hide();
+                $('#tabvdomain tfoot').html('<tr><td colspan="3"><p align="center">{{ langmod.VDLABEL9 }}</p></td> </tr>');
+                noti_bubble('{{langmod.VDLABEL7}}','','error',false,false,'6000',true);
+            }else{
+                $('#btnallcahe').show();
+                $('#tabvdomain').DataTable( {
+                    "type": "POST",
+                    "ajax": "./{{users}}/index.php?module=vdomaincache&acc=list",
+                    "columns": [
+                        { "data": "index" },
+                        { "data": "domain" },
+                        { render: function ( data, type, row ){
+                                var domian=row.domain;
+                                var hashdomain = domian.replace(".", "");
+                                return '<button type="button" class="btn btn-warning btn-sm" id="'+hashdomain+'" onclick="return clearcachedomins(\''+domian+'\')">{{langmod.VDLABEL5}}</button>';
+                            }
+                        }
+                    ]
+                });
+            }
+            return false;
+        }
+    });
+
+}

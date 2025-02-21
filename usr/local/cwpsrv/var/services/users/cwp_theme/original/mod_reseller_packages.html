@@ -1,0 +1,322 @@
+<div class="ibox" id="packages_list_wrapper">
+  <div class="ibox-title">
+    <h4>
+      {{langmod.RSPACKLAB1}}
+    </h4>
+    {% if mod.licenseReseller != 0 %}
+      <button id="btn_add_package" onclick="showNewPackageForm()" class="btn btn-xs btn-success"><i class="fa fa-plus"></i> {{langmod.RSLABEL31}}</button>
+    {% endif %}
+
+  </div><input type="hidden" id="swajaxpack" value="">
+  <div class="ibox-content" id="table_packages_wrapper">
+    <!--<div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>-->
+    <table class="table packages_table table-striped table-bordered table-hover" id="packs_table">
+      <thead>
+      <tr>
+        <th style="width:60px">{{langmod.RSLABEL13}}</th>
+        <th style="width:100px">{{langmod.RSLABEL15}}</th>
+        <th style="width:100px">{{langmod.RSLABEL16}}</th>
+        <th style="width:100px">{{langmod.RSLABEL25}}</th>
+        <th style="width:100px">{{langmod.RSLABEL17}}</th>
+        <th style="width:100px">{{langmod.RSLABEL18}}</th>
+        <th style="width:100px">{{langmod.RSLABEL19}}</th>
+        <th style="width:100px">{{langmod.RSLABEL24}}</th>
+        <th style="width:100px">{{langmod.RSLABEL20}}</th>
+        <th style="width:100px">{{langmod.RSLABEL21}}</th>
+        <th style="width:100px">{{langmod.RSLABEL22}}</th>
+        <th style="width:100px">{{langmod.RSLABEL23}}</th>
+        <th style="width:100px">{{langmod.SECLABEL35}}</th>
+
+          <th style="width:100px">{{langmod.SECLABEL36}}</th>
+
+        <th style="width:100px">{{langmod.SECLABEL37}}</th>
+      </tr>
+      </thead>
+      <tbody id="contenttr">
+
+      </tbody>
+      </table>
+  </div>
+</div>
+<div class="ibox" id="add_new_package_container">
+  <div class="ibox-title">
+    <h4 id="pack_form_title">
+      {{langmod.RSLABEL101}}
+    </h4>
+    <input type="hidden" id="is_editing" value="0">
+    <!-- <a href="#" id="btnaddaccount" title="{{langmod.RSLABEL76}}">
+        <i class="fa fa-plus-circle fa-2x" style="color: #36a116"></i>
+    </a> -->
+    <div class="actions-btn text-right">
+      <button onclick="saveNewPackage()" class="sv-package-btn btn btn-w-m btn-sm btn-success btn-save-webdisk"><i class="fa fa-floppy-o" aria-hidden="true"></i> {{langmod.RSLABEL35}}</button>
+      <button onclick="cancelNewPackage()" class="cnl-package-btn btn btn-w-m btn-sm btn-warning btn-cancel-webdisk"><i class="fa fa-ban" aria-hidden="true"></i> {{langmod.RSLABEL42}}</button>
+    </div>
+  </div>
+  {% set package_info = mod.init_info.package_contracted %}
+  <div class="ibox-content">
+    <div class="row">
+      <label class="col-md-2 control-label" for="">{{langmod.RSLABEL15}}:</label>
+      <div class="col-md-6">
+          <input type="text" data-required="true" class="form-control packinput" name="package_name" id="package_name"  maxlength="255" value="">
+          <div class="unlimited-pack">{{langmod.RSPACKLAB5}} &infin;</div>
+      </div>
+      <span class="help-block"></span>
+    </div>
+    <div class="row" style="padding-top: 5px">
+      <label class="col-md-2 control-label" for="">{{langmod.RSLABEL16}}:</label>
+      <div class="col-md-2">
+          <input type="number" name="disk_quota" id="disk_quota" data-cwpmax="{{package_info.disk_quota}}"  data-required="true" class="form-control packinput tip"  maxlength="8">
+          <div class="unlimited-pack">{{langmod.RSPACKLAB5}} &infin;</div>
+      </div>
+      <div class="col-md-4 help-block"><span style="margin-right:10px;">MB</span>
+        {% if package_info.disk_quota == -1 %}
+        <div class="checkbox checkbox-primary">
+          <input class="checkbox checkbox-danger" onchange="setUnlimited(this)" type="checkbox" id="unl_disk_quota">
+          <label for="unl_disk_quota">{{langmod.RSPACKLAB4}}</label>
+        </div>
+        {% else %}
+          ({{langmod.RSPACKLAB3}} {{package_info.disk_quota}})
+        {% endif %}
+      </div>
+    </div>
+    <div class="row" style="padding-top: 5px">
+      <label class="col-md-2 control-label" for="">{{langmod.RSLABEL25}}:</label>
+      <div class="col-md-2">
+          <input type="number" name="bandwidth" data-cwpmax="{{package_info.bandwidth}}" id="bandwidth" data-required="true" class="form-control packinput">
+          <div class="unlimited-pack">{{langmod.RSPACKLAB5}} &infin;</div>
+      </div>
+      <div class="col-md-4 help-block"><span style="margin-right:10px;">MB</span>
+        {% if package_info.bandwidth == -1 %}
+        <div class="checkbox checkbox-primary">
+          <input class="checkbox checkbox-danger" onchange="setUnlimited(this)" type="checkbox" id="unl_bandwidth">
+          <label for="unl_bandwidth">{{langmod.RSPACKLAB4}}</label>
+        </div>
+        {% else %}
+          ({{langmod.RSPACKLAB3}} {{package_info.bandwidth}})
+        {% endif %}
+      </div>
+    </div>
+    <div class="row" style="padding-top: 5px">
+      <label class="col-md-2 control-label" for="">{{langmod.RSLABEL17}}:</label>
+      <div class="col-md-2">
+          <input type="number" name="ftp_accounts" data-cwpmax="{{package_info.ftp_accounts}}" id="ftp_accounts" value="" data-required="true" class="form-control packinput tip" >
+          <div class="unlimited-pack">{{langmod.RSPACKLAB5}} &infin;</div>
+      </div>
+      <span class="help-block">
+        {% if package_info.ftp_accounts == -1 %}
+        <div class="checkbox checkbox-primary">
+          <input class="checkbox checkbox-danger" onchange="setUnlimited(this)" type="checkbox" id="unl_ftp_accounts">
+          <label for="unl_ftp_accounts">{{langmod.RSPACKLAB4}}</label>
+        </div>
+        {% else %}
+          ({{langmod.RSPACKLAB3}} {{package_info.ftp_accounts}})
+        {% endif %}
+      </span>
+    </div>
+
+    <div class="row" style="padding-top: 5px">
+      <label class="col-md-2 control-label" for="">{{langmod.RSLABEL18}}:</label>
+      <div class="col-md-2">
+          <input type="number" name="email_accounts" data-cwpmax="{{package_info.email_accounts}}" id="email_accounts" value="" data-required="true" class="form-control packinput tip" >
+          <div class="unlimited-pack">{{langmod.RSPACKLAB5}} &infin;</div>
+      </div>
+      <div class="col-md-4 help-block">
+        {% if package_info.email_accounts == -1 %}
+        <div class="checkbox checkbox-primary">
+          <input class="checkbox checkbox-danger" onchange="setUnlimited(this)" type="checkbox" id="unl_email_accounts">
+          <label for="unl_email_accounts">{{langmod.RSPACKLAB4}}</label>
+        </div>
+        {% else %}
+          ({{langmod.RSPACKLAB3}} {{package_info.email_accounts}})
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="row" style="padding-top: 5px">
+      <label class="col-md-2 control-label" for="">{{langmod.RSLABEL19}}:</label>
+      <div class="col-md-2">
+          <input type="number" name="email_lists" data-cwpmax="{{package_info.email_lists}}" id="email_lists" value="" data-required="true" class="form-control packinput tip" >
+          <div class="unlimited-pack">{{langmod.RSPACKLAB5}} &infin;</div>
+      </div>
+      <div class="col-md-4 help-block">
+        {% if package_info.email_lists == -1 %}
+        <div class="checkbox checkbox-primary">
+          <input class="checkbox checkbox-danger" onchange="setUnlimited(this)" type="checkbox" id="unl_email_lists">
+          <label for="unl_email_lists">{{langmod.RSPACKLAB4}}</label>
+        </div>
+        {% else %}
+          ({{langmod.RSPACKLAB3}} {{package_info.email_lists}})
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="row" style="padding-top: 5px">
+      <label class="col-md-2 control-label" for="">{{langmod.RSLABEL24}}:</label>
+      <div class="col-md-2">
+          <input type="number" data-required="true" data-cwpmax="{{package_info.databases}}" class="form-control packinput input-small" name="databases" id="databases" maxlength="8">
+          <div class="unlimited-pack">{{langmod.RSPACKLAB5}} &infin;</div>
+      </div>
+      <div class="col-md-4 help-block">
+        {% if package_info.databases == -1 %}
+        <div class="checkbox checkbox-primary">
+          <input class="checkbox checkbox-danger" onchange="setUnlimited(this)" type="checkbox" id="unl_databases">
+          <label for="unl_databases">{{langmod.RSPACKLAB4}}</label>
+        </div>
+        {% else %}
+          ({{langmod.RSPACKLAB3}} {{package_info.databases}})
+        {% endif %}
+      </div>
+    </div>
+    <div class="row" style="padding-top: 5px">
+      <label class="col-md-2 control-label" for="">{{langmod.RSLABEL20}}:</label>
+      <div class="col-md-2">
+          <input type="number" data-required="true" data-cwpmax="{{package_info.sub_domains}}" class="form-control packinput input-small"  name="sub_domains" id="sub_domains" maxlength="8">
+          <div class="unlimited-pack">{{langmod.RSPACKLAB5}} &infin;</div>
+      </div>
+      <div class="col-md-4 help-block">
+        {% if package_info.sub_domains == -1 %}
+        <div class="checkbox checkbox-primary">
+          <input class="checkbox checkbox-danger" onchange="setUnlimited(this)" type="checkbox" id="unl_sub_domains">
+          <label for="unl_sub_domains">{{langmod.RSPACKLAB4}}</label>
+        </div>
+        {% else %}
+          ({{langmod.RSPACKLAB3}} {{package_info.sub_domains}})
+        {% endif %}
+      </div>
+    </div>
+    <div class="row" style="padding-top: 5px">
+      <label class="col-md-2 control-label" for="">{{langmod.RSLABEL21}}:</label>
+      <div class="col-md-2">
+          <input type="number" data-required="true" data-cwpmax="{{package_info.parked_domains}}" class="form-control packinput input-small" name="parked_domains" id="parked_domains" maxlength="6">
+          <div class="unlimited-pack">{{langmod.RSPACKLAB5}} &infin;</div>
+      </div>
+      <div class="col-md-4 help-block">
+        {% if package_info.parked_domains == -1 %}
+        <div class="checkbox checkbox-primary">
+          <input class="checkbox checkbox-danger" onchange="setUnlimited(this)" type="checkbox" id="unl_parked_domains">
+          <label for="unl_parked_domains">{{langmod.RSPACKLAB4}}</label>
+        </div>
+        {% else %}
+          ({{langmod.RSPACKLAB3}} {{package_info.parked_domains}})
+        {% endif %}
+      </div>
+    </div>
+    <div class="row" style="padding-top: 5px">
+      <label class="col-md-2 control-label" for="">{{langmod.RSLABEL22}}:</label>
+      <div class="col-md-2">
+          <input type="number" data-required="true" data-cwpmax="{{package_info.addons_domains}}" class="form-control packinput input-small"  name="addons_domains" id="addons_domains" maxlength="6">
+          <div class="unlimited-pack">{{langmod.RSPACKLAB5}} &infin;</div>
+      </div>
+      <div class="col-md-4 help-block">
+        {% if package_info.addons_domains == -1 %}
+        <div class="checkbox checkbox-primary">
+          <input class="checkbox checkbox-danger" onchange="setUnlimited(this)" type="checkbox" id="unl_addons_domains">
+          <label for="unl_addons_domains">{{langmod.RSPACKLAB4}}</label>
+        </div>
+        {% else %}
+          ({{langmod.RSPACKLAB3}} {{package_info.addons_domains}})
+        {% endif %}
+      </div>
+    </div>
+    <div class="row" style="padding-top: 5px">
+      <label class="col-md-2 control-label" for="">{{langmod.RSLABEL23}}:</label>
+      <div class="col-md-2">
+          <input type="number" data-required="true" data-cwpmax="{{package_info.hourly_emails}}" class="form-control packinput input-small" name="hourly_emails" id="hourly_emails" maxlength="6">
+          <div class="unlimited-pack">{{langmod.RSPACKLAB5}} &infin;</div>
+      </div>
+      <div class="col-md-4 help-block">
+        {% if package_info.hourly_emails == -1 %}
+        <div class="checkbox checkbox-primary">
+          <input class="checkbox checkbox-danger" onchange="setUnlimited(this)" type="checkbox" id="unl_hourly_emails">
+          <label for="unl_hourly_emails">{{langmod.RSPACKLAB4}}</label>
+        </div>
+        {% else %}
+          ({{langmod.RSPACKLAB3}} {{package_info.hourly_emails}})
+        {% endif %}
+      </div>
+    </div>
+    <div class="row" style="padding-top: 5px">
+      <label class="col-md-2 control-label" for="">{{langmod.SECLABEL35}}:</label>
+      <div class="col-md-2">
+        <input type="number" data-required="true" data-cwpmax="{{package_info.nodejs_apps}}" class="form-control packinput input-small"  name="nodejs_apps" id="nodejs_apps" maxlength="6">
+        <div class="unlimited-pack">{{langmod.RSPACKLAB5}} &infin;</div>
+      </div>
+      <div class="col-md-4 help-block">
+        {% if package_info.nodejs_apps == -1 %}
+        <div class="checkbox checkbox-primary">
+          <input class="checkbox checkbox-danger" onchange="setUnlimited(this)" type="checkbox" id="unl_nodejs_apps">
+          <label for="unl_nodejs_apps">{{langmod.RSPACKLAB4}}</label>
+        </div>
+        {% else %}
+        ({{langmod.RSPACKLAB3}} {{package_info.nodejs_apps}})
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="row" style="padding-top: 5px">
+      <label class="col-md-2 control-label" for="">{{langmod.SECLABEL36}}:</label>
+      <div class="col-md-2">
+        <input type="number" data-required="true" data-cwpmax="{{package_info.mongo_database}}" class="form-control packinput input-small"  name="mongo_database" id="mongo_database" maxlength="6">
+        <div class="unlimited-pack">{{langmod.RSPACKLAB5}} &infin;</div>
+      </div>
+      <div class="col-md-4 help-block">
+        {% if package_info.mongo_database == -1 %}
+        <div class="checkbox checkbox-primary">
+          <input class="checkbox checkbox-danger" onchange="setUnlimited(this)" type="checkbox" id="unl_mongo_database">
+          <label for="unl_mongo_database">{{langmod.RSPACKLAB4}}</label>
+        </div>
+        {% else %}
+        ({{langmod.RSPACKLAB3}} {{package_info.mongo_database}})
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="row" style="padding-top: 5px">
+      <label class="col-md-2 control-label" for="">{{langmod.SECLABEL37}}:</label>
+      <div class="col-md-2">
+        <input type="number" data-required="true" data-cwpmax="{{package_info.pgresql_database}}" class="form-control packinput input-small"  name="pgresql_database" id="pgresql_database" maxlength="6">
+        <div class="unlimited-pack">{{langmod.RSPACKLAB5}} &infin;</div>
+      </div>
+      <div class="col-md-4 help-block">
+        {% if package_info.pgresql_database == -1 %}
+        <div class="checkbox checkbox-primary">
+          <input class="checkbox checkbox-danger" onchange="setUnlimited(this)" type="checkbox" id="unl_pgresql_database">
+          <label for="unl_pgresql_database">{{langmod.RSPACKLAB4}}</label>
+        </div>
+        {% else %}
+        ({{langmod.RSPACKLAB3}} {{package_info.pgresql_database}})
+        {% endif %}
+      </div>
+    </div> 
+
+  </div>
+  <div class="ibox-footer">
+    <div class="text-right">
+      <button onclick="saveNewPackage()" class="sv-package-btn btn btn-w-m btn-sm btn-success btn-save-webdisk">
+        <i class="fa fa-floppy-o" aria-hidden="true"></i> {{langmod.RSLABEL35}}
+      </button>
+      <button onclick="cancelNewPackage()" class="cnl-package-btn btn btn-w-m btn-sm btn-warning btn-cancel-webdisk">
+        <i class="fa fa-ban" aria-hidden="true"></i> {{langmod.RSLABEL42}}
+      </button>
+    </div>
+  </div>
+</div>
+<div class="modal" id="delete_package_modal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-sm" style="width:300px">
+    <div class="modal-content animated fadeIn">
+      <div class="modal-header" style="padding: 10px;">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">×</span>
+          <span class="sr-only">{{langene.MDCLOSE}}</span>
+        </button>
+        <h4 class="modal-title" style="font-size:2rem">{{langmod.RSLABEL98}}</h4>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+
+      </div>
+      <div class="modal-footer">
+
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,101 @@
+<div class="ibox tomcat-manager-apps-list" id="tomcat_form_window">
+    <div class="ibox-title">
+        <h4 id="_tomcat_form_title"></h4>
+        <div style="font-size: 90%;">
+            <button class="btn btn-warning btn-cancel-app" onclick="cancelTomcatManagerForm()">
+                <i class="fa fa-ban"></i>
+                {{langmod.LABTOMCAT11}}
+            </button>
+            <button class="btn-save-app btn btn-success" onclick="saveNewTomcatManagerApp()">
+                <i class="fa fa-floppy-o"></i>
+                {{langmod.LABTOMCAT38}}
+            </button>
+        </div>
+    </div>
+    <div class="ibox-content">
+        <div id="tomcat_app_quick_actions_container">
+            <button class="btn btn-sm btn-danger" onclick="tomcatJSAppStatusInForm(this,'stop')"><i
+                    class="fa fa-stop"></i>{{langmod.LABTOMCAT40}}</button>
+            <button class="btn btn-sm btn-success" onclick="tomcatJSAppStatusInForm(this,'start')"><i
+                    class="fa fa-play"></i>{{langmod.LABTOMCAT41}}</button>
+            <button class="btn btn-sm btn-default" onclick="tomcatJSAppStatusInForm(this,'restart')"><i
+                    class="fa fa-refresh"></i>{{langmod.LABTOMCAT42}}</button>
+        </div>
+        <div class="container-fluid">
+            <input type="hidden" id="_tomcat_app_form_type">
+            
+            <div class="row row-app-form">
+                <div class="col-md-4">
+                    <label for="">URL: <small class="required-asterisk">*</small></label>
+                    <small>{{langmod.LABTOMCAT59}}</small>
+                </div>
+                <div class="col-md-8 tomcat-url-selector">
+                    <div id="tomcat_url_selector_select">
+
+                    </div>
+                    <input type="hidden" id="_tomcat_form_domain_selected_" value="">
+                </div>
+            </div>
+            <div class="row row-app-form item-hide-on-edit">
+                <div class="col-md-4">
+                    <label for="">{{langmod.LABTOMCAT155}}:</label>
+                    <small>{{langmod.LABTOMCAT156}}</small>
+                </div>
+                <div class="col-md-8 tomcat-url-selector">
+                    <select class="form-control" id="_tomcat_app_deploy_type_" onchange="changedDeploymentType(this)">
+                        <option value="upload_file" selected>{{langmod.LABTOMCAT157}}</option>
+                        <!--<option value="xml_configuration">XML Configuration file URL</option>-->
+                        <option value="war_local_file">{{langmod.LABTOMCAT158}}</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row row-app-form tomcat-deploy-type item-hide-on-edit" id="tomcat_deploy_type_upload">
+                <div class="col-md-4">
+                    <label for="">{{langmod.LABTOMCAT159}}: <small class="required-asterisk">*</small></label>
+                </div>
+                <div class="col-md-8">
+                    <input type="file" class="form-control" id="_tomcat_app_war_file_" accept=".war">
+                </div>
+            </div>
+            <!--<div class="row row-app-form hide-deploy-type tomcat-deploy-type item-hide-on-edit" id="tomcat_deploy_type_xml">
+                <div class="col-md-4">
+                    <label for="">XML Configuration file URL: <small class="required-asterisk">*</small></label>
+                </div>
+                <div class="col-md-8">
+                    <div class="file-path-selector" data-modal="{{langmod.LABTOMCAT135}}" data-afile="xml" data-sdirectory="false" onclick="showExplorer(this)">
+                        <i class="fa fa-folder-o"></i>
+                        <span class="path-selected">Nothing selected.</span>
+                    </div>
+                </div>
+            </div>-->
+            <div class="row row-app-form hide-deploy-type tomcat-deploy-type item-hide-on-edit" id="tomcat_deploy_type_war">
+                <div class="col-md-4">
+                    <label for="">{{langmod.LABTOMCAT160}}: <small class="required-asterisk">*</small></label>
+                </div>
+                <div class="col-md-8">
+                    <div class="file-path-selector" data-modal="{{langmod.LABTOMCAT136}}" data-afile="war" onclick="showExplorer(this)">
+                        <i class="fa fa-folder-o"></i>
+                        <span class="path-selected">{{langmod.LABTOMCAT161}}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="row row-app-form">
+                <div class="col-md-12">
+                    <label for="" style="font-size:1.2rem"><small class="required-asterisk">*</small>
+                        {{langmod.LABTOMCAT60}}</label>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="ibox-footer">
+        <div class="text-right">
+            <button type="button" class="btn btn-warning btn-cancel-app" onclick="cancelTomcatManagerForm()"><i
+                    class="fa fa-ban" aria-hidden="true"></i>
+                {{langmod.LABTOMCAT11}}</button>
+            <button type="button" class="btn-save-app btn btn-success" onclick="saveNewTomcatManagerApp()"><i
+                    class="fa fa-floppy-o" aria-hidden="true"></i>
+                <span class="btn-cwp-tag"></span>{{langmod.LABTOMCAT38}}</span>
+            </button>
+        </div>
+    </div>
+</div>

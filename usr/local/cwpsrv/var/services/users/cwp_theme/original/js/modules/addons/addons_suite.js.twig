@@ -1,0 +1,171 @@
+let suite_table = null;
+let suite_list = null;
+function suiteTable(list){
+    suite_list = list;
+    if(suite_list.length > 0){
+        let html_content = '';
+        let index = 0;
+        suite_list.forEach(function(installation){
+            let insturl = installation.hasOwnProperty('url') ? installation.url : 'http://' + installation.domain;
+            let dbinf = '';
+            if(installation.hasOwnProperty('db_result') && installation.db_result.result != 'success'){
+                let dbtitle = '{{langmod.ADDDBNOT}}: ' + handleDBError(installation.db_result.code);
+
+                dbinf = '<span class="fa-stack fa-xs" title="' + dbtitle + '" data-toggle="tooltip" data-placement="top" aria-hidden="true">' +
+                    '<i class="fa fa-circle fa-stack-2x"></i>' +
+                    '<i class="fa fa-info fa-stack-1x fa-inverse"></i>' +
+                    '</span>';
+            }
+            html_content += '<tr id="tdsuite_' + index + '">' +
+                '<td>' + installation.domain + '<br>' +
+                '<a href="' + insturl + '" target="_blank">' + insturl + '</a></td>' +
+                '<td><div class="addon-td-item">' + installation.path + '</div></td>' +
+                '<td><div class="addon-td-item">' + installation.version + '</div></td>' +
+                '<td>' +
+                '<div class="database-info-td">' +
+                '<div><b>{{langmod.ADDSHORTDB}}: </b> ' + installation.suitebd + '<br><b>{{langmod.ADDSHORTUDB}}: </b>' + installation.suiteuserdb + '</div>' +
+                dbinf +
+                '</div>' +
+                '</td>' +
+                '<td>' +
+                '<div class="addon-td-item text-center"><button title="{{langmod.ADDDWP3}}" data-traddon="#tdsuite_' + index + '" data-type="suite" data-installation=\'' + JSON.stringify(installation) + '\' data-toggle="tooltip" data-placement="top" aria-hidden="true" class="btn btn-danger btn-xs btn-delete" onclick="return deleteAddon(this, 0)">' +
+                '<i aria-hidden="true" class="fa fa-trash"></i>' +
+                '</button></div>' +
+                '</td>' +
+                '</tr>';
+            index++;
+        });
+        let table_html = '<table class="table table-striped suite-table">' +
+            '<thead>' +
+            '<tr>' +
+            '<th>{{langmod.ADDDOMLAB}}</th>' +
+            '<th>{{langmod.ADDPATHLAB}}</th>' +
+            '<th>{{langmod.ADDDWP27}}</th>' +
+            '<th>{{langmod.ADDBDUDB}}</th>' +
+            '<th class="text-center"></th>' +
+            '</tr>' +
+            '</thead>' +
+            '<tbody id="trpaneljl">' +
+            html_content +
+            '</tbody>' +
+            '</table>';
+        $('#table_suite_container').html(table_html);
+        $('.suite-table').DataTable().destroy();
+        suite_table = $('.suite-table').DataTable();
+    }else{
+        $('#table_suite_container').html('<div class="empty_list"><h4 class="text-success">Thre\'s not osTicket installations</h4></div>');
+    }
+    $('[data-toggle="tooltip"]').tooltip();
+}
+function suiteInit(){
+    if(suite_list == null){
+        suiteReList();
+    }
+}
+function suiteReList(){
+    $('#table_suite_container').html(loader);
+    getList('suite', function(response){
+        suiteTable(response);
+    });
+}
+function cancelsuite(idCollapse){
+    uchip.slideToggle('#suite_list','#suite_form', function(){
+
+    });
+    $('#suitedomain').val('');
+    $('#suitepach').val('suite');
+    $('#suiteadminemail').val('');
+    $('#suiteadminpass').val('');
+    $('#suiteadminpass').pwstrength('forceUpdate');
+    $('#suitepassbd').val('');
+    $('#suitepassbd').pwstrength('forceUpdate');
+    $('#suitebd').val('suite{{mod.extra_data.randbd}}');
+    $('#suiteuserdb').val('suite{{mod.extra_data.randbd}}');
+    uchip.validator('.reqsuite', true);
+    cancelGeneral(idCollapse);
+}
+function addsuite(){
+    if(uchip.validator('.reqsuite')){
+        let suiteurl = $("#suiteurl").val();
+        let suitedomain = $("#suitedomain").val();
+        let suitebd = $("#suitebd").val();
+        let suiteuserdb = $("#suiteuserdb").val();
+        let suitepassbd = $("#suitepassbd").val();
+        let suitepach = $("#suitepach").val();
+        let suiteadminemail = $("#suiteadminemail").val();
+        let suiteadminpass = $("#suiteadminpass").val();
+        let suitefolderadmin= $("#suitefolderadmin").val();
+        let suiteadminuser= $("#suiteadminuser").val();
+        let dompath =  $('#suitedomain option:selected').data('path');
+        let domssl =  $('#suitedomain option:selected').data('ssl');
+        let data = 'suiteadminuser='+suiteadminuser+'&suitefolderadmin='+suitefolderadmin+'&suiteurl=' + suiteurl + '&suitedomain=' + suitedomain + '&suitebd=' + suitebd + '&suiteuserdb=' + suiteuserdb + '&suitepassbd=' + Base64.encode(suitepassbd) +
+            '&suitepach=' + suitepach + '&suiteadminemail=' + suiteadminemail + '&suiteadminpass=' + Base64.encode(suiteadminpass) + '&dompath=' + dompath + '&domssl=' + domssl;
+        let details = [
+            {
+                title : '{{langmod.ADDDOMLAB}}',
+                value : suitedomain
+            },
+            {
+                title : '{{langmod.ADDURLLAB}}',
+                value : (domssl == 1 ? 'http' : 'http') + '://' + suitedomain + '/' + suitepach
+            },
+            {
+                title : '{{langmod.ADDPATHLAB}}',
+                value : dompath + '/' + suitepach
+            },
+            {
+                title : '{{langmod.ADDPS03}}',
+                value : suiteadminemail
+            },
+            {
+                title : '{{langmod.ADDDWP20}}',
+                value : suitebd
+            },
+            {
+                title : '{{langmod.ADDDBUSERLAB}}',
+                value : suiteuserdb
+            }
+        ];
+        confirmInstallation({
+            type: 'suite',
+            script: 'SuiteCRM',
+            data : data,
+            wholepath: dompath + '/' + suitepach,
+            callback: function(response){
+                if(response.hasOwnProperty('result') && response.result == 'success'){
+                    if(response.db_result.result != 'success'){
+                        noti_bubble('{{langmod.ADDINSTALLDET}} ' + handleDBError(response.db_result.code),'{{langmod.ADDATENTION}}!','warning',false,false,'6500',true);
+                    }else{
+                        noti_bubble('{{langmod.ADDINSTALLSUCC}}','{{langmod.SUCCESS}}','success',false,false,'3000',true);
+                    }
+                }else{
+                    noti_bubble('{{langmod.ADDERRORGEN}}','{{langmod.FERROR}}','error',false,false,'3000',true);
+                }
+                var variableHTML='';
+                var modulin='suite';
+                if($("#instaled_"+modulin).html()==undefined){
+                    variableHTML+='<div class="panel panel-default" id="instaled_'+modulin+'">'+
+                        ' <div class="panel-heading white-bg script-container-title">'+
+                        '<a class="accordion-toggle" style="width: 100%" data-toggle="collapse"  ' +
+                        'aria-expanded="true" aria-controls="panel_'+modulin+'_container" ' +
+                        'data-parent="#accordion1" data-target="#panel_'+modulin+'_container">'+
+                        '<h4 class="panel-title"><i class="more-less glyphicon-plus font-weight-bolder"></i></h4>' +
+                        '<h4 class="panel-title">SuiteCRM Installations</h4></a></div>' +
+                        '<div id="panel_'+modulin+'_container"  class="panel-collapse collapse">' +
+                        '<div class="panel-body" id="table_'+modulin+'_container"><div class="table_cron_loader"><span>' +
+                        '<i class="fa fa-circle-o-notch fa-spin"></i></span></div></div></div></div>'
+                    $( "#accordion1" ).append( variableHTML );
+                    $(".accordion-toggle").click(function(){
+                        $("#"+$(this).prop('data-target')).slideToggle('slow');
+                    });
+                }
+                $("#instaledEmpty").hide();
+                suiteTable(response.list);
+                cancelsuite();
+            },
+            details: details
+        });
+    }else{
+        noti_bubble('{{langmod.ADDREQFIELDS}}','{{langmod.FERROR}}','error',false,false,'3000',true);
+    }
+}

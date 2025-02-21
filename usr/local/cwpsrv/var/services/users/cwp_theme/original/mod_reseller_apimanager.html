@@ -1,0 +1,698 @@
+{% if mod.license != 0 %}
+<div class="ibox" id="apimanager_container">
+  <div class="ibox-title">
+    <h4>
+      {{langmod.RSJSLAB5}}
+    </h4>
+
+    <button id="btn_add_account" onclick="showNewToken()" class="btn btn-xs btn-success" ><i class="fa fa-plus"></i> {{langmod.RSJSLAB6}}</button>
+
+  </div>
+  <div class="ibox-content">
+    <div class="table_cron_loader" id="loader_apimanager"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+    <div id="apimanager_wrapper" style="display: none">
+      <table class="table packages_table table-striped table-bordered table-hover dataTable no-footer" id="tableToken">
+        <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">{{ langmod.RSJSLAB7 }}</th>
+          <th scope="col">{{ langmod.RSJSLAB8 }}</th>
+          <th scope="col">{{ langmod.RSJSLAB9 }}</th>
+          <th scope="col">{{ langmod.RSJSLAB10 }}</th>
+          <th scope="col">{{ langmod.RSJSLAB11 }}</th>
+          <th scope="col">{{ langmod.RSJSLAB12 }}</th>
+          </tr>
+        </thead>
+        <tbody id="tbodylist">
+
+        </tbody></table>
+    </div>
+  </div>
+
+  <div class="mt10" style="margin-top: 15px">
+    <div class="ibox-title">
+      <div class="row col-lg-12" >
+        <div class="align-left col-lg-11">
+          <h4>
+            <a href="#" class="moredetail">{{langmod.RSJSLAB24}}</a>
+          </h4>
+        </div>
+        <div class="col-lg-1" style="padding-right: -1px">
+          <a href="#" class="moredetail"><i class="fa fa-angle-down"></i></a>
+        </div>
+      </div>
+
+    </div>
+    <div class="ibox-content" id="boxdetaltable" style="display: none">
+      <div id="">
+        <table class="table packages_table table-striped table-bordered table-hover dataTable no-footer" id="tableTokenF">
+          <thead>
+          <tr>
+            <th scope="col" class="col-lg-3">{{langmod.RSJSLAB36}}</th>
+            <th scope="col" class="col-lg-9">{{langmod.RSJSLAB37}}</th>
+          </tr>
+          </thead>
+          <tbody id="tbodylistFucntion">
+            <tr>
+              <td class="col-lg-3">
+                <div class="col-lg-12">
+                  <table class="table packages_table table-striped table-bordered table-hover dataTable no-footer" id="tableTokenF2">
+                    <tr>
+                      <td><a href="#" class="hreffuc" id="fcaccounts" onclick="return detailFunction('fcaccounts')">{{langmod.RSLABEL1}}</a></td>
+                    </tr>
+                    <tr>
+                      <td><a href="#" class="hreffuc" id="fcaccoundetail" onclick="return detailFunction('fcaccoundetail')">{{langmod.RSJSLAB32}}</a></td>
+                    </tr>
+                    <tr>
+                      <td><a href="#" class="hreffuc" id="fcautologin" onclick="return detailFunction('fcautologin')">{{langmod.RSJSLAB33}}</a></td>
+                    </tr>
+                    <tr>
+                      <td><a href="#" class="hreffuc" id="fcchangepass" onclick="return detailFunction('fcchangepass')">{{langmod.CHANGPASS_UDP}}</a></td>
+                    </tr>
+                    <tr>
+                      <td><a href="#" class="hreffuc" id="fcpackages" onclick="return detailFunction('fcpackages')">{{langmod.RSLABEL2}}</a></td>
+                    </tr>
+                  </table>
+                </div>
+              </td>
+              <td class="col-lg-9">
+                <div id="titlecont"><p align="center" style="margin-top: 20px">{{langmod.RSJSLAB38}}</p></div>
+                <div class="col-lg-12" id="contafifuctiondesc" style="display: none">
+                  <div class="row">
+                    <div class="ibox-content" style="margin-top: 5px">
+                      <div class="row" id="contfunct">
+
+                      </div>
+                    </div>
+
+                  </div>
+                  <div class="row ibox-content" id="detfunctcont">
+
+                  </div>
+                </div>
+              </td>
+            </tr>
+
+          </tbody>
+        </table>
+        <div class="row">
+          <input type="hidden" value="0" id="swdetail">
+          <div class="col-lg-1 col-lg-offset-11 pull-right" style="margin-bottom: -10px;margin-right: -10px"><button class="btn btn-warning moredetail">{{langmod.RSLABEL42}}</button></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+<div class="ibox" id="add_new_token_container" style="display: none">
+  <div class="ibox-title">
+    <h4>
+      {{langmod.RSJSLAB6}}
+    </h4>
+    <div class="actions-btn text-right">
+      <button onclick="saveNewToken()" class="btnsav btn btn-w-m btn-sm btn-success"><i class="fa fa-floppy-o" aria-hidden="true"></i> {{langmod.RSLABEL35}}</button>
+      <button onclick="cancelNewToken(0)" class="btn btn-w-m btn-sm btn-warning"><i class="fa fa-ban" aria-hidden="true"></i> {{langmod.RSLABEL42}}</button>
+    </div>
+  </div>
+  <div class="ibox-content">
+    <div class="row">
+      <label class="col-md-2 control-label" for="">{{langmod.RSJSLAB18}}:</label>
+      <div class="col-md-5">
+        <input type="text" class="form-control"  name="nameT" id="nameT" maxlength="255" value="">
+      </div>
+    </div>
+    <div class="row reseller-row-form">
+      <label class="col-md-2 control-label" for="">{{langmod.RSJSLAB19}}:</label>
+      <div class="col-md-5">
+        <input type="text" name="hostT" id="hostT" class="form-control tip" data-required="true" placeholder="{{langmod.RSJSLAB20}}" maxlength="15" title="">
+      </div>
+    </div>
+    <div class="row">
+      <label class="col-md-2 control-label" for="">{{langmod.RSJSLAB21}}:</label>
+      <div class="col-md-5 pass_form_div">
+        <div class="pass_container">
+          <input type="text" name="tokenT" id="tokenT" class="form-control"  placeholder="" value="">
+          <div class="pwstrength_viewport_progress"></div>
+          <span class="btn btn-default btn-xs copy-pass-btn" title="{{langmod.ADDCOPYPASS}}" data-toggle="tooltip" data-placement="top" onclick="copyPass('tokenT')"><i class="fa fa-copy"></i></span>
+        </div>
+        <div>
+          <span class="btn btn-default" title="{{langmod.RSJSLAB27}}" data-toggle="tooltip" data-placement="top" onclick="generate_token()">{{langmod.RSJSLAB22}}</span>
+        </div>
+      </div>
+    </div>
+    <div class="row reseller-row-form">
+      <label class="col-md-2 control-label" for="">{{langmod.RSJSLAB23}}:</label>
+      <div class="col-md-5">
+        <select name="formatT" id="formatT" class="form-control">
+          <option value="JSON">JSON</option>
+          <option value="XML">XML</option>
+        </select>
+      </div>
+    </div>
+    <div class="row reseller-row-form">
+      <div class="col-md-12" style="margin-top: 15px">
+        <div class="col-lg-offset-2" style="margin-bottom: 8px; margin-top: -10px" onclick="return autoselect('whmcs',1)">
+          <button class="btn btn-sm btn-primary">Check for WHMCS</button>
+          <button onclick="uncheckall(1)" class="btn btn-w-m btn-sm btn-warning">
+            {{langmod.RSJSLAB31}}
+          </button>
+        </div>
+        <div class="panel panel-default" id="supr1">
+          <div class="panel-heading">
+            <h4 class="panel-title">{{langmod.RSJSLAB24}}</h4>
+          </div>
+          <div class="panel-body pt0 pb0">
+            <table class="table packages_table table-striped table-bordered table-hover dataTable no-footer" id="table3">
+              <thead>
+              <tr>
+                <th scope="col">{{langmod.RSJSLAB26}}</th>
+                <th scope="col">add</th>
+                <th scope="col">upd</th>
+                <th scope="col">del</th>
+                <th scope="col">list</th>
+                <th scope="col">susp</th>
+                <th scope="col">unsp</th>
+              </tr>
+              </thead>
+              <tbody id="">
+                <tr>
+                  <td>{{langmod.RSLABEL1}}</td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="accout_add" class="check" type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="accout_upd" class="check" type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="accout_del" class="check" type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="accout_list" class="check" type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="accout_susp" class="check" type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="accout_unsp" class="check" type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>{{langmod.RSJSLAB32}}</td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="detailaccount_add" class="check disabled" disabled type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="detailaccount_upd" class="check disabled" disabled type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="detailaccount_del" class="check disabled" disabled type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="detailaccount_list" class="check" type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="detailaccount_susp" class="check disabled" disabled type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="detailaccount_unsp" class="check disabled" disabled type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>{{langmod.RSJSLAB33}}</td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="user_session_add" class="check disabled" disabled type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="user_session_upd" class="check disabled" disabled type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="user_session_del" class="check disabled" disabled type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="user_session_list" class="check" type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="user_session_susp" class="check disabled" disabled type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="user_session_unsp" class="check disabled" disabled type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>{{langmod.CHANGPASS_UDP}}</td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="changpass_add" class="check disabled"  disabled type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="changpass_udp" class="check" type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="changpass_del" class="check disabled" disabled type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="changpass_list" class="check disabled" disabled type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="changpass_susp" class="check disabled" disabled type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="changpass_unsp" class="check disabled" disabled type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>{{langmod.RSLABEL2}}</td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="pack_add" class="check" type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="pack_upd" class="check" type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="pack_del" class="check" type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="pack_list" class="check" type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="pack_susp" class="check disabled" disabled type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                  <td align="center">
+                    <div class="checkbox-custom">
+                      <input id="pack_unsp" class="check disabled"  disabled type="checkbox" value="1">
+                      <label for="check4"></label>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ibox-footer">
+    <div class="text-right">
+      <button onclick="saveNewToken()" class="btnsav btn btn-w-m btn-sm btn-success">
+        <i class="fa fa-floppy-o" aria-hidden="true"></i> {{langmod.RSLABEL35}}
+      </button>
+      <button onclick="cancelNewToken(0)" class="btn btn-w-m btn-sm btn-warning">
+        <i class="fa fa-ban" aria-hidden="true"></i> {{langmod.RSLABEL42}}
+      </button>
+    </div>
+  </div>
+</div>
+<div class="ibox" id="edit_token_container" style="display: none">
+  <div class="ibox-title">
+    <h4>
+      {{langmod.RSJSLAB6}}
+    </h4>
+    <div class="actions-btn text-right">
+      <button onclick="updateToken()" class="btnsav btn btn-w-m btn-sm btn-success"><i class="fa fa-floppy-o" aria-hidden="true"></i> {{langmod.RSLABEL35}}</button>
+      <button onclick="cancelNewToken(1)" class="btn btn-w-m btn-sm btn-warning"><i class="fa fa-ban" aria-hidden="true"></i> {{langmod.RSLABEL42}}</button>
+    </div>
+  </div>
+  <div class="ibox-content">
+    <div class="row">
+      <label class="col-md-2 control-label" for="">{{langmod.RSJSLAB18}}:</label>
+      <div class="col-md-5">
+        <input type="text" class="form-control"  name="nameEdit" id="nameEdit" maxlength="255" value="">
+      </div>
+    </div>
+    <div class="row reseller-row-form">
+      <label class="col-md-2 control-label" for="">{{langmod.RSJSLAB19}}:</label>
+      <div class="col-md-5">
+        <input type="text" name="hostEdit" id="hostEdit" class="form-control tip" data-required="true" placeholder="{{langmod.RSJSLAB20}}" maxlength="15" title="">
+      </div>
+    </div>
+    <div class="row">
+      <label class="col-md-2 control-label" for="">{{langmod.RSJSLAB21}}:</label>
+      <div class="col-md-5 pass_form_div">
+        <div class="pass_container">
+          <input type="text" name="tokenEdit" id="tokenEdit" class="form-control"  placeholder="" value="">
+          <div class="pwstrength_viewport_progress"></div>
+          <span class="btn btn-default btn-xs copy-pass-btn" title="{{langmod.ADDCOPYPASS}}" data-toggle="tooltip" data-placement="top" onclick="copyPass('tokenEdit')"><i class="fa fa-copy"></i></span>
+        </div>
+        <div>
+          <span class="btn btn-default" title="{{langmod.RSJSLAB27}}" data-toggle="tooltip" data-placement="top" onclick="generate_token()">{{langmod.RSJSLAB22}}</span>
+        </div>
+      </div>
+    </div>
+    <div class="row reseller-row-form">
+      <label class="col-md-2 control-label" for="">{{langmod.RSJSLAB23}}:</label>
+      <div class="col-md-5">
+        <select name="formatEdit" id="formatEdit" class="form-control">
+          <option value="JSON">JSON</option>
+          <option value="XML">XML</option>
+        </select>
+      </div>
+    </div>
+    <div class="row reseller-row-form">
+      <div class="col-md-12" style="margin-top: 15px">
+        <div class="col-lg-offset-2" style="margin-bottom: 8px; margin-top: -10px" onclick="return autoselect('whmcs',0)">
+          <button class="btn btn-sm btn-primary">Check for WHMCS</button>
+          <button onclick="uncheckall(0)" class="btn btn-w-m btn-sm btn-warning">
+            {{langmod.RSJSLAB31}}
+          </button>
+        </div>
+        <div class="panel panel-default" id="EditFunction">
+          <div class="panel-heading">
+            <h4 class="panel-title">{{langmod.RSJSLAB24}}</h4>
+          </div>
+          <div class="panel-body pt0 pb0">
+            <table class="table packages_table table-striped table-bordered table-hover dataTable no-footer" id="EditTable">
+              <thead>
+              <tr>
+                <th scope="col">{{langmod.RSJSLAB26}}</th>
+                <th scope="col">add</th>
+                <th scope="col">upd</th>
+                <th scope="col">del</th>
+                <th scope="col">list</th>
+                <th scope="col">susp</th>
+                <th scope="col">unsp</th>
+              </tr>
+              </thead>
+              <tbody id="">
+              <tr>
+                <td>{{langmod.RSLABEL1}}</td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="accout_add_edit" class="check accout_add" type="checkbox" value="accout_add">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="accout_upd_edit" class="check accout_upd" type="checkbox" value="accout_upd">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="accout_del_edit" class="check accout_del" type="checkbox" value="accout_del">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="accout_list_edit" class="check accout_list" type="checkbox" value="accout_list">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="accout_susp_edit" class="check accout_susp" type="checkbox" value="accout_susp">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="accout_unsp_edit" class="check accout_unsp" type="checkbox" value="accout_unsp">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>{{langmod.RSJSLAB32}}</td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="detailaccount_add_edit" class="check disabled detailaccount_add" disabled type="checkbox" value="detailaccount_add">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="detailaccount_upd_edit" class="check disabled detailaccount_upd" disabled type="checkbox" value="detailaccount_upd">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="detailaccount_del_edit" class="check disabled detailaccount_del" disabled type="checkbox" value="detailaccount_del">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="detailaccount_list_edit" class="check detailaccount_list" type="checkbox" value="detailaccount_list">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="detailaccount_susp_edit" class="check disabled detailaccount_susp" disabled type="checkbox" value="detailaccount_susp">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="detailaccount_unsp_edit" class="check disabled detailaccount_unsp" disabled type="checkbox" value="detailaccount_unsp">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>{{langmod.RSJSLAB33}}</td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="user_session_add_edit" class="check disabled user_session_add" disabled type="checkbox" value="user_session_add">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="user_session_upd_edit" class="check disabled user_session_upd" disabled type="checkbox" value="user_session_upd">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="user_session_del_edit" class="check disabled user_session_del" disabled type="checkbox" value="user_session_del">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="user_session_list_edit" class="check user_session_list" type="checkbox" value="user_session_list">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="user_session_susp_edit" class="check disabled user_session_susp" disabled type="checkbox" value="user_session_susp">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="user_session_unsp_edit" class="check disabled user_session_unsp" disabled type="checkbox" value="user_session_unsp">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>{{langmod.CHANGPASS_UDP}}</td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="changpass_add_edit" class="check disabled changpass_add"  disabled type="checkbox" value="changpass_add">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="changpass_udp_edit" class="check changpass_udp" type="checkbox" value="changpass_udp">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="changpass_del_edit" class="check disabled changpass_del" disabled type="checkbox" value="changpass_del">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="changpass_list_edit" class="check disabled changpass_list" disabled type="checkbox" value="changpass_list">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="changpass_susp_edit" class="check disabled changpass_susp" disabled type="checkbox" value="changpass_susp">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="changpass_unsp_edit" class="check disabled changpass_unsp" disabled type="checkbox" value="changpass_unsp">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>{{langmod.RSLABEL2}}</td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="pack_add_edit" class="check pack_add" type="checkbox" value="pack_add">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="pack_upd_edit" class="check pack_upd" type="checkbox" value="pack_upd">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="pack_del_edit" class="check pack_del" type="checkbox" value="pack_del">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="pack_list_edit" class="check pack_list" type="checkbox" value="pack_list">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="pack_susp_edit" class="check disabled pack_susp" disabled type="checkbox" value="pack_susp">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+                <td align="center">
+                  <div class="checkbox-custom">
+                    <input id="pack_unsp_edit" class="check disabled pack_unsp"  disabled type="checkbox" value="pack_unsp">
+                    <label for="check4"></label>
+                  </div>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ibox-footer">
+    <input type="hidden" id="lineEdit">
+    <div class="text-right">
+      <button onclick="updateToken()" class="btnsav btn btn-w-m btn-sm btn-success">
+        <i class="fa fa-floppy-o" aria-hidden="true"></i> {{langmod.RSLABEL35}}
+      </button>
+      <button onclick="cancelNewToken(1)" class="btn btn-w-m btn-sm btn-warning">
+        <i class="fa fa-ban" aria-hidden="true"></i> {{langmod.RSLABEL42}}
+      </button>
+    </div>
+  </div>
+</div>
+<div class="modal" id="del_token_modal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-sm" style="width:300px">
+    <div class="modal-content animated fadeIn">
+      <div class="modal-header" style="padding: 10px;">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">×</span>
+          <span class="sr-only">{{langene.MDCLOSE}}</span>
+        </button>
+        <h4 class="modal-title" style="font-size:2rem">{{langmod.RSLABEL41}}</h4>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+
+      </div>
+      <input type="hidden" id="linedel">
+      <div class="modal-footer">
+        <button type="button" class="btn btn-white" data-dismiss="modal">{{langmod.RSLABEL71}}</button>
+        <button type="button" class="btn btn-primary" id="btndeletetoken" onclick="deleteTok(1,'','')">{{langmod.RSLABEL70}}</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}

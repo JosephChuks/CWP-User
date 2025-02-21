@@ -1,0 +1,162 @@
+
+console.log();
+let joomlist = null;
+let jltable = null;
+function joomlaTable(list){
+  joomlist = list;
+  if(joomlist.length > 0){
+    let html_content = '';
+    let index = 0;
+    joomlist.forEach(function(installation){
+      let insturl = installation.hasOwnProperty('url') ? installation.url : 'http://' + installation.domain;
+      let dbinf = '';
+      if(installation.hasOwnProperty('db_result') && installation.db_result.result != 'success'){
+        let dbtitle = '{{langmod.ADDDBNOT}} ' + handleDBError(installation.db_result.code);
+
+        dbinf = '<span class="fa-stack fa-xs" title="' + dbtitle + '" data-toggle="tooltip" data-placement="top" aria-hidden="true">' +
+                  '<i class="fa fa-circle fa-stack-2x"></i>' +
+                  '<i class="fa fa-info fa-stack-1x fa-inverse"></i>' +
+                '</span>';
+      }
+      html_content += '<tr id="tdjl_' + index + '">' +
+                        '<td>' + installation.domain + '<br>' +
+                          '<a href="' + insturl + '" target="_blank">' + insturl + '</a></td>' +
+                        '<td><div class="addon-td-item">' + installation.path + '</div></td>' +
+                        '<td><div class="addon-td-item text-center">' + installation.version + '</div></td>' +
+                        '<td>' +
+                          '<div class="database-info-td">' +
+                            '<div><b>{{langmod.ADDSHORTDB}}: </b> ' + installation.dbjl + '<br><b>{{langmod.ADDSHORTUDB}}: </b>' + installation.userbdjl + '</div>' +
+                            dbinf +
+                          '</div>' +
+                        '</td>' +
+                        '<td>' +
+                          '<div class="addon-td-item text-center">' +
+                            '<button title="{{langmod.ADDDWP3}}" data-toggle="tooltip" data-traddon="#tdjl_' + index + '" data-type="joomla" data-installation=\'' + JSON.stringify(installation) + '\' data-placement="top" aria-hidden="true" class="btn btn-danger btn-xs btn-delete" onclick="return deleteAddon(this, 0)">' +
+                            '<i aria-hidden="true" class="fa fa-trash"></i>' +
+                          '</button></div>' +
+                        '</td>' +
+                      '</tr>';
+      index++;
+    });
+    let table_html = '<table class="table table-striped jl-table">' +
+                      '<thead>' +
+                        '<tr>' +
+                          '<th>{{langmod.ADDDOMLAB}}</th>' +
+                          '<th>{{langmod.ADDPATHLAB}}</th>' +
+                          '<th class="text-center">{{langmod.ADDVERLAB}}</th>' +
+                          '<th>{{langmod.ADDBDUDB}}</th>' +
+                          '<th class="text-center"></th>' +
+                        '</tr>' +
+                      '</thead>' +
+                      '<tbody id="trpaneljl">' +
+                        html_content +
+                      '</tbody>' +
+                    '</table>';
+    $('#table_jl_container').html(table_html);
+    $('.jl-table').DataTable().destroy();
+    jltable = $('.jl-table').DataTable();
+  }else{
+    $('#table_jl_container').html('<div class="empty_list"><h4 class="text-success">{{langmod.ADDNOTJL}}</h4></div>');
+  }
+  $('[data-toggle="tooltip"]').tooltip();
+}
+function cancelJl(idCollapse){
+  uchip.slideToggle('#jl_list','#jl_form', function(){
+
+  });
+  $('#jlpach').val('jl');
+  $('#jldomain').val('');
+  $('#jlbd').val('jl{{mod.extra_data.randbd}}');
+  $('#jluserdb').val('jl{{mod.extra_data.randbd}}');
+  $('#jlpassbd').val('');
+  $('#jlpassbd').pwstrength('forceUpdate');
+  uchip.validator('.reqjoomla', true);
+  cancelGeneral(idCollapse);
+}
+function jlInit(){
+  if(joomlist == null){
+    jlReList();
+  }
+}
+function jlReList(){
+  $('#table_jl_container').html(loader);
+  getList('joomla', function(response){
+    joomlaTable(response);
+  });
+}
+function addJoomla(){
+  if(uchip.validator('.reqjoomla')){
+    let jldomain =  $('#jldomain').val();
+    let jlbd =  $('#jlbd').val();
+    let jluserdb =  $('#jluserdb').val();
+    let jlpassbd =  $('#jlpassbd').val();
+    let jlpach =  $('#jlpach').val();
+    let dompath =  $('#jldomain option:selected').data('path');
+    let domssl =  $('#jldomain option:selected').data('ssl');
+
+    let details = [
+      {
+        title : '{{langmod.ADDDOMLAB}}',
+        value : jldomain
+      },
+      {
+        title : '{{langmod.ADDURLLAB}}',
+        value : (domssl == 1 ? 'https' : 'http') + '://' + jldomain + '/' + jlpach
+      },
+      {
+        title : '{{langmod.ADDPATHLAB}}',
+        value : dompath + '/' + jlpach
+      },
+      {
+        title : '{{langmod.ADDDWP20}}',
+        value : jlbd
+      },
+      {
+        title : '{{langmod.ADDDBUSERLAB}}',
+        value : jluserdb
+      }
+    ];
+    let data = 'domssl=' + domssl + '&domain=' + jldomain + '&database=' + jlbd + '&dbuser=' + jluserdb + '&dbpass=' + Base64.encode(jlpassbd) + '&path=' + jlpach + '&dompath=' + dompath;
+    confirmInstallation({
+      type: 'joomla',
+      script: 'Joomla',
+      data : data,
+      wholepath: dompath + '/' + jlpach,
+      callback: function(response){
+        if(response.hasOwnProperty('result') && response.result == 'success'){
+          if(response.db_result.result != 'success'){
+            noti_bubble('{{langmod.ADDINSTALLDET}} ' + handleDBError(response.db_result.code),'{{langmod.ADDATENTION}}!','warning',false,false,'6500',true);
+          }else{
+            noti_bubble('{{langmod.ADDINSTALLSUCC}}','{{langmod.SUCCESS}}','success',false,false,'3000',true);
+          }
+        }else{
+          noti_bubble('{{langmod.ADDERRORGEN}}','{{langmod.FERROR}}','error',false,false,'3000',true);
+        }
+        var variableHTML='';
+        var modulin='jl';
+        if($("#instaled_"+modulin).html()==undefined){
+          variableHTML+='<div class="panel panel-default" id="instaled_'+modulin+'">'+
+                  ' <div class="panel-heading white-bg script-container-title">'+
+                  '<a class="accordion-toggle" style="width: 100%" data-toggle="collapse"  ' +
+                  'aria-expanded="true" aria-controls="panel_'+modulin+'_container" ' +
+                  'data-parent="#accordion1" data-target="#panel_'+modulin+'_container">'+
+                  '<h4 class="panel-title"><i class="more-less glyphicon-plus font-weight-bolder"></i></h4>' +
+                  '<h4 class="panel-title">Joomla Installations</h4></a></div>' +
+                  '<div id="panel_'+modulin+'_container"  class="panel-collapse collapse">' +
+                  '<div class="panel-body" id="table_'+modulin+'_container"><div class="table_cron_loader"><span>' +
+                  '<i class="fa fa-circle-o-notch fa-spin"></i></span></div></div></div></div>'
+          $( "#accordion1" ).append( variableHTML );
+          $(".accordion-toggle").click(function(){
+            $("#"+$(this).prop('data-target')).slideToggle('slow');
+          });
+        }
+        $("#instaledEmpty").hide();
+        joomlaTable(response.list);
+        cancelJl('jl');
+      },
+      details: details
+    });
+  }else{
+    noti_bubble('{{langmod.ADDREQFIELDS}}','{{langmod.FERROR}}','error',false,false,'3000',true);
+  }
+}

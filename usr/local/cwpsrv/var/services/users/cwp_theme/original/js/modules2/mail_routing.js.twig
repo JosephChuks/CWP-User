@@ -1,0 +1,43 @@
+function changest(domain,st){
+    $(".btnchangest").attr('disabled',true);
+    $(".btnchangest").addClass('disabled');
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=mail_routing&acc=changest",
+        data: "domain=" + domain + "&st=" + st,
+        complete: function (datos) {
+            updatelistmxrouting();
+            if(datos.responseText==1){
+                noti_bubble('{{langmod.MRSUCCES2}}','{{langmod.MRSUCCES}}','success',false,false,'3000',true);
+            }else{
+                noti_bubble('{{langmod.MRERRORT2}}','{{langmod.MRERRORT}}','error',false,false,'3000',true);
+            }
+            $(".btnchangest").attr('disabled',false);
+            $(".btnchangest").removeClass('disabled');
+            return false;
+        }
+    })
+}
+function updatelistmxrouting(){
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=mail_routing&acc=updatelist",
+        complete: function (datos) {
+            $("#listtr").html(datos.responseText);
+            return false;
+        }
+    })
+}
+function statusdomiain(domain){
+    $("#stajax").hide('blind');
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=mail_routing&acc=statusdomiain",
+        data: "domain=" + domain,
+        complete: function (datos) {
+            noti_bubble(datos.responseText,'Status','warning',true,true,'3000',false);
+            return false;
+        }
+    })
+    return false;
+}

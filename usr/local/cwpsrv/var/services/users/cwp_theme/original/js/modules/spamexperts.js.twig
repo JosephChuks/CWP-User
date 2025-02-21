@@ -1,0 +1,24 @@
+
+console.log();
+function loginspamexpert(code,id){
+    $(".classlogin").hide();
+    $("#loadin"+id).show();
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=spamexperts&acc=autologin",
+        data:"code="+code,
+        complete: function(datos){
+            //alert(datos.responseText);
+            $("#loadin"+id).hide();
+            $(".classlogin").show();
+            var obj = JSON.parse(datos.responseText);
+            if(obj.type=='Success'){
+                $("#autoLogin").attr("action",obj.data).submit();
+            }else{
+                noti_bubble('',obj.messages,'error',false,false,'3000',true);
+            }
+            return false;
+        }
+    });
+}

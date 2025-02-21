@@ -1,0 +1,122 @@
+function tomcatJSAppStatusInForm(elem, type) {
+    // uchip.handleButton(elem, curr_ico);
+    let ico_btn = 'fa-play';
+    let message = 'started';
+    if (type == 'stop') {
+        ico_btn = 'fa-stop'
+        message = 'stopped'
+    } else if (type == 'restart') {
+        ico_btn = 'fa-refresh'
+        message = 'restarted'
+    }
+    let cwp_key = $('#tomcat_app_quick_actions_container').data('cwp-key');
+    let app_key = $('#tomcat_app_quick_actions_container').data('key');
+    uchip.handleButton(elem, ico_btn);
+    $('#tomcat_app_quick_actions_container .btn').prop('disabled', true);
+    //$('.nodejs-app-form-btn').prop('disabled', true);
+    function resetButtons() {
+        $('#tomcat_app_quick_actions_container .btn').prop('disabled', false);
+        //$('.nodejs-app-form-btn').prop('disabled', false);
+        uchip.handleButton(elem, ico_btn, true);
+    }
+    handleAppStatus(type + '&cwp_key=' + cwp_key + '&key=' + app_key, function (resp_data) {
+        if ((type == 'start' || type == 'restart') && resp_data.app_status === 'running') {
+            $('#tomcat_app_quick_actions_container').addClass('is-running');
+        } else if (type == 'stop' && resp_data.app_status === 'stopped') {
+            $('#tomcat_app_quick_actions_container').removeClass('is-running');
+        } else {
+            if(type == 'restart'){
+                $('#tomcat_app_quick_actions_container').removeClass('is-running');
+            }
+            let mess = (type == 'start' || type == 'restart') ? '{{langmod.LABTOMCAT105}}' : '{{langmod.LABTOMCAT141}}';
+            noti_bubble(mess, '{{langmod.LABTOMCAT82}}', 'error', true, false, '3000', true);
+            resetButtons();
+            return;
+        }
+        let mess = '{{langmod.LABTOMCAT143}}';
+        if (type == 'restart'){
+            mess = '{{langmod.LABTOMCAT144}}';
+        } else if (type == 'stop'){
+            mess = '{{langmod.LABTOMCAT142}}';
+        }
+        noti_bubble('{{langmod.LABTOMCAT103}} ' + mess, '{{langmod.LABTOMCAT83}}', 'success', true, false, '5500', true);
+        resetButtons();
+        updateStatusAppTr(app_key, resp_data.app_status)
+    }, function () {
+        resetButtons();
+    });
+}
+function restartApplication(elem, index) {
+    uchip.handleButton(elem, 'fa-refresh');
+    let tr_app = $('#_tomcat_apps_item_' + index);
+    tr_app.addClass('deleting_tr');
+    function resetTR() {
+        tr_app.removeClass('deleting_tr');
+        tr_app.find('.btn').prop('disabled', false);
+        uchip.handleButton(elem, 'fa-refresh', true);
+    }
+    let app_key = tr_app.data('key');
+    let cwp_key = tr_app.data('cwpkey');
+    handleAppStatus('restart&cwp_key=' + cwp_key + '&key=' + app_key, function (response) {
+        if (response.app_status != 'running') {
+            $(elem).fadeOut('fast');
+            updateStatusAppTr(app_key, response.app_status);
+            noti_bubble('{{langmod.LABTOMCAT82}}', '{{langmod.LABTOMCAT105}}', 'error', true, false, '3000', true);
+        } else {
+            noti_bubble('{{langmod.LABTOMCAT83}}', '{{langmod.LABTOMCAT100}}', 'success', true, false, '5500', true);
+            updateStatusAppTr(app_key, response.app_status)
+        }
+        resetTR();
+    }, function () {
+        resetTR();
+    });
+}
+function updateStatusAppTr(appkey, status) {
+    let class_circle = 'text-running';
+    let btn_class_new = 'btn-danger';
+    let btn_class_old = 'btn-primary';
+    let btn_ico_new = 'fa-stop';
+    let btn_ico_old = 'fa-play';
+    let next_title = "{{langmod.LABTOMCAT102}}";
+    if (status != 'running') {
+        class_circle = 'text-danger';
+        btn_class_new = 'btn-primary';
+        btn_class_old = 'btn-danger';
+        btn_ico_new = 'fa-play';
+        btn_ico_old = 'fa-stop';
+        next_title = "{{langmod.LABTOMCAT101}}";
+        $('.app-tr-' + appkey).find('.btn-restart-app').fadeOut('fast');
+    } else {
+        $('.app-tr-' + appkey).find('.btn-restart-app').fadeIn('fast');
+    }
+    // if (status !== 'running') {
+    //     $('#_nodejs_apps_restart_btn_' + index).fadeIn('fast');
+    // } else {
+    //     $('#_nodejs_apps_restart_btn_' + index).fadeOut('fast');
+    // }
+    $('.app-tr-' + appkey).find('.btn-status_main').removeClass(btn_class_old).addClass(btn_class_new).attr('data-original-title', next_title).attr('title', next_title).data('status', status);
+    $('.app-tr-' + appkey).find('.btn-status_main i').removeClass(btn_ico_old).addClass(btn_ico_new);
+    $('.app-tr-' + appkey).find('.status-app-container i').removeClass().addClass('fa fa-circle ' + class_circle);
+    $('.app-tr-' + appkey).find('.status-app-container span').text(status);
+}
+function handleAppStatus(action, success, cleaner) {
+    uchip.call('module=tomcat_manager&acc=app_status', {
+        data: 'action=' + action,
+        callback: function (response) {
+            if (response.result == 'success') {
+                success(response);
+            } else {
+                let message_error = '{{langmod.LABTOMCAT81}}';
+                if (response.hasOwnProperty('code')) {
+                    if (response.code == 2) {
+                        message_error = '{{langmod.LABTOMCAT117}}';
+                    } else if (response.code == 1) {
+                        message_error = '{{langmod.LABTOMCAT116}}';
+                    }
+                }
+                noti_bubble('{{langmod.LABTOMCAT82}}', message_error, 'error', true, false, '3000', true);
+                cleaner();
+            }
+        }
+    });
+}

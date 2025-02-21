@@ -1,0 +1,13 @@
+
+    <div class="footer" style="margin-top:20px">
+        <div id="footer_content">
+            {% if mod.custom_footer != '' %} {{mod.custom_footer|raw}} {% else
+            %}
+            <strong>Copyright &copy; {{mod.ano}} </strong>
+            <a href="http://thekinsmen.net" target="_blank"
+                >The Kinsmen</a
+            >
+            {% endif%}
+        </div>
+    </div>
+

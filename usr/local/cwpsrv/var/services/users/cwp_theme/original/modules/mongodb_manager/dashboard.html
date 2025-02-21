@@ -1,0 +1,58 @@
+<div class="col-md-12"> 
+    {% if mod.mongodb_status == 'running' %}
+        {% if mod.mongodb_quota > -1 %}
+            {% set mongo_db_quota_bar=100/mod.mongodb_quota*mod.mongodb_qty %}
+            {% if mongo_db_quota_bar >=26 and mongo_db_quota_bar <=50 %} 
+                {% set classbar='progress-bar progress-bar-success' %} 
+            {% elseif mongo_db_quota_bar>=51 and mongo_db_quota_bar <=75 %} 
+                {% set classbar='progress-bar progress-bar-warning' %} 
+            {% elseif mongo_db_quota_bar>75 %}
+                {% set classbar = 'progress-bar progress-bar-danger' %}
+            {% else %}
+                {% set classbar = 'progress-bar' %}
+            {% endif %}
+            {% set label_dom = mod.mongodb_quota %}
+        {% else %}
+            {% set mongo_db_quota_bar = 0 %}
+            {% set classbar = 'progress-bar' %}
+            {% set label_dom = '&infin;' %}
+        {% endif %}
+        <div class="mongodb-quota-wrapper">
+            <div class="ibox-content" id="indemail" style="display: block">
+                <ul class="stat-list">
+                    <li>
+                        <h2 class="no-margins" style="vertical-align: inherit;" id="tlftpind">Mongo Databases {{langmod.LABMON80}} <span id="mongodb_used">{{mod.mongodb_qty}}</span> / {{mod.mongodb_quota}}</h2>
+                        <small style="vertical-align: inherit;">{{langmod.LABMON81}} / {{langmod.LABMON82}}</small>
+                        <div id="stat-percent" style="display: inline;">{{mongo_db_quota_bar|round}}%</div>
+                        <div class="progress progress-mini">
+                            <div style="width: {{mongo_db_quota_bar|round}}%;" class="{{classbar}}" id="_bar_mongodb_quota_"></div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="ibox" id="_mongo_tabs_wrapper_">
+            <ul class="nav nav-tabs">
+                <li class="active"><a class="nav-link"  data-toggle="tab" href="#_mongo_database_tab_"><i class="fa fa-database"></i> {{langmod.LABMON1}}</a></li>
+                <li><a data-toggle="tab" class="nav-link" onclick="showUsesrTab()" href="#_mongodb_users_tab_"><i class="fa fa-users"></i> {{langmod.LABMON2}}</a></li>
+            </ul>  
+            
+            <div class="tab-content">
+                {% include 'modules/mongodb_manager/databases.html' %}
+                <div id="_mongodb_users_tab_" class="tab-pane fade">
+                    <div class="ibox-content" id="_mongdb_users_list_wrapper_">
+                        
+                    </div>
+                    <div class="ibox-content" id="_mongdb_users_loader_">
+                        <div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="ibox-content" id="_mongdb_not_running_wrapper_">
+            <i class="fa fa-ban text-warning"></i>
+            <h5>{{langmod.LABMON79}}</h5>
+        </div>
+    {% endif %}
+</div>

@@ -1,0 +1,1271 @@
+<style media="screen">
+  #editor_loader {
+    display: none;
+  }
+
+  .editor-loader-wrapper {
+    display: flex;
+    height: 30vh;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff;
+  }
+
+  .ibox-title {
+    padding: 15px;
+  }
+
+  .email-filters-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .email-filters-title h4 {
+    margin: 0px;
+  }
+
+  .accounts_loader {
+    position: absolute;
+    background-color: #ffffff;
+    width: 20rem;
+    z-index: 1000;
+    height: auto;
+    border-radius: 5px;
+    border: 1px solid #cecece;
+    padding: .5rem 0px;
+  }
+
+  .loader-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 30vh;
+  }
+
+  #table_email_container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    padding: 15px;
+  }
+
+  #table_preset_container {
+    padding: 15px;
+  }
+
+  .email-accounts-table,
+  #DataTables_Table_0_wrapper {
+    width: 100% !important;
+  }
+
+  .td-filters {
+    text-align: center;
+  }
+
+  .td-filters .fa {
+    font-size: 2.2rem;
+  }
+
+  .filter-type {
+    text-align: right;
+  }
+
+  .filter-type select {
+    margin-left: 5px;
+  }
+
+  .filter-type label {
+    font-weight: 500;
+  }
+
+  #goat_wrap {
+    display: none;
+  }
+
+  .rules-selector {
+    display: flex;
+  }
+
+  .rules-filter-units-wrapper .radio,
+  .rules-selector .radio {
+    margin-top: 10px !important;
+    margin-right: 10px;
+  }
+
+  fieldset {
+    border: 1px solid #ddd;
+    padding: 0px 10px 10px;
+    border-radius: 5px;
+    margin-top: 5px;
+  }
+
+  legend {
+    width: auto !important;
+    font-size: 14px;
+    padding: 0px 10px;
+    font-weight: 600;
+    border-bottom: none;
+    color: #676a75;
+    margin-bottom: 0px;
+  }
+
+  .redirection-filter,
+  .rules-filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0px;
+  }
+
+  .redirection-filter {
+    align-items: baseline;
+  }
+
+  .redirection-filter-item,
+  .rules-filter-item {
+    margin-right: 5px;
+  }
+
+  .rules-filter-first {
+    width: 130px;
+  }
+
+  .rules-filter-contains {
+    width: 250px;
+  }
+
+  .rules-filter-value-wrapper.filter-normal {
+    width: 200px;
+  }
+
+  .rules-filter-custom-wrapper {
+    width: 180px;
+  }
+
+  .rules-filter-custom-wrapper .bootstrap-tagsinput,
+  .rules-filter-value-wrapper.filter-normal .bootstrap-tagsinput {
+    width: 200px;
+    border-radius: 1px;
+    border-color: #e7eaec;
+    box-shadow: none;
+    min-height: auto;
+    margin-right: 5px;
+  }
+
+  .rules-filter-custom-wrapper {
+    margin-right: 5px;
+  }
+
+  .rules-filter-custom-wrapper .bootstrap-tagsinput input,
+  .rules-filter-value-wrapper.filter-normal .bootstrap-tagsinput input {
+    padding: 2px 6px;
+  }
+
+  .vacation-myadd-wrapper .bootstrap-tagsinput,
+  .action-filter-notifyoption .bootstrap-tagsinput {
+    width: 31rem;
+    display: block;
+    overflow: auto;
+    border-radius: 1px;
+    border-width: 1px;
+    border-color: #e7eaec;
+  }
+
+  .rem-rule-btn,
+  .add-rule-btn {
+    height: 3.2rem;
+  }
+
+  .rem-rule-btn {
+    margin-left: 5px;
+  }
+
+  .subnormal {
+    display: none;
+  }
+
+  .rules-filter-size {
+    width: 80px;
+  }
+
+  .rules-filter-quota {
+    width: 80px;
+  }
+
+  .rules-filter-units {
+    width: 200px;
+    margin-top: -5px;
+  }
+
+  .rules-filter-date {
+    width: 180px;
+  }
+
+  .rules-filter-units-wrapper {
+    display: flex;
+  }
+
+  #rules_filter_account .rules-filter:not(:first-child),
+  #rules_filter .rules-filter:not(:first-child) {
+    margin-top: 5px;
+  }
+
+  .actions-filters .redirection-filter:first-child .rem-rule-btn,
+  #rules_filter_account .rules-filter:first-child .rem-rule-btn,
+  #rules_filter .rules-filter:first-child .rem-rule-btn {
+    display: none;
+  }
+
+  .actions-filters .redirection-filter:not(:last-child),
+  #rules_filter_account .rules-filter:not(:last-child),
+  #rules_filter .rules-filter:not(:last-child) {
+    padding-bottom: 5px;
+    border-bottom: 1px solid #e5e6e7;
+  }
+
+  .actions-filters .redirection-filter:first-child .add-rule-btn,
+  #rules_filter_account .rules-filter:first-child .add-rule-btn,
+  #rules_filter .rules-filter:first-child .add-rule-btn {
+    margin-right: 4rem;
+  }
+
+  .redirection-filter-inner,
+  .rules-filter-inner {
+    display: flex;
+  }
+
+  .right-panel-filters h4 {
+    margin: 0px;
+  }
+
+  .rules-filter-advopt {
+    cursor: pointer;
+  }
+
+  .redirection-filter-inner {
+    margin-top: 5px;
+  }
+
+  .redirection-filter-first {
+    width: 250px;
+  }
+
+  .redirection-filter-address,
+  #filter_account_form_loader {
+    display: none;
+  }
+
+  .redirection-filter-flags {
+    margin-left: 10px;
+  }
+
+  .redirection-filter-flags .checkbox-primary:first-child {
+    margin-top: 0px;
+  }
+
+  .checkbox.check-sm {
+    margin-bottom: 0px;
+  }
+
+  .checkbox.check-sm label {
+    font-size: 13px;
+  }
+
+  .checkbox.check-sm label::before {
+    width: 14px;
+    height: 14px;
+    top: 3px;
+  }
+
+  .checkbox.check-sm label::after {
+    left: -1px;
+    top: 2px;
+  }
+
+  .redirection-filter-vars {
+    margin-left: 10px;
+  }
+
+  .redirection-filter-vars input {
+    margin-bottom: 5px;
+  }
+
+  .redirection-filter-vars .checkbox-primary {
+    margin-top: 0px;
+  }
+
+  .filter-action-label {
+    font-size: 13px;
+    margin: 10px 0px 5px;
+    display: block;
+  }
+
+  .redirection-filter-notify {
+    margin-left: 10px;
+  }
+
+  .redirection-filter-notify-target {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .redirection-filter-notify-target select {
+    width: 30%;
+  }
+
+  .redirection-filter-notify-target input {
+    width: 66%;
+    margin-left: 10px;
+  }
+
+  .pick-on-save {
+    display: none;
+  }
+
+  .error_filter {
+    border: 1px dotted #cc5965 !important;
+  }
+
+  .error-field,
+  .error-span {
+    font-size: 13px;
+    color: #FF0000;
+    font-weight: 500;
+  }
+
+  .raw-content-forms {
+    display: none;
+  }
+
+  #email_filters_sets .filter-set-management {
+    padding: 10px 15px;
+  }
+
+  .set-item-info {
+    display: flex;
+    align-items: center;
+  }
+
+  #save_type_accounts .bootstrap-tagsinput {
+    border-radius: 1px;
+    border-color: #e7eaec;
+    box-shadow: none;
+  }
+
+  .alert {
+    margin-bottom: 0px;
+    margin-top: 5px;
+  }
+
+  #preset_form_loader {
+    display: none;
+    background-color: #ffffff;
+  }
+
+  .dataTables_wrapper {
+    padding-bottom: 0px;
+  }
+
+  #filters_account_modal .ibox-content-loader {
+    display: flex;
+    justify-content: center;
+  }
+
+  #filters_account_modal .ibox {
+    margin-bottom: 0px;
+  }
+
+  #filters_account_modal .table_cron_loader {
+    position: inherit;
+  }
+
+  #email_filters_manager,
+  #email_filters_sets {
+    display: none;
+  }
+
+  .sets-account-list {
+    border-right: 1px #ddd solid;
+  }
+
+  #set_filters_wrapper .ibox,
+  .sets-account-list .ibox {
+    margin-bottom: 0px;
+  }
+
+  .sets-account-list .set-item {
+    padding: 5px;
+    border-bottom: 1px solid #e7eaec;
+  }
+
+  .sets-account-list .set-item .col-md-12 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .sets-account-list .set-item:nth-child(odd) {
+    background: #F8F8F8;
+  }
+
+  .sets-account-list .set-item {
+    padding: 10px 5px;
+    border-bottom: 1px solid #e7eaec;
+  }
+
+  .filter-list-item-inactive .filters-list-item-name::before {
+    content: "";
+    display: inline-block;
+    vertical-align: middle;
+    border: 1px solid #696c6d40;
+    width: 70%;
+    position: absolute;
+    margin-top: 10px;
+  }
+
+  .sets-account-list .set-item.set-item-inactive .col-md-12::before {
+    content: "";
+    display: inline-block;
+    vertical-align: middle;
+    border: 1px solid #eeeeeebf;
+    width: 100%;
+    position: absolute;
+    margin-top: 0px;
+  }
+
+  .filter-set-loader-wrapper {
+    display: none;
+  }
+
+  .set-item-buttons {
+    z-index: 10;
+  }
+
+  .set-item-inactive .set-item-info-name {
+    color: #999999;
+  }
+
+  .set-item-active .set-item-info-name {
+    font-weight: 500;
+    margin-right: 5px;
+  }
+
+  .set-item-info-name {
+    margin-left: 5px;
+    border-left: 1px solid #999;
+    padding-left: 5px;
+  }
+
+  .onoffswitch-label {
+    margin-bottom: 0px;
+  }
+
+  .sets-account-list .set-item.set-item-inactive .radio label {
+    color: #999999;
+  }
+
+  .sets-account-list .set-item.set-item-active {
+    background-color: #5cb85c47;
+  }
+
+  .sets-account-list .ibox-content {
+    padding: 0px;
+    max-height: 70vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .filter-set-loader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+  }
+
+  .filter-set-loader .fa {
+    font-size: 3rem;
+    color: #1bb393;
+  }
+
+  #set_filters_wrapper .email-filters-title,
+  .sets-account-list .email-filters-title {
+    margin-bottom: 5px;
+    padding: 0px 5px;
+  }
+
+  .sets-account-list .set-item .row {
+    align-items: center;
+    display: flex;
+  }
+
+  .sets-account-list .set-item .col-xs-4 {
+    text-align: right;
+  }
+
+  #set_filters_wrapper .ibox-title,
+  .sets-account-list .ibox-title {
+    border-top: 0px;
+    padding: 0px;
+    min-height: 0;
+  }
+
+  #new_set_dropdown .dropdown-menu {
+    width: 100%;
+    border-top-right-radius: 0px;
+    border-top-left-radius: 0px;
+    padding: 10px;
+  }
+
+  .sets-account-list .btn-container {
+    display: flex;
+    justify-content: center;
+  }
+
+  .sets-account-list ul {
+    list-style: none;
+    padding-left: 0px;
+  }
+
+  .empty-set-filter {
+    display: flex;
+    justify-content: center;
+    height: 40vh;
+    align-items: center;
+    background-color: #f5f5f5;
+  }
+
+  .select-filter-set {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #manager_content_wrapper .ibox-content-loader {
+    display: flex;
+    justify-content: center;
+    height: 30vh;
+    align-items: center;
+  }
+
+  #manager_content_wrapper .table_cron_loader {
+    position: relative;
+  }
+
+  #filters_list_wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 10vh;
+  }
+
+  .no-filters-stored {
+    text-align: center;
+    line-height: 40px;
+  }
+
+  .ul-filters-list {
+    list-style: none;
+    padding-left: 0px;
+    margin-bottom: 0px;
+  }
+
+  .filters-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .filters-list-box {
+    padding: 0px 5px;
+  }
+
+  .ul-filters-list li {
+    padding: 7px 0px;
+    border-bottom: 1px solid #e7eaec;
+  }
+
+  #new_filter_selector {
+    right: 4rem;
+    position: absolute;
+    width: 12rem;
+  }
+
+  #new_filter_selector .dropdown-menu a {
+    display: block;
+    padding: 10px 5px;
+    border-bottom: 1px solid #f3f3f4;
+  }
+
+  #new_filter_selector .dropdown-menu a .fa {
+    margin-right: 10px;
+  }
+
+  .deleting_row {
+    background-color: #f5f5f566;
+    color: #e7eaec;
+  }
+
+  .deleting_row .badge-success {
+    background-color: #b8deff;
+  }
+
+  .deleting_row .badge-primary {
+    background-color: #a7e8db;
+  }
+
+  .filter-input-wrapper {
+    display: flex;
+    align-items: center;
+  }
+
+  #actions_filters_preset .redirection-filter,
+  #preset_form_wrapper .rules-filter {
+    margin: 0px 15px;
+  }
+
+  #modal_pick_template .modal-dialog {
+    width: 35vw !important;
+    max-width: 700px;
+  }
+
+  .btn-xxs {
+    font-size: 12px;
+  }
+
+  .set-item.current-viewing {
+    background-color: #ddd !important;
+  }
+
+  .set-item.current-viewing .set-item-info-name {
+    color: #797777;
+  }
+
+  .nav.nav-tabs {
+    border-bottom: 0px;
+  }
+
+  .head-set-list {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e6eaec;
+  }
+
+  .head-set-list .col-md-2 {
+    padding: 0px;
+    text-align: center;
+  }
+
+  .head-set-list .col-md-10 {
+    padding-left: 5px;
+    border-left: 1px solid #999;
+  }
+
+  .nbtop-head {
+    border-top: 0px;
+  }
+</style>
+<div class="modal" id="modal_del_item_filter" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-sm" style="width:300px">
+    <div class="modal-content animated fadeIn">
+      <div class="modal-header" style="padding: 10px;">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">×</span>
+          <span class="sr-only">{{langene.MDCLOSE}}</span>
+        </button>
+        <h4 class="modal-title text-center" style="font-size:2rem">Attention!</h4>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+
+      </div>
+      <div class="modal-footer" id="conf_del_buttons">
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal" id="modal_pick_template" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" style="width:300px">
+    <div class="modal-content animated fadeIn">
+      <div class="modal-header" style="padding: 10px;">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">×</span>
+          <span class="sr-only">{{langene.MDCLOSE}}</span>
+        </button>
+        <h4 class="modal-title text-center" style="font-size:2rem">Choose a template to create a new filter.</h4>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+
+      </div>
+
+    </div>
+  </div>
+</div>
+{% set emailbar_mailauto=100/mod.email_pack_mailauto*mod.email_accounts_mailauto %}
+<div class="row  border-bottom white-bg dashboard-header">
+  {% if mod.fsl == 1 %}
+  {% set stflalert ='block' %}
+  {% else %}
+  {% set stflalert ='none' %}
+  {% endif %}
+  <div class="row  alert alert-warning col-lg-12" style="margin-left: 5px; padding-right: 5px;display:{{stflalert}}"
+    id="alertfl">
+    <strong>{{langene.GALARTFILEBLOCK}}</strong>
+  </div>
+  <div class="col-lg-10">
+    <h2>{{langmod.ARTITJLE}} ({{users}})</h2>
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="?">Home</a></li>
+      <li class="breadcrumb-item active"><strong>{{langmod.EMFILTERSLAB1}}</strong></li>
+    </ol>
+  </div>
+</div>
+<div class="row" style="margin-top:2rem;">
+  <div class="col-lg-9">
+    <div class="tabs-container">
+      <ul class="nav nav-tabs" role="tablist">
+        <li><a class="nav-link active" data-idenifier="#tab-1" data-toggle="tab" href="#tab-1">
+            {{langmod.EMFILTERSLAB1}}</a></li>
+        <li><a class="nav-link" data-idenifier="#tab-2" data-toggle="tab" href="#tab-2">{{langmod.EMFILTERSLAB115}}</a>
+        </li>
+      </ul>
+      <div class="tab-content">
+        <div role="tabpanel" id="tab-1" class="tab-pane active">
+          <div class="row" id="email_filters_main">
+            <div class="col-md-9">
+              <div class="ibox" id="list_filters">
+                <div class="ibox-title nbtop-head">
+                  <div class="email-filters-title">
+                    <h4>{{langmod.EMFILTERSLAB116}}</h4>
+
+                  </div>
+                </div>
+                <div class="ibox-content" id="table_email_container">
+                  <div class="table_cron_loader accounts_loader" id="accounts_loader"><span><i
+                        class="fa fa-circle-o-notch fa-spin"></i></span></div>
+                </div>
+              </div>
+              <div class="ibox" id="email_filters_sets">
+                <div class="ibox-title nbtop-head filter-set-management">
+                  <div class="email-filters-title">
+                    <h4 id="title_manage_filter"></h4>
+                    <div class="text-right">
+                      <button type="button" onclick="cancelManageFilterAccount()"
+                        class="btn btn-warning btn-xs mr5 mb10"><i class="fa fa-chevron-left"></i>
+                        {{langmod.EMFILTERSLAB147}}</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="ibox-content" id="manager_content_wrapper">
+
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="ibox right-panel-filters">
+                <div class="ibox-title">
+                  <h4>{{langmod.EMFILTERSLAB3}}</h4>
+                </div>
+                <div class="ibox-content">
+                  {{langmod.EMFILTERSLAB167}}1
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row" id="email_filters_manager">
+            <div class="col-md-12" id="editor_form">
+              <div class="ibox">
+                <input type="hidden" id="editor_action" value="create">
+                <input type="hidden" id="editing_index" value="0">
+                <div class="ibox-title nbtop-head">
+                  <div class="email-filters-title">
+                    <h4><span id="filter_title_prefix_account"></span> <span id="filter_title_account"></span></h4>
+                    <div class="text-right">
+                      <button type="button" onclick="cancelManage()"
+                        class="btn btn-warning btn-xs mr5 mb10 cancel-preset-account"><i class="fa fa-ban"></i>
+                        {{langmod.EMFILTERSLAB5}}</button>
+                      <button type="button" onclick="saveFilterAccount()"
+                        class="btn btn-success btn-xs mr5 mb10 save-preset-account"><i class="fa fa-floppy-o"></i>
+                        {{langmod.EMFILTERSLAB175}}</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="ibox-content">
+                  <div class="" id="filter_account_form">
+                    <input type="hidden" id="filter_for_account" name="" value="">
+                    <div class="row filter-input-wrapper">
+                      <div class="col-sm-2">
+                        <label for="_name"><b>{{langmod.EMFILTERSLAB7}}:</b></label>
+                      </div>
+                      <div class="col-sm-4">
+                        <input name="filter_name" id="filter_name_toaccount"
+                          class="form-control data-required filter_name_input" placeholder="{{langmod.EMFILTERSLAB7}}"
+                          type="text">
+                      </div>
+                    </div>
+                    <div class="row filter-input-wrapper" style="margin-top: 5px;">
+                      <div class="col-sm-2">
+                        <label for="_name"><b>{{langmod.EMFILTERSLAB165}}:</b></label>
+                      </div>
+                      <div class="col-sm-1">
+                        <div class="radio radio-primary">
+                          <input class="filter-status-check-form" checked name="_filter_status_form"
+                            id="_filter_status_form_active" value="1" type="radio">
+                          <label for="_filter_status_form_active">{{langmod.EMFILTERSLAB132}}</label>
+                        </div>
+                      </div>
+                      <div class="col-sm-1">
+                        <div class="radio radio-primary">
+                          <input class="filter-status-check-form" name="_filter_status_form"
+                            id="_filter_status_form_inactive" value="0" type="radio">
+                          <label for="_filter_status_form_inactive">{{langmod.EMFILTERSLAB131}}</label>
+                        </div>
+                      </div>
+                    </div>
+                    <fieldset>
+                      <legend>{{langmod.EMFILTERSLAB8}}:</legend>
+                      <div class="container-fluid">
+                        <div class="row">
+                          <div class="col-sm-12 rules-selector">
+                            <div class="radio radio-primary">
+                              <input name="_join_account" class="type_filter"
+                                onchange="matchingType('#rules_filter_account')" type="radio" id="_allof_account"
+                                checked value="allof">
+                              <label for="_allof_account">{{langmod.EMFILTERSLAB9}}</label>
+                            </div>
+                            <div class="radio radio-primary">
+                              <input name="_join_account" class="type_filter"
+                                onchange="matchingType('#rules_filter_account')" type="radio" id="_anyof_account"
+                                value="anyof">
+                              <label for="_anyof_account">{{langmod.EMFILTERSLAB10}}</label>
+                            </div>
+                            <div class="radio radio-primary">
+                              <input name="_join_account" class="type_filter"
+                                onchange="matchingType('#rules_filter_account')" type="radio" id="_any_account"
+                                value="any">
+                              <label for="_any_account">{{langmod.EMFILTERSLAB11}}</label>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="row rules-filter-wrapper" id="rules_filter_account">
+                        </div>
+                      </div>
+                    </fieldset>
+                    <fieldset>
+                      <legend>...{{langmod.EMFILTERSLAB52}}:</legend>
+                      <div class="container-fluid">
+                        <div class="row actions-filters" id="actions_filters_account">
+                        </div>
+                      </div>
+                    </fieldset>
+                  </div>
+                  <div id="filter_account_form_loader">
+                    <div class="loader-wrapper">
+                      <div class="table_cron_loader accounts_loader"><span><i
+                            class="fa fa-circle-o-notch fa-spin"></i></span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-12" id="editor_loader">
+              <div class="editor-loader-wrapper">
+                <div class="table_cron_loader accounts_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div role="tabpanel" id="tab-2" class="tab-pane">
+          <div class="container-fluid" id="list_presets" style="padding:0px;">
+            <div class="row">
+              <div class="col-md-9">
+                <div class="ibox">
+                  <div class="ibox-title nbtop-head">
+                    <div class="email-filters-title">
+                      <h4>{{langmod.EMFILTERSLAB117}}</h4>
+                      <div class="text-right">
+                        <button type="button" id="addAutoRepBTN" onclick="showNewFilterForm()"
+                          class="btn btn-success btn-xs mr5 mb10"><i class="fa fa-plus"></i>
+                          {{langmod.EMFILTERSLAB118}}</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="ibox-content" id="table_preset_container">
+                    <div class="table_cron_loader accounts_loader"><span><i
+                          class="fa fa-circle-o-notch fa-spin"></i></span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="ibox" id="list_filters">
+                  <div class="ibox-title">
+                    <h4>{{langmod.EMFILTERSLAB3}}</h4>
+                  </div>
+                  <div class="ibox-content">
+                    {{langmod.EMFILTERSLAB167}}2
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="goat_wrap">
+            <div class="ibox" id="new_filter_form">
+              <div class="ibox-title nbtop-head">
+                <div class="email-filters-title">
+                  <h4 id="_template_editor_title">{{langmod.EMFILTERSLAB4}}</h4>
+                  <div class="text-right">
+                    <button type="button" onclick="cancelPreset()"
+                      class="btn btn-warning btn-xs mr5 mb10 cancel-preset"><i class="fa fa-ban"></i>
+                      {{langmod.EMFILTERSLAB5}}</button>
+                    <button type="button" id="addAutoRepBTN" onclick="savePreSet()"
+                      class="btn btn-success btn-xs mr5 mb10 save-preset"><i class="fa fa-floppy-o"></i>
+                      {{langmod.EMFILTERSLAB6}}</button>
+                  </div>
+                </div>
+              </div>
+              <div class="ibox-content" id="preset_form_wrapper">
+                <div class="">
+                  <div class="row">
+                    <div class="col-sm-2">
+                      <label for="_name"><b>{{langmod.EMFILTERSLAB7}}:</b></label>
+                    </div>
+                    <div class="col-sm-4">
+                      <input name="filter_name" id="filter_name" class="form-control data-required filter_name_input"
+                        placeholder="{{langmod.EMFILTERSLAB7}}" type="text">
+                    </div>
+                  </div>
+
+                  <fieldset>
+                    <legend>{{langmod.EMFILTERSLAB8}}:</legend>
+                    <div class="container-fluid"></div>
+                    <div class="row">
+                      <div class="col-sm-12 rules-selector">
+                        <div class="radio radio-primary">
+                          <input name="_join" class="type_filter" onchange="matchingType('#rules_filter')" type="radio"
+                            id="_allof" checked value="allof">
+                          <label for="_allof">{{langmod.EMFILTERSLAB9}}</label>
+                        </div>
+                        <div class="radio radio-primary">
+                          <input name="_join" class="type_filter" onchange="matchingType('#rules_filter')" type="radio"
+                            id="_anyof" value="anyof">
+                          <label for="_anyof">{{langmod.EMFILTERSLAB10}}</label>
+                        </div>
+                        <div class="radio radio-primary">
+                          <input name="_join" class="type_filter" onchange="matchingType('#rules_filter')" type="radio"
+                            id="_any" value="any">
+                          <label for="_any">{{langmod.EMFILTERSLAB11}}</label>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row rules-filter-wrapper" id="rules_filter">
+                    </div>
+                    <!--</div>-->
+                  </fieldset>
+                  <fieldset>
+                    <legend>...{{langmod.EMFILTERSLAB52}}:</legend>
+                    <div class="row actions-filters" id="actions_filters_preset">
+                    </div>
+                  </fieldset>
+                  <div class="raw-content-forms conta">
+                    <div class="row" id="rules_filter_raw">
+                      <div class="col-sm-10 rules-filter" id="_rule_row_{RULE_INDEX}" data-index="{RULE_INDEX}">
+                        <div class="rules-filter-inner">
+
+                          <select class="form-control rules-filter-item rules-filter-first" id="rule_type{RULE_INDEX}"
+                            onchange="ruleType(this)">
+                            <option value="subject" selected="selected">{{langmod.EMFILTERSLAB12}}</option>
+                            <option value="from">{{langmod.EMFILTERSLAB13}}</option>
+                            <option value="to">{{langmod.EMFILTERSLAB14}}</option>
+                            <option value="...">...</option>
+                            <option value="body">{{langmod.EMFILTERSLAB15}}</option>
+                            <option value="size">{{langmod.EMFILTERSLAB16}}</option>
+                            <option value="date">{{langmod.EMFILTERSLAB17}}</option>
+                            <option value="currentdate">{{langmod.EMFILTERSLAB18}}</option>
+                          </select>
+                          <select name="" id="rule_date{RULE_INDEX}"
+                            class="form-control rules-filter-item rules-filter-date subnormal">
+                            <option value="date">{{langmod.EMFILTERSLAB19}} (yyyy-mm-dd)</option>
+                            <option value="iso8601">{{langmod.EMFILTERSLAB19}} (ISO8601)</option>
+                            <option value="std11">{{langmod.EMFILTERSLAB19}} (RFC2822)</option>
+                            <option value="julian">{{langmod.EMFILTERSLAB19}} (julian)</option>
+                            <option value="time">{{langmod.EMFILTERSLAB20}} (hh:mm:ss)</option>
+                            <option value="year">{{langmod.EMFILTERSLAB21}}</option>
+                            <option value="month">{{langmod.EMFILTERSLAB22}}</option>
+                            <option value="day">{{langmod.EMFILTERSLAB23}}</option>
+                            <option value="hour">{{langmod.EMFILTERSLAB24}}</option>
+                            <option value="minute">{{langmod.EMFILTERSLAB25}}</option>
+                            <option value="second">{{langmod.EMFILTERSLAB26}}</option>
+                            <option value="weekday">{{langmod.EMFILTERSLAB27}} (0-6)</option>
+                            <option value="zone">{{langmod.EMFILTERSLAB28}}</option>
+                          </select>
+                          <div class="rules-filter-custom-wrapper subnormal">
+                            <input type="text" class="form-control rules-filter-custom rules-filter-item data-required"
+                              id="rule_custom{RULE_INDEX}" name="" value="">
+                          </div>
+                          <select class="form-control rules-filter-item rules-filter-size filter-by-size subnormal"
+                            id="rule_size_op{RULE_INDEX}">
+                            <option value="over">{{langmod.EMFILTERSLAB29}}</option>
+                            <option value="under">{{langmod.EMFILTERSLAB30}}</option>
+                          </select>
+                          <input type="text" data-numeric="true"
+                            class="form-control rules-filter-item rules-filter-quota data-required filter-by-size subnormal"
+                            id="rule_size_quota{RULE_INDEX}" value="" size="10">
+                          <div class="rules-filter-item rules-filter-units filter-by-size subnormal">
+                            <div class="rules-filter-units-wrapper">
+                              <div class="radio radio-primary">
+                                <input name="filter_rule_size{RULE_INDEX}" class="filter_size_unit" type="radio" checked
+                                  id="filter_rule_size_b{RULE_INDEX}" value="B">
+                                <label for="filter_rule_size_b{RULE_INDEX}">B</label>
+                              </div>
+                              <div class="radio radio-primary">
+                                <input name="filter_rule_size{RULE_INDEX}" class="filter_size_unit" type="radio"
+                                  id="filter_rule_size_kb{RULE_INDEX}" value="K">
+                                <label for="filter_rule_size_kb{RULE_INDEX}">KB</label>
+                              </div>
+                              <div class="radio radio-primary">
+                                <input name="filter_rule_size{RULE_INDEX}" class="filter_size_unit" type="radio"
+                                  id="filter_rule_size_mb{RULE_INDEX}" value="M">
+                                <label for="filter_rule_size_mb{RULE_INDEX}">MB</label>
+                              </div>
+                              <div class="radio radio-primary">
+                                <input name="filter_rule_size{RULE_INDEX}" class="filter_size_unit" type="radio"
+                                  id="filter_rule_size_gb{RULE_INDEX}" value="G">
+                                <label for="filter_rule_size_gb{RULE_INDEX}">GB</label>
+                              </div>
+                            </div>
+                          </div>
+                          <select class="form-control rules-filter-item rules-filter-contains filter-normal"
+                            onchange="containType(this)" id="filter_rule_contain{RULE_INDEX}">
+                            <option value="contains" selected="selected">{{langmod.EMFILTERSLAB31}}</option>
+                            <option value="notcontains">{{langmod.EMFILTERSLAB32}}</option>
+                            <option value="is">{{langmod.EMFILTERSLAB33}}</option>
+                            <option value="notis">{{langmod.EMFILTERSLAB34}}</option>
+                            <option value="exists">{{langmod.EMFILTERSLAB35}}</option>
+                            <option value="notexists">{{langmod.EMFILTERSLAB36}}</option>
+                            <option value="matches">{{langmod.EMFILTERSLAB37}}</option>
+                            <option value="notmatches">{{langmod.EMFILTERSLAB38}}</option>
+                            <option value="regex">{{langmod.EMFILTERSLAB39}}</option>
+                            <option value="notregex">{{langmod.EMFILTERSLAB40}}</option>
+                            <option value="count-gt">{{langmod.EMFILTERSLAB41}}</option>
+                            <option value="count-ge">{{langmod.EMFILTERSLAB42}}</option>
+                            <option value="count-lt">{{langmod.EMFILTERSLAB43}}</option>
+                            <option value="count-le">{{langmod.EMFILTERSLAB44}}</option>
+                            <option value="count-eq">{{langmod.EMFILTERSLAB45}}</option>
+                            <option value="count-ne">{{langmod.EMFILTERSLAB46}}</option>
+                            <option value="value-gt">{{langmod.EMFILTERSLAB47}}</option>
+                            <option value="value-ge">{{langmod.EMFILTERSLAB48}}</option>
+                            <option value="value-lt">{{langmod.EMFILTERSLAB49}}</option>
+                            <option value="value-le">{{langmod.EMFILTERSLAB50}}</option>
+                            <option value="value-eq">{{langmod.EMFILTERSLAB51}}</option>
+                            <option value="value-ne">{{langmod.EMFILTERSLAB52}}</option>
+                          </select>
+                          <div class="rules-filter-item filter-normal rules-filter-value-wrapper">
+                            <input type="text" class="form-control rules-filter-value" data-index="{RULE_INDEX}"
+                              data-type="string" id="filter_value{RULE_INDEX}" name="" value="">
+                            <input type="hidden" name="" value="">
+                          </div>
+                        </div>
+                        <div class="">
+                          <button type="button" class="btn btn-primary btn-xs add-rule-btn" onclick="addNewRule()"
+                            name="button"><i class="fa fa-plus"></i></button>
+                          <button type="button" class="btn btn-danger btn-xs rem-rule-btn"
+                            onclick="remRule({RULE_INDEX}, 'rule')" name="button"><i class="fa fa-trash"></i></button>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row actions-filters_raw">
+                      <div class="col-sm-8 redirection-filter" data-index="{ACTION_INDEX}"
+                        id="_action_row_{ACTION_INDEX}">
+                        <div class="redirection-filter-inner">
+                          <select name="" class="form-control redirection-filter-item redirection-filter-first"
+                            id="action_type{ACTION_INDEX}" onchange="actionType(this)">
+                            <option value="fileinto" selected="selected">{{langmod.EMFILTERSLAB53}}</option>
+                            <option value="fileinto_copy">{{langmod.EMFILTERSLAB54}}</option>
+                            <option value="redirect">{{langmod.EMFILTERSLAB55}}</option>
+                            <option value="redirect_copy">{{langmod.EMFILTERSLAB56}}</option>
+                            <option value="reject">{{langmod.EMFILTERSLAB57}}</option>
+                            <option value="vacation">{{langmod.EMFILTERSLAB58}}</option>
+                            <option value="discard">{{langmod.EMFILTERSLAB59}}</option>
+                            <option value="setflag">{{langmod.EMFILTERSLAB60}}</option>
+                            <option value="addflag">{{langmod.EMFILTERSLAB61}}</option>
+                            <option value="removeflag">{{langmod.EMFILTERSLAB62}}</option>
+                            <option value="set">{{langmod.EMFILTERSLAB63}}</option>
+                            <option value="notify">{{langmod.EMFILTERSLAB64}}</option>
+                            <option value="keep">{{langmod.EMFILTERSLAB65}}</option>
+                            <option value="stop">{{langmod.EMFILTERSLAB73}}</option>
+                          </select>
+                          <select id="action_mailbox{ACTION_INDEX}"
+                            class="form-control action-redirect-to redirection-filter-item redirection-filter-natural"
+                            name="">
+                            <option value="INBOX">{{langmod.EMFILTERSLAB66}}</option>
+                            <option value="Drafts">{{langmod.EMFILTERSLAB67}}</option>
+                            <option value="Sent">{{langmod.EMFILTERSLAB68}}</option>
+                            <option value="Trash">{{langmod.EMFILTERSLAB69}}</option>
+                            <option value="Spam">{{langmod.EMFILTERSLAB70}}</option>
+                          </select>
+                          <div class="redirection-filter-item subnormal redirection-filter-flags">
+                            <div class="checkbox checkbox-primary">
+                              <input name="filter_action_flags{ACTION_INDEX}" class="action-flag-item" type="checkbox"
+                                id="filter_action_seen{ACTION_INDEX}" value="Seen">
+                              <label for="filter_action_seen{ACTION_INDEX}">{{langmod.EMFILTERSLAB71}}</label>
+                            </div>
+                            <div class="checkbox checkbox-primary">
+                              <input name="filter_action_flags{ACTION_INDEX}" class="action-flag-item" type="checkbox"
+                                id="filter_action_answered{ACTION_INDEX}" value="Answered">
+                              <label for="filter_action_answered{ACTION_INDEX}">{{langmod.EMFILTERSLAB72}}</label>
+                            </div>
+                            <div class="checkbox checkbox-primary">
+                              <input name="filter_action_flags{ACTION_INDEX}" class="action-flag-item" type="checkbox"
+                                id="filter_action_flagged{ACTION_INDEX}" value="Flagged">
+                              <label for="filter_action_flagged{ACTION_INDEX}">{{langmod.EMFILTERSLAB74}}</label>
+                            </div>
+                            <div class="checkbox checkbox-primary">
+                              <input name="filter_action_flags{ACTION_INDEX}" class="action-flag-item" type="checkbox"
+                                id="filter_action_deleted{ACTION_INDEX}" value="Deleted">
+                              <label for="filter_action_deleted{ACTION_INDEX}">{{langmod.EMFILTERSLAB75}}</label>
+                            </div>
+                            <div class="checkbox checkbox-primary">
+                              <input name="filter_action_flags{ACTION_INDEX}" class="action-flag-item" type="checkbox"
+                                id="filter_action_draft{ACTION_INDEX}" value="Draft">
+                              <label for="filter_action_draft{ACTION_INDEX}">{{langmod.EMFILTERSLAB76}}</label>
+                            </div>
+                          </div>
+                          <div class="redirection-filter-item subnormal redirection-filter-vars">
+                            <input type="text" placeholder="{{langmod.EMFILTERSLAB93}}" data-isvarname="true"
+                              name="_action_varname{ACTION_INDEX}" id="action_varname{ACTION_INDEX}"
+                              class="form-control data-required action-var-name" value="" size="35">
+                            <input type="text" placeholder="{{langmod.EMFILTERSLAB94}}"
+                              name="_action_varvalue{ACTION_INDEX}" id="action_varvalue{ACTION_INDEX}"
+                              class="form-control data-required action-var-value" value="" size="35">
+                            <span>{{langmod.EMFILTERSLAB77}}:</span>
+                            <div class="checkbox checkbox-primary check-sm">
+                              <input name="_action_varmods{ACTION_INDEX}" class="action-var-modifier" type="checkbox"
+                                id="action_varmods{ACTION_INDEX}lower" value="lower">
+                              <label for="action_varmods{ACTION_INDEX}lower">{{langmod.EMFILTERSLAB78}}</label>
+                            </div>
+                            <div class="checkbox checkbox-primary check-sm">
+                              <input name="_action_varmods{ACTION_INDEX}" class="action-var-modifier" type="checkbox"
+                                id="action_varmods{ACTION_INDEX}upper" value="upper">
+                              <label for="action_varmods{ACTION_INDEX}upper">{{langmod.EMFILTERSLAB79}}</label>
+                            </div>
+                            <div class="checkbox checkbox-primary check-sm">
+                              <input name="_action_varmods{ACTION_INDEX}" class="action-var-modifier" type="checkbox"
+                                id="action_varmods{ACTION_INDEX}lowerfirst" value="lowerfirst">
+                              <label for="action_varmods{ACTION_INDEX}lowerfirst">{{langmod.EMFILTERSLAB80}}</label>
+                            </div>
+                            <div class="checkbox checkbox-primary check-sm">
+                              <input name="_action_varmods{ACTION_INDEX}" class="action-var-modifier" type="checkbox"
+                                id="action_varmods{ACTION_INDEX}upperfirst" value="upperfirst">
+                              <label for="action_varmods{ACTION_INDEX}upperfirst">{{langmod.EMFILTERSLAB81}}</label>
+                            </div>
+                            <div class="checkbox checkbox-primary check-sm">
+                              <input name="_action_varmods{ACTION_INDEX}" class="action-var-modifier" type="checkbox"
+                                id="action_varmods{ACTION_INDEX}quotewildcard" value="quotewildcard">
+                              <label for="action_varmods{ACTION_INDEX}quotewildcard">{{langmod.EMFILTERSLAB82}}</label>
+                            </div>
+                            <div class="checkbox checkbox-primary check-sm">
+                              <input name="_action_varmods{ACTION_INDEX}" class="action-var-modifier" type="checkbox"
+                                id="action_varmods{ACTION_INDEX}length" value="length">
+                              <label for="action_varmods{ACTION_INDEX}length">{{langmod.EMFILTERSLAB83}}</label>
+                            </div>
+                          </div>
+                          <div class="redirection-filter-item subnormal redirection-filter-notify">
+                            <div class="redirection-filter-notify-target">
+                              <select name="_action_notifymethod{ACTION_INDEX}" id="_action_notifymethod{ACTION_INDEX}"
+                                class="form-control action-notify-type">
+                                <option value="mailto">{{langmod.EMFILTERSLAB85}}</option>
+                              </select>
+                              <input type="text" placeholder="{{langmod.EMFILTERSLAB85}}"
+                                name="_action_notifytarget{ACTION_INDEX}"
+                                class="form-control action-notify-target data-required"
+                                id="action_notifytarget{ACTION_INDEX}" data-isemail="true" value="" size="25">
+                            </div>
+                            <span class="filter-action-label">{{langmod.EMFILTERSLAB86}}:</span>
+                            <textarea name="_action_notifymessage{ACTION_INDEX}" id="action_notifymessage{ACTION_INDEX}"
+                              class="form-control action-notify-message" rows="3" cols="35"></textarea>
+                            <span class="filter-action-label">{{langmod.EMFILTERSLAB87}}:</span>
+                            <input type="text" name="_action_notifyfrom{ACTION_INDEX}"
+                              placeholder="Ex: myname@mydomain.com"
+                              class="form-control action-notify-sender data-required" data-isemail="true"
+                              data-isoptional="true" id="action_notifyfrom{ACTION_INDEX}" value="" size="35">
+                            <span class="filter-action-label">{{langmod.EMFILTERSLAB88}}:</span>
+                            <select name="_action_notifyimportance{ACTION_INDEX}"
+                              class="form-control action-notify-importance" id="_action_notifyimportance{ACTION_INDEX}">
+                              <option value="3">{{langmod.EMFILTERSLAB89}}</option>
+                              <option value="2" selected="selected">{{langmod.EMFILTERSLA90}}</option>
+                              <option value="1">{{langmod.EMFILTERSLAB91}}</option>
+                            </select>
+
+                          </div>
+                          <input type="text" value=""
+                            class="form-control redirection-filter-item subnormal redirection-filter-address data-required"
+                            placeholder="Enter email address" data-isemail="true" name="" size="30">
+                          <textarea name="" placeholder="Enter the message" id="action_target_area{ACTION_INDEX}"
+                            rows="5" cols="35"
+                            class="form-control subnormal redirection-filter-item redirection-filter-message data-required"></textarea>
+                          <div class="subnormal vacation-action-message-wrapper">
+                            <span class="filter-action-label" style="margin-top:0px;">Message body (vacation
+                              reason):</span>
+                            <textarea name="" placeholder="Enter the message" id="vacation_message_area{ACTION_INDEX}"
+                              rows="5" cols="35"
+                              class="form-control redirection-filter-item data-required vacation-action-message"></textarea>
+                            <span class="filter-action-label">Message subject:</span>
+                            <input type="text" value=""
+                              class="form-control redirection-filter-item vacation-action-subject"
+                              placeholder="Subject for you message" name="" size="30">
+                            <span class="filter-action-label">Reply sender address:</span>
+                            <input type="text" value="" data-isemail="true" data-isoptional="true"
+                              class="form-control redirection-filter-item vacation-action-sndradd data-required" name=""
+                              size="30">
+                            <span class="filter-action-label">My email addresses:</span>
+                            <div class="vacation-myadd-wrapper">
+                              <input type="text" value=""
+                                class="form-control redirection-filter-item vacation-action-myadds" name=""
+                                id="_vacation_addresses{ACTION_INDEX}">
+                            </div>
+                            <span class="filter-action-label">How often send messages (in days):</span>
+                            <input type="text" value="" data-numeric="true" data-isoptional="true" style="width: 60px;"
+                              class="form-control redirection-filter-item vacation-action-days data-required" name=""
+                              maxlength="2">
+                          </div>
+                        </div>
+                        <div class="">
+                          <button type="button" class="btn btn-primary btn-xs add-rule-btn" onclick="addNewAction()"
+                            name="button"><i class="fa fa-plus"></i></button>
+                          <button type="button" class="btn btn-danger btn-xs rem-rule-btn"
+                            onclick="remRule({ACTION_INDEX}, 'action')" name="button"><i
+                              class="fa fa-trash"></i></button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="ibox-footer">
+                  <div class="text-right">
+                    <button type="button" onclick="cancelPreset()"
+                      class="btn btn-warning btn-xs mr5 mb10 cancel-preset"><i class="fa fa-ban"></i>
+                      {{langmod.EMFILTERSLAB5}}</button>
+                    <button type="button" id="addAutoRepBTN" onclick="savePreSet()"
+                      class="btn btn-success btn-xs mr5 mb10 save-preset"><i class="fa fa-floppy-o"></i>
+                      {{langmod.EMFILTERSLAB6}}</button>
+                  </div>
+                </div>
+              </div>
+              <div class="" id="preset_form_loader">
+                <div class="loader-wrapper">
+                  <div class="table_cron_loader accounts_loader"><span><i
+                        class="fa fa-circle-o-notch fa-spin"></i></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% include 'sidebar.html' %}
+</div>
+{% include 'footer.html' %}

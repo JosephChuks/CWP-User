@@ -1,0 +1,88 @@
+<div class="row  border-bottom white-bg dashboard-header">
+    {% if mod.fsl == 1 %}
+    {% set stflalert ='block' %}
+    {% else %}
+    {% set stflalert ='none' %}
+    {% endif %}
+    <div class="row  alert alert-warning col-lg-12" style="margin-left: 5px; padding-right: 5px;display:{{stflalert}}" id="alertfl">
+        <strong>{{langene.GALARTFILEBLOCK}}</strong>
+    </div>
+    <div class="col-lg-10">
+        <h2>{{langmod.ERRLOG001}}  ({{users}})</h2>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="?">Home</a></li>
+            <li class="breadcrumb-item active"><strong>{{langmod.ERRLOG001}}</strong></li>
+        </ol>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-9">
+        <br>
+        <div class="row" style="margin-left: 3px; margin-right: 3px">
+            <div class="col-lg-12">
+                <div class="ibox ">
+                    <div class="row ibox-title">
+                        <div class="row">
+                            <div class="col-lg-3">
+                                <p class="-align-center"><b>{{langmod.ERRLOG002}}</b></p>
+                            </div>
+                            <div class="col-lg-9">
+                                <div class="row">
+                                    <div class="col-lg-2">
+                                        <p class="-align-center"><b>{{langmod.ERRLOG0010}}</b></p>
+                                    </div>
+                                    <div class="col-lg-5">
+                                        <p class="-align-center"><b>{{langmod.ERRLOG0011}}</b></p>
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <p class="-align-center"><b>{{langmod.ERRLOG0012}}</b></p>
+                                    </div>
+                                    <div class="col-lg-2">
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-3">
+                                <select class="form-control" id="domainini">
+                                    {% for domain in mod.listdomins %}
+                                    <option value="{{ domain }}">{{ domain }}</option>';
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-lg-9">
+                                <div class="row">
+                                    <div class="col-lg-2">
+                                        <select class="form-control" id="tipe">
+                                            <option value="">{{langmod.ERRLOG005}}</option>
+                                            <option value="error">Error Log</option>
+                                            <option value="access">Access Log</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-5">
+                                        <input class="form-control" type="text" id="textsearch" value="" placeholder="{{langmod.ERRLOG009}}">
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <div class="row">
+                                            <div class="col-lg-6"><input type="text" class="form-control" id="numline" value="20"></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-2">
+                                        <button class="btn btn-success btn-xs" id="btngeneratelog">{{langmod.ERRLOG006}}</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row ibox-content mt-5">
+                        <div id="result" style="margin-left: 15px;margin-right: 15px;border: 1px solid #c4c4c4;padding: 5px; background-color: #0b0b0b; color: #f1ebd8; display: none; overflow:scroll; width:100%;height:600px"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% include 'sidebar.html' %}
+</div>
+{% include 'footer.html' %}

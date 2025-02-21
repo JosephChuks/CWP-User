@@ -1,0 +1,249 @@
+body{
+    background: #fcfcfc;
+}
+.table tbody tr.selected{
+    background-color: #d7edf9;
+    border-left:4px solid #103D67
+}
+.table .fa-trash{
+    color:#B61F24
+}
+.table .fa-folder, .table .fa-folder-open, .vue-tree .fa-folder, .vue-tree .fa-folder-open{
+    color:#eeae4a
+}
+li.listFind{
+    list-style: none;
+}
+li.listFind .fa{
+    color: #0b51a0
+}
+li.listFind .fa-folder{
+    color:#eeae4a
+}
+
+li.listFind a{
+    color:#000;
+    text-decoration: none;
+}
+#listFind .modal-dialog {
+    width:75%
+}
+#uploadModal .modal-dialog{
+    width:75%;
+}
+#uploadModal .modal-body{
+    max-height: 550px;
+}
+.enterDrag{
+    background-color: #feffda;
+}
+#listFind .modal-body,  #deleteDirMultiple .modal-body {
+    margin-left: 0px;
+    padding-left: 0px;
+    max-height: 550px;
+    overflow-y: auto;
+}
+#topnav ul, #topnav ul li {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+nav#breadcumb{
+    width: 100%;
+}
+.breadcrumb{
+    height: 25px;
+    padding: 4px 0px 5px;
+    width: 100%;
+    margin-bottom:0px;
+    margin-top:5px
+}
+
+#topnav li, #topnav li a {
+    float: left;
+    margin-left: 7px;
+    font-size: 16px;
+    color: #000;
+}
+.table thead{
+    background: #103D67;
+    color: #fff
+}
+
+.table thead tr:nth-child(1) th{
+
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.breadcrumb-item{
+    margin-left: 0px;
+}
+#user-table td{
+    padding: 3px;
+}
+#user-table{
+
+    overflow-y:scroll;
+}
+.vue-tree {
+    font-size: 16px;
+    min-height: 16px;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+    height: 99%;
+    overflow-y: auto;
+    overflow-x: auto;
+    background:#fff;
+    white-space:nowrap;
+}
+.modal-body .vue-tree {
+    font-size: 16px;
+    min-height: 16px;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+    max-height: 350px;
+    overflow-y: auto;
+    overflow-x: auto;
+    background: #f5f5f5;
+}
+.vue-tree li {
+    margin: 0;
+    padding: 2px;
+    position: relative;
+    list-style: none;
+}
+
+.vue-tree li > span,
+.vue-tree li > i,
+.vue-tree li > a {
+    line-height: 16px;
+    vertical-align: middle;
+    color:#000
+}
+
+.vue-tree li > a + a {
+    margin-left: 5px;
+    color: #000;
+}
+
+.vue-tree li i.icon-open-state {
+    font-size: 11px;
+}
+
+.vue-tree ul ul li:hover {
+    /*background: rgba(0, 0, 0, .015)*/
+}
+
+.vue-tree li:after, .vue-tree li:before {
+    content: '';
+    left: -18px;
+    position: absolute;
+    right: auto
+}
+
+.vue-tree li:before {
+    border-left: 0px solid #999;
+    bottom: 50px;
+    height: 100%;
+    top: -16px;
+    width: 1px;
+}
+.fileTable th{
+    cursor: pointer;
+}
+.vue-tree li:after {
+    border-top: 0px solid #999;
+    height: 20px;
+    top: 17px;
+    width: 22px
+}
+
+.vue-tree li span {
+    display: inline-block;
+    padding: 1px 1px;
+    text-decoration: none;
+    color: #000;
+}
+
+.vue-tree > ul > li::after, .vue-tree > ul > li:before {
+    border: 0
+}
+
+.vue-tree li:last-child::before {
+    height: 34px
+}
+
+.vue-tree > ul {
+    padding-left: 0
+}
+.vue-tree ul li a {
+    color: #000;
+}
+li.parent_li i.fa{
+    margin-right: 0px;
+}
+
+.vue-tree ul ul {
+    padding-left: 12px;
+    padding-top: 5px
+}
+.modal-header{
+    padding: 2px 5px;
+    color: #fff;
+    background: #2865AA;
+}
+.modal-header .close{
+    margin-top: 5px;
+    color: #fff
+}
+.modal-header h4{
+    font-size: 16px;
+}
+/**CONTEXT-MENU**/
+#context-menu {
+    top: 0;
+    left: 0;
+    margin: 0;
+    padding: 0;
+    display: none;
+    list-style: none;
+    position: absolute;
+    z-index: 2147483647;
+    background-color: white;
+    border: 1px solid #ebebeb;
+    border-bottom-width: 0px;
+}
+
+#context-menu.active {
+    display: block;
+}
+
+.context-menu-icon {
+    top: 1px;
+    position: relative;
+    margin-right: 10px;
+}
+a.context-menu-item{
+
+}
+.context-menu-item {
+    display: flex;
+    cursor: pointer;
+    padding: 8px 15px;
+    align-items: center;
+    border-bottom: 1px solid #ebebeb;
+    color:#000;
+    text-decoration: none;
+}
+.context-menu-item a{
+    color:#000
+}
+.context-menu-item:hover {
+    background-color: #ebebeb;
+}
+#lisfiledos .fa-file-zip-o, #lisfiledos .fa-file-text{
+    color:#0b51a0
+}

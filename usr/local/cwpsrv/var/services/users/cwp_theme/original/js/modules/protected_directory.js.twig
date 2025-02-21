@@ -1,0 +1,223 @@
+
+console.log();
+function deleteDP(st,file){
+    if(st==0){
+        //var msj='<div class="alert alert-warning fade in"><i class="glyphicon glyphicon-warning-sign alert-icon "></i>{{langmod.MSJDELETE}} <strong>'+name+'  <a href="#" onclick="return deletedp('+array+',\''+usr+'\',\''+name+'\',1)">{{langmod.DPYES}}</a></strong> / <strong><a href="#">{{langmod.DPNOT}}</a></strong></div>';
+
+
+        var msj='<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{ langmod.PDIRLABEL2 }}</span></button><h4 class="modal-title">{{langmod.PDIRLABEL1}}</h4>  <small class="font-bold"> {{langmod.MSJDELETE}} </small>';
+        var btns=' <button type="button" class="btn btn-white" data-dismiss="modal">{{ langmod.CANCE }}</button>\n' +'<button type="button" class="btn btn-primary" id="btndelete" onclick="return deleteDP(1,\''+file+'\')">{{ langmod.DPYES }}</button>';
+        $("#deletemodal .modal-header").html(msj);
+        $("#deletemodal .modal-body").html('<p class="text-center"><strong>'+file+'</strong></p>');
+        $("#deletemodal .modal-footer").html(btns);
+        $("#deletemodal").modal('toggle');
+        return false;
+    }else if(st==1){
+        $("#deletemodal #btndelete").addClass('disabled');
+        $("#deletemodal #btndelete").attr('disabled',true);
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=protected_directory&acc=deletedp",
+            data:"file="+file,
+            complete: function(datos){
+                $("#deletemodal").modal('hide');
+                $("#deletemodal .modal-header").html('');
+                $("#deletemodal .modal-body").html('');
+                $("#deletemodal .modal-footer").html('');
+                updatetabledp();
+                return false;
+            }
+        });
+    }
+}
+function updatetable(){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=protected_directory&acc=updatetable",
+        complete: function(datos){
+            $("#tablebody").html(datos.responseText);
+            return false;
+        }
+    });
+    return false;
+}
+function newdirprotec(){
+    $("#divbtn-add").toggle();
+    $("#tableredg").toggle();
+    $("#divaddform").toggle('blind');
+    return false;
+}
+function cancel() {
+    $("#alert").hide();
+    $("#alert1").hide();
+    $("#divbtn-add").show();
+    $("#tableredg").show();
+    $("#divaddform").hide('blind');
+    return false;
+}
+function updatetabledp(){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        //url: "./{{users}}/index.php?module=protected_directory&acc=updatetable",
+        url: "./{{users}}/index.php?module=protected_directory&acc=list",
+        complete: function(datos){
+            $("#tablebodydp").html(datos.responseText);
+            cancel();
+            $("#tableredg").show();
+            return false;
+        }
+    });
+    return false;
+}
+function searchdir(path){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=protected_directory&acc=searchdir",
+        data:"path="+path,
+        complete: function(datos){
+            var newpath=path.replace("/../", "/");
+            var trozo=datos.responseText.split('|@|');
+            var str = trozo[0];
+            $("#divconte").html(str);
+            $("#pathview").html(trozo[1]);
+            $("#hiddenvalue").val(trozo[1]);
+            return false;
+        }
+    });
+    return false;
+}
+function savedp(){
+    $("#alert1").hide();
+    var swerror=0;
+    var radio=$('input:radio[name=radio1]:checked').val();
+    if(radio==0){ var ruta='/home/{{users}}/'+$("#path1").val(); }else{ var ruta=$("#hiddenvalue").val(); }
+
+    if(ruta==''){ swerror=1;}
+
+    if($("#useradd").val()==''){ swerror=1;}
+    if($("#pass1dp").val()==''){ swerror=1;}
+    if($("#pass2dp").val()==''){ swerror=1;}
+    if($("#pass1dp").val()!=$("#pass2dp").val()){swerror=2;}
+
+    if(swerror==0){
+        $("#btn-protege").addClass("disabled");
+        $("#btn-protege").attr("disabled",true);
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=protected_directory&acc=createdp",
+            data:"username="+$("#useradd").val()+"&dir="+ruta+"&passw1="+$("#pass1dp").val(),
+            complete: function(datos){
+                updatetabledp();
+                cancel();
+                $("#btn-protege").removeClass("disabled");
+                $("#btn-protege").attr("disabled",false);
+                $("#useradd").val('');
+                $("#pass1dp").val('');
+                $("#pass2dp").val('');
+                $("#hiddenvalue").val('/home/{{users}}/');
+                return false;
+            }
+        });
+    }else if(swerror==1){
+        noti_bubble('{{langmod.ALLREQ}}','{{langmod.PDIRLABEL3}}','error',true,false,'3000',true);
+        return false;
+    }else if(swerror==2){
+        noti_bubble('{{langmod.PASSERROR}}','{{langmod.PDIRLABEL3}}','error',true,false,'3000',true);
+        return false;
+    }
+    return false;
+}
+function addUToDP(dir){
+    var header = '<h5 class="modal-title">Add new user</h5><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>';
+    var html = '<input type="hidden" id="dirP" value="'+dir+'">' +
+            '<div class="row" >' +
+                '<div class="col-md-12 text-center">User Name</div>' +
+            '</div>' +
+            '<div class="row"  style="margin-bottom:10px">' +
+                '<div class="col-md-offset-1 col-md-10 text-center">' +
+                    '<input type="text" class="form-control text-center" id="username">' +
+                '</div>' +
+            '</div>' +
+            '<div class="row">' +
+                '<div class="col-md-12 text-center">Password</div>' +
+            '</div>' +
+            '<div class="row"  style="margin-bottom:10px">' +
+                '<div class="col-md-offset-1 col-md-10 text-center">' +
+                    '<input type="Password" class="form-control text-center" id="passw1" placeholder="Write your password">' +
+                '</div>' +
+            '</div>' +
+                '<div class="row">' +
+                    '<div class="col-md-12 text-center">Re Password</div>' +
+                '</div>' +
+                '<div class="row" style="margin-bottom:10px">' +
+                    '<div class="col-md-offset-1 col-md-10 text-center">' +
+                        '<input type="Password" class="form-control text-center" id="passw2"  placeholder="Confirm your password">' +
+                    '</div>' +
+                '</div>';
+    var foofer ='<button type="button" class="btn btn-primary" onclick="return adduser()" id="btnadduser">Save changes</button> <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>';
+    $("#dpModal .modal-header").html(header);
+    $("#dpModal .modal-body").html(html);
+    $("#dpModal .modal-footer").html(foofer);
+    $("#dpModal").modal();
+    return false;
+}
+function adduser(){
+    var username = $("#dpModal #username").val();
+    var passw1 = $("#dpModal #passw1").val();
+    var passw2 = $("#dpModal #passw2").val();
+    var dir = $("#dpModal #dirP").val();
+    if(passw1 !='' && passw2 !='' && passw1 == passw2){
+        $("#btnadduser").attr('disabled',true);
+        $("#btnadduser").addClass('disabled');
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=protected_directory&acc=adduser",
+            data:"username="+username+"&passw1="+passw1+"&dir="+dir,
+            complete: function(datos){
+                updatetabledp();
+                $("#dpModal").modal('toggle');
+                $("#btnadduser").attr('disabled',false);
+                $("#btnadduser").removeClass('disabled');
+                return false;
+            }
+        });
+    }else{
+        alert('Error Password');
+        return false;
+    }
+}
+function deleteUser(st,file,user){
+    if(st==0){
+        var msj='<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{ langmod.PDIRLABEL2 }}</span></button><h4 class="modal-title">{{langmod.PDIRLABEL1}}</h4>  <small class="font-bold"> {{langmod.MSJDELETE}} </small>';
+        var btns=' <button type="button" class="btn btn-white" data-dismiss="modal">{{ langmod.CANCE }}</button>\n' +'<button type="button" class="btn btn-primary" id="btndelete" onclick="return deleteUser(1,\''+file+'\',\''+user+'\')">{{ langmod.DPYES }}</button>';
+        $("#deletemodal .modal-header").html(msj);
+        $("#deletemodal .modal-body").html('<p class="text-center"><strong>'+user+'</strong></p>');
+        $("#deletemodal .modal-footer").html(btns);
+        $("#deletemodal").modal('toggle');
+        return false;
+    }else if(st==1){
+        $("#deletemodal #btndelete").addClass('disabled');
+        $("#deletemodal #btndelete").attr('disabled',true);
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=protected_directory&acc=deleteUser",
+            data:"file="+file+"&usr="+user,
+            complete: function(datos){
+                $("#deletemodal").modal('hide');
+                $("#deletemodal .modal-header").html('');
+                $("#deletemodal .modal-body").html('');
+                $("#deletemodal .modal-footer").html('');
+                updatetabledp();
+                return false;
+            }
+        });
+    }
+    return false;
+}

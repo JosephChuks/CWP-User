@@ -1,0 +1,186 @@
+function infomodal(domain,st){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=letsencrypt&acc=infomodal",
+        data:"domain="+domain+"&st="+st,
+        complete: function(datos){
+            $("#modalinfo .modal-body").html(datos.responseText);
+            $("#modalinfo").modal('toggle');
+            return false;
+        }
+    });
+}
+function validatevhost(){
+    //btnporcess('off','btn-lets-add','{{ langmod.SSLLABEL1 }}');
+    $("#btn-lets-add").attr('disabled',true);
+    $("#btn-lets-add").addClass('disabled');
+    $("#btn-lets-add").html('{{langmod.SSLVALID}}');
+    $("#domain_lets").attr('disabled',true);
+    $("#domain_lets").addClass('disabled');
+
+    if($("#domain_lets").val()!=''){
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=letsencrypt&acc=validatevhost",
+            data:"domain="+$("#domain_lets").val(),
+            complete: function (datos) {
+                if(datos.responseText<1){ // validado
+                    $.ajax({
+                        type: "POST",
+                        url: "./{{users}}/index.php?module=letsencrypt&acc=validate_domaindns",
+                        data:"domain="+$("#domain_lets").val(),
+                        complete: function (datos) {
+                            //alert(datos.responseText);
+                            if(datos.responseText==1){
+                                $("#btn-lets-add").html('{{langmod.LMINSTALL}}');
+                                $("#btn-lets-add").attr('disabled',false);
+                                $("#btn-lets-add").removeClass('disabled');
+                                $("#domain_lets").attr('disabled',false);
+                                $("#domain_lets").removeClass('disabled');
+                                //btnporcess('off','btn-lets-add','{{ langmod.LMINSTALL }}');
+                                return false;
+                            }else{
+                                //btnporcess('off','btn-lets-add','{{ langmod.LMINSTALL }}');
+                                noti_bubble('{{langmod.SSLERRODNS}}','{{langmod.SSLVALIDATEERROR}}','error',false,false,'3000',true);
+                                $("#btn-lets-add").html('{{langmod.LMINSTALL}}');
+                                $("#domain_lets").attr('disabled',false);
+                                $("#domain_lets").removeClass('disabled');
+                                return false;
+                            }
+                        }
+                    });
+                }else{
+                    noti_bubble('{{langmod.SSLVALIDATEERRORMSJ}}','{{langmod.SSLVALIDATEERROR}}','error',false,false,'3000',true);
+                    $("#btn-lets-add").attr('disabled',true);
+                    $("#btn-lets-add").addClass('disabled');
+                    $("#domain_lets").attr('disabled',false);
+                    $("#domain_lets").removeClass('disabled');
+                    //btnporcess('off','btn-lets-add','{{ langmod.LMINSTALL }}');
+                    return false;
+                }
+            }
+        });
+        return false;
+    }
+
+    return false;
+}
+function forcerenew(domain){
+    $(".forcerenew").attr('disabled', true);
+    $(".forcerenew").addClass('disabled');
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=letsencrypt&acc=forcerenew",
+        data: "domain="+domain,
+        complete: function(datos){
+            //alert(datos.responseText);
+            var str = datos.responseText;
+            var trz = str.split('||');
+            if(trz[0]=='0'){
+                noti_bubble('{{langmod.SSLEXIT}}','{{langmod.SSLALEROK}}','success',false,false,'3000',true);
+                $(".forcerenew").attr('disabled', false);
+                $(".forcerenew").removeClass('disabled');
+                $("#sslbody").html(trz[1]);
+                return false;
+            }else{
+                noti_bubble('{{langmod.SSLERRO20}}','{{langmod.SSLVALIDATEERROR}}','error',false,false,'3000',true);
+                return false;
+            }
+        }
+    });
+}
+function updlistssl(){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=letsencrypt&acc=list",
+        complete: function(datos){
+            $("#sslbody").html(datos.responseText);
+            return false;
+        }
+    });
+}
+function deletessl(st,domain){
+    if(st==0){
+        var strheader = '<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{ langmod.SSLCLOSE }}</span></button><h4 class="modal-title">{{ langmod.LMATENC }}</h4><small class="font-bold">{{langmod.LMDELETESSL}}</small>';
+        var strbody = '<p class="text-center">'+domain+'</p>';
+        var strfooter = '<button type="button" class="btn btn-white" data-dismiss="modal">{{ langmod.SSLCLOSE }}</button><button type="button" class="btn btn-primary" id="btnyesdel" onclick="return deletessl(1,\''+domain+'\')">{{langmod.LMYES}}</button>';
+
+        $("#deletemodal .modal-header").html(strheader);
+        $("#deletemodal .modal-body").html(strbody);
+        $("#deletemodal .modal-footer").html(strfooter);
+        $("#deletemodal").modal('toggle');
+        return false;
+    }else if(st==1){
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=letsencrypt&acc=delete",
+            data: "domain="+domain,
+            complete: function(datos){
+                $("#sslbody").html(datos.responseText);
+                noti_bubble('{{langmod.SSLOK}}','{{langmod.SSLALEROK}}','success',false,false,'3000',true);
+                $("#deletemodal").modal('hide');
+                return false;
+            }
+        });
+        return false;
+    }
+}
+
+
+$("#btn-lets-add").click(function (){
+    $("#alert-confirm").hide('blind');
+    $("#btn-lets-add").addClass('disabled');
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    if($("#domain_lets").val()!=''){
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=letsencrypt&acc=add",
+            data:"domain="+$("#domain_lets").val(),
+            complete: function(datos){
+                console.log(datos.responseText);
+                if(datos.responseText=='Error_domain'){
+                    $("#btn-lets-add").removeClass('disabled');
+                    noti_bubble('{{langmod.SSLERRODNS}}','{{langmod.SSLVALIDATEERROR}}','error',false,false,'3000',true);
+
+                    return false;
+                }else if(datos.responseText=='Error'){
+                    $("#btn-lets-add").removeClass('disabled');
+                    noti_bubble('{{langmod.SSLERRORDO}}','{{langmod.SSLVALIDATEERROR}}','error',false,false,'3000',true);
+
+                    return false;
+                }else{
+                    $("#sslbody").html(datos.responseText);
+                    noti_bubble('{{langmod.SSLOK}}','{{langmod.SSLALEROK}}','success',false,false,'3000',true);
+
+                    return false;
+                }
+            }
+        });
+    }else{
+        var error1 ='<div class="alert alert-danger fade in"><strong>{{langmod.LMATENC}}</strong> {{langmod.LMALERT1}}</div>';
+        $("#alert-confirm").html(error1);
+        $("#alert-confirm").show('blind');
+        $("#btn-lets-add").removeClass('disabled');
+        return false;
+    }
+
+});
+$("#forceallrenew").click(function () {
+    $("#forceallrenew").attr('disabled', true);
+    $("#forceallrenew").addClass('disabled');
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=letsencrypt&acc=forceallrenew",
+        complete: function(datos){
+            updlistssl();
+            $("#forceallrenew").attr('disabled', false);
+            $("#forceallrenew").removeClass('disabled');
+            return false;
+        }
+    });
+});

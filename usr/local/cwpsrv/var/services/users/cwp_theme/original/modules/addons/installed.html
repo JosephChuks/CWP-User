@@ -1,0 +1,40 @@
+{% if app == 'installed' %}
+<div id="tab_installed" class="tab-pane fade in active" style="margin-top:10px">
+    {% else %}
+    <div id="tab_installed" class="tab-pane fade" style="margin-top:10px">
+    {% endif %}
+        <div class="panel-group accordion" id="accordion1">
+            {% if (mod.installed|length > 0) %}
+            {% set foo = 0 %}
+            {% for key, value in mod.installed %}
+            <div class="panel panel-default" id="instaled_{{ key }}">
+                <div class="panel-heading white-bg script-container-title">
+                    <a class="accordion-toggle" style="width: 100%" data-toggle="collapse"  aria-expanded="true" aria-controls="panel_{{ key }}_container" data-parent="#accordion1" data-target="#panel_{{ key }}_container">
+                        <h4 class="panel-title">
+                        {% if (foo==0) %}
+                        <i class="more-less glyphicon-minus font-weight-bolder"></i>
+                        {% else %}
+                        <i class="more-less glyphicon-plus font-weight-bolder"></i>
+                        {% endif%}
+                        </h4>
+                        <h4 class="panel-title"> {{ mod.installedNm[key] |capitalize}} Installations</h4>
+                    </a>
+                </div>
+                {% if (foo==0) %}
+                {% set foo = 1 %}
+                <div id="panel_{{ key }}_container"  class="panel-collapse collapse in">
+                 {% else %}
+                    <div id="panel_{{ key }}_container"  class="panel-collapse collapse">
+                 {% endif%}
+                    <div class="panel-body" id="table_{{ key }}_container">
+                        <div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            {% else %}
+                    <div class="empty_list" id="instaledEmpty"><h4 class="text-success">{{langmod.ADDNOTALL}}</h4></div>
+            {% endif%}
+            </div>
+</div>

@@ -1,0 +1,11 @@
+
+console.log();
+$("#btn_hi").click(function (){
+    $.ajax({ type: "POST", url: "./{{users}}/index.php?module=testmodule&acc=regards",
+        complete: function(datos){
+            alert(datos.responseText);
+            return false;
+        }
+    });
+    return false;
+});

@@ -1,0 +1,155 @@
+function nodeJSAppStatusInForm(elem, type) {
+    // uchip.handleButton(elem, curr_ico);
+    let ico_btn = 'fa-play';
+    let message = 'started';
+    if (type == 'stop') {
+        ico_btn = 'fa-stop'
+        message = 'stopped'
+    } else if (type == 'restart') {
+        ico_btn = 'fa-refresh'
+        message = 'restarted'
+    }
+    let cwp_key = $('#nodejs_app_quick_actions_container').data('cwp-key');
+    let app_key = $('#nodejs_app_quick_actions_container').data('key');
+    uchip.handleButton(elem, ico_btn);
+    $('#nodejs_app_quick_actions_container .btn').prop('disabled', true);
+    $('.nodejs-app-form-btn').prop('disabled', true);
+    function resetButtons() {
+        $('#nodejs_app_quick_actions_container .btn').prop('disabled', false);
+        $('.nodejs-app-form-btn').prop('disabled', false);
+        uchip.handleButton(elem, ico_btn, true);
+    }
+    handleAppStatus(type + '&cwp_key=' + cwp_key + '&key=' + app_key, function (resp_data) {
+        if ((type == 'start' || type == 'restart') && resp_data.app_status === 'running') {
+            $('#nodejs_app_quick_actions_container').addClass('is-running');
+        } else if (type == 'stop') {
+            $('#nodejs_app_quick_actions_container').removeClass('is-running');
+        } else {
+            noti_bubble('{{langmod.LABNODEJS82}}', '{{lang.LABNODEJS105}}', 'error', true, false, '3000', true);
+            resetButtons();
+            return;
+        }
+        noti_bubble('{{langmod.LABNODEJS83}}', '{{langmod.LABNODEJS103}}', 'success', true, false, '5500', true);
+        resetButtons();
+        updateStatusAppTr(app_key, resp_data.app_status)
+    }, function () {
+        resetButtons();
+    });
+}
+function restartApplication(elem, index) {
+    uchip.handleButton(elem, 'fa-refresh');
+    let tr_app = $('#_nodejs_apps_item_' + index);
+    tr_app.addClass('deleting_tr');
+    function resetTR() {
+        tr_app.removeClass('deleting_tr');
+        tr_app.find('.btn').prop('disabled', false);
+        handleButton(elem, 'fa-refresh', true);
+    }
+    let app_key = tr_app.data('key');
+    let cwp_key = tr_app.data('cwpkey');
+    handleAppStatus('restart&cwp_key=' + cwp_key + '&key=' + app_key, function (response) {
+        if (response.app_status != 'running') {
+            $(elem).fadeOut('fast');
+            let status_btn = $('#_nodejs_apps_status_btn_' + index)
+            status_btn.removeClass('btn-success').addClass('btn-danger');
+        } else {
+            noti_bubble('{{langmod.LABNODEJS83}}', '{{langmod.LABNODEJS100}}', 'success', true, false, '5500', true);
+            updateStatusAppTr(app_key, response.app_status)
+        }
+        resetTR();
+    }, function () {
+        resetTR();
+    });
+}
+function updateStatusAppTr(appkey, status) {
+    let class_circle = 'text-running';
+    let btn_class_new = 'btn-danger';
+    let btn_class_old = 'btn-primary';
+    let btn_ico_new = 'fa-stop';
+    let btn_ico_old = 'fa-play';
+    let next_title = "{{langmod.LABNODEJS102}}";
+    if (status != 'running') {
+        class_circle = 'text-danger';
+        btn_class_new = 'btn-primary';
+        btn_class_old = 'btn-danger';
+        btn_ico_new = 'fa-play';
+        btn_ico_old = 'fa-stop';
+        next_title = "{{langmod.LABNODEJS101}}";
+        $('.app-tr-' + appkey).find('.btn-restart-app').fadeOut('fast');
+    } else {
+        $('.app-tr-' + appkey).find('.btn-restart-app').fadeIn('fast');
+    }
+    // if (status !== 'running') {
+    //     $('#_nodejs_apps_restart_btn_' + index).fadeIn('fast');
+    // } else {
+    //     $('#_nodejs_apps_restart_btn_' + index).fadeOut('fast');
+    // }
+    $('.app-tr-' + appkey).find('.btn-status_main').removeClass(btn_class_old).addClass(btn_class_new).attr('data-original-title', next_title);
+    $('.app-tr-' + appkey).find('.btn-status_main i').removeClass(btn_ico_old).addClass(btn_ico_new);
+    $('.app-tr-' + appkey).find('.status-app-container i').removeClass().addClass('fa fa-circle ' + class_circle);
+    $('.app-tr-' + appkey).find('.status-app-container span').text(status);
+}
+function handleAppStatus(action, success, cleaner) {
+    uchip.call('module=nodejs_manager&acc=app_status', {
+        data: 'action=' + action,
+        callback: function (response) {
+            if (response.result == 'success') {
+                success(response);
+            } else {
+                let message_error = '{{langmod.LABNODEJS81}}';
+                if (response.hasOwnProperty('code')) {
+                    if (response.code == 2) {
+                        message_error = '{{langmod.LABNODEJS117}}';
+                    } else if (response.code == 1) {
+                        message_error = '{{langmod.LABNODEJS116}}';
+                    }
+                }
+                noti_bubble('{{langmod.LABNODEJS82}}', message_error, 'error', true, false, '3000', true);
+                cleaner();
+            }
+        }
+    });
+    // $.ajax({
+    //     type: "POST",
+    //     url: "./loader_ajax.php?ajax=nodejs&acc=app_status",
+    //     data: 'action=' + action,
+    //     complete: function (response) {
+    //         let resp_data = {}
+    //         try {
+    //             resp_data = response.hasOwnProperty('responseJson') ? response.responseJson : JSON.parse(response.responseText);
+    //         } catch (error) {
+    //             $.gritter.add({
+    //                 title: '{{langmod.LABNODEJS82}}',
+    //                 text: '{{langmod.LABNODEJS81}}',
+    //                 time: 3500,
+    //                 close_icon: '',
+    //                 icon: 'icomoon-icon-power',
+    //                 class_name: 'error-notice'
+    //             });
+    //             cleaner();
+    //             return;
+    //         }
+    //         if (resp_data.hasOwnProperty('result') && resp_data.result === 'success') {
+    //             success(resp_data);
+    //         } else {
+    //             let message_error = '{{langmod.LABNODEJS81}}';
+    //             if (resp_data.hasOwnProperty('code')) {
+    //                 if (resp_data.code == 2) {
+    //                     message_error = '{{langmod.LABNODEJS117}}';
+    //                 } else if (resp_data.code == 1) {
+    //                     message_error = '{{langmod.LABNODEJS116}}';
+    //                 }
+    //             }
+    //             $.gritter.add({
+    //                 title: '{{langmod.LABNODEJS82}}',
+    //                 text: message_error,
+    //                 time: 3500,
+    //                 close_icon: '',
+    //                 icon: 'icomoon-icon-power',
+    //                 class_name: 'error-notice'
+    //             });
+    //             cleaner();
+    //         }
+    //     }
+    // });
+}

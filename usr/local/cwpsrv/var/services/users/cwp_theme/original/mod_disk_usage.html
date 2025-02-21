@@ -1,0 +1,157 @@
+<style media="screen">
+  .backup-stat-separator{
+    margin: 5px 0px;
+    border:none;
+  }
+  #total_usage h5{
+    font-size:13px;
+  }
+  #total_usage{
+    font-size:12px;
+  }
+  .total-title{
+    font-size: 16px;
+  }
+  .total-amount-small{
+    font-size: 100%;
+  }
+  .total-amount-percent{
+    font-size:14px;
+  }
+  .total-separator{
+    margin: 10px 0px !important;
+    border-top: 2px solid #eee !important;
+  }
+  .directory-item-root{
+    display:flex;
+    flex-wrap:wrap;
+  }
+  .directory-item{
+    padding: 5px 12px;
+    border-bottom: 1px solid #cecece;
+  }
+  .directory-item-path{
+    width:80%;
+  }
+  .directory-item-size{
+    width:20%;
+    text-align:right;
+  }
+  .directory-item-path.total{
+    width:60%;
+  }
+  .directory-item-size.total{
+    width:40%;
+    text-align:right;
+  }
+  .directory-items{
+    list-style: none;
+    padding: 0px;
+  }
+  .directory-item.main-directory{
+    font-size: 1.8rem;
+    padding: 5px 0px;
+  }
+  .directory-item-path .fa{
+    margin-right:15px;
+  }
+  .normal-item{
+    cursor:pointer;
+  }
+  .no-cursor a{
+    cursor:auto;
+  }
+  .directory-item-path .fa-caret-down{
+    margin-right:11px;
+  }
+  .directory-item-path .fa-dot-circle-o{
+    margin-right:8px;
+  }
+  .directory-item .fa-caret-right,
+  .directory-item-path.opened .fa-caret-down{
+    display:inline-block;
+  }
+  .directory-item a{
+    color: inherit;
+  }
+  .directory-item .fa-caret-down,
+  .directory-item-path.opened .fa-caret-right{
+    display:none;
+  }
+  .directory-item.normal-item.opened{
+    background-color:#f5f5f5;
+  }
+  .subdirectories-items{
+    display:none;
+    border-top: 1px solid #cecece;
+  }
+  .subdirectories-items .directory-item{
+    padding-right: 0px;
+  }
+  .subdirectories-items .directory-item:last-child{
+    border-bottom:none;
+  }
+  .directory-item-path.opened,
+  .directory-item-size.opened{
+    font-weight: 600;
+  }
+  .sort-ui{
+    display:flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  .sort-ui-control{
+    margin-left:10px;
+  }
+  .unlimited-space{
+    font-size: 2.2rem;
+    position: relative;
+    top: 4px;
+    line-height: 1px;
+  }
+</style>
+<div class="row  border-bottom white-bg dashboard-header">
+  {% if mod.fsl == 1 %}
+    <div class="row  alert alert-warning col-lg-12" style="margin-left: 5px; padding-right: 5px;display:{{stflalert}}" id="alertfl">
+        <strong>{{langene.GALARTFILEBLOCK}}</strong>
+    </div>
+  {% endif %}
+  <div class="col-lg-10">
+    <h2>{{langmod.DUSAGELAB1}} ({{users}})</h2>
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="?">Home</a></li>
+        <li class="breadcrumb-item active"><strong>{{langmod.DUSAGELAB1}}</strong></li>
+    </ol>
+  </div>
+</div>
+<div class="row" style="margin-top:2rem">
+  <div class="col-lg-12">
+    <div class="row">
+      <div class="col-lg-8">
+        <div class="ibox" id="list_wrapper">
+          <div class="ibox-title">
+            <h4>{{langmod.DUSAGELAB8}}</h4>
+          </div>
+          <div class="ibox-content">
+            <div id="sort_controls">
+
+            </div>
+            <div class="" id="files_usage">
+              <div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="ibox" id="list_wrapper">
+          <div class="ibox-title">
+            <h4>{{langmod.DUSAGELAB5}}</h4>
+          </div>
+          <div class="ibox-content" id="total_usage">
+            <div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,800 @@
+function changeView(view){
+  let another_view = view == 'row_list_cron' ? 'row_panel_cron' : 'row_list_cron';
+  $('#' + view).slideUp('fast', function(){
+    $('#' + another_view).slideDown('fast');
+  });
+  if(view == 'row_panel_cron'){
+    $('#simple_scheduled').show();
+    $('#advance_options').hide();
+    $('#crontab_command').val('');
+    $('#simple_selected').val('hourly');
+    $('#cron_description').val('');
+    $('#form_title').text('{{ langmod.CRCREATE }}');
+    resetAdvance('#sel_min');
+    resetAdvance('#sel_hour');
+    resetAdvance('#sel_day');
+    resetAdvance('#sel_month');
+    resetAdvance('#sel_weekdays');
+    $('#line_editing').val('');
+    $('#status_editing').val('');
+  }
+}
+const resetAdvance = (idelemen) => {
+  let option = $(idelemen).data('list').options[0].value;
+  populateOnEdit(idelemen, option);
+}
+const setButtonAllState = (state) => {
+  if(state){
+    $('#selunselall_button').html('{{ langmod.CRUNSELECT }}');
+  }else{
+    $('#selunselall_button').html('{{ langmod.CRSELECTALL }}');
+  }
+  all_selected = state;
+}
+const saveButtonState = (elem_button, state) => {
+  let button_icon = elem_button.find('.fa');
+  let cancel_buton = $('#cron_cancel_button');
+  if(state === true){
+    elem_button.addClass('disabled');
+    cancel_buton.addClass('disabled');
+    button_icon.removeClass('fa-floppy-o');
+    button_icon.addClass('fa-circle-o-notch fa-spin');
+  }else{
+    elem_button.removeClass('disabled');
+    button_icon.removeClass('fa-circle-o-notch');
+    button_icon.removeClass('fa-spin');
+    cancel_buton.removeClass('disabled');
+    button_icon.addClass('fa-floppy-o');
+  }
+}
+String.prototype.isEmpty = function() {
+    return (this.length === 0 || !this.trim());
+};
+String.prototype.replaceAll = function(find, replace) {
+    return this.replace(new RegExp(find, 'g'), replace);
+}
+const createCron = (elem_button) => {
+  elem_button = $(elem_button);
+  let data_send = '';
+  let invalid = false;
+  let type_scheduled = '';
+  if($('#advance_options').is(':visible')){
+    type_scheduled = 'advance';
+    $('#advance_options').find('.advance_options_item').each(function(){
+      let val_item = $(this).data('items_selecteds');
+      let opt_selection = $(this).parent().find('.cron_opt_selection');
+      if(Array.isArray(val_item)){
+        if(val_item.length > 0){
+          val_item = JSON.stringify(val_item);
+          opt_selection.removeClass('error');
+        }else{
+          opt_selection.addClass('error');
+          invalid = true;
+        }
+      }else if(val_item != undefined){
+        val_item = val_item.value;
+        opt_selection.removeClass('error');
+      }else{
+        opt_selection.addClass('error');
+        invalid = true;
+      }
+      data_send += $(this).attr('id') + '=' + val_item + '&';
+    });
+    data_send = data_send.substring(0, data_send.length - 1);
+  }else{
+    type_scheduled = 'simple';
+    data_send = 'simple_selected=' + $('#simple_selected').val();
+  }
+  let crontab_command_input = $('#crontab_command');
+  let comment = $('#cron_description').val();
+  let crontab_command = encodeURIComponent(crontab_command_input.val());
+  if(crontab_command.isEmpty()){
+    crontab_command_input.addClass('error');
+    crontab_command_input.focus();
+    invalid = true;
+  }
+  if(!invalid){
+    saveButtonState(elem_button, true);
+    let line_editing = $('#line_editing').val();
+    let endpoint_url = '';
+    if(line_editing.isEmpty()){
+      endpoint_url = "./{{users}}/index.php?module=crontab&acc=add";
+    }else{
+      let status_editing = $('#status_editing').val();
+      line_editing = '&line=' + line_editing + '&status_editing=' + status_editing;
+      endpoint_url = "./{{users}}/index.php?module=crontab&acc=edit";
+    }
+    $.ajax({
+        type: "POST",
+        url: endpoint_url,
+        data: 'type=' + type_scheduled + '&' + data_send + '&comment=' + comment + '&crontab_command=' + crontab_command + line_editing,
+        complete: function(datos){
+          saveButtonState(elem_button, false);
+          cronTable(datos.responseJSON.list);
+          changeView('row_panel_cron');
+
+        }
+    });
+  }else{
+    noti_bubble('{{ langmod.CRINVALIDCREATION }}','Error','error',false,false,'4000',true);
+  }
+
+  // $.ajax({
+  //     type: "POST",
+  //     url: "./{{users}}/index.php?module=crontab&acc=addcront",
+  //     data: 'type=' + type_scheduled,
+  //     complete: function(datos){
+  //
+  //     }
+  // });
+}
+const updateAdvanced = (elem_id) => {
+  let elem = $('#' + elem_id);
+  let selecteds = elem.data('items_selecteds');
+  let selecteds_container = elem.parent().find('.cron_opt_selection');
+  let sels = '';
+  if(Array.isArray(selecteds)){
+    if(selecteds.length > 0){
+      sels = '(' + selecteds.join(',') + ')';
+      let list = elem.data('list');
+      if(selecteds.length == list.items.length){
+        setButtonAllState(true);
+      }
+    }else{
+      sels = 'None selected.';
+      setButtonAllState(false);
+    }
+  }else{
+    sels = selecteds.label;
+  }
+  selecteds_container.text(sels);
+}
+const crontab_run = (elem) =>{
+    let command = $(elem).data('command');
+    noti_bubble('{{ langmod.CRLABEL4 }}','{{ langmod.CRLABEL6 }}','success',true,false,'3000',true);
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=crontab",
+        data:"acc=run_cron&command=" + command,
+        complete: function(datos){
+            return false;
+        }
+    });
+    return false;
+}
+const showTimeMenu = (elem, title, additional) => {
+  let elem_id = $(elem).attr('id');
+  if($('#main_cont_' + elem_id).is(':visible')){
+    $('#main_cont_' + elem_id).remove();
+    $('#' + elem_id).parent().find('.fa-sliders.selected').removeClass('selected');
+  }else{
+    let data_list = $(elem).data('list');
+    let items = data_list.items;
+    let selecteds = $(elem).data('items_selecteds');
+    // if(selecteds == 'All'){
+    //   selecteds = items;
+    // }
+    var col_size = '';
+    if(elem_id == 'sel_month'){
+      col_size = 'col-md-6';
+    }else if(elem_id == 'sel_weekdays'){
+      col_size = 'col-md-6';
+    }else{
+      col_size = 'col-md-2';
+    }
+    let selected_option = '';
+    let days_selected = [];
+    if(Array.isArray(selecteds)){
+      selected_option = 'custom';
+      days_selected = selecteds;
+    }else{
+      selected_option = selecteds.value;
+    }
+    let html_config = '<div tabindex="20" class="main_cont_config_menu" id="main_cont_' + elem_id + '"><div class="mail-config-menu cron_option ' + elem_id + '">' +
+                        '<div class="mail-config-menu-container">' +
+                          '<div class="tabs-container">' +
+                                '<ul class="nav nav-tabs cron_advance_tab" role="tablist">' +
+                                    '<li><a class="nav-link active" data-toggle="tab" href="#tabcommon"> {{ langmod.CRCOMMONSETTINGS }}</a></li>' +
+                                    '<li><a class="nav-link" data-toggle="tab" href="#tabmil">{{ langmod.CRSELECT }} ' + title + '</a></li>' +
+                                '</ul>' +
+                                '<div class="tab-content">' +
+                                    '<div role="tabpanel" id="tabcommon" class="tab-pane active">' +
+                                        '<div class="panel-body">';
+                                        data_list.options.forEach(function(option, index){
+                                          html_config += '<div class="i-checks"><label> <input type="radio" data-option=\'' + JSON.stringify(option) + '\' class="cron_option" ' + ( option.value == selected_option ? 'checked' : '')  + ' value="' + option.value + '" name="cron_option"> <i></i> ' + option.label + ' </label></div>';
+                                        });
+                                        html_config += '<div class="i-checks"><label> <input type="radio" class="cron_option" ' + ( selected_option == 'custom' ? 'checked' : '')  + ' id="custom_option" value="custom" data-option="custom" name="cron_option"> <i></i> {{ langmod.CRCUSTOMSELECT }} </label></div>';
+                                        html_config += '</div>' +
+                                    '</div>' +
+                                    '<div role="tabpanel" id="tabmil" class="tab-pane">' +
+                                        '<div class="panel-body">' +
+                                          '<div class="row cron_item_container container-fluid">';
+
+
+    // let html_config = '<div class="mail-config-menu cron_option ' + elem_id + '"><div class="mail-config-menu-container"><h3>Select ' + title + '</h3><div class="row cron_item_container">';
+    let selected_count = 0;
+    items.forEach(function(item){
+      let isSelected = '';
+      if(days_selected.indexOf(item.value) > -1){
+        selected_count++;
+        isSelected = 'class="selected"';
+      }
+      html_config += '<div class="' + col_size + ' cron-item-time"><span ' + isSelected + ' data-value="' + item.value + '">' + item.label + '</span></div>';
+    });
+    html_config +='</div>' +
+                    '<div class="selunselall_button">' +
+                      '<span class="btn btn-block btn-success" id="selunselall_button" onclick="handleOptSelection(this,\'' + elem_id + '\')">{{ langmod.CRSELECTALL }}</span>' +
+                    '</div>' +
+                    '</div>' +
+                  '</div>' +
+                  '</div>' +
+                  '</div>' +
+                  '</div>' +
+                  '</div></div>';
+    // html_config = html_config.replace('{{ITEMS}}', html_config_items);
+    // html_config += '</div><div style="margin-top:5px"><span class="btn btn-block btn-outline btn-primary">Unselect all</span></div></div></div>';
+    $(elem).parent().find('.fa-sliders').addClass('selected');
+    $(elem).parent().parent().prepend(html_config);
+    // $('#main_cont_' + elem_id).focus();
+    // document.getElementById().focus();
+    setTimeout(function(){
+      $('html, body').animate({
+           scrollTop: $('#' + elem_id).offset().top - ($('.mail-config-menu-container').height() + 100)
+      }, 300);
+    },50);
+    if(selected_count == items.length){
+      setButtonAllState(true);
+    }else{
+      setButtonAllState(false);
+    }
+    $('.i-checks').iCheck({
+        checkboxClass: 'icheckbox_square-green',
+        radioClass: 'iradio_square-green',
+    });
+    $('.i-checks').on('ifChecked', function(event){
+      if($(event.target).val() != 'custom'){
+        $('#' + elem_id).data('items_selecteds', $(event.target).data('option'));
+        $('.cron-item-time span').removeClass('selected');
+      }else{
+        setTimeout(function(){
+          $('.cron_advance_tab li:eq(1) a').tab('show');
+        },200);
+        $('#' + elem_id).data('items_selecteds', []);
+      }
+      updateAdvanced(elem_id);
+    });
+    $('.cron-item-time').click(function(){
+      let selecteds = $('#' + elem_id).data('items_selecteds');
+      let current_option = $('.cron_option :checked');
+      if(current_option.val() != 'custom'){
+        current_option.iCheck('uncheck');
+        $('#custom_option').iCheck('check');
+      }
+      let span_item = $(this).find('span');
+      if(span_item.hasClass('selected')){
+        span_item.removeClass('selected');
+      }else{
+        span_item.addClass('selected');
+      }
+      let sels = [];
+      $('.cron-item-time span.selected').each(function(index){
+        sels.push($(this).data('value'));
+      });
+      $('#' + elem_id).data('items_selecteds', sels);
+      updateAdvanced(elem_id);
+    });
+    if(selected_option == 'custom'){
+      $('.cron_advance_tab li:eq(1) a').tab('show');
+    }
+    hideOnClickOutside('#main_cont_' +  elem_id, '#' + elem_id + (additional != undefined ? ', ' + additional : ''));
+  }
+
+}
+let all_selected = false;
+const handleOptSelection = (button, master_elem) => {
+  let gparent = $(button).parent().parent();
+  let items = gparent.find('.cron-item-time');
+  let new_items = [];
+  if(!all_selected){
+    items.each(function(){
+      let item_elem = $(this).find('span');
+      item_elem.addClass('selected');
+      new_items.push(item_elem.data('value'));
+    });
+    all_selected = true;
+  }else{
+    items.each(function(){
+      $(this).find('span').removeClass('selected');
+    });
+    all_selected = false;
+  }
+  $('#' + master_elem).data('items_selecteds', new_items);
+  updateAdvanced(master_elem);
+}
+const hideOnClickOutside = (selector, second) => {
+  let forhide = false;
+  if(second === undefined){
+    second = '#show_options_button';
+    forhide = true;
+  }
+  const outsideClickListener = (event) => {
+    $target = $(event.target);
+    if (!$target.closest(selector).length && !$target.closest(second).length  && $(selector).is(':visible')) {
+      $(selector).parent().find('.fa-sliders.selected').removeClass('selected');
+      if(forhide){
+        $(selector).hide();
+      }else{
+        $(selector).remove();
+      }
+      $(selector).remove();
+        removeClickListener();
+    }
+  }
+
+  const removeClickListener = () => {
+    document.removeEventListener('click', outsideClickListener)
+  }
+
+  document.addEventListener('click', outsideClickListener)
+}
+function showAdvanceOptions(){
+  if($('#simple_scheduled').is(':visible')){
+    var to_show = 'advance_options';
+    var to_hide = 'simple_scheduled';
+  }else{
+    var to_hide = 'advance_options';
+    var to_show = 'simple_scheduled';
+  }
+  $('#' + to_hide).slideUp('fast', function(){
+    $('#' + to_show).slideDown('fast');
+  });
+}
+const showMoreData = (elem, title) => {
+  let elem_id = $(elem).attr('id');
+  if($('#main_cont_' + elem_id).is(':visible')){
+    $('#main_cont_' + elem_id).remove();
+    return;
+  }
+  let position = $(elem).offset();
+  let width_elem = $(elem).width();
+  let factor = 6;
+  if(width_elem > 55){
+    factor = 5;
+  }
+  let left_px = position.left - (width_elem * factor);
+  let items = $(elem).data('time');
+  let menu_html = '<div tabindex="20" style="left:' + left_px + 'px" class="main_cont_config_menu" id="main_cont_' + elem_id + '">'+
+                    '<div class="mail-config-menu cron_option ' + elem_id + ' cron-option-value">' +
+                      '<h4>' + title + '</h4>'+
+                      '<div class="mail-config-menu-container">';
+                      items.forEach(function(item){
+                        menu_html += '<div class="col-md-2 cron-item-time"><span class="selected" data-value="' + item + '">' + item + '</span></div>';
+                      });
+                      menu_html += '</div>' +
+                    '</div>' +
+                  '</div>';
+  hideOnClickOutside('#main_cont_' +  elem_id, '#' + elem_id);
+  $(elem).append(menu_html);
+  // $(menu_html).insertBefore(elem);
+}
+const advanceValueShow = (option_value, title, title_short, line) =>{
+  let slices = option_value.split(',');
+  let html = '';
+  if(option_value.length > 5){
+    html = '<div class="label label-primary more_options" id="cron_line_' + line + '" data-time=\'' + JSON.stringify(slices) + '\'" onclick="showMoreData(this,\'' + title + '\')">{{ langmod.CRSHOWMORE }}<span class="label label-warning count_info" style="margin-left:0px">' + slices.length + '</span></div>';
+    // html = '<div class="label label-primary more_options" id="cron_line_' + line + '" data-time=\'' + JSON.stringify(slices) + '\'">Show +<span class="label label-warning count_info" style="margin-left:0px">' + slices.length + '</span></div>';
+  }else{
+    html = '<div class="label label-primary">(' + slices.join(',') + '  )</div>';
+  }
+  return html;
+}
+const timeInfo = (info_time, line) => {
+  let description = '';
+  let pattern = '';
+  if(info_time.type == 'simple'){
+    description = '<div class="label label-primary">' + info_time.data.label + '</div>';
+    pattern = info_time.data.pattern;
+  }else{
+    description = '<div>' +
+                    advanceValueShow(info_time.data.minutes,'{{ langmod.CRSELECTEDM }}','mins', line) +
+                    ' ' + advanceValueShow(info_time.data.hours,'{{ langmod.CRSELECTEDM }}','hours', line) +
+                    ' ' + advanceValueShow(info_time.data.days,'{{ langmod.CRSELECTEDD }}','days', line) +
+                    ' ' + advanceValueShow(info_time.data.months,'{{ langmod.CRSELECTEDMT }}','months', line) +
+                    ' ' + advanceValueShow(info_time.data.weekdays,'{{ langmod.CRSELECTEDWD }}','weedays', line) +
+                  '</div>';
+  }
+  let html_time = '<div class="cron-table-b-info cron-table-time">' +
+                    '<div class="cron-table-time-description">' +
+                      '<span>' + description + '</span>&nbsp;' +
+                    '</div>' +
+                    // '<i class="fa fa-info"></i>' +
+                  '</div>';
+  return html_time;
+}
+const replaceQuotes = (content) =>{
+  content = content.replaceAll('{Q1}','"');
+  content = content.replaceAll('{Q2}',"'");
+  content = content.replaceAll('{Q3}',"`");
+  return content;
+}
+const cronTable = (cron_list) => {
+  let table_content = '';
+  let content_html = '';
+  if(cron_list.length > 0){
+    cron_list.forEach(function(cron_item){
+      let tr_class = '';
+      let act_icon = 'fa-ban';
+      let act_title = 'Deactivate';
+      if(cron_item.status == false){
+        tr_class = 'class="cron_line_inactive"';
+        act_icon = 'fa-check';
+        act_title = 'Activate';
+      }
+      table_content += '<tr id="cron_line_' + cron_item.line + '" ' + tr_class + '>' +
+                            '<td class="cron-table-td">' + cron_item.line + '</td>' +
+                            '<td class="cron-table-td">' + replaceQuotes(cron_item.command) + '</td>' +
+                            '<td class="cron-table-td">' + timeInfo(cron_item.time, cron_item.line) + '</td>' +
+                            '<td class="cron-table-b-actions">' +
+                              '<div class="cron-table-b-info">' +
+                                '<button type="button" title="Run cron job now" class="btn btn-success btn-xs" data-command="' + cron_item.command + '" onclick="return crontab_run(this)">' +
+                                  '<i class="fa fa-play" aria-hidden="true"></i>' +
+                                '</button>' +
+                                '<button type="button" title="' + act_title + ' cron job" class="btn btn-cronstatus btn-xs" data-line="' + cron_item.line + '" data-status="' + cron_item.status + '" onclick="return crontab_status(this)">' +
+                                  '<i class="fa ' + act_icon + '" aria-hidden="true"></i>' +
+                                '</button>' +
+                                '<button type="button" title="Edit cron job" class="btn btn-success btn-cron-edit btn-xs" data-info=\'' + JSON.stringify(cron_item) + '\'" onclick="return crontab_edit(this)">' +
+                                  '<i class="fa fa-pencil" aria-hidden="true"></i>' +
+                                '</button>' +
+                                '<button type="button" title="Delete cron job" class="btn btn-warning btn-xs"  onclick="return crontab_delete(' + cron_item.line + ',\'' + cron_item.command + '\')">' +
+                                  '<i class="fa fa-trash" aria-hidden="true">' +
+                                '</button>' +
+                              '</div>' +
+                            '</td>' +
+                        '</tr>';
+    });
+    content_html = '<table class="table table-striped cron-table">' +
+                    '<thead>' +
+                        '<tr>' +
+                          '<th style="width:25px">#</th>' +
+                          '<th style="width:40%">{{langmod.cron_job}}</th>' +
+                          '<th id="wrun_col">{{langmod.CRWHENRUN}}&nbsp;<i class="fa fa-info" onmouseover="showCronConfigInfo()" onmouseout="showCronConfigInfo()"></i></th>' +
+                          '<th class="cron-table-h-actions">{{langmod.action}}</th>' +
+                        '</tr>' +
+                    '</thead>' +
+                    '<tbody id="table_crons">' +
+                      table_content +
+                    '</tbody>' +
+                '</table>';
+  }else{
+    content_html = '<div class="empty_list"><h4 class="text-success">{{langmod.CRNONECREATED}}</h4></div>';
+  }
+  $('#cron_list_container').html(content_html);
+  if(tableSSL){
+    tableSSL.destroy();
+  }
+  tableSSL = $('.cron-table').DataTable({
+    "iDisplayLength": 20,
+    "columns": [
+                null,
+                { "width": "40%" },
+                null,
+                null
+              ],
+  });
+}
+const btnStatusHandler = (btn_elem, status) =>{
+  let cron_st = btn_elem.data('status');
+  let line = btn_elem.data('line');
+  let act = 'deactivate';
+  let class_to_remove = 'fa-ban';
+  let class_to_add = 'fa-check';
+  let new_title = 'Deactivate cron job';
+  if(cron_st == false){
+    act = 'activate';
+    class_to_remove = 'fa-check';
+    class_to_add = 'fa-ban';
+    new_title = 'Activate cron job';
+  }
+  let btn_icon = btn_elem.find('.fa');
+  if(status === undefined){
+    btn_elem.addClass('disabled');
+    btn_icon.removeClass(class_to_remove);
+    btn_icon.addClass('fa-circle-o-notch fa-spin');
+    return {
+      status: cron_st,
+      act : act,
+      line: line
+    };
+  }else{
+    btn_elem.removeClass('disabled');
+    btn_icon.removeClass('fa-circle-o-notch fa-spin');
+    btn_icon.addClass(class_to_remove);
+    btn_elem.attr('title', new_title);
+  }
+}
+const crontab_status = (elem) => {
+  let btn_elem = $(elem);
+  cron_st = btnStatusHandler(btn_elem);
+  $.ajax({
+      type: "POST",
+      url: "./{{users}}/index.php?module=crontab&acc=status",
+      data: 'line=' + cron_st.line + '&act=' + cron_st.act,
+      complete: function(response){
+        let data_response = response.responseJSON;
+        let tr_elem = $('#cron_line_' + cron_st.line);
+        if(data_response.status == 'OK'){
+          if(cron_st.status == false){
+            tr_elem.removeClass('cron_line_inactive');
+          }else{
+            tr_elem.addClass('cron_line_inactive');
+          }
+          let btn_edit = tr_elem.find('.btn-cron-edit');
+          let btn_edit_info = btn_edit.data('info');
+          btn_edit_info.status = !cron_st.status;
+          btn_edit.data('info',btn_edit_info);
+          btn_elem.data('status', !cron_st.status);
+          btnStatusHandler(btn_elem, true);
+          noti_bubble('Cron job has been ' + cron_st.act,'{{langmod.CRLABEL4}}','success',false,false,'4000',true);
+        }else{
+          noti_bubble('{{langmod.CRDELETED}}','{{langmod.CRLABEL4}}','success',false,false,'4000',true);
+        }
+      }
+  });
+}
+const showCronConfigInfo = () => {
+  if($('.cron_config_window').is(':visible')){
+    $('.cron_config_window').slideUp('fast',function(){
+      $(this).remove();
+    });
+  }else{
+    let html = '<div class="cron_config_window" style="display:none">' +
+        '<pre># {{langmod.EXAMPLE}}:<br/>' +
+          '<span class="big-space-letter"># .----------------</span> {{langmod.Tminutes}} (0 - 59)<br/>' +
+          '<span class="big-space-letter"># |  .-------------</span> {{langmod.TITLE2_Hours2}} (0 - 23)<br/>' +
+          '<span class="big-space-letter"># |  |  .----------</span> {{langmod.DayMonT}}<br/>' +
+          '<span class="big-space-letter"># |  |  |  .-------</span> {{langmod.CRON1}}<br/>' +
+          '<span class="big-space-letter"># |  |  |  |  .----</span> {{langmod.CRON2}}<br/>' +
+          '<span class="big-space-letter"># |  |  |  |  |</span><br/>' +
+          '<span class="big-space-letter"># *  *  *  *  *</span> {{langmod.CRON3}}' +
+        '</pre>' +
+    '</div>';
+    $('#wrun_col').append(html);
+    $('.cron_config_window').slideDown('fast');
+  }
+
+}
+let cron_list = JSON.parse('{{mod.cron_list|json_encode()|raw}}');
+$(document).ready(function() {
+  cronTable(cron_list);
+});
+let tableSSL = null;
+const crontab_edit = (elem) => {
+  let info_cron = $(elem).data('info');
+  $('#crontab_command').val(replaceQuotes(info_cron.command));
+  $('#cron_description').val(replaceQuotes(info_cron.comment));
+  $('#line_editing').val(info_cron.line);
+  $('#status_editing').val(info_cron.status);
+  $('#form_title').text('{{langmod.CREDITING}} ' + info_cron.line);
+  if(info_cron.time.type == 'simple'){
+    $('#simple_selected').val(info_cron.time.data.value);
+  }else{
+    populateOnEdit('#sel_min', info_cron.time.data.minutes);
+    populateOnEdit('#sel_hour', info_cron.time.data.hours);
+    populateOnEdit('#sel_day', info_cron.time.data.days);
+    populateOnEdit('#sel_month', info_cron.time.data.months);
+    populateOnEdit('#sel_weekdays', info_cron.time.data.weekdays);
+    $('#advance_options').show();
+    $('#simple_scheduled').hide();
+  }
+  changeView('row_list_cron');
+}
+const populateOnEdit = (element, data) => {
+  let list = $(element).data('list');
+  let data_stored = list.options.find(option => option.value == data);
+  if(data_stored === undefined){
+    data_stored = data.split(',').map(function(item){
+      return parseInt(item);
+    });
+  }
+  $(element).data('items_selecteds', data_stored);
+  updateAdvanced(element.substr(1));
+}
+const bindClickDelete = (line) => {
+  $('#btn-delete-cron').unbind('click');
+  $('#btn-delete-cron').click(function(){
+    let btn_elem = $(this);
+    let icon_elem = btn_elem.find('.fa');
+    let btn_cancel = $('#btn-delete-cancel-button');
+    btn_elem.addClass('disabled');
+    btn_cancel.addClass('disabled');
+    icon_elem.removeClass('fa-trash');
+    icon_elem.addClass('fa-circle-o-notch fa-spin');
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=crontab&acc=deletecron",
+        data: 'line=' + line,
+        complete: function(datos){
+            cronTable(datos.responseJSON.list);
+            $("#cron_confirm_window").modal('toggle');
+            noti_bubble('{{langmod.CRDELETED}}','{{langmod.CRLABEL4}}','success',false,false,'4000',true);
+            btn_elem.removeClass('disabled');
+            btn_cancel.removeClass('disabled');
+            icon_elem.removeClass('fa-circle-o-notch fa-spin');
+            icon_elem.addClass('fa-trash');
+        }
+    });
+  });
+}
+function crontab_delete(line, command){
+    $("#cron_confirm_message").html('{{ langmod.CRDELETEWARNING }} ' + line +' ({{langmod.command}}: ' + command + ')');
+    $("#cron_confirm_window").modal('toggle');
+    bindClickDelete(line);
+    return false;
+}
+
+function addcron(sw){
+    if(sw==1){
+        btnporcess('off','btn-cron1','{{ langmod.CRLABEL10 }}');
+        if(($("#common_options_1").val()=='')||($("#common_command_1").val()=='')){
+            if($("#common_options_1").val()==''){ $("common_options_1").css("color","#ffd4d4"); }
+            noti_bubble('{{langmod.ERROR1}}','{{langmod.ERROR2}}','error',true,false,'3000',true);
+            btnporcess('on','btn-cron1','{{ langmod.save_change }}');
+            return false;
+        }else{
+            $("#btn-cron1").addClass('disabled');
+            $("#btn-cron1").attr('disabled',true);
+            $('#ibox1').children('.ibox-content').toggleClass('sk-loading');
+            $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+            var comm=$("#common_command_1").val();
+            var rcomm=comm.replace('>>','||@||');
+            $.ajax({
+                type: "POST",
+                url: "./{{users}}/index.php?module=crontab&acc=addcron",
+                data:"common="+Base64.encode($("#common_options_1").val())+"&command="+Base64.encode(rcomm)+"&sw="+sw+"&minute_options="+Base64.encode($("#minute_options").val())+
+                    "&hour_options="+Base64.encode($("#hour_options").val())+"&day_options="+Base64.encode($("#day_options").val())+"&month_options="+Base64.encode($("#month_options").val())+"&weekday_options="+Base64.encode($("#weekday_options").val())+"&command2="+Base64.encode($("#command2").val())+"&command3="+Base64.encode($("#command3").val()),
+                complete: function(datos){
+                    //alert(datos.responseText); return false;
+                    $("#common_options_1").val('');
+                    $("#common_command_1").val('');
+                    noti_bubble('{{langmod.EXIST}}','{{langmod.EXISTADD}}','success',true,false,'3000',true);
+                    refrescron();
+                    $("#btn-cron1").removeClass('disabled');
+                    $("#btn-cron1").attr('disabled',false);
+                    track_errors();
+                    $('#ibox1').children('.ibox-content').removeClass('sk-loading');
+                    btnporcess('on','btn-cron1','{{ langmod.save_change }}');
+                    return false;
+                }
+            });
+        }
+    }
+    if(sw==2){
+        btnporcess('off','btn-cron2','{{ langmod.CRLABEL10 }}');
+        if(($("#minute_options").val()=='')||($("#hour_options").val()=='')||($("#day_options").val()=='')||($("#month_options").val()=='')||($("#weekday_options").val()=='')||($("#command2").val()=='')){
+            noti_bubble('{{langmod.ERROR1}}','{{langmod.ERROR2}}','error',true,false,'3000',true);
+            return false;
+        }else{
+            $("#btn-cron2").addClass('disabled');
+            $("#btn-cron2").attr('disabled',true);
+            $('#ibox1').children('.ibox-content').toggleClass('sk-loading');
+            $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+            $.ajax({
+                type: "POST",
+                url: "./{{users}}/index.php?module=crontab&acc=addcron",
+                data:"sw="+sw+"&minute_options="+Base64.encode($("#minute_options").val())+"&hour_options="+Base64.encode($("#hour_options").val())+"&day_options="+Base64.encode($("#day_options").val())+"&month_options="+Base64.encode($("#month_options").val())+"&weekday_options="+Base64.encode($("#weekday_options").val())+"&command2="+Base64.encode($("#command2").val()),
+                complete: function(datos){
+                    $("#minute_options").val('');
+                    $("#hour_options").val('');
+                    $("#day_options").val('');
+                    $("#month_options").val('');
+                    $("#weekday_options").val('');
+                    $("#command2").val('');
+                    $("#table_crons").html('');
+                    noti_bubble('{{langmod.EXIST}}','{{langmod.EXISTADD}}','success',true,false,'3000',true);
+                    refrescron();
+                    $("#btn-cron2").removeClass('disabled');
+                    $("#btn-cron2").attr('disabled',false);
+                    track_errors();
+                    $('#ibox1').children('.ibox-content').removeClass('sk-loading');
+                    btnporcess('on','btn-cron2','{{ langmod.save_change }}');
+                    return false;
+                }
+            });
+        }
+    }
+    if(sw==3){
+        btnporcess('off','btn-cron3','{{ langmod.CRLABEL10 }}');
+        $("#btn-cron3").addClass('disabled');
+        $("#btn-cron3").attr('disabled',true);
+        if($("#command3").val()==''){
+            noti_bubble('{{langmod.ERROR1}}','{{langmod.ERROR1}}','error',true,false,'3000',true);
+            return false;
+        }else{
+            $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+            $.ajax({
+                type: "POST",
+                url: "./{{users}}/index.php?module=crontab&acc=addcron",
+                data:"sw="+sw+"&command3="+Base64.encode($("#command3").val())+"&val_hide_comm3="+Base64.encode($("#val_hide_comm3").val()),
+                complete: function(datos){
+                    $("#command3").val('');
+                    $("#table_crons").html('');
+                    noti_bubble('{{langmod.EXIST}}','{{langmod.EXISTADD}}','success',true,false,'3000',true);
+                    refrescron();
+                    $("#btn-cron3").removeClass('disabled');
+                    $("#btn-cron3").attr('disabled',false);
+                    track_errors();
+                    $('#ibox1').children('.ibox-content').removeClass('sk-loading');
+                    btnporcess('on','btn-cron3','{{ langmod.save_change }}');
+                    return false;
+                }
+            });
+        }
+    }
+}
+// function crontab_edit(line,desc){
+//     $("#litab1").removeClass('active');
+//     $("#litab2").removeClass('active');
+//     $("#litab3").addClass('active');
+//
+//     $("#tab-1").removeClass('active');
+//     $("#tab-2").removeClass('active');
+//     $("#tab-3").addClass('active');
+//
+//     $("#command3").val(Base64.decode(desc));
+//     $("#btn_cancel_comm3").show();
+//     $("#val_hide_comm3").val(line);
+//     return false;
+// }
+function refrescron(){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=crontab&acc=refrescron",
+        complete: function(datos){
+            $("#table_crons").html('');
+            $("#table_crons").html(datos.responseText);
+            return false;
+        }
+    });
+    return false;
+}
+
+function track_errors(){
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=crontab&acc=track_errors",
+        complete: function(datos){
+          if(datos.responseJSON.st != 'OK'){
+            $("#alerterrorcron").show('blind');
+            // $("#edibtncron"+datos.responseText).addClass('disabled');
+            // $("#edibtncron"+datos.responseText).attr('disabled',true);
+            // $("#tr"+datos.responseText).css('background-color','#f2dede');
+            noti_bubble('{{langmod.CRLABEL8}}','{{langmod.ERROR1}}','error',false,false,'3000',true);
+          }else{
+            $("#alerterrorcron").hide();
+          }
+        }
+    });
+}
+// $('#btn-delete-cron').on('click', function(){
+//     btnporcess('off','btn-delete-cron','{{ langmod.CRLABEL10 }}');
+//     var line =$("#idhidencron").val();
+//     $('#ibox1').children('.ibox-content').toggleClass('sk-loading');
+//     $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+//     $.ajax({
+//         type: "POST",
+//         url: "./{{users}}/index.php?module=crontab&acc=deletecron",
+//         data:"line="+line,
+//         complete: function(datos){
+//             $('#ibox1').children('.ibox-content').toggleClass('sk-loading');
+//             refrescron();
+//             $("#descron").html('');
+//             $("#idhidencron").val('');
+//             btnporcess('on','btn-delete-cron','{{ langmod.CRYES }}');
+//             $("#myModal2").modal('toggle');
+//             noti_bubble('{{ langmod.CRLABEL4 }}','{{ langmod.CRLABEL5 }}','success',true,false,'3000',true);
+//             return false;
+//         }
+//     });
+// });

@@ -1,0 +1,39 @@
+
+console.log();
+function changestnot(elem, type){
+    //let state = $(elem).is(':checked') ? 1 : 0;
+}
+$("#accFixIssues").click(function(){
+    var text = $("#accFixIssues").text();
+    $("#accFixIssues").addClass('disabled');
+    $("#accFixIssues").attr('disabled',true);
+    $(".onoffswitch-checkbox").attr('disabled',true);
+    $("#accFixIssues").html('<i class="fa fa-spinner fa-spin"></i> '+text);
+    let fix_permissions = $("#fix_permissions").is(':checked') ? 1 : 0;
+    let internalError = $("#internalError").is(':checked') ? 1 : 0;
+    let removeHandler = $("#removeHandler").is(':checked') ? 1 : 0;
+    if((fix_permissions + internalError + removeHandler)==0){
+        noti_bubble('{{langmod.FIXACCPERM9}}','{{langmod.FIXACCPERM12}}','error',false,false,'4000',true);
+        $("#accFixIssues").removeClass('disabled');
+        $("#accFixIssues").attr('disabled',false);
+        $(".onoffswitch-checkbox").attr('disabled',false);
+        $("#accFixIssues").html(text);
+        return false;
+    }else{
+        $.ajax({
+            type: 'POST',
+            url: "?module=fix_acc_perm&acc=accFixIssues",
+            data: 'fix_permissions=' + fix_permissions + '&internalError=' + internalError + '&removeHandler=' + removeHandler,
+            success: function(result){
+                console.log(result);
+                noti_bubble('{{langmod.FIXACCPERM10}}','{{langmod.FIXACCPERM11}}','success',false,false,'4000',true);
+
+                $("#accFixIssues").removeClass('disabled');
+                $("#accFixIssues").attr('disabled',false);
+                $(".onoffswitch-checkbox").attr('disabled',false);
+                $("#accFixIssues").html(text);
+                return false;
+            }
+        });
+    }
+});

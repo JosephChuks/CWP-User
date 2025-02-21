@@ -1,0 +1,959 @@
+
+console.log();
+let uchip = null;
+let textone ='ssssssssssssssssssss';
+let textTwo ='fffffffffff';
+Dropzone.autoDiscover = false;
+$(document).ready(function() {
+    uchip = new Uchip();
+    listServerCast();
+    $('#services').DataTable();
+    var myDropzone = new Dropzone("div#dropzoneDragArea", {
+        paramName: "file",
+        url: "?module=servercast&acc=uploadFiles",
+        previewsContainer: 'div.dropzone-previews',
+        addRemoveLinks: true,
+        autoProcessQueue: true,
+        uploadMultiple: false,
+        parallelUploads: 1,
+        maxFiles: 10,
+
+        init: function() {
+            var myDropzone = this;
+            $("form[name='demoform']").submit(function(event) {
+                event.preventDefault();
+                URL = $("#demoform").attr('action');
+                formData = $('form #demoform').serialize();
+
+                $.ajax({
+                    type: 'POST',
+                    url: URL,
+                    data: formData,
+                    success: function(result){
+                        if(result.status == "success"){
+                            console.log(result);
+                            myDropzone.processQueue();
+                            return false;
+                        }else{
+                            console.log("error");
+                            return false;
+                        }
+                    }
+                });
+            });
+
+            this.on('sending', function(file, xhr, formData){
+                formData.append("media", $("#media_galery").val());
+                formData.append("server", $("#idServerCast").val());
+            });
+
+            this.on("success", function (file, response) {
+                $('#demoform')[0].reset();
+                $('.dropzone-previews').empty();
+            });
+            this.on("queuecomplete", function () {
+                search_music('none');
+                disk_consumption()
+            });
+
+            this.on("sendingmultiple", function() {
+                // Gets triggered when the form is actually being sent.
+                // Hide the success button or the complete form.
+            });
+
+            this.on("successmultiple", function(files, response) {
+                // Gets triggered when the files have successfully been sent.
+                // Redirect user or notify of success.
+            });
+
+            this.on("errormultiple", function(files, response) {
+                // Gets triggered when there was an error sending the files.
+                // Maybe show form again, and notify user of error
+            });
+        }
+    });
+    $('[data-toggle="tooltip"]').tooltip();
+} );
+
+function tabshoutcast(){
+    $("#_icecast_tab_").hide();
+    $("#_shoustcast_tab_").show();
+}
+function tabicecast(){
+    $("#_shoustcast_tab_").hide();
+    $("#_icecast_tab_").show();
+}
+function autodjDetails(){
+    $("#autodjList").hide();
+    $("#autodjDetails").fadeIn();
+    $("#menuTable .nav-link").removeClass('active in');
+    $("#menuTable .nav-item").removeClass('active');
+    $("#listRepDJ").addClass('active in');
+    $("#menuTable #li_listRepDJ").addClass('active');
+    search_music('none');
+    serviceSt();
+    disk_consumption();
+    return false;
+}
+function disk_consumption(){
+    var id =$("#idServerCast").val();
+    uchip.call('module=servercast&acc=disk_consumption', {
+        data: 'server=' + id,
+        callback: function (response) {
+            console.log(response);
+            var disk_pack = response.disk_pack;
+            var disk_use = response.disk_use;
+            var poscen = (100 / disk_pack) *  disk_use;
+            poscen = Math.round(poscen);
+            var disk_use_div = Math.round(disk_use/1024);
+            var disk_pack_div = Math.round(disk_pack/1024);
+
+            $("#autodjDetails .progress-bar").html(disk_use_div+' MB/'+disk_pack_div+' MB/');
+            $("#autodjDetails .progress-bar").css("width", poscen+'%');
+        }
+    });
+}
+function searchDataAutoJd(id){
+    uchip.call('module=servercast&acc=searchDataAutoJd', {
+        data: 'id=' + id,
+        callback: function (response) {
+            console.log(response);
+            if(response.status =='OK'){
+                var data = response.data;
+                var  myplaylist = data.myplaylist;
+                var tamanoP = myplaylist.length;
+                var jingles = data.jingles;
+                var tamanoJ = jingles.length;
+
+                var msj = "Playback in progress of List <b>"+myplaylist.substr(0, (tamanoP-4))+"</b> and Jingle <b>"+jingles.substr(0, (tamanoJ-4))+"</b>";
+                $("#alrtviewsound").html(msj);
+                $("#alrtviewsound").show();
+            }else{
+
+            }
+        }
+    });
+}
+function serviceSt(){
+    var id =$("#idServerCast").val();
+    $(".btStatusAutoDj").addClass('disabled');
+    $(".btStatusAutoDj").attr('disabled',true);
+    uchip.call('module=servercast&acc=serviceSt', {
+        data: 'id=' + id,
+        callback: function (response) {
+            if(response.autodj == 'ON'){
+                $(".btStatusAutoDj").html('<i class="fa fa-stop"  title="Parar"></i>');
+                $(".btStatusAutoDj").removeClass('btn-primary');
+                $(".btStatusAutoDj").addClass('btn-danger');
+                $(".btStatusAutoDj").removeClass('disabled');
+                $(".btStatusAutoDj").attr('disabled',false);
+                $(".btStatusAutoDj").attr('title','Parar');
+                $(".titleautodj").html('<i class="fa fa-volume-down"></i> AutoDJ <span class="badge badge-success">ONLine</span>');
+                $("#alrtviewsound_no").hide();
+                searchDataAutoJd(id);
+                //
+            }else if(response.autodj == 'OFF'){
+                $(".btStatusAutoDj").html('<i class="fa fa-play"  title="Iniciar"></i>');
+                $(".btStatusAutoDj").removeClass('btn-danger');
+                $(".btStatusAutoDj").addClass('btn-primary');
+                $(".btStatusAutoDj").removeClass('disabled');
+                $(".btStatusAutoDj").attr('disabled',false);
+                $(".btStatusAutoDj").attr('title','Iniciar');
+                $(".titleautodj").html('<i class="fa fa-volume-mute"></i> AutoDJ <span class="badge badge-dark">OFFLine</span>');
+                $("#alrtviewsound").hide();
+                $("#alrtviewsound_no").show();
+            }
+
+            console.log(response);
+            return false;
+        }
+    });
+}
+function autodjList() {
+    var id =$("#idServerCast").val();
+    $(".titleServer").html(id.toUpperCase());
+    $("#menuTable .nav-item").removeClass('active');
+    $("#menuTable .nav-link").removeClass('active in');
+    $("#li_listRepDJ").addClass('active');
+    $("#listRepDJ").addClass('active in');
+    $(".tabsCast").hide();
+    uchip.call('module=servercast&acc=autodjList', {
+        data: 'id=' + id,
+        callback: function (response) {
+            $("#autodjDetails #playlist").html(response.playlist);
+            $("#DTRotation tbody").html(response.rotationTable);
+            $("#DTistCron tbody").html(response.scheduledTable);
+            $("#DTJingle tbody").html(response.jinglesTable);
+            $("#autodjDetails #playlist").html(response.playlist);
+            $("#autodjDetails #playlist").html(response.playlist);
+            $("#table_services").hide();
+            $("#DTRotation").dataTable();
+            $("#DTJingle").dataTable();
+            $("#DTistCron").dataTable();
+            $("#autodjList").fadeIn();
+            return false;
+        }
+    });
+    return false;
+}
+function salirAutoDJ(){
+    return menuTab('autodjList',$("#idServerCast").val());
+}
+function MyServices(){
+    $(".tabsCast").hide();
+    $("#table_services").fadeIn();
+    return false;
+}
+function removifilePlayMedia(file,name){
+    $("#modal_delete_file_media #idfile").val(file);
+    $("#modal_delete_file_media #filename").html(name);
+    $("#modal_delete_file_media").modal('toggle');
+    return false;
+}
+function Overvier(idnew){
+    var myVar;
+    if(idnew!='' && idnew !=undefined){$("#idServerCast").val(idnew);}
+    var id = $("#idServerCast").val();
+    $(".titleServer").html(id.toUpperCase());
+    $("#table_services").hide();
+    $(".tabsCast").hide();
+    $("#overvier").fadeIn();
+    $("#menuTable .nav-item").removeClass('active');
+    $("#menuTable .nav-link").removeClass('active in');
+
+    $("#menuTable  #li_Overvier").addClass('active');
+    $("#menuTable  #Overvier-tab").addClass('active in');
+    myVar = setInterval(DetailsOverCast, 6000);
+    console.log(myVar);
+    detailServer();
+    serviceSt();
+    return false;
+}
+function detailServer(){
+    var server = $("#idServerCast").val();
+    uchip.call('module=servercast&acc=detailServer', {
+        data: 'server=' + server,
+        callback: function (response) {
+            console.log(response);
+            $("#labeltype").html(response.type_server);
+            $("#labelip").html(response.ip);
+            $("#labelport").html(response.port);
+            var disk = response.disk_pack;
+            var diskuse = response.disk_use;
+            if(diskuse==0){diskuse=1;}
+            var porcentaje = (diskuse * 100) / disk;
+            porcentaje = Math.round(porcentaje);
+            if(porcentaje==0){porcentaje=1;}
+            $("#grafdisk").html('<div class="progress-bar bg-info" role="progressbar" style="width: '+porcentaje+'%" aria-valuenow="'+porcentaje+'" aria-valuemin="0" aria-valuemax="100">'+diskuse+' / '+disk+' MB</div>');
+            return false;
+        }
+    });
+}
+function Config(){
+    var id = $("#idServerCast").val();
+    uchip.call('module=servercast&acc=Config', {
+        data: 'id=' + id,
+        callback: function (response) {
+            $("#confGeneral #typeServer").val(response.server);
+            $("#confGeneral #package").val('none');
+            $("#confGeneral #user").val('{{ users }}');
+            $("#confGeneral #port").val(response.port);
+            var config = response.conf;
+            var dominios = response.domains;
+            var opDomain ='<option value="">Ninguno</option>';
+            dominios.forEach(function(dominio, index) {
+                opDomain +='<option value="'+dominio.domain+'">'+dominio.domain+'</option>';
+            });
+            $("#confGeneral #domain").html(opDomain);
+            $("#confGeneral #pass").val(config.password);
+            $("#confGeneral #passAdmin").val(config.adminPassword);
+
+            $("#confLimites #mounting").val(1);
+            $("#confLimites #autodj").val(1);
+            $("#confLimites #bitrate").val(config.bitrate);
+            $("#confLimites #max_users").val(config.max_users);
+            $("#confLimites #bandwidth").val(config.bandwidth);
+            $("#confLimites #disk_quota").val(config.disk_quota);
+
+            $(".titleServer").html(id.toUpperCase());
+            $("#table_services").hide();
+            $(".tabsCast").hide();
+            $("#MenuConfDiv").fadeIn();
+            $("#config").fadeIn();
+            $("#menuTable .nav-link").removeClass('active in');
+            $("#menuTable .nav-item").removeClass('active');
+            $("#menuTable #li-config").addClass('active');
+            $("#menuTable #Config-tab").addClass('active in');
+            return false;
+        }
+    });
+    return false;
+}
+function Conf_general(){
+    $("#menuConfig .nav-link").removeClass('active in');
+    $("#Conf_general-tab").addClass('active in');
+    $(".divConf").hide();
+    $("#detConf_general").fadeIn();
+    return false;
+}
+function Conf_limites(){
+    $("#menuConfig .nav-link").removeClass('active in');
+    $("#Conf_limites-tab").addClass('active in');
+    $(".divConf").hide();
+    $("#detConf_limites").fadeIn();
+    return false;
+}
+function Conf_plugins() {
+    $("#menuConfig .nav-link").removeClass('active in');
+    $("#Conf_plugins-tab").addClass('active in');
+    $(".divConf").hide();
+    $("#detConf_plugins").fadeIn();
+    return false;
+}
+function Conf_autodj(){
+    $("#menuConfig .nav-link").removeClass('active in');
+    $("#Conf_autodj-tab").addClass('active in');
+    $(".divConf").hide();
+    $("#detConf_autodj").fadeIn();
+    return false;
+}
+function Conf_rele(){
+    $("#menuConfig .nav-link").removeClass('active in');
+    $("#detConf_rele-tab").addClass('active in');
+    $(".divConf").hide();
+    $("#detConf_rele").fadeIn();
+    return false;
+}
+function restarSV(id){
+    $("#btnrest_"+id).attr('disabled',true);
+    $("#btnrest_"+id).addClass('disabled');
+    $("#icon_"+id).addClass('fa-spin');
+    uchip.call('module=servercast&acc=restarSV', {
+        data: 'server=' + id,
+        callback: function (response) {
+            console.log(response);
+            noti_bubble('Successful restart','Success','success',false,false,'4000',true);
+            $("#btnrest_"+id).attr('disabled',false);
+            $("#btnrest_"+id).removeClass('disabled');
+            $("#icon_"+id).removeClass('fa-spin');
+        }
+    });
+
+}
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+function DjManager(){
+    $("#table_services").hide();
+    $("#MenuConfDiv").hide();
+    $("#menuTable li").removeClass('active in');
+    $("#DjManager-tab").addClass('active in');
+    $(".tabsCast").hide();
+    $("#djmanager").fadeIn();
+    return false;
+}
+function listServerCast(){
+    uchip.call('module=servercast&acc=infoCast', {
+        //data: 'key=' + key + '&lines=' + lines,
+        callback: function (response) {
+            $("#services tbody").html(response.listServer);
+            $("#services").dataTable();
+        }
+    });
+}
+function search_music(folder){
+    if(folder == 'none'){
+        if($("#listMediaId").val()==''){ $("#listMediaId").val('media'); }
+        folder =$("#listMediaId").val();
+    }else{
+        $("#listMediaId").val(folder);
+    }
+    $("#btnmedias .media").removeClass('disabled');
+    $("#btnmedias .media").attr('disabled',false);
+    $("#btnmedias #btnmusic_"+folder).addClass('disabled');
+    $("#btnmedias #btnmusic_"+folder).attr('disabled',true);
+
+    $("#fileOrigen").html('<div class="loaderList"><i class="fa fa-spinner fa-spin LoaderIcon"></i></div>');
+    uchip.call('module=servercast&acc=search_music', {
+        data: 'folder=' + folder + '&server=' + $("#idServerCast").val(),
+        callback: function (response) {
+            uchip.slideToggle('#idresult2','.loaderList', function(){
+                $("#fileOrigen").html(response.html);
+            });
+        }
+    });
+}
+function masterPlayplist(){
+    $("#playlist").css('border',"1px solid #e5e6e7");
+    if($("#playlist").val()=='' || $("#playlist").val()=='NEW'){
+        $("#playlistBtn").hide();
+        if($("#playlist").val()==''){
+            $("#playlistAdd").hide();
+            $("#playlistBtnAdd").hide();
+            $("#playlistBtn").hide();
+            $("#typePlayList").hide();
+            $("#playlist").show();
+        }else if($("#playlist").val()=='NEW'){
+            $("#playlistBtn").hide();
+            $("#playlist").hide();
+            $("#playlistAdd").show();
+            $("#playlistBtnAdd").show();
+            $("#typePlayList").show();
+        }
+    }else{
+        var typePlayList = $("#playlist").find(':selected').data('type');
+        $("#playlistBtn").show();
+        $("#typePlayList").hide();
+        showPlaylist(typePlayList,$("#playlist").val());
+    }
+}
+function showPlaylist(typePlayList,name){
+    $("#filePlayList").html('<div class="loaderList" ><i class="fa fa-spinner fa-spin LoaderIcon" ></i></div>');
+    uchip.call('module=servercast&acc=showPlaylist', {
+        data: 'playlist=' + typePlayList + '&server=' + $("#idServerCast").val()+"&name="+$("#playlist").val(),
+        callback: function (response) {
+            uchip.slideToggle('#idresult','.loaderList', function(){
+
+                $("#filePlayList").html(response.html);
+            });
+        }
+    });
+}
+function deleteFilePlayList(file,token,n){
+    var typePlayList = $("#playlist").find(':selected').data('type');
+    uchip.call('module=servercast&acc=deleteFilePlayList', {
+        data: 'file=' + file + '&tokenfile=' + token+"&n="+n+"&pllistTyp="+typePlayList+"&list="+$("#playlist").val(),
+        callback: function (response) {
+            console.log(response);
+            if(response.status = "OK"){
+                masterPlayplist();
+                return false;
+            }else{
+                noti_bubble('Something went wrong, the track cannot be removed','Error','error',false,false,'4000',true);
+                return false;
+            }
+        }
+    });
+}
+function addfilePlayList(hash){
+    $("#playlist").css('border',"1px solid #e5e6e7");
+    if($("#playlist").val()=='Choose' || $("#playlist").val()=='NEW'){
+        $("#playlist").css('border',"1px solid #ed5565");
+        noti_bubble('you must choose a playlist','Error','error',false,false,'4000',true);
+        return false;
+    }else{
+        var typePlayL = $("#playlist").find(':selected').data('type');
+        var nameList = $("#playlist").val();
+        var server = $("#idServerCast").val();
+        uchip.call('module=servercast&acc=addfilePlayList', {
+            data: 'hash=' + hash + '&server=' + server+ '&nameList=' + nameList+"&typePlayL="+typePlayL,
+            callback: function (response) {
+                if(response.status=="OK"){
+                    noti_bubble('Successful operation','Success','success',false,false,'4000',true);
+                    masterPlayplist();
+                }else{
+                    noti_bubble('Something went wrong','Error','error',false,false,'4000',true);
+                    return false;
+                }
+            }
+        });
+    }
+}
+function viewAutodjDetails(playlist,type){
+    $("#autodjDetails #playlist option[value='" + playlist + "']").prop("selected","selected");
+    masterPlayplist();
+    autodjDetails();
+}
+function openConfigPlay(){
+    uchip.call('module=servercast&acc=openConfigPlay', {
+        data: 'server=' + $("#idServerCast").val(),
+        callback: function (response) {
+            $("#_playList_confirm_modal_ #stationName").val(response.stationName);
+            $("#_playList_confirm_modal_ #gender").val(response.gender);
+            $("#_playList_confirm_modal_ #url").val(response.url);
+            $("#_playList_confirm_modal_ #myplaylist").html(response.rotativas);
+            $("#_playList_confirm_modal_ #jingles").html(response.jinglesOp);
+
+            $("#_playList_confirm_modal_ #type option[value='" + response.basic + "']").prop("selected","selected");
+            $("#_playList_confirm_modal_ #myplaylist option[value='" + response.myplaylist + "']").prop("selected","selected");
+            $("#_playList_confirm_modal_ #jingles option[value='" + response.jingles + "']").prop("selected","selected");
+            $("#_playList_confirm_modal_ #audio_error").html(response.ErrorSound);
+            $("#_playList_confirm_modal_ #audio_error option[value='" + response.audio_error + "']").prop("selected","selected");
+            $("#_playList_confirm_modal_ #after").val(response.after);
+            $("#_playList_confirm_modal_ #jinglesAfter").val(response.jinglesAfter);
+            $("#_playList_confirm_modal_").modal("toggle");
+            return false;
+        }
+    });
+
+
+}
+function savePlaylistConf(){
+    var sw=0;
+    $("#_playList_confirm_modal_ .form_control").css('border',"1px solid #e5e6e7");
+    $("#btnconfiplay").removeClass('fa-check-circle');
+    $("#btnconfiplay").addClass('fa-spinner fa-spin');
+    $("#btnconfiplay").addClass('disabled');
+    $("#btnconfiplay").attr('disabled', true);
+    if($("#audio_error").val()==''){
+        $("#audio_error").css('border',"1px solid #ed5565");
+        sw=1;
+    }
+    if($("#after").val()==''){
+        $("#after").css('border',"1px solid #ed5565");
+        sw=1;
+    }
+    if($("#jinglesAfter").val()==''){
+        sw=1;
+        $("#jinglesAfter").css('border',"1px solid #ed5565");
+    }
+    if(sw==1){
+        $("#btnconfiplay").removeClass('fa-spinner fa-spin');
+        $("#btnconfiplay").addClass('fa-check-circle');
+        $("#btnconfiplay").removeClass('disabled');
+        $("#btnconfiplay").attr('disabled', false);
+        noti_bubble('Some data is missing','Error','error',false,false,'4000',true);
+        return false;
+    }else{
+        uchip.call('module=servercast&acc=savePlaylistConf', {
+            data: $("#_playList_confirm_modal_ #playlistForm").serialize() + '&server=' + $("#idServerCast").val(),
+            callback: function (response) {
+                console.log(response);
+                if(response.status == 'OK'){
+                    $("#btnconfiplay").removeClass('fa-spinner fa-spin');
+                    $("#btnconfiplay").addClass('fa-check-circle');
+                    $("#btnconfiplay").removeClass('disabled');
+                    $("#btnconfiplay").attr('disabled', false);
+                    noti_bubble('Successful Update','Success','success',false,false,'4000',true);
+                   $("#_playList_confirm_modal_").modal('toggle');
+                    return false;
+                }else{
+                    $("#btnconfiplay").removeClass('fa-spinner fa-spin');
+                    $("#btnconfiplay").addClass('fa-check-circle');
+                    $("#btnconfiplay").removeClass('disabled');
+                    $("#btnconfiplay").attr('disabled', false);
+                    noti_bubble(response.msj,'Error','error',false,false,'4000',true);
+                    return false;
+                }
+                return false;
+            }
+        });
+    }
+}
+function subir() {
+    var media =$("#listMediaId").val();
+    if(media==''){
+        $("#media_galery option[value='media']").attr("selected","selected");
+    }else if(media=='intro'){
+        $("#media_galery option[value='intro']").attr("selected","selected");
+    }else if(media=='ondemand'){
+        $("#media_galery option[value='ondemand']").attr("selected","selected");
+    }
+
+    $("#uploadModal").modal('toggle');
+    return false;
+}
+function menuTab(tab,server){
+    if(server!=''){ $("#idServerCast").val(server); }
+    if(tab=='myServices'){MyServices();}
+    if(tab=='overvier'){Overvier(server);}
+    if(tab=='config'){Config();}
+    if(tab=='autodjList'){autodjList();}
+    if(tab=='djmanager'){DjManager();}
+}
+function PlayMediaSound(audio){
+    uchip.call('module=servercast&acc=PlayMediaSound', {
+        data: 'server=' + $("#idServerCast").val()+'&audio='+audio,
+        callback: function (response) {
+            $("#reproductor").attr('src','https://'+response.ip+'/~'+response.user+'/tmp/streaming/'+response.file);
+            $("#divaudio").show();
+        }
+    });
+}
+function DetailsOverCast() {
+    uchip.call('module=servercast&acc=DetailsOverCast', {
+        data: 'server=' + $("#idServerCast").val(),
+        callback: function (response) {
+            console.log(response);
+            var streams  = response.streams;
+            if(streams[0].songtitle!=undefined){
+                var songtitle  = streams[0].songtitle;
+            }else{
+                var songtitle  = '';
+            }
+
+            var currentlisteners = streams[0].currentlisteners;
+            var maxlisteners = streams[0].maxlisteners;
+            var peaklisteners = streams[0].peaklisteners;
+            var bitrate = streams[0].bitrate;
+            var linkuser = response.linkuser;
+            var linkadmin = response.linkadmin;
+
+            $("#hreflinkuser").attr('href',linkuser);
+            $("#hreflinkadmin").attr('href',linkadmin);
+
+            $("#songtitle").html(songtitle);
+            $("#conexCast").html(currentlisteners+' / '+maxlisteners);
+            $("#maxListCast").html(peaklisteners);
+            $("#overbit").html(bitrate);
+            return false;
+        }
+    });
+}
+function deletePlayList(lista,type,code){
+    $("."+code).addClass('disabled');
+    $("."+code).attr('disabled', true);
+    uchip.call('module=servercast&acc=deletePlayList', {
+        data: 'list=' + lista+'&type='+type+'&server='+$("#titleCast #idServerCast").val()+'&id='+$("#idServerCast").val(),
+        callback: function (response) {
+            console.log(response);
+            if(response.status == 'OK'){
+                if(type=='rotation'){
+                    $("#DTRotation tbody").html(response.html);
+                    $("#DTRotation").dataTable();
+                }
+                if(type=='scheduled'){
+                    //
+                    $("#DTistCron tbody").html(response.html);
+                    $("#DTistCron").dataTable();
+                }
+                if(type=='jingles'){
+                    // DTJingle
+                    $("#DTistCron tbody").html(response.html);
+                    $("#DTistCron").dataTable();
+                }
+                noti_bubble('Service restarted successfully','Success!','success',false,false,'3000',true);
+            }else{
+                noti_bubble(response.msj,'Error!','error',false,false,'3000',true);
+            }
+            $("."+code).removeClass('disabled');
+            $("."+code).attr('disabled', false);
+            return false;
+        }
+    });
+}
+function tabConfig(id){
+    if(id!=''){
+        $("#idServerCast").val(id);
+        Config();
+    }
+    return  false;
+}
+function startService(id,service){
+    $("#"+id).attr("disabled",true);
+    $("#"+id).addClass("disabled");
+    var text = $("#"+id).text();
+    $("#"+id).html('<i class="fa fa-spinner fa-spin"></i>');
+    uchip.call('module=servercast&acc=startService', {
+        data: 'server=' +id ,
+        callback: function (response) {
+            console.log(response);
+            if(response.status == 'OK'){
+                $("#"+id+"OFF").addClass('hide');
+                $("#"+id+"ON").removeClass('hide');
+                $("#status_"+id).removeClass('badge-danger');
+                $("#status_"+id).addClass('badge-success');
+                $("#status_"+id).html(service);
+                noti_bubble('Service restarted successfully','Success!','success',false,false,'3000',true);
+            }else{
+                noti_bubble(response.msj,'Error!','error',false,false,'3000',true);
+            }
+            $("#"+id).attr("disabled",false);
+            $("#"+id).removeAttr("disabled");
+            $("#"+id).html(text);
+            return false;
+        }
+    });
+}
+function stopService(id,service){
+    $("#"+id).attr("disabled",true);
+    $("#"+id).addClass("disabled");
+    var text = $("#"+id).text();
+    $("#"+id).html('<i class="fa fa-spinner fa-spin"></i>');
+    uchip.call('module=servercast&acc=stopService', {
+        data: 'server=' +id ,
+        callback: function (response) {
+            console.log(response);
+            if(response.status == 'OK'){
+                $("#"+id+"ON").addClass('hide');
+                $("#"+id+"OFF").removeClass('hide');
+                $("#status_"+id).removeClass('badge-success');
+                $("#status_"+id).addClass('badge-danger');
+                $("#status_"+id).html(service);
+                noti_bubble('Service restarted successfully','Success!','success',false,false,'3000',true);
+            }else{
+                noti_bubble(response.msj,'Error!','error',false,false,'3000',true);
+            }
+            $("#"+id).attr("disabled",false);
+            $("#"+id).removeAttr("disabled");
+            $("#"+id).html(text);
+            return false;
+        }
+    });
+}
+$("#btnResturn").click(function(){
+    $("#playlistAdd").hide();
+    $("#playlistBtnAdd").hide();
+    $("#playlist").show();
+    $("#typePlayList").hide();
+});
+$("#btnSaveNewPlayList").click(function (){
+    $("#playlistAdd").css('border',"1px solid #e5e6e7");
+    if($("#playlistAdd").val()==''){
+        $("#playlistAdd").css('border',"1px solid #ed5565");
+        noti_bubble('You must indicate a name','Error','error',false,false,'4000',true);
+        return false;
+    }else{
+        uchip.call('module=servercast&acc=savePlayList', {
+            data: 'name=' + $("#playlistAdd").val() + '&server=' + $("#idServerCast").val()+ '&playlist=' + $("#typePlayList").val(),
+            callback: function (response) {
+                $("#autodjDetails #playlist").html(response.playlist);
+                $("#playlistAdd").hide();
+                $("#playlistBtnAdd").hide();
+                $("#playlist").show();
+                $("#typePlayList").hide();
+                $("#playlistAdd").val('');
+            }
+        });
+    }
+})
+$("#btnUpdConfig").click(function(){
+    uchip.call('module=servercast&acc=UpdConfig', {
+        data: 'domain=' + $("#confGeneral #domain").val() + '&pass=' + btoa($("#confGeneral #pass").val()) + '&passAdmin=' + btoa($("#confGeneral #passAdmin").val()) + '&server=' + $("#idServerCast").val(),
+        callback: function (response) {
+            console.log(response);
+            if(response.status =="OK"){
+                noti_bubble('Something went wrong','Error..!','success',false,false,'3000',true);
+            }else{
+                noti_bubble('Something went wrong','Error..!','error',false,false,'3000',true);
+            }
+            return false;
+        }
+    });
+});
+$("#_btn_delete_FileAudio").click(function(){
+    $("#_btn_delete_FileAudio").addClass("disabled");
+    $("#_btn_delete_FileAudio").attr("disabled",true);
+    var text = $("#_btn_delete_FileAudio").text();
+    $("#_btn_delete_FileAudio").html("<i class=\"fa fa-spinner fa-spin\"></i> Removing...!");
+    var idfile = $("#modal_delete_file_media #idfile").val();
+    uchip.call('module=servercast&acc=delete_file_media', {
+        data: 'server=' + $("#idServerCast").val()+'&id='+idfile,
+        callback: function (response) {
+            console.log(response);
+            if(response.status == 'OK'){
+                var folder = $("#listMediaId").val();
+                $("#_btn_delete_FileAudio").removeClass("disabled");
+                $("#_btn_delete_FileAudio").attr("disabled",false);
+                $("#_btn_delete_FileAudio").html(text);
+                search_music(folder);
+                $("#modal_delete_file_media").modal('toggle');
+                noti_bubble('File deleted successfully','Success!','success',false,false,'3000',true);
+                return false;
+            }else{
+                noti_bubble(response.msj,'Error!','error',false,false,'3000',true);
+                $("#_btn_delete_FileAudio").removeClass("disabled");
+                $("#_btn_delete_FileAudio").attr("disabled",false);
+                $("#_btn_delete_FileAudio").html(text);
+                return false;
+            }
+        }
+    });
+});
+$(".btStatusAutoDj").click(function (){
+    uchip.call('module=servercast&acc=stopStartAutoDJ', {
+        data: 'server=' + $("#idServerCast").val(),
+        callback: function (response) {
+            console.log(response);
+            serviceSt();
+            return false;
+        }
+    });
+});
+$(".btnRestarAutoDJ").click(function(){
+    $(".btnRestarAutoDJ").attr('disabled',true);
+    $(".btnRestarAutoDJ").addClass('disabled');
+    $(".iconrestautodj").addClass('fa-spin');
+    uchip.call('module=servercast&acc=RestarAutoDJ', {
+        data: 'server=' + $("#idServerCast").val(),
+        callback: function (response) {
+            console.log(response);
+            $(".btnRestarAutoDJ").attr('disabled',false);
+            $(".btnRestarAutoDJ").removeClass('disabled');
+            $(".iconrestautodj").removeClass('fa-spin');
+            noti_bubble('Service restarted successfully','Success!','success',false,false,'3000',true);
+            return false;
+        }
+    });
+});
+$("#btndelplaylist").click(function (){
+    var lista = $("#playlist").val();
+    var datatype= $("#playlist").find(':selected').data('type');
+    var textmodal ='<b>'+lista+'</b><p>('+datatype+')</p>';
+    $("#deletePlayList #name_playlist").html(textmodal);
+    $("#deletePlayList #playlistname").val(lista);
+    $("#deletePlayList #typeplaylist").val(datatype);
+    $("#deletePlayList").modal('toggle');
+    return false;
+});
+$("#btn_delete_playlist").click(function (){
+    $("#btn_delete_playlist").addClass('disabled');
+    $("#btn_delete_playlist").attr('disabled', true);
+    var list = $("#deletePlayList #playlistname").val();
+    var typelist = $("#deletePlayList #typeplaylist").val();
+    uchip.call('module=servercast&acc=deletePlayList', {
+        data: 'list=' + list+'&type='+typelist+'&server='+$("#titleCast #idServerCast").val(),
+        callback: function (response) {
+            console.log(response);
+            if(response.status == 'OK'){
+                $("#autodjDetails #playlist option[value='"+list+"']").hide();
+                $("#autodjDetails #playlist option[value='']").attr("selected", true);
+                masterPlayplist();
+                $("#deletePlayList").modal('toggle');
+                noti_bubble('Service restarted successfully','Success!','success',false,false,'3000',true);
+            }else{
+                noti_bubble(response.msj,'Error!','error',false,false,'3000',true);
+            }
+            $("#btn_delete_playlist").removeClass('disabled');
+            $("#btn_delete_playlist").attr('disabled', false);
+            return false;
+        }
+    });
+    return false;
+});
+
+
+var Base64 = {
+
+    // private property
+    _keyStr : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+
+    // public method for encoding
+    encode : function (input) {
+        var output = "";
+        var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+        var i = 0;
+
+        input = Base64._utf8_encode(input);
+
+        while (i < input.length) {
+
+            chr1 = input.charCodeAt(i++);
+            chr2 = input.charCodeAt(i++);
+            chr3 = input.charCodeAt(i++);
+
+            enc1 = chr1 >> 2;
+            enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+            enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+            enc4 = chr3 & 63;
+
+            if (isNaN(chr2)) {
+                enc3 = enc4 = 64;
+            } else if (isNaN(chr3)) {
+                enc4 = 64;
+            }
+
+            output = output +
+                this._keyStr.charAt(enc1) + this._keyStr.charAt(enc2) +
+                this._keyStr.charAt(enc3) + this._keyStr.charAt(enc4);
+
+        }
+
+        return output;
+    },
+
+    // public method for decoding
+    decode : function (input) {
+        var output = "";
+        var chr1, chr2, chr3;
+        var enc1, enc2, enc3, enc4;
+        var i = 0;
+
+        input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+
+        while (i < input.length) {
+
+            enc1 = this._keyStr.indexOf(input.charAt(i++));
+            enc2 = this._keyStr.indexOf(input.charAt(i++));
+            enc3 = this._keyStr.indexOf(input.charAt(i++));
+            enc4 = this._keyStr.indexOf(input.charAt(i++));
+
+            chr1 = (enc1 << 2) | (enc2 >> 4);
+            chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+            chr3 = ((enc3 & 3) << 6) | enc4;
+
+            output = output + String.fromCharCode(chr1);
+
+            if (enc3 != 64) {
+                output = output + String.fromCharCode(chr2);
+            }
+            if (enc4 != 64) {
+                output = output + String.fromCharCode(chr3);
+            }
+
+        }
+
+        output = Base64._utf8_decode(output);
+
+        return output;
+
+    },
+
+    // private method for UTF-8 encoding
+    _utf8_encode : function (string) {
+        string = string.replace(/\r\n/g,"\n");
+        var utftext = "";
+
+        for (var n = 0; n < string.length; n++) {
+
+            var c = string.charCodeAt(n);
+
+            if (c < 128) {
+                utftext += String.fromCharCode(c);
+            }
+            else if((c > 127) && (c < 2048)) {
+                utftext += String.fromCharCode((c >> 6) | 192);
+                utftext += String.fromCharCode((c & 63) | 128);
+            }
+            else {
+                utftext += String.fromCharCode((c >> 12) | 224);
+                utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+                utftext += String.fromCharCode((c & 63) | 128);
+            }
+
+        }
+
+        return utftext;
+    },
+
+    // private method for UTF-8 decoding
+    _utf8_decode : function (utftext) {
+        var string = "";
+        var i = 0;
+        var c = c1 = c2 = 0;
+
+        while ( i < utftext.length ) {
+
+            c = utftext.charCodeAt(i);
+
+            if (c < 128) {
+                string += String.fromCharCode(c);
+                i++;
+            }
+            else if((c > 191) && (c < 224)) {
+                c2 = utftext.charCodeAt(i+1);
+                string += String.fromCharCode(((c & 31) << 6) | (c2 & 63));
+                i += 2;
+            }
+            else {
+                c2 = utftext.charCodeAt(i+1);
+                c3 = utftext.charCodeAt(i+2);
+                string += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
+                i += 3;
+            }
+
+        }
+        return string;
+    }
+
+}

@@ -1,0 +1,68 @@
+<!------------------------FILE MANAGER------------------------------->
+<div id="tab_swlm" class="tab-pane fade {{diclm}} {{swlm}}">
+    <div class="col-lg-12">
+        {% if mod.stfilemng == 0 %}
+        <div id="row1" style="margin-top: 25px">
+            <div class="row text-center" style="margin-top: 15px" >
+                <div>
+                    <b>{{langmod.PASS1}}</b>
+                </div>
+            </div>
+            <div class="row text-center" style="margin-top: 15px">
+                <div class="col-lg-offset-4 col-lg-4">
+                    <input type="text" class="form-control text-center" id="pass1fm" placeholder="{{langmod.TYPEPASS}}">
+                </div>
+            </div>
+            <div class="row text-center" style="margin-top: 25px"  id="row2">
+                <div>
+                    <b>{{langmod.PASS2}}</b>
+                </div>
+            </div>
+            <div class="row text-center" style="margin-top: 15px">
+                <div class="col-lg-offset-4 col-lg-4">
+                    <input type="text" class="form-control text-center" id="pass2fm" placeholder="{{langmod.TYPEPASS}}">
+                </div>
+            </div>
+        </div>
+
+        {% endif %}
+        <div class="row" style="margin-top: 25px" id="rowon">
+            <div class="panel" id="row3">
+                {% if mod.stfilemng == 1 %}
+                    <div class="row col-lg-10">
+                        <div class='alert alert-danger' id="alert-delete-filemanager" style="display: none">
+                            <div style="margin-bottom: 15px">{{langmod.DESINTALL}}  <a href="#" onclick="return alertdeletefilemanager(1)"><strong>{{langmod.TYES}}</strong></a> / <a href="#" onclick="return alertdeletefilemanager(0)"><strong>{{langmod.TNOT}}</strong></a></div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-12 text-center">
+                            <div style="margin-bottom: 15px">[<samp style="color: #4ca44c"><b>{{langmod.ADDEFMBTNON}}</b></samp>]</div>
+                        </div>
+                    </div>
+                    <div class="row col-lg-12">
+                        <div class='alert alert-success'>
+                            <strong>{{langmod.SUCCESS}}</strong> {{langmod.EXISTINSTALL}} <a target='_blank' href='http://{{mod.domain}}/filemanager/'>http://{{mod.domain}}/filemanager/</a> !
+                        </div>
+                    </div>
+
+                    <div class="row col-lg-6 col-lg-offset-3 text-center">
+                        <button type="button" class="btn btn-warning btn-block" id="btn-delete-filemanager" >DELETE</button>
+                    </div>
+                    <br><br><br>
+            {% else %}
+                <div id="btnoff" class="text-center col-lg-8 col-lg-offset-2">
+                    <button type="button" class="btn btn-warning btn-block" id="btn-addons-efm-add">{{langmod.ADDEFMBTNOFF}}</button>
+                </div>
+                <div class="row" style="margin-top: 15px; display: none"  id="install">
+                    <div class="col-lg-12">
+                        <p class="text-center">installing     ...</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-3" id="btnon" style="display: none">
+                    <button type="button" class="btn btn-success btn-block">{{langmod.ADDEFMBTNON}}</button>
+                </div>
+            {% endif %}
+            </div>
+        </div>
+    </div>
+</div>

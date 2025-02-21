@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CWP.user</title>
+
+    <link href="{{url}}/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{url}}/font-awesome/css/font-awesome.css" rel="stylesheet">
+    <link href="{{url}}/css/plugins/iCheck/custom.css" rel="stylesheet">
+    <!-- Toastr style -->
+    <link href="{{url}}/css/plugins/toastr/toastr.min.css" rel="stylesheet">
+    <!-- Gritter -->
+    <link href="{{url}}/js/plugins/gritter/jquery.gritter.css" rel="stylesheet">
+    <link href="{{url}}/css/animate.css" rel="stylesheet">
+    <link href="{{url}}/css/style.css" rel="stylesheet">
+
+</head>
+
+<body class="gray-bg">
+
+<div class="middle-box text-center loginscreen   animated fadeInDown" id="login">
+    <div>
+        <div>
+            <a href="#"><img src="https://thekinsmen.net/wp-content/uploads/2024/08/cropped-icon-1024x1024-1-192x192.png" width="300"></a>
+        </div>
+        <h3>Control Web Panel</h3>
+        <form class="m-t" role="form" action="#" onsubmit="return valite()">
+            <div class="form-group">
+                <input type="text" name="username" id="username" class="form-control" placeholder="User" required="" maxlength="80">
+            </div>
+            <div class="form-group">
+                <input type="password" name="password" id="password" class="form-control" placeholder="Password" required="">
+            </div>
+            <button type="submit" id="btnsubmit" class="btn btn-primary block full-width m-b">Login</button>
+
+            <p class="text-muted text-center" style="display: {{cont.SSL}}"><i class="fa fa-lock"></i>  <small>Please use SSL login <a href="{{cont.URLREDIRECT}}">Click here for SSL login</a></small></p>
+            <a class="btn btn-sm btn-white btn-block" href="#" onclick="return forgout(0)">Recover password</a>
+        </form>
+    </div>
+</div>
+
+<div class="middle-box animated fadeInDown" id="lost-pass" style="display: none">
+    <div class="text-center">
+        <a href="#"><img src="https://thekinsmen.net/wp-content/uploads/2024/08/cropped-icon-1024x1024-1-192x192.png" width="300"></a>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="ibox-content">
+
+                <h2 class="font-bold">Forgot password</h2>
+
+                <p>
+                    Enter your username and your email address and your new access will be sent to you by email.
+                </p>
+
+                <div class="row">
+
+                    <div class="col-lg-12">
+                        <form class="m-t" role="form" action="" onsubmit="return lostpass()">
+                            <div class="form-group">
+                                <input type="text" class="form-control" maxlength="8" name="lost-user" id="lost-user" placeholder="User" required="">
+                            </div>
+                            <div class="form-group">
+                                <input type="email" class="form-control" placeholder="Email address" name="lost-email" id="lost-email" required="">
+                            </div>
+
+                            <button type="submit" class="btn btn-primary block full-width m-b">Send new password</button>
+                            <p></p>
+                            <a class="btn btn-sm btn-white btn-block" href="#" onclick="return forgout(1)">Cancel</a>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Mainly scripts -->
+<script src="{{url}}/js/jquery-3.1.1.min.js"></script>
+<script src="{{url}}/js/popper.min.js"></script>
+<script src="{{url}}/js/bootstrap.js"></script>
+<!-- iCheck -->
+<script src="{{url}}/js/plugins/iCheck/icheck.min.js"></script>
+<script src="{{url}}/js/plugins/toastr/toastr.min.js"></script>
+<script src="{{url}}/js/plugins/gritter/jquery.gritter.min.js"></script>
+
+<script>
+    $(document).ready(function(){
+        $('.i-ch00ecks').iCheck({
+            checkboxClass: 'icheckbox_square-green',
+            radioClass: 'iradio_square-green',
+        });
+    });
+
+    function cookie() {
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "/login/index.php?acc=cookie",
+            complete: function(datos){
+                if(datos.responseText!=''){
+                    window.location = datos.responseText;
+                }
+            }
+        });
+    }
+    function valite(){
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $("#btnsubmit").attr('disabled',false);
+        $("#btnsubmit").addClass('disabled');
+        $("#btnsubmit").html('<div class="loader"></div>Please wait!');
+
+        if(($("#username").val()=='')||($("#password").val()=='')){
+            noti_bubble('All data is required','Error..!','error',false,false,'3000',true);
+            $("#btnsubmit").attr('disabled',false);
+            $("#btnsubmit").removeClass('disabled');
+            $("#btnsubmit").html('Login');
+            return false;
+        }else{
+            var pass=$("#password").val();
+            var pass= Base64.encode(pass);
+            $.ajax({
+                type: "POST",
+                url: "/login/index.php?acc=validate",
+                data:"username="+$("#username").val()+"&password="+pass,
+                complete: function(datos){
+                    //alert(datos.responseText);
+                    if($("#username").val()!='root'){
+                        if((datos.responseText!='user_invalid')&&(datos.responseText!='suspended')&&(datos.responseText!='encryption')&&(datos.responseText!='failed')&&(datos.responseText!='errorpassmysql')){
+                            $.ajax({
+                                type: "POST",
+                                url: "/"+$("#username").val()+"/index.php?acc=validate",
+                                data:"username="+$("#username").val()+"&password="+pass+"&hasd="+datos.responseText,
+                                complete: function(datos2){
+                                    noti_bubble('Successful Authentication','Congratulations','success',false,false,'3000',true);
+                                    window.location = datos2.responseText;
+                                    return false;
+                                }
+                            });
+                        }else{
+                            if(datos.responseText=='user_invalid'){
+                                noti_bubble('User root Invalid..!','Error..!','error',false,false,'3000',true);
+                                $("#btnsubmit").attr('disabled',false);
+                                $("#btnsubmit").removeClass('disabled');
+                                $("#btnsubmit").html('Login');
+                            }else if(datos.responseText=='suspended'){
+                                noti_bubble('Account Suspended','Attention..!','error',false,false,'3000',true);
+                                $("#btnsubmit").attr('disabled',false);
+                                $("#btnsubmit").removeClass('disabled');
+                                $("#btnsubmit").html('Login');
+                            }else if(datos.responseText=='encryption'){
+                                noti_bubble('encryption!','Error..!','error',false,false,'3000',true);
+                                $("#btnsubmit").attr('disabled',false);
+                                $("#btnsubmit").removeClass('disabled');
+                                $("#btnsubmit").html('Login');
+                            }else if(datos.responseText=='errorpassmysql'){
+                                noti_bubble('Error with MySQL password','Error..!','error',false,false,'3000',true);
+                                $("#btnsubmit").attr('disabled',false);
+                                $("#btnsubmit").removeClass('disabled');
+                                $("#btnsubmit").html('Login');
+                            }else if(datos.responseText=='failed'){
+                                noti_bubble('Login failed!','Error..!','error',false,false,'3000',true);
+                                $("#btnsubmit").attr('disabled',false);
+                                $("#btnsubmit").removeClass('disabled');
+                                $("#btnsubmit").html('Login');
+                            }
+                            return false;
+                        }
+                    }else{
+                        noti_bubble('User root Invalid..!','Error..!','error',false,false,'3000',true);
+                        return false;
+                    }
+                }
+            });
+        }
+        return false;
+    }
+    function forgout(sw){
+        if(sw==0){
+            $("#login").hide();
+            $("#lost-pass").show();
+        }else  if(sw==1){
+            $("#lost-pass").hide();
+            $("#login").show();
+        }
+        return false;
+    }
+    function lostpass(){
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $("#error").hide('');
+        if(($("#lost-user").val()!='')&&($("#lost-email").val()!='')){
+            $.ajax({
+                type: "POST",
+                url: "/login/index.php?acc=lostpass",
+                data:"username="+$("#lost-user").val()+"&email="+$("#lost-email").val(),
+                complete: function(datos){
+                    noti_bubble(datos.responseText,'Attention..!','info',false,false,'4000',true);
+                    return false;
+                }
+            });
+            return false;
+        }else{
+            return false;
+        }
+    }
+    function noti_bubble(title,msj,type,bar,button,timer,repeat) {
+        toastr.options = {
+            closeButton: button,
+            progressBar: bar,
+            showMethod: 'slideDown',
+            preventDuplicates:repeat,
+            timeOut: timer
+        };
+        if(type =='success'){ toastr.success(title, msj); }
+        if(type =='error'){ toastr.error(title, msj); }
+        if(type =='info'){ toastr.info(title, msj); }
+        if(type =='warning'){ toastr.warning(title, msj); }
+        //validatesound();
+    }
+    var Base64 = {
+
+        // private property
+        _keyStr : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+
+        // public method for encoding
+        encode : function (input) {
+            var output = "";
+            var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+            var i = 0;
+
+            input = Base64._utf8_encode(input);
+
+            while (i < input.length) {
+
+                chr1 = input.charCodeAt(i++);
+                chr2 = input.charCodeAt(i++);
+                chr3 = input.charCodeAt(i++);
+
+                enc1 = chr1 >> 2;
+                enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+                enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+                enc4 = chr3 & 63;
+
+                if (isNaN(chr2)) {
+                    enc3 = enc4 = 64;
+                } else if (isNaN(chr3)) {
+                    enc4 = 64;
+                }
+
+                output = output +
+                    this._keyStr.charAt(enc1) + this._keyStr.charAt(enc2) +
+                    this._keyStr.charAt(enc3) + this._keyStr.charAt(enc4);
+
+            }
+
+            return output;
+        },
+
+        // public method for decoding
+        decode : function (input) {
+            var output = "";
+            var chr1, chr2, chr3;
+            var enc1, enc2, enc3, enc4;
+            var i = 0;
+
+            input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+
+            while (i < input.length) {
+
+                enc1 = this._keyStr.indexOf(input.charAt(i++));
+                enc2 = this._keyStr.indexOf(input.charAt(i++));
+                enc3 = this._keyStr.indexOf(input.charAt(i++));
+                enc4 = this._keyStr.indexOf(input.charAt(i++));
+
+                chr1 = (enc1 << 2) | (enc2 >> 4);
+                chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+                chr3 = ((enc3 & 3) << 6) | enc4;
+
+                output = output + String.fromCharCode(chr1);
+
+                if (enc3 != 64) {
+                    output = output + String.fromCharCode(chr2);
+                }
+                if (enc4 != 64) {
+                    output = output + String.fromCharCode(chr3);
+                }
+
+            }
+
+            output = Base64._utf8_decode(output);
+
+            return output;
+
+        },
+
+        // private method for UTF-8 encoding
+        _utf8_encode : function (string) {
+            string = string.replace(/\r\n/g,"\n");
+            var utftext = "";
+
+            for (var n = 0; n < string.length; n++) {
+
+                var c = string.charCodeAt(n);
+
+                if (c < 128) {
+                    utftext += String.fromCharCode(c);
+                }
+                else if((c > 127) && (c < 2048)) {
+                    utftext += String.fromCharCode((c >> 6) | 192);
+                    utftext += String.fromCharCode((c & 63) | 128);
+                }
+                else {
+                    utftext += String.fromCharCode((c >> 12) | 224);
+                    utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+                    utftext += String.fromCharCode((c & 63) | 128);
+                }
+
+            }
+
+            return utftext;
+        },
+
+        // private method for UTF-8 decoding
+        _utf8_decode : function (utftext) {
+            var string = "";
+            var i = 0;
+            var c = c1 = c2 = 0;
+
+            while ( i < utftext.length ) {
+
+                c = utftext.charCodeAt(i);
+
+                if (c < 128) {
+                    string += String.fromCharCode(c);
+                    i++;
+                }
+                else if((c > 191) && (c < 224)) {
+                    c2 = utftext.charCodeAt(i+1);
+                    string += String.fromCharCode(((c & 31) << 6) | (c2 & 63));
+                    i += 2;
+                }
+                else {
+                    c2 = utftext.charCodeAt(i+1);
+                    c3 = utftext.charCodeAt(i+2);
+                    string += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
+                    i += 3;
+                }
+
+            }
+
+            return string;
+        }
+
+    }
+    cookie();
+</script>
+</body>
+
+</html>

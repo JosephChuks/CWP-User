@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Web Panel</title>
+    <link href="{{url}}/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{url}}/font-awesome/css/font-awesome.css" rel="stylesheet">
+    <link href="{{url}}/css/animate.css" rel="stylesheet">
+    <link href="{{url}}/css/style.css" rel="stylesheet">
+    <link rel="icon" href="{{url}}/img/ico/favicon.ico" type="image/png">
+</head>
+<body class="gray-bg">
+<div class="lock-word animated fadeInDown"  style="margin-top: 30px">
+    <span class="first-word">LOCKED</span><span>SCREEN</span>
+</div>
+<div class="middle-box text-center  animated fadeInDown">
+    <div>
+        <div>
+            <img src="https://thekinsmen.net/wp-content/uploads/2024/08/cropped-icon-1024x1024-1-192x192.png">
+        </div>
+        <div class="lockscreen"  style="margin-top: 120px">
+            <h3>Your {{myip}} IP address has been blocked</h3>
+            <p>You reached the maximum of failed attempts, please try again in</p>
+            <p>10 Minutes</p>
+        </div>
+    </div>
+</div>
+
+<!-- Mainly scripts -->
+<script src="{{url}}/js/jquery-3.1.1.min.js"></script>
+<script src="{{url}}/js/popper.min.js"></script>
+<script src="{{url}}/js/bootstrap.js"></script>
+<script>
+    function loadThumb(){
+        $.ajax({
+            type: "POST",
+            url: "/login/index.php?acc=locked",
+            complete: function(datos2){
+                //console.log(datos2.responseText);
+                if(datos2.responseText<=0) {
+                    window.location = '/';
+                }else if(datos2.responseText=='END'){
+                    window.location = '/';
+                }else{
+                    setTimeout('loadThumb()', 3600);
+                }
+                return false;
+            }
+        });
+
+    }
+    loadThumb();
+</script>
+</body>
+</html>

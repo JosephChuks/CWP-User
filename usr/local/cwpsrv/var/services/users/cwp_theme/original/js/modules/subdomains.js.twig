@@ -1,0 +1,530 @@
+
+console.log();
+let uchip = null;
+let subdomain_list = JSON.parse('{{mod.subdomains|json_encode|raw}}');
+let subdomain_table = null;
+String.prototype.isEmpty = function() {
+  return (this.length === 0 || !this.trim());
+};
+function useAutoSSL(type){
+  if(type == 1){
+    $('#autossl_checkbox').slideUp('fast', function(){
+      $('#wildcard_checkbox').slideDown('fast');
+      $('#ssl_checkbox').prop('checked', false);
+    });
+    $('#alert_info').fadeOut('fast');
+  }else{
+    $('#wildcard_checkbox').slideUp('fast', function(){
+      $('#autossl_checkbox').slideDown('fast');
+      $('#ssl_checkbox2').prop('checked', false);
+    });
+  }
+}
+$(document).ready(function() {
+  {% if mod.isie == 1 %}
+    uchip = new $.Uchip();
+  {% else %}
+    uchip = new Uchip();
+  {% endif %}
+  subDomainsTable(subdomain_list);
+  $('[data-toggle="tooltip"]').tooltip();
+  $('#subdomprefix').keyup(function(ev) {
+    let newpath = '';
+    let subprefix = $(this).val();
+    if(!subprefix.isEmpty()){
+      subprefix = subprefix.charAt(subprefix.length - 1) == '.' ? subprefix.slice(0, -1) : subprefix;
+      newpath = subprefix + $('#domain_toadd').val();
+      $('#pathdomain').val(newpath);
+    }
+    $('#pathdomain').val(newpath);
+  });
+  $('#domain_toadd').change(function(){
+    let iswild = $(this).children('option:selected').data('wild');
+    if(iswild == '1'){
+      $('#autossl_checkbox').slideUp('fast', function(){
+        $('#wildcard_checkbox').slideDown('fast');
+        $('#ssl_checkbox').prop('checked', false);
+      });
+      $('#alert_info').fadeOut('fast');
+    }else{
+      $('#wildcard_checkbox').slideUp('fast', function(){
+        $('#autossl_checkbox').slideDown('fast');
+        $('#ssl_checkbox2').prop('checked', false);
+      });
+    }
+    let newpath = '';
+    let subprefix = $('#subdomprefix').val()
+    if(!subprefix.isEmpty()){
+      subprefix = subprefix.charAt(subprefix.length - 1) == '.' ? subprefix.slice(0, -1) : subprefix;
+      newpath = subprefix + $(this).val();
+    }
+    $('#pathdomain').val(newpath);
+  });
+  $('#ssl_checkbox').change(function(){
+    if($(this).is(':checked')){
+      $('#alert_info').fadeIn();
+    }else{
+      $('#alert_info').fadeOut();
+    }
+  });
+});
+function subDomainsTable(list){
+  subdomain_list = list;
+  if(subdomain_list.length > 0){
+    let html_content = '';
+    let index = 0;
+    subdomain_list.forEach(function(subdom){
+      let totalbanw = subdom.banwtotalbanw;
+      let ssl_stat = '<i class="fa fa-unlock text-center" title="{{langmod.SDOMNONSSL}}" data-toggle="tooltip" data-placement="top" aria-hidden="true" style="color: #ed5565"></i>';
+      if(subdom.ssl != 0){
+        ssl_stat = '<a href="?module=letsencrypt" title="{{langmod.SDOMHAVESSL}}" data-toggle="tooltip" data-placement="top" aria-hidden="true"><i class="fa fa-lock text-center" style="color: #1ab394;" ></i></a>';
+      }
+      if({{mod.pack_bandwidth}} > -1){
+            let barwi = 0;
+        let barcolor = uchip.getBarColor(subdom.porbanw);
+        bandwidth_container = '<div class="progress" style="height: 10px;background-color: #CBCACF;">' +
+                                '<div style="width:' + subdom.porbanw + '%" class="' + barcolor + '"></div>' +
+                              '</div>' + uchip.humanFileSize(subdom.banw * 1024 * 2014) + ' / ' + uchip.humanFileSize({{mod.pack_bandwidth}} * 1024 * 1024);
+      }else{
+            let barwi = (({{mod.pack_bandwidth}} / 100) * subdom.banw);
+        bandwidth_container = '<div class="progress" style="height: 10px;background-color: #CBCACF;">' +
+                                '<div style="width:0%" class="progress-bar"></div>' +
+                              '</div>' + uchip.humanFileSize(subdom.banw * 1024 * 2014) + ' / <span class="infinite-bandwidth">&infin;</span> MB';
+      }
+
+      html_content += '<tr id="trdomain_' + index + '" class="gradeA odd" role="row">' +
+                        '<td class="td-table-domain">' + subdom.subdomain + ' <a href="http://' + subdom.subdomain + '.' + subdom.domain + '" target="_blank"><i class="icomoon-icon-play-3"></i> </a> </td>' +
+                        '<td class="td-table-domain">' + subdom.domain + '</td>' +
+                        '<td class="td-table-domain" align="center">{{users}}</td>' +
+                        '<td class="td-table-domain">' + subdom.path + '     <a href="#" onclick="return changepath(\'' + subdom.subdomain + '\',\'' + subdom.domain + '\',\'' + subdom.path + '\')"><i class="fa fa-edit text-center" style="color: #1ab394; font-size: 1.5em;"></i></a></td>' +
+                        '<td align="center" class="domain_bw">' +
+                          bandwidth_container +
+                        '</td>' +
+                        '<td align="center" class="td-table-domain-icon">' + ssl_stat + '</td>' +
+                        '<td align="center"  class="td-table-domain-btn">' +
+                          '<button type="button" id="btn_del_' + index + '" class="btn btn-danger btn-xs mr5 mb10" title="{{langmod.SDBTNDELETE}}" onclick="return subdomaindelete(0,\'' + subdom.domain + '\',\'' + subdom.subdomain + '\',' + index + ')">' +
+                            '<i class="fa fa-trash"></i>' +
+                          '</button>' +
+                        '</td>' +
+                      '</tr>';
+      index++;
+    });
+    let table_html = '<table class="table table-striped table-bordered table-hover" id="table_subdomains">' +
+                        '<thead>' +
+                          '<tr role="row">' +
+                            '<th>{{langmod.SSUBDOMAIN}}</th>' +
+                            '<th>{{langmod.SDDOMAIN}}</th>' +
+                            '<th>{{langmod.SDUSER}}</th>' +
+                            '<th>{{langmod.SDPATH}}</th>' +
+                            '<th>{{langmod.SUBDOMLABEL11}}</th>' +
+                            '<th>{{langmod.SUBDOMLABEL9}}</th>' +
+                            '<th>{{langmod.SDACTION}}</th>' +
+                          '</tr>' +
+                        '</thead>' +
+                        '<tbody id="contenttr">' +
+                          html_content +
+                        '</tbody>' +
+                      '</table>';
+    $('#table_subdomains_wrapper').html(table_html);
+    $('#table_subdomains').DataTable().destroy();
+    subdomain_table = $('#table_subdomains').DataTable({
+      'columnDefs': [
+        { 'width': '100px', 'targets': 4 }
+      ]
+    });
+  }else{
+    $('#table_subdomains_wrapper').html('<div class="empty_list"><h4 class="text-success">{{langmod.SDOMNOSUBS}}</h4></div>');
+  }
+}
+function showNewForm(){
+  uchip.slideToggle('#new_form_wrapper','#subdomains_list_wrapper');
+}
+function cancelNewForm(){
+  uchip.slideToggle('#subdomains_list_wrapper','#new_form_wrapper', function(){
+    $('#pathdomain').val('');
+    $('#subdomprefix').val('');
+    $('#domain_toadd').val($('#domain_toadd option:first').val());
+    $('.dir-sel-btn').attr('data-original-title','{{langmod.SDOMCHOOBPAT}}');
+    $('#dirsel').text('/');
+    $('#ssl_checkbox').prop('checked', false);
+    $('#subdomprefix').removeClass('error');
+    $('.error-field').remove();
+  });
+}
+function showExplorer(){
+  $('#dir_explorer_domain .modal-body').html('<div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>');
+  $('#dir_explorer_domain').modal('show');
+  callDirList($('#dirsel').text());
+}
+function selCurrentPath(){
+  let curpath = $('#current_path_dirsel').val();
+  $('.dir-sel-btn').attr('data-original-title',curpath);
+  $('#dirsel').text(curpath);
+  $('#dir_explorer_domain').modal('hide');
+}
+function callDirList(directory){
+  uchip.handleButton('#sel_path_btn', 'fa-thumb-tack');
+  $('#dir_explorer_domain .modal-body').html('<div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>');
+  uchip.call('module=domains&acc=dirlist', {
+    data: 'basedir=' + directory,
+    callback: function(response){
+      directory = directory.charAt(directory.length-1) == '/' ? directory : directory + '/';
+      renderDirSelector(directory, response);
+      uchip.handleButton('#sel_path_btn', 'fa-thumb-tack', true);
+    }
+  });
+}
+function renderDirSelector(base, dirs){
+  let dirs_html = '';
+  dirs.forEach((dir) => {
+    dirs_html += '<div class="dir-item" data-dir="' + dir + '"><div class="row">' +
+                    '<div class="col-md-12">' +
+                      '<i class="fa fa-folder-o" aria-hidden="true"></i>' +
+                      dir +
+                    '</div>' +
+                  '</div></div>';
+  });
+  let html = '<div id="dir_list" class="container-fluid" style="display:none">' +
+                '<div class="row">' +
+                  '<div class="col-md-12 current-path-div">' +
+                    '<label class="form-label">Cuerent path</label>' +
+                    '<input type="text" id="current_path_dirsel" class="form-control" value="' + base + '" readonly>' +
+                  '</div>' +
+                '</div>' +
+                dirs_html +
+              '</div>';
+  $('#dir_explorer_domain .modal-body').html(html);
+  $('.dir-item').mouseover(function() {
+    $(this).find('.fa').removeClass('fa-folder-o').addClass('fa-folder-open-o');
+  })
+  .mouseout(function() {
+    $(this).find('.fa').removeClass('fa-folder-open-o').addClass('fa-folder-o');
+  }).click(function(){
+    let curpath = $('#current_path_dirsel').val();
+    let dir = $(this).data('dir');
+    if(dir == '..'){
+      let pieces = curpath.split('/');
+      pieces.pop();
+      pieces.pop();
+      dir = pieces.join('/')
+    }else{
+      dir = curpath + dir;
+    }
+    callDirList(dir);
+  });
+  $('#dir_list').slideDown('fast');
+}
+function inArray(needle, haystack) {
+    var length = haystack.length;
+    for(var i = 0; i < length; i++) {
+        if(haystack[i] == needle) return true;
+    }
+    return false;
+}
+function sendNewSub(){
+  let notallowed = 'mail, ftp, webmail, cpanel';
+  let excludearry = ['mail', 'ftp', 'webmail', 'cpanel'];
+  let subprefix = $('#subdomprefix').val();
+  subprefix = subprefix.charAt(subprefix.length - 1) == '.' ? subprefix.slice(0, -1) : subprefix;
+  let whole_sub = subprefix + $('#domain_toadd').val();
+  let path = $('#dirsel').text() + $('#pathdomain').val();
+  if(!inArray(subprefix,excludearry)){
+      /*if(notallowed.indexOf(subprefix) > -1){
+          if(!$('#subdomprefix').hasClass('error')){
+              $('#subdomprefix').addClass('error');
+              $('#subdomprefix').parent().append('<span class="error-field">' + notallowed + ' Are not allowed as subdomain</span>');
+          }
+      }else*/ if(!(/^([a-zA-Z0-9][a-zA-Z0-9-_]*\.)*[a-zA-Z0-9]*[a-zA-Z0-9-_]*[[a-zA-Z0-9]+$/igm.test(whole_sub))){
+          if(!$('#subdomprefix').hasClass('error')){
+              $('#subdomprefix').addClass('error');
+              $('#subdomprefix').parent().append('<span class="error-field">Invalid subdomain</span>');
+          }
+      }else if(path == '/'){
+          $('#pathdomain').addClass('error');
+          noti_bubble('Invalid path','{{langmod.DERROR}}','error',false,false,'3000',true);
+          return false;
+      }else{
+          $('#subdomprefix').removeClass('error');
+          $('#subdomprefix').parent().find('.error-field').remove();
+          uchip.handleButton('.btn-save-domain','fa-floppy-o');
+          uchip.handleButton('.btn-cancel-domain','fa-ban');
+          let autossl = 0;
+          if($('#ssl_checkbox').is(':checked')){
+              autossl = 1;
+          }
+          let use_wild = 0;
+          if($('#domain_toadd').children('option:selected').data('wild') == '1' && $('#ssl_checkbox2').is(':checked')){
+              use_wild = 1;
+          }
+          uchip.call('module=subdomains&acc=addsubdomain', {
+              data: 'domain=' + $('#domain_toadd').val() + '&path=' + path + '&subdomain=' + subprefix + '&autossl=' + autossl + '&use_wild=' + use_wild,
+              callback: function(response){
+                  if(response.result == 'success'){
+                      if(autossl == 1){
+                          if(response.ssl_status.type == 'created'){
+                              noti_bubble('{{langmod.SDOMANDSSLCR}}','{{langmod.SDSUCCT}}','success',false,false,'6500',true);
+                          }else{
+                              noti_bubble("{{langmod.SDOMCRENOSSL}}",'{{langmod.SDSUCCT}}','warning',false,false,'6500',true);
+                          }
+                      }else{
+                          noti_bubble('{{langmod.SDDOMAINEXIT}}','{{langmod.SDSUCCT}}','success',false,false,'3000',true);
+                      }
+                      subDomainsTable(response.list);
+                      calculateQuota();
+                      cancelNewForm();
+                  }else{
+                      let error_message = '{{langmod.SDOMCRELAB1}}';
+                      if(response.code == 1){
+                          error_message = '{{langmod.SDOMCRELAB2}}';
+                      }else if(response.code == 2){
+                          error_message = 'Invalid path.';
+                      }else if(response.code == 100){
+                          error_message = '{{langmod.SDOMCRELAB3}}';
+                      }else if(response.code == 409){
+                          error_message = '{{langmod.SDOMCRELAB4}}';
+                      }
+                      noti_bubble(error_message,'{{langmod.SDERROR}}','error',false,false,'3000',true);
+                  }
+                  uchip.handleButton('.btn-save-domain','fa-floppy-o', true);
+                  uchip.handleButton('.btn-cancel-domain','fa-ban', true);
+              }
+          });
+      }
+  }else{
+      $('#subdomprefix').addClass('error');
+      $('#subdomprefix').parent().append('<span class="error-field">' + notallowed + ' Are not allowed as subdomain</span>');
+  }
+}
+function calculateQuota(){
+  let plan = {{mod.subdomain_pack}};
+  $('#subdomains_used').text(subdomain_list.length);
+  if(plan >= 0){
+    if(subdomain_list.length == plan){
+      $('#btn_add_subdomain').addClass('disabled');
+      $('#btn_add_subdomain').prop('disabled', true)
+    }else{
+      $('#btn_add_subdomain').removeClass('disabled');
+      $('#btn_add_subdomain').prop('disabled', false)
+    }
+    let percent = ((subdomain_list.length * 100) / plan).toFixed(0);
+    $('#stat_percent_domain').text(percent + '%');
+    let barcolor = uchip.getBarColor(percent);
+    $('#bardomindpor').removeClass();
+    $('#bardomindpor').addClass(barcolor);
+    $('#bardomindpor').width(percent + '%');
+  }
+}
+function subdomaindelete(st,domain,subdomin, index){
+  if(st==0){
+    var strbody = '<p>{{langmod.SDOMDELTIT1}}<br><b>' + subdomin + '.' + domain + '</b><br/>{{langmod.SDOMDELTIT2}}</p>';
+    var strfooter = '<button type="button" class="btn btn-white" data-dismiss="modal">{{ langmod.SDNO }}</button><button type="button" class="btn btn-primary" id="btnyesdel" onclick="return subdomaindelete(1,\''+domain+'\',\''+subdomin+'\',' + index + ')">{{langmod.SDYES}}</button>';
+
+    $("#deletemodaldomain .modal-footer").html(strfooter);
+    $("#deletemodaldomain .modal-body").html(strbody);
+    // $("#deletemodal .modal-header").html(strheader);
+    $("#deletemodaldomain").modal('toggle');
+    return false;
+  }else if(st==1){
+    $("#deletemodaldomain").modal('hide');
+    uchip.handleButton('#btn_del_' + index,'fa-trash');
+    let tr = $('#trdomain_' + index);
+    tr.addClass('deleting_tr');
+    uchip.call('module=subdomains&acc=subdomaindelete', {
+      data: 'domain=' + domain + '&subdomain=' + subdomin,
+      callback: function(response){
+        if(response.result == 'success'){
+          tr.slideUp('fast', function(){
+            subdomain_table.row(this).remove().draw();
+          });
+          subdomain_list.splice(index, 1);
+          calculateQuota();
+          noti_bubble('{{langmod.SDDELDOMAINALERT}}','{{langmod.SDSUCCT}}','success',false,false,'3000',true);
+        }else{
+          tr.removeClass('deleting_tr');
+          uchip.handleButton('#btn_del_' + index,'fa-trash', true);
+          noti_bubble('{{langmod.SDOMERRORUN}}','Error','error',false,false,'3000',true);
+        }
+      }
+    });
+    // btnporcess('off','btnyesdel','{{ langmod.SUBDOMLABEL10 }}');
+    // $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    // $.ajax({
+    //   type: "POST",
+    //   url: "./{{users}}/index.php?module=subdomains&acc=subdomaindelete",
+    //   data:"domain="+domain+"&subdomain="+subdomin,
+    //   complete: function(datos){
+    //     $("#trdomain"+datos.responseText).hide();
+    //     //uploadpackage('subdomains');
+    //     subdomainrefres();
+    //     refrespanelnew('subdomains');
+    //     noti_bubble('{{langmod.SDDELDOMAINALERT}}','{{langmod.SDSUCCT}}','success',false,false,'3000',true);
+    //     btnporcess('on','btnyesdel','{{ langmod.SDYES }}');
+    //     $("#deletemodal").modal('hide');
+    //     return false;
+    //   }
+    // });
+  }
+  return false;
+}
+function subdomainrefres(){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=subdomains&acc=subdomainrefres",
+        complete: function(datos){
+            $('.dataTables-example').DataTable().destroy();
+            $("#contenttr").html(datos.responseText);
+            $('.dataTables-example').DataTable();
+            return false;
+        }
+    });
+}
+function subdomainkeyup(){
+    var domain=$("#domains").val();
+    domain=domain.substr(1);
+    if($("#subdomain").val()=='mail'){
+        $("#btn_save_subdomain").hide('blind');
+    }else{
+        var expreg = /^[a-zA-Z0-9]+([(\.|\/|\-)]?[a-zA-Z0-9_]+)*$/i;
+        var resp=expreg.test($("#subdomain").val());
+        if(resp==false){
+            noti_bubble('{{langmod.ERRORFORM}}','{{langmod.DERROR}}','error',false,false,'3000',true);
+            $("#btnsavesubdomain").addClass('disabled');
+            $("#btnsavesubdomain").attr('disabled',true);
+        }else{
+            $("#btnsavesubdomain").removeClass('disabled');
+            $("#btnsavesubdomain").attr('disabled',false);
+            $("#alertftp").hide('blind');
+            $("#alertftp").html('');
+            var path='/public_html/';
+            var newpath=$("#subdomain").val();
+            $("#pathdomain").val(path+newpath+'.'+domain);
+        }
+    }
+}
+function btn_save_subdomain(){
+    btnporcess('off','btnsavesubdomain','{{ langmod.SUBDOMLABEL10 }}');
+    if($("#subdomain").val()=='' || $("#pathdomain").val()==''){
+        noti_bubble('{{langmod.SDDATEALL}}','{{langmod.SDERROR}}','error',false,false,'3000',true);
+        btnporcess('on','btnsavesubdomain','{{ langmod.SDBNTADD }}');
+        return false;
+    }else{
+        if ($('#autossl').prop('checked')){ var autossl=1; } else{ var autossl=0; }
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=subdomains&acc=btn_save_subdomain",
+            data: "domain="+$("#domains").val()+"&subdomain="+$("#subdomain").val()+"&path="+$("#pathdomain").val()+"&autossl="+autossl,
+            complete: function(datos){
+                //alert(datos.responseText);
+                if(datos.responseText=='OK'){
+                    $("#suddomain").val('');
+                    $("#pathdomain").val('/public_html/');
+                    subdomainrefres();
+                    refrespanelnew('subdomains');
+                    noti_bubble('{{langmod.SDDOMAINEXIT}}','{{langmod.SDSUCCT}}','success',false,false,'3000',true);
+                    btnporcess('on','btnsavesubdomain','{{ langmod.SDBNTADD }}');
+                    $("#addmodal").modal('hide');
+                }else{
+                    //refrespanelnew('subdomains');
+                    //subdomainrefres();
+                    //subdomainrefres();
+                    noti_bubble(datos.responseText,'{{langmod.SDERROR}}','error',false,false,'3000',true);
+                    btnporcess('on','btnsavesubdomain','{{ langmod.SDBNTADD }}');
+                }
+                return false;
+            }
+        });
+    }
+}
+function btnaddsubdomain(){
+    var headervar='<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{ langmod.SUBDOMLABLE3 }}</span></button><h4 class="modal-title">{{ langmod.SDBNTADD }}</h4>';
+    var bodyvar='<div class="row"><div class="col-sm-3"><b>{{ langmod.SDDOMAIN }}:</b></div><div class="col-sm-3"><input type="text" class="form-control" style="padding:3px 0px;" id="subdomain" onkeyup="return subdomainkeyup()"></div><div class="col-sm-5"><select id="domains" class="form-control" >{% for dsel in mod.seldomain %}<option value="{{ dsel.domain }}">{{ dsel.domain }}</option>{% endfor %}</select></div></div><div class="row" style="padding-top: 5px"><div class="col-sm-3" style="padding-top: 3px"><b>{{ langmod.SDPATH }}:</b> /home/{{ users }}</div><div class="col-sm-5"><input type="text" class="form-control" style="padding:3px 0px;" id="pathdomain" value="/public_html/"></div></div><div class="row" style="padding-top: 5px"><div class="col-sm-3" style="padding-top: 3px"><b>{{ langmod.SUBDOMLABEL8 }}:</b></div><div class="col-sm-5"><input type="checkbox" class="form-control2" style="padding:3px 0px;" id="autossl"></div></div><p class="text-center"  style="padding-top: 15px"><b>{{ langmod.SUBDOMLABEL7 }}</b></p>';
+    var btnvar='<button type="button" class="btn btn-white" data-dismiss="modal">{{ langmod.SUBDOMLABLE3 }}</button> <button type="button" class="btn btn-primary" onclick="return btn_save_subdomain()" id="btnsavesubdomain">{{ langmod.SDBNTADD }}</div></button>';
+    $("#addmodal .modal-header").html(headervar);
+    $("#addmodal .modal-body").html(bodyvar);
+    $("#addmodal .modal-footer").html(btnvar);
+    $("#addmodal").modal('toggle');
+}
+function changepath(subdomain,domain,path){
+    showExplorerEdit(path.replace('/home/{{users}}',''),domain,subdomain);
+    return false;
+}
+function showExplorerEdit(path,domain,sub){
+    $('#dir_explorer_domainEdit .modal-body').html('<div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>');
+    $('#dir_explorer_domainEdit').modal('show');
+    callDirListEdit(path,domain,sub);
+}
+function callDirListEdit(directory,domain,sub){
+    uchip.handleButton('#sel_path_btnEdit', 'fa-thumb-tack');
+    $('#dir_explorer_domainEdit .modal-body').html('<div class="table_cron_loader"><span><i class="fa fa-circle-o-notch fa-spin"></i></span></div>');
+    uchip.call('module=domains&acc=dirlist', {
+        data: 'basedir=' + directory,
+        callback: function(response){
+            directory = directory.charAt(directory.length-1) == '/' ? directory : directory + '/';
+            renderDirSelectorEdit(directory, response,domain,sub);
+            uchip.handleButton('#sel_path_btnEdit', 'fa-thumb-tack', true);
+        }
+    });
+}
+function renderDirSelectorEdit(base, dirs,domain,sub){
+    $("#dir_explorer_domainEdit #domain").val(domain);
+    $("#dir_explorer_domainEdit #sub").val(sub);
+    let dirs_html = '';
+    dirs.forEach((dir) => {
+        dirs_html += '<div class="dir-item" data-dir="' + dir + '"><div class="row">' +
+            '<div class="col-md-12">' +
+            '<i class="fa fa-folder-o" aria-hidden="true"></i>' +
+            dir +
+            '</div>' +
+            '</div></div>';
+    });
+    let html = '<div id="dir_listEdit" class="container-fluid" style="display:none">' +
+        '<div class="row">' +
+        '<div class="col-md-12 current-path-div">' +
+        '<label class="form-label">Cuerent path</label>' +
+        '<input type="text" id="current_path_dirselEdit" class="form-control" value="' + base + '" readonly>' +
+        '</div>' +
+        '</div>' +
+        dirs_html +
+        '</div>';
+    $('#dir_explorer_domainEdit .modal-body').html(html);
+    $('.dir-item').mouseover(function() {
+        $(this).find('.fa').removeClass('fa-folder-o').addClass('fa-folder-open-o');
+    })
+        .mouseout(function() {
+            $(this).find('.fa').removeClass('fa-folder-open-o').addClass('fa-folder-o');
+        }).click(function(){
+        let curpath = $('#current_path_dirselEdit').val();
+        let dir = $(this).data('dir');
+        if(dir == '..'){
+            let pieces = curpath.split('/');
+            pieces.pop();
+            pieces.pop();
+            dir = pieces.join('/')
+        }else{
+            dir = curpath + dir;
+        }
+        callDirListEdit(dir,domain,sub);
+    });
+    $('#dir_listEdit').slideDown('fast');
+}
+function selCurrentPathEdit(){
+    let curpath = $('#current_path_dirselEdit').val();
+    $('.dir-sel-btn').attr('data-original-title',curpath);
+    uchip.call('module=domains&acc=changepath', {
+        data: 'path=' + curpath+'&domain='+$('#dir_explorer_domainEdit #domain').val()+'&sub='+$('#dir_explorer_domainEdit #sub').val()+'&type=subdomain',
+        callback: function(response){
+            noti_bubble('{{langmod.DDOMAINEXIT}}','{{langmod.SDSUCCT}}','success',false,false,'3000',true);
+            subDomainsTable(response.list);
+            $('#dir_explorer_domainEdit').modal('hide');
+
+        }
+    });
+    uchip.call('module=fix_acc_perm&acc=accFixIssues', {
+        data: 'fix_permissions=1&internalError=0&removeHandler=0',
+        callback: function(response){
+            return false;
+        }
+    });
+}

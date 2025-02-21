@@ -1,0 +1,956 @@
+function deletepipe(st,email,dom){
+    if(st==0){
+        var strheader = '<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{ langmod.EMLABEL6 }}</span></button><h4 class="modal-title">{{langmod.EWARNING}}</h4><small class="font-bold">{{langmod.EDELETEEMAIL}}</small>';
+        var strbody = '<p class="text-center">'+email+'</p>';
+        var strfooter = '<button type="button" class="btn btn-white" data-dismiss="modal">{{langmod.ENO}}</button><button type="button" class="btn btn-primary" id="btnyesdel" onclick="return deletepipe(1,\''+email+'\',\''+dom+'\')">{{langmod.EYES}}</button>';
+        $("#deletemodalmail .modal-header").html(strheader);
+        $("#deletemodalmail .modal-body").html(strbody);
+        $("#deletemodalmail .modal-footer").html(strfooter);
+        $("#deletemodalmail").modal('toggle');
+        return false;
+    }
+    if(st==1){
+      btnporcess('off','btnyesdel','{{ langmod.EMLABEL9 }}');
+
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=email_accounts&acc=pipe&op=del",
+            data:"email="+email+"&domain="+dom,
+            complete: function(datos){
+                refrespanelnew('email_forwarders');
+                $('#dataTables-pipe').DataTable().ajax.reload( function ( json ) {
+
+                } );
+                btnporcess('off','btnyesdel','{{ langmod.EYES }}');
+                $("#deletemodalmail").modal('toggle');
+                noti_bubble('{{langmod.EMLPIPEDELETED}}','{{langmod.EMSUCCT}}','success',false,false,'3000',true);
+                return false;
+            }
+        });
+    }
+    return false;
+}
+function activepipeTwice(elem){
+  $('.table-loader-cwp').show();
+  let email = $(elem).data('emailaddress');
+  let active = $(elem).data('status');
+  $.ajax({
+      type: "POST",
+      dataType: "json",
+      url: "./{{users}}/index.php?module=email_accounts&acc=pipe&op=udp",
+      data: "email=" + email+"&active="+active,
+      complete: function (datos) {
+        datos = datos.responseJSON;
+        datos.response = (active == 1 ? 5 : 1);
+        if(datos.hasOwnProperty('result') && datos.result == 'success'){
+          let action_type = ''
+          if(datos.response == 5){
+            action_type = '{{langmod.EMLPIPEACTIVE}}';
+          }else{
+            action_type = '{{langmod.EMLPIPEDEACTIVE}}';
+          }
+          switchEmailST(elem, datos.response);
+          noti_bubble(action_type,'{{langmod.EMSUCCT}}','success',false,false,'3000',true);
+        }else{
+          noti_bubble('An error occurred','Ups!','error',false,false,'3000',true);
+        }
+        $('.table-loader-cwp').hide();
+        return false;
+      }
+  });
+}
+function activepipe(email,active){
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=email_accounts&acc=pipe&op=udp",
+        data:"email="+email+"&active="+active,
+        complete: function(datos){
+            //console.log(datos.responseText);
+            $('#dataTables-pipe').DataTable().ajax.reload( function ( json ) {
+
+            } );
+            noti_bubble('','{{langmod.EMLABEL16}}','success',false,false,'3000',true);
+            return false;
+        }
+    });
+}
+function updatelistemail(){
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=email_accounts&acc=updatelistemail",
+        complete: function (datos) {
+            $("#contenttr").html(datos.responseText);
+            return false;
+        }
+    });
+    return false;
+}
+function switchEmailST(elem, response){
+  let icon = $(elem).find('i');
+  $(elem).data('status', response);
+  if(response == 5){
+    $(elem).removeClass('btn-success');
+    $(elem).addClass('btn-warning');
+    icon.removeClass('fa-thumbs-up');
+    icon.addClass('fa-thumbs-down');
+  }else{
+    $(elem).removeClass('btn-warning');
+    $(elem).addClass('btn-success');
+    icon.addClass('fa-thumbs-up');
+    icon.removeClass('fa-thumbs-down');
+  }
+}
+function emailactiveTwice(elem){
+  $('.table-loader-cwp').show();
+  let email = $(elem).data('emailaddress');
+  let st = $(elem).data('status');
+  $.ajax({
+      type: "POST",
+      dataType: "json",
+      url: "./{{users}}/index.php?module=email_accounts&acc=changestemail",
+      data: "email=" + email+"&st="+st,
+      complete: function (datos) {
+        datos = datos.responseJSON;
+        if(datos.hasOwnProperty('result') && datos.result == 'success'){
+          let action_type = ''
+          if(datos.response == 5){
+            action_type = '{{langmod.EDESACTIVEEMAIL}}';
+          }else{
+            action_type = '{{langmod.EACTIVEEMAIL}}';
+          }
+          switchEmailST(elem, datos.response);
+          noti_bubble(action_type,'{{langmod.EMSUCCT}}','success',false,false,'3000',true);
+        }else{
+          noti_bubble('An error occurred','Ups!','error',false,false,'3000',true);
+        }
+        $('.table-loader-cwp').hide();
+        return false;
+      }
+  });
+}
+function emailactive(email,st){
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=email_accounts&acc=changestemail",
+        data: "email=" + email+"&st="+st,
+        complete: function (datos) {
+            $('#dataTables-examplemail').DataTable().ajax.reload( function ( json ) {
+
+            } );
+            if(datos.responseText==5){ noti_bubble('{{langmod.EDESACTIVEEMAIL}}','{{langmod.EMSUCCT}}','success',false,false,'3000',true); }
+            if(datos.responseText==1){ noti_bubble('{{langmod.EACTIVEEMAIL}}','{{langmod.EMSUCCT}}','success',false,false,'3000',true); }
+            return false;
+        }
+    });
+}
+function emaildelete(st,email,tr){
+    if(st==0){
+        var strheader = '<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{ langmod.EMLABEL6 }}</span></button><h4 class="modal-title">{{langmod.EWARNING}}</h4><small class="font-bold">{{langmod.EDELETEEMAIL}}</small>';
+        var strbody = '<p class="text-center">'+email+'</p>';
+        var strfooter = '<button type="button" class="btn btn-white" data-dismiss="modal">{{langmod.ENO}}</button><button type="button" class="btn btn-primary" id="btnyesdel" onclick="return emaildelete(1,\''+email+'\',\''+tr+'\')">{{langmod.EYES}}</button>';
+
+        $("#deletemodalmail .modal-header").html(strheader);
+        $("#deletemodalmail .modal-body").html(strbody);
+        $("#deletemodalmail .modal-footer").html(strfooter);
+        $("#deletemodalmail").modal('toggle');
+        return false;
+
+    }
+    if(st==1){
+        btnporcess('off','btnyesdel','{{ langmod.EMLABEL9 }}');
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=email_accounts&acc=emaildelete",
+            data:"email="+email,
+            complete: function(datos){
+                if(datos.responseText==1){
+
+                    $('#dataTables-examplemail').DataTable().ajax.reload( function ( json ) {
+
+                    } );
+                    noti_bubble('{{langmod.EMDELETEEMOK}}','{{langmod.EMSUCCT}}','success',false,false,'3000',true);
+                    refrespanelnew('email_accounts');
+                    btnporcess('on','btnyesdel','{{ langmod.EYES }}');
+                    $("#deletemodalmail").modal('hide');
+                    return false;
+                    {#$.ajax({
+                        type: "POST",
+                        url: "./{{users}}/index.php?module=email_accounts&acc=listemail",
+                        complete: function(datos){
+                            //$('.dataTables-example').DataTable().destroy();
+                            //$("#contftp").html(datos.responseText);
+                            //$('.dataTables-example').DataTable();
+                            $('#dataTables-examplemail').DataTable().ajax.reload( function ( json ) {
+
+                            } );
+                            noti_bubble('{{langmod.EMDELETEEMOK}}','{{langmod.EMSUCCT}}','success',false,false,'3000',true);
+                            refrespanelnew('email_accounts');
+                            btnporcess('on','btnyesdel','{{ langmod.EYES }}');
+                            $("#deletemodalmail").modal('hide');
+                            return false;
+                        }
+                    });#}
+                }else{
+                    noti_bubble('{{langmod.EERROR2}}','{{langmod.EWARNING}}','error',false,false,'3000',true);
+                    btnporcess('on','btnyesdel','{{ langmod.EYES }}');
+                    return false;
+                }
+            }
+        });
+        return false;
+    }
+    return false;
+}
+function btncancelemail(){
+    $("#addmailmodal").modal('hide');
+}
+function changerrandom(inputdiv, elem){
+    $(elem).hide();
+    $('.generator_loader').show();
+    var long=$("#lengthpass").val();
+    var typepass=$("#typepass").val();
+    $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=email_accounts&acc=changerrandom&long="+long+"&typepass="+typepass,
+        complete: function(datos){
+            $('.generator_loader').hide();
+            $(elem).show();
+            $("#"+inputdiv).val(datos.responseText);
+            if(inputdiv == 'pass1email'){
+              $('#pass2email').val(datos.responseText);
+            }
+            copyPass(inputdiv);
+            return false;
+        }
+    });
+    return false;
+}
+
+$('#modal-changepassemail').on('shown.bs.modal', function (e) {
+
+});
+$(document).ready(function() {
+  var options1 = {};
+  options1.ui = {
+      container: "#changepass_container",
+      showVerdictsInsideProgressBar: true,
+      viewports: {
+          progress: ".pwstrength_viewport_progress"
+      }
+  };
+  options1.common = {
+      debug: false,
+  };
+  $('#pass1email').pwstrength(options1);
+  var table = $('#dataTables-examplefor').on( 'processing.dt', function ( e, settings, processing ) {
+    $('#dataTables-examplefor_processing').css('display', 'none');
+    if (processing) {
+      $(this).hide();
+      $('#tab-2 .table-loader-cwp').show();
+    } else {
+      $('#tab-2 .table-loader-cwp').hide();
+      $(this).show();
+    }
+  }).DataTable({
+      "processing": true,
+      "bProcessing": true,
+      "bServerSide": true,
+      'iDisplayLength': 25,
+      "ajax": {
+          "url": "./{{users}}/index.php?module=email_accounts&acc=listforwar",
+          "type": "POST"
+      },
+      responsive: true
+  });
+  var table = $('#dataTables-examplemail').on( 'processing.dt', function ( e, settings, processing ) {
+    $('#dataTables-examplemail_processing').css('display', 'none');
+    if (processing) {
+      $(this).hide();
+      $('#tab-1 .table-loader-cwp').show();
+    } else {
+      $('#tab-1 .table-loader-cwp').hide();
+      $(this).show();
+    }
+  }).DataTable({
+      "processing": true,
+      "bProcessing": true,
+      "bServerSide": true,
+      'iDisplayLength': 25,
+      "ajax": {
+          "url": "./{{users}}/index.php?module=email_accounts&acc=listemail",
+          "type": "POST"
+      },
+      responsive: true
+  });
+  var table = $('#dataTables-pipe').on( 'processing.dt', function ( e, settings, processing ) {
+    $('#dataTables-pipe_processing').css('display', 'none');
+    if (processing) {
+      $(this).hide();
+      $('#tab-3 .table-loader-cwp').show();
+    } else {
+      $('#tab-3 .table-loader-cwp').hide();
+      $(this).show();
+    }
+  }).DataTable({
+      "processing": true,
+      "bProcessing": true,
+      "bServerSide": true,
+      'iDisplayLength': 25,
+      "ajax": {
+          "url": "./{{users}}/index.php?module=email_accounts&acc=pipe&op=list",
+          "type": "POST"
+      },
+      responsive: true
+  });
+});
+$('#modal-changepassemail').on('hidden.bs.modal', function (e) {
+  $('#pass1email').val('');
+  $('#pass2email').val('');
+})
+function btnaddemail(){
+    $("#alertemail").hide('blind');
+    let quotamail = parseInt($("#quotamail").val());
+    if(($("#emailaddres").val()=='') || ($("#domain").val()=='') || ($("#pass").val()=='') || !Number.isInteger(quotamail)){
+        if(!Number.isInteger(quotamail)){
+          $("#quotamail").addClass('error');
+        }
+        noti_bubble('{{langmod.EFEILDR}}','{{langmod.EMERROR}}','error',false,false,'3000',true);
+        return false;
+    }else{
+        var pass=$("#pass").val();
+        pass=pass.replace('&','||@||');
+        pass=pass.replace('%','|/@/|');
+
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        btnporcess('off','btnaddemail','{{ langmod.EMLABEL9 }}');
+
+
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=email_accounts&acc=addemail",
+            data: "email="+$("#emailaddres").val()+"&domain="+$("#domain").val()+"&pass="+pass+"&quotamail=" + quotamail,
+            complete: function(datos){
+                if((datos.responseText==4) || (datos.responseText==5) || (datos.responseText==6)){
+                    if(datos.responseText==4){ var msj='{{langmod.EERROR4}}';}
+                    if(datos.responseText==5){ var msj='{{langmod.EERROR5}}';}
+                    if(datos.responseText==6){ var msj='{{langmod.EERROR6}}';}
+                    noti_bubble(msj,'{{langmod.EMERROR}}','error',false,false,'3000',true);
+                    btnporcess('on','btnaddemail','{{ langmod.EADD }}');
+                    return false;
+                }else{
+                    $.ajax({
+                        type: "POST",
+                        url: "./{{users}}/index.php?module=email_accounts&acc=listemail",
+                        complete: function(datos){
+                            //$('.dataTables-example').DataTable().destroy();
+                            //$("#contftp").html(datos.responseText);
+                            //$('.dataTables-example').DataTable();
+
+                            $('#dataTables-examplemail').DataTable().ajax.reload( function ( json ) {
+
+                            } );
+
+                            noti_bubble('{{langmod.EMSUCCT}}','{{langmod.EMCREATOK}}','success',false,false,'3000',true);
+                            refrespanelnew('email_accounts');
+                            btnporcess('on','btnaddemail','{{ langmod.EADD }}');
+                            $("#addmailmodal").modal('hide');
+                            return false;
+                        }
+                    });
+                }
+            }
+        });
+        return false;
+    }
+}
+const refreshList = () => {
+  $.ajax({
+      type: "POST",
+      url: "./{{users}}/index.php?module=email_accounts&acc=listemail",
+      complete: function(datos){
+          //$('.dataTables-example').DataTable().destroy();
+          //$("#contftp").html(datos.responseText);
+          //$('.dataTables-example').DataTable();
+
+          $('#dataTables-examplemail').DataTable().ajax.reload( function ( json ) {
+
+          } );
+
+          noti_bubble('{{langmod.EMSUCCT}}','{{langmod.EMCREATOK}}','success',false,false,'3000',true);
+          refrespanelnew('email_accounts');
+          btnporcess('on','btnaddemail','{{ langmod.EADD }}');
+          $("#addmailmodal").modal('hide');
+          return false;
+      }
+  });
+}
+function chancetabemail(sw){
+    if(sw==0){
+        $("#indemail").show();
+        $("#indforw").hide();
+    }else{
+        $("#indforw").show();
+        $("#indemail").hide();
+    }
+}
+$('#editforwarddomain').on('hidden.bs.modal', function (e) {
+  $('#forwardersupd').tagsinput('destroy');
+
+})
+function editforwar(elem){
+    let forward = $(elem).data('forward');
+    let goto = $(elem).data('goto');
+    let idtr = $(elem).data('idtr');
+    var msj='<p><b>{{langmod.ETITLEFW}}:  </b> '+Base64.decode(forward)+'</p><input type="hidden" id="hiddenemail" value="'+Base64.decode(forward)+'"><input type="hidden" id="idtrfw" value="'+idtr+'">';
+    $("#contentmodaludp").html(msj);
+    goto = goto.replace(' ', '');
+    $("#forwardersupd").val(goto);
+    $("#editforwarddomain").modal('toggle');
+    $('#forwardersupd').tagsinput({
+      tagClass: 'cwp-tags-input'
+    });
+    $('#forwardersupd').on('beforeItemAdd', function(event) {
+      if(!validateEmail(event.item)){
+        event.cancel = true;
+        $('#invalid_mail_alert').slideDown();
+        setTimeout(function(){
+          $('#invalid_mail_alert').slideUp();
+        }, 3500);
+      }
+      // event.item: contains the item
+      // event.cancel: set to true to prevent the item getting added
+    });
+    return false;
+}
+function forwardactiveTwice(elem){
+  $('.table-loader-cwp').show();
+  let email = $(elem).data('emailaddress');
+  let st = $(elem).data('status');
+  $.ajax({
+      type: "POST",
+      dataType: "json",
+      url: "./{{users}}/index.php?module=email_accounts&acc=changestforward",
+      data: "email=" + email+"&st="+st,
+      complete: function (datos) {
+        datos = datos.responseJSON;
+        console.log('datos', datos);
+        if(datos.hasOwnProperty('result') && datos.result == 'success'){
+          let action_type = ''
+          if(datos.response == 5){
+            action_type = '{{langmod.EMLFORWARDDEACTIVE}}';
+          }else{
+            action_type = '{{langmod.EMLFORWARDACTIVE}}';
+          }
+          switchEmailST(elem, datos.response);
+          noti_bubble(action_type,'{{langmod.EMSUCCT}}','success',false,false,'3000',true);
+        }else{
+          noti_bubble('An error occurred','Ups!','error',false,false,'3000',true);
+        }
+        $('.table-loader-cwp').hide();
+        return false;
+      }
+  });
+}
+function forwardactive(email,st){
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=email_accounts&acc=changestforward",
+        data: "email=" + email+"&st="+st,
+        complete: function (datos) {
+            listforwar();
+            noti_bubble('{{langmod.EMSUCCT}}','{{langmod.EUPDFORW}}','success',false,false,'3000',true);
+            return false;
+        }
+    });
+}
+function ediquotaemail(email,quota){
+    $("#quotaemailmodal").val((quota/1024/1024));
+    $("#quotaemailtitle").html(email);
+    $("#quotaemailhidde").html(email);
+    $("#modal-updquotemail").modal('toggle');
+    return false;
+}
+function emailchangepass(email){
+    $("#labelemail").html(email);
+    $("#modal-changepassemail").modal('toggle');
+    $("#emailpass").val(email);
+    return false;
+}
+function forwardelete(st,email,tr){
+    if(st==0){
+        var strheader = '<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">{{ langmod.EMLABEL6 }}</span></button><h4 class="modal-title">{{langmod.EALERTDELEFW}}</h4><small class="font-bold">{{langmod.DBDELETEUSER}}</small>';
+        var strbody = '<p class="text-center">'+Base64.decode(email)+'</p>';
+        var strfooter = '<button type="button" class="btn btn-white" data-dismiss="modal">{{langmod.ENO}}</button><button type="button" class="btn btn-primary" id="btnyesdel" onclick="return forwardelete(1,\''+email+'\',\''+tr+'\')">{{langmod.EYES}}</button>';
+
+        $("#deletemodalmail .modal-header").html(strheader);
+        $("#deletemodalmail .modal-body").html(strbody);
+        $("#deletemodalmail .modal-footer").html(strfooter);
+        $("#deletemodalmail").modal('toggle');
+        return false;
+    }else if(st==1){
+        btnporcess('off','btnyesdel','{{ langmod.EMLABEL9 }}');
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=email_accounts&acc=forwardelete",
+            data:"email="+Base64.decode(email),
+            complete: function(datos){
+                listforwar();
+                btnporcess('off','btnyesdel','{{ langmod.EYES }}');
+                refrespanelnew('email_forwarders');
+                noti_bubble('{{langmod.EMSUCCT}}','{{langmod.EMLFORWARDDELETED}}','success',false,false,'3000',true);
+                $("#deletemodalmail").modal('hide');
+                return false;
+            }
+        });
+    }
+}
+function btnaddforwar(){
+    $("#alertforwar").hide();
+    if(($("#forwaraddres").val()=='') || ($("#domainforwar").val()=='') || ($("#forwarders").val()=='')){
+        noti_bubble('{{langmod.EFEILDR}}','{{langmod.EMERROR}}','error',false,false,'3000',true);
+        return false;
+    }else{
+        btnporcess('off','btn-addforwar','{{ langmod.EMLABEL9 }}');
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=email_accounts&acc=addforwar",
+            data: "forwaraddres="+$("#forwaraddres").val()+"&domainforwar="+$("#domainforwar").val()+"&forwarders="+$("#forwarders").val(),
+            complete: function(datos){
+                //alert(datos.responseText);
+                //if((datos.responseText==6) || (datos.responseText==9)){
+                if(datos.responseText!=''){
+                    //if(datos.responseText==6){ var msj='{{langmod.ERROR6}}'; }else{ var msj='{{langmod.ERROR9}}'; }
+                    //noti_bubble(msj,'{{langmod.EMERROR}}','error',false,false,'3000',true);
+                    noti_bubble(datos.responseText,'{{langmod.EMERROR}}','error',false,false,'3000',true);
+                    btnporcess('on','btn-addforwar','{{ langmod.EYES }}');
+                    return false;
+                } else{
+                    listforwar();
+                    noti_bubble('{{langmod.EMLFORWARDCREATED}}','{{langmod.EMSUCCT}}','success',false,false,'3000',true);
+                    refrespanelnew('email_forwarders');
+                    btnporcess('on','btn-addforwar','{{ langmod.EYES }}');
+                    $("#addmailmodal").modal('hide');
+                }
+            }
+        });
+    }
+}
+function addforwarbtn(){
+    var vheader='';
+    // var vbody='<div class="row"><div class="col-sm-3"><input id="forwaraddres" class="form-control" value="" placeholder="{{ langmod.EALIAS }}"></div><div class="col-sm-3"><select id="domainforwar" class="form-control"><option value="">{{ langmod.ECHOOSE }}</option>';
+    let vbody = '<div>' +
+                  '<div class="mail-add-row">' +
+                    '<div class="form-group mail-add-row-address">' +
+                      '<label>{{langmod.EEMAILH}}</label> ' +
+                      '<input type="text" placeholder="{{ langmod.EALIAS }}" id="forwaraddres" class="form-control">' +
+                    '</div>' +
+                    '<span class="mail-add-row-at">@</span>' +
+                    '<div class="form-group mail-add-row-domain">' +
+                      '<label>Domain</label>' +
+                      '<select id="domainforwar" class="form-control">' +
+                        '<option value="">{{ langmod.ECHOOSE }}</option>' +
+                        '{% for email2 in mod.email2 %}'+
+                          '{% if loop.index	 == 1 %}' +
+                              '<option value="{{ email2.domain }}" selected>{{ email2.domain }}</option>' +
+                          '{% else %} ' +
+                              '<option value="{{ email2.domain }}">{{ email2.domain }}</option>' +
+                          '{% endif %} ' +
+                        '{% endfor %}' +
+                      '</select>' +
+                    '</div>' +
+                  '</div>'+
+                  '<div>'+
+                    '<label class="control-label" for="">Redirects to:</label>' +
+                    '<input type="text" id="forwarders" class="form-control" placeholder="Email address..."></input> {{ langmod.ETITLEF3 }}' +
+                  '</div>' +
+                  '<div class="alert alert-danger alert-dismissable" id="invalid_mail_alert" style="display:none;">' +
+                      '<button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>' +
+                      'Please enter a valid email address.' +
+                  '</div>'+
+                '</div>';
+    // {% for email2 in mod.email2 %}
+    // vbody+='<option value="{{ email2.domain }}">@{{ email2.domain }}</option>';
+    // {% endfor %}
+    // vbody+='</select></div></div><div class="row"><div class="col-sm-12" style=" margin-top: 5px"><textarea id="forwarders" class="form-control" placeholder="email@email.com,email2@email2.com"></textarea> {{ langmod.ETITLEF3 }}</div></div>';
+    var vfooter='<button class="btn btn-default btn-xs mr5 mb10"  id="btncancelforwar" onclick="return btncancelforwar()">{{langmod.ECANDELDOMAIN}}</button>  <button class="btn btn-primary btn-xs mr5 mb10" id="btn-addforwar" onclick="return btnaddforwar()">{{langmod.EADD}}</button>';
+    $("#addmailmodal .modal-header").html('<h4>Add mail forwarder</h4>');
+    $("#addmailmodal .modal-body").html(vbody);
+    $("#addmailmodal .modal-footer").html(vfooter);
+    $("#addmailmodal").modal('toggle');
+    $('#forwarders').tagsinput({
+      tagClass: 'cwp-tags-input'
+    });
+    $('#forwarders').on('beforeItemAdd', function(event) {
+      if(!validateEmail(event.item)){
+        event.cancel = true;
+        $('#invalid_mail_alert').slideDown();
+        setTimeout(function(){
+          $('#invalid_mail_alert').slideUp();
+        }, 3500);
+      }
+      // event.item: contains the item
+      // event.cancel: set to true to prevent the item getting added
+    });
+    return false;
+}
+function validateEmail(email) {
+  var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  return re.test(email);
+}
+function listforwar(){
+    /*$.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+    $.ajax({
+        type: "POST",
+        url: "./{{users}}/index.php?module=email_accounts&acc=listforwar",
+        complete: function(datos){
+            $('.dataTables-example').DataTable().destroy();
+            $("#contenttrfo").html(datos.responseText);
+            $('.dataTables-example').DataTable();
+        }
+    });*/
+    $('#dataTables-examplefor').DataTable().ajax.reload( function ( json ) {
+
+    } );
+}
+function btncancelforwar(){
+    $("#addmailmodal").modal('hide');
+    return false;
+}
+$("#addemailbtn").click(function (){
+    let password_preset = $(this).data('pass');
+    var headermod = '<h4>{{ langmod.EBNTADD }}</h4>';
+    let bodymod = '<div class="">' +
+                      '<div class="mail-add-row">' +
+                        '<div class="form-group mail-add-row-address">' +
+                          '<label>{{langmod.EEMAILH}}</label> ' +
+                          '<input type="text" placeholder="Enter email" id="emailaddres" class="form-control">' +
+                        '</div>' +
+                        '<span class="mail-add-row-at">@</span>' +
+                        '<div class="form-group mail-add-row-domain">' +
+                          '<label>Domain</label>' +
+                          '<select id="domain" class="form-control">' +
+                            '<option value="">{{ langmod.ECHOOSE }}</option>' +
+                            '{% for email2 in mod.email2 %}'+
+                              '{% if loop.index	 == 1 %}' +
+                                  '<option value="{{ email2.domain }}" selected>{{ email2.domain }}</option>' +
+                              '{% else %} ' +
+                                  '<option value="{{ email2.domain }}">{{ email2.domain }}</option>' +
+                              '{% endif %} ' +
+                            '{% endfor %}' +
+                          '</select>' +
+                        '</div>' +
+                      '</div>' +
+                      '<div class="mail-add-row">' +
+                        '<div class="form-group mail-add-row-address">' +
+                          '<label>{{langmod.EPASSW}}</label>' +
+                          '<input id="pass" class="form-control" type="text" value="' + password_preset + '" style="padding-right: 3rem;" placeholder="{{langmod.EPASSW}}">' +
+                          '<span class="mail-add-copy-button" onclick="copyPass(\'pass\')"><i class="fa fa-copy"></i></span>' +
+                        '</div>' +
+                        '<span class="mail-add-row-at">' +
+                          '&nbsp;' +
+                        '</span>' +
+                        '<div class="form-group mail-add-row-domain">' +
+                          '<label>{{langmod.EPASSW}} generator</label>' +
+                          '<div class="mail-password-generator-container">' +
+                            '<a href="#" onclick="return changerrandom(\'pass\', this)" id="generator_button" data-toggle="tooltip" data-placement="top" title="" data-original-title="Change suggested password">' +
+                              '<i class="fa fa-cog" style="font-size: 1.8rem;"></i>' +
+                            '</a>' +
+                            '<i class="fa fa-spinner fa-spin generator_loader" style="display:none;font-size: 1.8rem;"></i>' +
+                            '<div class="btn-group dropdown" id="show_options_button">' +
+                              '<button type="button" class="btn btn-default btn-xs" onclick="openPGOPT()">' +
+                                'Encrypted<span class="caret"></span>' +
+                              '</button>' +
+                              '<div class="mail-password-generator-options pgopt_container" id="pgopt_container">' +
+                                '<span class="mail-password-generator-options-title"><b>Options</b></span>' +
+                                '<span class="mail-password-generator-options-close" onclick="closePGOPT()"><i class="fa fa-window-close"></i></span>' +
+                                '<ul class="right animated fadeIn">' +
+                                  '<li>' +
+                                    '<select class="form-control" id="lengthpass" title="Length" style="margin-bottom: 5px;">' +
+                                      '<option value="7"> Length  7</option>' +
+                                      '<option value="8"> Length  8</option>' +
+                                      '<option value="9"> Length  9</option>' +
+                                      '<option value="10"> Length 10</option>' +
+                                      '<option value="11"> Length 11</option>' +
+                                      '<option value="12" selected=""> Length 12</option>' +
+                                      '<option value="13"> Length 13</option>' +
+                                      '<option value="14"> Length 14</option>' +
+                                      '<option value="15"> Length 15</option>' +
+                                    '</select>' +
+                                  '</li>' +
+                                  '<li>' +
+                                    '<select class="form-control" id="typepass" title="Type">' +
+                                      '<option value="1">Type Alphabetical</option>' +
+                                      '<option value="2" selected="">Type Alphanumeric</option>' +
+                                      '<option value="3">Type Alphanumerics + Symbols</option>' +
+                                    '</select>' +
+                                  '</li>' +
+                                '</ul>' +
+                              '</div>' +
+                            '</div>' +
+                          '</div>' +
+                          '<div class="alert alert-info mail-password-generator-copied" style="display:none">' +
+                              'Password copied to clipboard.' +
+                          '</div>' +
+                        '</div>' +
+                      '</div>' +
+                      '<div class="mail-add-row">' +
+                        '<div id="pwd-container" class="mail-add-row-address">' +
+                          '<div class="pwstrength_viewport_progress"></div>' +
+                        '</div>' +
+                        '<span class="mail-add-row-at">' +
+                          '&nbsp;' +
+                        '</span>' +
+                        '<div class="form-group mail-add-row-address">' +
+                          '<label>Quota {{ langmod.EMLABEL8 }}</label> ' +
+                          '<input type="text" id="quotamail" placeholder="Quota" class="form-control">' +
+                        '</div>' +
+                      '</div>' +
+                    '</div>';
+    // var bodymod = '<div class="row"><div class="col-lg-2">{{langmod.EEMAILH}}</div><div class="col-lg-2"><input id="emailaddres" class="form-control" value="" placeholder=""></div><div class="col-lg-1">@</div><div class="col-lg-3">';
+    // bodymod += '<select id="domain" class="form-control"><option value="">{{ langmod.ECHOOSE }}</option>';
+    // bodymod += '{% for email2 in mod.email2 %}';
+    // bodymod += '<option value="{{ email2.domain }}">@{{ email2.domain }}</option>';
+    // bodymod += '{% endfor %}';
+    // bodymod += '</select></div><div class="col-sm-3">';
+    // bodymod += '<input id="quotamail" class="form-control" value="0" placeholder=""><label style="margin-left: 10px; margin-top: 7px">{{ langmod.EMLABEL8 }}</label>';
+    // bodymod += '</div></div><div class="row" style="margin-top:15px"><div class="col-lg-2">{{langmod.EPASSW}}</div><div class="col-lg-2"><input id="pass" class="form-control" value="{{mod.rand}}" placeholder="{{langmod.EPASSW}}"></div>';
+    // bodymod += '<div class="col-sm-4">{{ langmod.EELABELRANDON }}   <a href="#"  onclick="return changerrandom(\'pass\')" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{ langmod.ICONRANDOM }}"><i class="fa fa-cog"></i></a><div class="btn-group dropdown mb10 mr10">';
+    // bodymod += '<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-expanded="false">{{ langmod.FTPENCRYTED }}<span class="caret"></span></button>';
+    // bodymod += '<ul class="dropdown-menu right animated fadeIn" role="menu" style="margin-left: -48.5px;">';
+    // bodymod += '<li><select class="form-control" id="lengthpass" title="{{ langmod.FTPLENGTH }}"><option value="7" selected> {{ langmod.FTPLENGTH }}  7</option><option value="8"> {{ langmod.FTPLENGTH }}  8</option>';
+    // bodymod += '<option value="9"> {{ langmod.FTPLENGTH }}  9</option><option value="10"> {{ langmod.FTPLENGTH }} 10</option><option value="11"> {{ langmod.FTPLENGTH }} 11</option>';
+    // bodymod += '<option value="12"> {{ langmod.FTPLENGTH }} 12</option><option value="13"> {{ langmod.FTPLENGTH }} 13</option><option value="14"> {{ langmod.FTPLENGTH }} 14</option><option value="15"> {{ langmod.FTPLENGTH }} 15</option>';
+    // bodymod += '</select></li><li><select class="form-control"  id="typepass" title="{{ langmod.FTPTYPE }}" style="margin-top: 5px">';
+    // bodymod += '<option value="1">{{ langmod.FTPTYPE }} {{ langmod.FTPALF }}</option>';
+    // bodymod += '<option value="2" selected>{{ langmod.FTPTYPE }} {{ langmod.FTPALFNUM }}</option>';
+    // bodymod += '<option value="3">{{ langmod.FTPTYPE }} {{ langmod.FTPALFNUMSIG }}</option>';
+    // bodymod += '</select></li></ul></div></div>';
+    var footermod = '<button class="btn btn-default btn-xs mr5 mb10"  id="btn-cancelemail"  onclick="return btncancelemail()">{{langmod.ECANDELDOMAIN}}</button>   <button class="btn btn-primary btn-xs mr5 mb10" id="btnaddemail" onclick="return btnaddemail()">{{langmod.EADD}}</button> ';
+    $("#addmailmodal .modal-header").html(headermod);
+    $("#addmailmodal .modal-body").html(bodymod);
+    $("#addmailmodal .modal-footer").html(footermod);
+
+    var options1 = {};
+    options1.ui = {
+        container: "#pwd-container",
+        showVerdictsInsideProgressBar: true,
+        viewports: {
+            progress: ".pwstrength_viewport_progress"
+        }
+    };
+    options1.common = {
+        debug: false,
+    };
+    $('#pass').pwstrength(options1);
+
+    $("#addmailmodal").modal('toggle');
+
+});
+// CECILIO MORALES JS
+const hideOnClickOutside = (selector, second) => {
+  let forhide = false;
+  if(second === undefined){
+    second = '#show_options_button';
+    forhide = true;
+  }
+  const outsideClickListener = (event) => {
+    $target = $(event.target);
+    if (!$target.closest(selector).length && !$target.closest(second).length  && $(selector).is(':visible')) {
+      if(forhide){
+        $(selector).hide();
+      }else{
+        $(selector).remove();
+      }
+
+        removeClickListener();
+    }
+  }
+
+  const removeClickListener = () => {
+    document.removeEventListener('click', outsideClickListener)
+  }
+
+  document.addEventListener('click', outsideClickListener)
+}
+const closePGOPT = () => {
+  $('.pgopt_container').slideUp();
+}
+const openPGOPT = () => {
+  if($('.pgopt_container').is(':visible')){
+    closePGOPT();
+  }else{
+    $('.pgopt_container').slideDown();
+    hideOnClickOutside('.pgopt_container');
+  }
+}
+const copyPass = (elem) => {
+  let field = document.getElementById(elem);
+  field.select();
+  document.execCommand('copy');
+  $('.mail-password-generator-copied').slideDown();
+  setTimeout(function(){
+    $('.mail-password-generator-copied').slideUp();
+  }, 4500);
+}
+const showConfigMenu = (elem, id_elem) => {
+  let elem_data = $(elem).data('mailconfig');
+  console.log(elem_data);
+  let html_config = '<div class="mail-config-menu ' + id_elem + '"><div class="mail-config-menu-container"><h3>Windows live mail configuration</h3><ul>' +
+                    '<li><a href="index.php?module=email_accounts&acc=configfile&domain=' + elem_data.domain + '&address=' + elem_data.email + '&type=imap&secure=1">IMAP over SSL/TLS</a></li>' +
+                    '<li><a href="index.php?module=email_accounts&acc=configfile&domain=' + elem_data.domain + '&address=' + elem_data.email + '&type=pop&secure=1">POP3 over SSL/TLS</a></li>' +
+                    '<li><a href="index.php?module=email_accounts&acc=configfile&domain=' + elem_data.domain + '&address=' + elem_data.email + '&type=imap&secure=0">IMAP</a></li> ' +
+                    '<li><a href="index.php?module=email_accounts&acc=configfile&domain=' + elem_data.domain + '&address=' + elem_data.email + '&type=pop&secure=0">POP3 (Post Office Protocol v3)</a></li>' +
+                    '</ul></div></div>';
+  $(elem).parent().prepend(html_config);
+  hideOnClickOutside('.' + id_elem, '#' + id_elem);
+}
+// END CECILIO MORALES JS
+$("#domainforw").change(function (){
+    //alert($("#domainforw").val());
+    $.ajax({
+        type: "POST",
+        url: "./{{ users }}/index.php?module=email_accounts&op=typephp&acc=pipe",
+        data: "domain="+$("#domainforw").val(),
+        complete: function(datos){
+            //console.log(datos.responseText);
+            return false;
+        }
+    });
+
+
+});
+$("#btn_pipeadd").click(function (){
+    //deletepipe
+    var sw = 0;
+    if($("#forw").val()==''){ sw = 1; $("#forw").css("border-color", "#A80705");}
+    if($("#domainforw").val()==''){ sw = 1; $("#domainforw").css("border-color", "#A80705");}
+    //if($("#phpversionfor").val()==''){ sw = 1; $("#phpversionfor").css("border-color", "#A80705");}
+    if($("#filepipe").val()==''){ sw = 1; $("#filepipe").css("border-color", "#A80705");}
+    if(sw==1){
+        noti_bubble('','{{langmod.EMLABEL15}}','error',false,false,'3000',true);
+        return false;
+    }else{
+        $("#btn_pipeadd").addClass('disabled');
+        $("#btn_pipeadd").attr('disabled',true);
+        $("#btn_pipeadd").html('<i class="fa fa-spinner fa-spin"></i>  {{langmod.EMLABEL13}}');
+        $.ajax({
+            type: "POST",
+            url: "./{{ users }}/index.php?module=email_accounts&op=add&acc=pipe",
+            data: "forw="+$("#forw").val()+"&domainforw="+$("#domainforw").val()+"&phpversionfor="+$("#phpversionfor").val()+"&filepipe="+$("#filepipe").val(),
+            complete: function(datos){
+                //console.log(datos.responseText);
+                if(datos.responseText==1){
+                    $('#dataTables-pipe').DataTable().ajax.reload( function ( json ) {
+
+                    } );
+                    refrespanelnew('email_forwarders');
+                    $("#btn_pipeadd").removeClass('disabled');
+                    $("#btn_pipeadd").attr('disabled',false);
+                    $("#btn_pipeadd").html('{{langmod.EMLABEL13}}');
+                    $("#forw").val('');
+                    $("#filepipe").val('');
+                    noti_bubble('','{{ langmod.EMLABEL16 }}','success',false,false,'3000',true);
+                }else{
+                    $("#btn_pipeadd").removeClass('disabled');
+                    $("#btn_pipeadd").attr('disabled',false);
+                    $("#btn_pipeadd").html('{{langmod.EMLABEL13}}');
+                    noti_bubble(datos.responseText,'{{ langmod.EMERROR }}','error',false,false,'3000',true);
+                    return false;
+                }
+                return false;
+            }
+        });
+    }
+    return false;
+});
+$("#btn-savequotaemail").click(function () {
+    if($("#quotaemailmodal").val()==''){
+        noti_bubble('{{langmod.EMERROR}}','{{langmod.EMERROR2}}','error',false,true,'3000',true);
+        return false;
+    }else{
+        $("#btn-savequotaemail").attr('disabled',true);
+        $("#btn-savequotaemail").addClass('disabled');
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=email_accounts&acc=updquotaemail",
+            data: "email=" + $("#quotaemailtitle").html() + "&quota=" + (($("#quotaemailmodal").val()*1024)*1024),
+            complete: function (datos) {
+                $("#modal-updquotemail").modal('hide');
+                refreshList();
+                noti_bubble('{{langmod.EMSUCCT}}','{{langmod.EMUPDOK}}','success',false,false,'3000',true);
+                //$("#bar_cp_mysql_manager").empty().removeData().attr('data-percent', porc).circliful( { backgroundColor: '#eeeeee', foregroundColor: bgcolorcirc });
+                $("#btn-savequotaemail").attr('disabled',false);
+                $("#btn-savequotaemail").removeClass('disabled');
+                return false;
+            }
+        })
+    }
+});
+$("#btn-changpassemail").click(function (){
+    btnporcess('off','btn-changpassemail','{{ langmod.EMLABEL9 }}');
+    if(($("#pass1email").val()=='') && ($("#pass1email").val()=='')) {
+        noti_bubble('{{langmod.EMERROR}}','{{langmod.EFEILDR}}','error',false,true,'3000',true);
+        btnporcess('on','btn-changpassemail','{{ langmod.EBTCSAVE }}');
+        return false;
+    }else if( $("#pass1email").val() != $("#pass2email").val()){
+        noti_bubble('{{langmod.EMERROR}}','{{langmod.EERROR1}}','error',false,true,'3000',true);
+        btnporcess('on','btn-changpassemail','{{ langmod.EBTCSAVE }}');
+        return false;
+    }else{
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=email_accounts&acc=changpassemail",
+            data: "email="+$("#emailpass").val()+"&pass1email="+$("#pass1email").val(),
+            complete: function(datos){
+                if(datos.responseText==0){
+                    $("#modal-changepassemail").modal('hide');
+                    noti_bubble('{{langmod.EMSUCCT}}','{{langmod.EMCHANGEPASSOK}} <b>'+$("#emailpass").val()+'</b>','success',false,false,'3000',true);
+                    btnporcess('on','btn-changpassemail','{{ langmod.EBTCSAVE }}');
+                }else{
+                    if(datos.responseText==7){var msj='{{langmod.ERROR7}}'}
+                    if(datos.responseText==8){var msj='{{langmod.ERROR8}}'}
+                    noti_bubble('{{langmod.EMERROR}}',+msj,'success',false,false,'3000',true);
+                    btnporcess('on','btn-changpassemail','{{ langmod.EBTCSAVE }}');
+                    return false;
+                }
+            }
+        });
+        return false;
+    }
+});
+$("#btn-updatemodal").click(function (){
+    $("#alertdivforw").hide('blind');
+    if($("#forwardersupd").val()==''){
+        var msj='{{langmod.EFORWDI}}';
+        $("#alertdivforw").html('<div class="alert alert-danger fade in"><i class="glyphicon glyphicon-ban-circle alert-icon "></i> '+msj+'</div>');
+        $("#alertdivforw").show('blind');
+        return false;
+    }else{
+        btnporcess('off','btn-updatemodal','{{ langmod.EMLABEL9 }}');
+        $.ajaxSetup({ headers: { 'csrftoken' : '{{ tokenajax }}' } });
+        $.ajax({
+            type: "POST",
+            url: "./{{users}}/index.php?module=email_accounts&acc=updateforwarders",
+            data: "email="+$("#hiddenemail").val()+"&goto="+$("#forwardersupd").val(),
+            complete: function(datos){
+                if(datos.responseText==0){
+                    $("#tdfw"+$("#idtrfw").val()).html($("#forwardersupd").val());
+                    btnporcess('on','btn-updatemodal','{{ langmod.EBTNEDITMODAL }}');
+                    $("#editforwarddomain").modal('hide');
+                    noti_bubble('{{langmod.EMUPDOKFORW}}','{{langmod.EMSUCCT}}','success',false,false,'3000',true);
+                }else{
+                    btnporcess('on','btn-updatemodal','{{ langmod.EBTNEDITMODAL }}');
+                    noti_bubble('{{langmod.EERROR6}}','{{langmod.EMERROR}}','error',false,false,'3000',true);
+                    return false;
+                }
+            }
+        });
+    }
+});

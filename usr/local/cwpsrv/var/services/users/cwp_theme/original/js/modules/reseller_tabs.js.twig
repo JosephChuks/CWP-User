@@ -1,0 +1,79 @@
+
+console.log();
+var itemPositions = [];
+var currentPosition = 0;
+var itemsWidth = 0;
+var widthOfList = function () {
+
+    itemPositions = []; //just in case we need to reset it
+    var marginWidth = 28;
+    var wrapperWidth = $('.maintabs-wrapper').innerWidth() - marginWidth;
+    itemPositions.push(0); //left most positions
+
+    $('.maintabs-wrapper .nav-tabs li').each(function () {
+
+        var itemWidth = $(this).outerWidth(true);
+        itemsWidth += itemWidth;
+
+        if (itemsWidth > wrapperWidth) {
+
+            itemPositions.push(itemsWidth - wrapperWidth); //push in the left offset to move to the right (or left)
+        }
+
+    });
+};
+
+//used to check whether to show either arrow
+var reAdjust = function () {
+
+    if (($('.maintabs-wrapper').outerWidth()) < itemsWidth) {
+        //$('.scroller-right').show();
+    } else {
+        //$('.scroller-right').hide();
+    }
+
+    if (getLeftPosi() < 0) {
+        //$('.scroller-left').show();
+    }
+
+};
+
+var moveRight = function () {
+    if (currentPosition + 1 < itemPositions.length) {
+        $('.maintabs-wrapper .nav-tabs').animate({
+            left: "-" + itemPositions[++currentPosition] + "px"
+        }, 'fast', reAdjust);
+    }
+
+}
+
+var moveLeft = function () {
+    if (currentPosition - 1 >= 0) {
+        $('.maintabs-wrapper .nav-tabs').animate({
+            left: "-" + itemPositions[--currentPosition] + "px"
+        }, 'fast', reAdjust);
+    }
+
+}
+
+//gets the current left scroll position of the list
+var getLeftPosi = function () {
+    return $('.maintabs-wrapper .nav-tabs').position().left;
+};
+
+function initTabs(){
+    widthOfList();
+    $('#_tab_scroller_btn_right').click(function () {
+
+        //widthOfList();
+        moveRight();
+
+    });
+
+    $('#_tab_scroller_btn_left').click(function () {
+
+        //widthOfList();
+        moveLeft();
+
+    });
+}
