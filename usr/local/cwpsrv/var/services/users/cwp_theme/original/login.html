@@ -24,7 +24,6 @@
         }
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-    <!-- Toastr -->
     <link href="{{url}}/css/plugins/toastr/toastr.min.css" rel="stylesheet"/>
     <link rel="icon" href="{{url}}/img/icon.png" type="image/png"/>
     <style>
@@ -68,6 +67,19 @@
         .orb-1 { background: radial-gradient(circle, rgba(59,130,246,0.3) 0%, transparent 70%); }
         .orb-2 { background: radial-gradient(circle, rgba(139,92,246,0.2) 0%, transparent 70%); }
         .orb-3 { background: radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%); }
+
+        /* Toastr dark overrides */
+        #toast-container > div {
+            background-color: #1e2235 !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            border-radius: 10px !important;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+            opacity: 1 !important;
+        }
+        #toast-container > .toast-error   { border-color: rgba(239,68,68,0.4) !important; }
+        #toast-container > .toast-success { border-color: rgba(16,185,129,0.4) !important; }
+        #toast-container > .toast-info    { border-color: rgba(59,130,246,0.4) !important; }
+        #toast-container > .toast-warning { border-color: rgba(245,158,11,0.4) !important; }
     </style>
 </head>
 <body class="dark:bg-surface-900 bg-gray-50 min-h-screen flex items-center justify-center bg-grid transition-colors duration-300 relative overflow-hidden">
@@ -80,18 +92,21 @@
     </div>
 
     <!-- Dark mode toggle -->
-    <button id="themeToggle" onclick="toggleTheme()" class="absolute top-5 right-5 z-50 p-2.5 rounded-xl glass dark:text-gray-300 text-gray-600 hover:text-primary-400 transition-all duration-200 hover:scale-110">
+    <button onclick="toggleTheme()" class="absolute top-5 right-5 z-50 p-2.5 rounded-xl glass dark:text-gray-300 text-gray-600 hover:text-primary-400 transition-all duration-200 hover:scale-110">
         <i class="fas fa-sun text-lg dark:block hidden"></i>
         <i class="fas fa-moon text-lg dark:hidden block"></i>
     </button>
 
-    <div class="w-full max-w-md px-4 animate-slide-up relative z-10">
+    <!-- ── Main login card ──────────────────────────────────── -->
+    <div class="w-full max-w-md px-4 animate-slide-up relative z-10" id="login">
         <div class="glass glow rounded-2xl p-8 dark:text-white text-gray-800">
 
             <!-- Logo -->
             <div class="text-center mb-8">
                 <a href="?">
-                    <img alt="Logo" src="{{url}}/img/logo.png" class="h-12 mx-auto mb-4 object-contain" onerror="this.style.display='none'; document.getElementById('logo-text').style.display='block'" />
+                    <img alt="Logo" src="{{url}}/img/logo.png"
+                         class="h-12 mx-auto mb-4 object-contain"
+                         onerror="this.style.display='none'; document.getElementById('logo-text').style.display='block'" />
                     <span id="logo-text" class="hidden text-2xl font-bold bg-gradient-to-r from-primary-400 to-purple-400 bg-clip-text text-transparent">Control Panel</span>
                 </a>
                 <h1 class="text-xl font-semibold dark:text-white text-gray-800 mt-2">{{langmod.LGLLABEL1}}</h1>
@@ -99,8 +114,8 @@
             </div>
 
             <!-- Already logged in notice -->
-            <div id="logged-wrapper" class="logged-message-wrapper hidden">
-                <div class="logged-message-alert text-center p-6">
+            <div id="logged-wrapper" class="hidden">
+                <div class="text-center p-6">
                     <i class="fas fa-check-circle text-6xl text-emerald-400 mb-4"></i>
                     <h5 class="text-2xl font-bold dark:text-white text-gray-800">Already Logged In</h5>
                     <h2 class="text-xl dark:text-gray-300 text-gray-600 mt-2">{{users}}</h2>
@@ -110,17 +125,12 @@
                 </div>
             </div>
 
-            <!-- Login Form -->
+            <!-- ── Login Form ─────────────────────────────────── -->
             <div id="login-form-wrap">
                 {% if mod.saml_only != 1 %}
-                <form role="form" id="form" action="{{url_ajax}}" method="post" autocomplete="off">
-                    <input type="hidden" name="action" value="login" />
-
-                    <!-- Alert area -->
-                    <div id="login-alert" class="hidden mb-4 px-4 py-3 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300 text-sm flex items-center gap-2">
-                        <i class="fas fa-exclamation-triangle flex-shrink-0"></i>
-                        <span id="login-alert-msg"></span>
-                    </div>
+                <form role="form" id="formloginon" action="#" method="post" autocomplete="off">
+                    <input type="hidden" id="token"    name="token"    value="" />
+                    <input type="hidden" id="intended" name="intended" value="{{intended}}" />
 
                     <!-- Username -->
                     <div class="mb-4">
@@ -129,9 +139,9 @@
                             <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center dark:text-gray-400 text-gray-400 pointer-events-none">
                                 <i class="fas fa-user text-sm"></i>
                             </span>
-                            <input type="text" name="username" id="username" 
+                            <input type="text" name="username" id="username"
                                 class="w-full pl-10 pr-4 py-3 rounded-xl input-dark dark:text-white text-gray-800 dark:placeholder-gray-500 placeholder-gray-400 text-sm"
-                                placeholder="Enter your username" autocomplete="off" />
+                                placeholder="{{langmod.LGLLABEL4}}" autocomplete="off" maxlength="16" autofocus />
                         </div>
                     </div>
 
@@ -144,51 +154,74 @@
                             </span>
                             <input type="password" name="password" id="password"
                                 class="w-full pl-10 pr-10 py-3 rounded-xl input-dark dark:text-white text-gray-800 dark:placeholder-gray-500 placeholder-gray-400 text-sm"
-                                placeholder="Enter your password" />
-                            <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 pr-3.5 flex items-center dark:text-gray-400 text-gray-400 hover:text-primary-400 transition-colors">
+                                placeholder="{{langmod.LGLLABEL5}}" />
+                            <button type="button" onclick="togglePassword()"
+                                class="absolute inset-y-0 right-0 pr-3.5 flex items-center dark:text-gray-400 text-gray-400 hover:text-primary-400 transition-colors">
                                 <i id="pwd-eye" class="fas fa-eye text-sm"></i>
                             </button>
                         </div>
                     </div>
 
                     {% if mod.recaptcha == 1 %}
-                    <!-- reCAPTCHA -->
                     <div class="mb-4 flex justify-center">
                         <div class="g-recaptcha" data-sitekey="{{mod.recaptcha_site_key}}"></div>
                     </div>
                     {% endif %}
 
-                    <!-- 2FA -->
-                    <div id="div2fa" class="mb-4 hidden">
-                        <label class="block text-sm font-medium dark:text-gray-300 text-gray-600 mb-1.5">Two-Factor Authentication</label>
-                        <div class="relative">
-                            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center dark:text-gray-400 text-gray-400 pointer-events-none">
-                                <i class="fas fa-shield-alt text-sm"></i>
-                            </span>
-                            <input type="text" name="code_2fa" id="code_2fa"
-                                class="w-full pl-10 pr-4 py-3 rounded-xl input-dark dark:text-white text-gray-800 dark:placeholder-gray-500 placeholder-gray-400 text-sm tracking-widest font-mono"
-                                placeholder="6-digit code" maxlength="6" autocomplete="one-time-code" />
-                        </div>
-                    </div>
-
-                    <!-- Remember me & Lost password -->
+                    <!-- Remember me & Forgot password -->
                     <div class="flex items-center justify-between mb-6">
                         <label class="flex items-center gap-2 cursor-pointer select-none">
-                            <input type="checkbox" name="rememberme" id="rememberme" class="w-4 h-4 rounded border-gray-500 bg-gray-700 text-primary-500 focus:ring-primary-500 focus:ring-offset-0" />
-                            <span class="text-sm dark:text-gray-400 text-gray-500">Remember me</span>
+                            <input type="checkbox" name="sessioning" id="sessioning"
+                                class="w-4 h-4 rounded border-gray-500 bg-gray-700 text-primary-500 focus:ring-primary-500 focus:ring-offset-0" />
+                            <span class="text-sm dark:text-gray-400 text-gray-500">{{langmod.LGLLABEL38}}</span>
                         </label>
-                        <a href="?lost_pass=1" class="text-sm text-primary-400 hover:text-primary-300 transition-colors font-medium">Forgot password?</a>
+                        <a href="#" onclick="return forgout(0)" class="text-sm text-primary-400 hover:text-primary-300 transition-colors font-medium">{{langmod.LGLLABEL9}}</a>
                     </div>
 
                     <!-- Submit -->
-                    <button type="submit" id="btn_submit" 
+                    <button type="button" id="btnsubmit" onclick="return valite()"
                         class="w-full py-3 px-6 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-semibold rounded-xl transition-all duration-200 btn-primary-glow flex items-center justify-center gap-2 text-sm shadow-lg">
-                        <i class="fas fa-sign-in-alt"></i>
-                        <span id="btn_label">Sign In</span>
-                        <span id="btn_loader" class="hidden"><i class="fas fa-circle-notch fa-spin"></i></span>
+                        <i id="btn_icon" class="fas fa-spinner fa-spin hidden"></i>
+                        <i id="btn_arrow" class="fas fa-sign-in-alt"></i>
+                        <span id="btn_title">{{langmod.LGLLABEL6}}</span>
                     </button>
+
+                    <!-- SSL notice -->
+                    <p class="text-center text-xs dark:text-gray-500 text-gray-400 mt-3" style="display:{{cont.SSL}}">
+                        <i class="fas fa-lock"></i>
+                        <small>{{langmod.LGLLABEL7}} <a href="{{cont.URLREDIRECT}}" class="text-primary-400 hover:text-primary-300">{{langmod.LGLLABEL8}}</a></small>
+                    </p>
                 </form>
                 {% endif %}
+
+                <!-- ── 2FA Panel ─────────────────────────────── -->
+                <div id="twofa" style="display:none" class="animate-fade-in">
+                    <div class="text-center mb-6">
+                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary-600/20 mb-3">
+                            <i class="fas fa-shield-alt text-2xl text-primary-400"></i>
+                        </div>
+                        <h2 class="text-lg font-bold dark:text-white text-gray-800">{{langmod.LGLABEl53}}</h2>
+                        <p class="text-sm dark:text-gray-400 text-gray-500 mt-1">{{langmod.LGLABEl54}}</p>
+                    </div>
+                    <div class="mb-2">
+                        <label class="block text-sm font-medium dark:text-gray-300 text-gray-600 mb-1.5">
+                            <b>{{langmod.LGLABEl55}}</b>
+                        </label>
+                        <input type="text" id="f2acode" name="f2acode"
+                            class="w-full px-4 py-3 rounded-xl input-dark dark:text-white text-gray-800 text-center text-2xl tracking-widest font-mono"
+                            placeholder="······" maxlength="6" autocomplete="one-time-code" />
+                        <p class="text-xs dark:text-gray-500 text-gray-400 mt-1.5">{{langmod.LGLABEl56}}</p>
+                    </div>
+                    <button type="button" id="btn-f2acode"
+                        class="w-full mt-4 py-3 px-6 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-semibold rounded-xl transition-all duration-200 btn-primary-glow flex items-center justify-center gap-2 text-sm shadow-lg">
+                        <i class="fas fa-check-circle"></i>
+                        <span>{{langmod.LGLABEl57}}</span>
+                    </button>
+                    <p class="text-center text-xs dark:text-gray-500 text-gray-400 mt-3">
+                        <a href="https://docs.control-webpanel.com/docs/user-guide/login/two-factor-authentication"
+                           target="_blank" class="text-primary-400 hover:text-primary-300">{{langmod.LGLABEl58}}</a>
+                    </p>
+                </div>
 
                 {% if mod.saml_btn == 1 %}
                 <div class="mt-4">
@@ -201,13 +234,103 @@
 
         </div>
 
-        <!-- Footer -->
         <p class="text-center text-xs dark:text-gray-600 text-gray-400 mt-6">
             &copy; {{mod.ano}} <a href="http://thekinsmen.net" target="_blank" class="hover:text-primary-400 transition-colors">The Kinsmen</a> &mdash; CWP Control Panel
         </p>
     </div>
 
-    <!-- Scripts -->
+    <!-- ── Already-logged-in full screen ───────────────────────── -->
+    <div class="logged-message-wrapper hidden w-full max-w-2xl px-4 animate-fade-in relative z-10" id="logged_message">
+        <div class="glass glow rounded-2xl p-10">
+            <div class="flex flex-col md:flex-row items-center gap-8">
+                <div class="text-center md:w-1/2">
+                    {% if mod.stimg == 1 %}
+                    <img width="150px" src="{{url}}/img/logo.png" class="mx-auto" />
+                    {% else %}
+                    <a href="https://www.control-webpanel.com" target="_blank">
+                        <img width="150px" src="{{url}}/img/logo.png" class="mx-auto" />
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="md:border-l border-white/10 md:pl-8 text-center md:text-left">
+                    <i class="fas fa-spinner fa-spin text-5xl text-emerald-400 mb-3"></i>
+                    <h2 class="text-2xl font-bold text-emerald-400">{{langmod.LGLLABEL35}}</h2>
+                    <h5 class="dark:text-gray-300 text-gray-600 mt-1">{{langmod.LGLLABEL36}}</h5>
+                    <h5 class="dark:text-gray-300 text-gray-600">{{langmod.LGLLABEL37}}</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Password recovery sent ──────────────────────────────── -->
+    <div class="logged-message-wrapper hidden w-full max-w-2xl px-4 animate-fade-in relative z-10" id="recover_pass">
+        <div class="glass glow rounded-2xl p-10">
+            <div class="flex flex-col md:flex-row items-center gap-8">
+                <div class="text-center md:w-1/2">
+                    <img width="150px" src="{{url}}/img/logo.png" class="mx-auto" />
+                </div>
+                <div class="md:border-l border-white/10 md:pl-8 text-center md:text-left">
+                    <i class="fas fa-envelope text-5xl text-emerald-400 mb-3"></i>
+                    <h2 class="text-2xl font-bold text-emerald-400">Almost there!</h2>
+                    <p class="dark:text-gray-300 text-gray-600 mt-2 text-base">
+                        A message with instructions to restore your password has been sent. Please check your spam box.
+                    </p>
+                    <a href="/login/" class="mt-4 inline-flex items-center gap-2 text-primary-400 hover:text-primary-300 font-medium transition-colors">
+                        <i class="fas fa-arrow-left text-sm"></i> Go to login page
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Forgot password form ─────────────────────────────────── -->
+    <div id="lost-pass" style="display:none" class="w-full max-w-md px-4 animate-slide-up relative z-10">
+        <div class="glass glow rounded-2xl p-8 dark:text-white text-gray-800">
+            <div class="text-center mb-6">
+                <img alt="Logo" src="{{url}}/img/logo.png"
+                     class="h-12 mx-auto mb-4 object-contain"
+                     onerror="this.style.display='none'" />
+                <h2 class="text-lg font-bold dark:text-white text-gray-800">{{langmod.LGLLABEL12}}</h2>
+                <p class="text-sm dark:text-gray-400 text-gray-500 mt-1">{{langmod.LGLLABEL13}}</p>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium dark:text-gray-300 text-gray-600 mb-1.5">{{langmod.LGLLABEL4}}</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center dark:text-gray-400 text-gray-400 pointer-events-none">
+                        <i class="fas fa-user text-sm"></i>
+                    </span>
+                    <input type="text" class="w-full pl-10 pr-4 py-3 rounded-xl input-dark dark:text-white text-gray-800 dark:placeholder-gray-500 placeholder-gray-400 text-sm recover-field"
+                        maxlength="32" name="lost-user" id="lost-user" placeholder="{{langmod.LGLLABEL4}}" required />
+                </div>
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-medium dark:text-gray-300 text-gray-600 mb-1.5">{{langmod.LGLLABEL14}}</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center dark:text-gray-400 text-gray-400 pointer-events-none">
+                        <i class="fas fa-envelope text-sm"></i>
+                    </span>
+                    <input type="email" class="w-full pl-10 pr-4 py-3 rounded-xl input-dark dark:text-white text-gray-800 dark:placeholder-gray-500 placeholder-gray-400 text-sm recover-field"
+                        placeholder="{{langmod.LGLLABEL14}}" name="lost-email" id="lost-email" required />
+                </div>
+            </div>
+
+            <button type="button" id="btnsendcode" onclick="return lostpass(this)"
+                class="w-full py-3 px-6 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-semibold rounded-xl transition-all duration-200 btn-primary-glow flex items-center justify-center gap-2 text-sm shadow-lg mb-3">
+                <i class="fas fa-paper-plane"></i>
+                <span>{{langmod.LGLLABEL15}}</span>
+            </button>
+            <button type="button" onclick="return forgout(1)"
+                class="w-full py-2.5 px-6 glass rounded-xl dark:text-gray-300 text-gray-600 hover:bg-white/5 transition-all text-sm font-medium">
+                <i class="fas fa-arrow-left me-1"></i> Cancel
+            </button>
+        </div>
+        <p class="text-center text-xs dark:text-gray-600 text-gray-400 mt-4">
+            &copy; {{mod.ano}} <a href="http://thekinsmen.net" target="_blank" class="hover:text-primary-400 transition-colors">The Kinsmen</a> &mdash; CWP Control Panel
+        </p>
+    </div>
+
+    <!-- ── Scripts ──────────────────────────────────────────────── -->
     <script src="{{url}}/js/jquery-3.1.1.min.js"></script>
     <script src="{{url}}/js/plugins/toastr/toastr.min.js"></script>
     {% if mod.recaptcha == 1 %}
@@ -215,63 +338,290 @@
     {% endif %}
 
     <script>
-        // Theme toggle
+        // ── Theme toggle ──────────────────────────────────────────
         function toggleTheme() {
             const html = document.documentElement;
             html.classList.toggle('dark');
             localStorage.setItem('cwp-theme', html.classList.contains('dark') ? 'dark' : 'light');
         }
-        // Load saved theme
-        (function() {
+        (function () {
             const saved = localStorage.getItem('cwp-theme');
             if (saved === 'light') document.documentElement.classList.remove('dark');
             else document.documentElement.classList.add('dark');
         })();
 
-        // Password toggle
+        // ── Password eye toggle ───────────────────────────────────
         function togglePassword() {
             const p = document.getElementById('password');
             const e = document.getElementById('pwd-eye');
-            if (p.type === 'password') { p.type = 'text'; e.className = 'fas fa-eye-slash text-sm'; }
-            else { p.type = 'password'; e.className = 'fas fa-eye text-sm'; }
+            if (p.type === 'password') { p.type = 'text';     e.className = 'fas fa-eye-slash text-sm'; }
+            else                       { p.type = 'password'; e.className = 'fas fa-eye text-sm'; }
         }
 
-        // Login form submission (preserve original CWP logic)
-        $('#form').on('submit', function(e) {
-            e.preventDefault();
-            var $btn = $('#btn_submit');
-            $btn.prop('disabled', true);
-            $('#btn_label').text('Signing in...');
-            $('#btn_loader').removeClass('hidden');
+        // ── Toastr helper (matches old noti_bubble exactly) ───────
+        function noti_bubble(title, msj, type, bar, button, timer, repeat) {
+            toastr.options = {
+                closeButton: button,
+                progressBar: bar,
+                showMethod: 'slideDown',
+                preventDuplicates: repeat,
+                timeOut: timer,
+            };
+            if (type === 'success') toastr.success(title, msj);
+            if (type === 'error')   toastr.error(title, msj);
+            if (type === 'info')    toastr.info(title, msj);
+            if (type === 'warning') toastr.warning(title, msj);
+        }
+
+        // ── Show/hide panels ──────────────────────────────────────
+        function forgout(sw) {
+            if (sw === 0) {
+                $('#login').fadeOut('fast', function () { $('#lost-pass').fadeIn('fast'); });
+            } else if (sw === 1) {
+                $('#lost-pass').fadeOut('fast', function () { $('#login').fadeIn('fast'); });
+            }
+            return false;
+        }
+
+        // ── Email validator ───────────────────────────────────────
+        function validateEmail(email) {
+            return /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email);
+        }
+
+        // ── Main login (original CWP validate flow) ───────────────
+        function valite() {
+            if ($('#username').val() === 'root') {
+                noti_bubble('{{langmod.LGLLABEL19}}', '', 'error', false, false, '3000', true);
+                return false;
+            }
+
+            if ($('#username').val() === '' || $('#password').val() === '') {
+                noti_bubble('{{langmod.LGLLABEL17}}', '', 'error', false, false, '3000', true);
+                return false;
+            }
+
+            $('#btnsubmit').prop('disabled', true).addClass('disabled');
+            $('#btn_icon').removeClass('hidden');
+            $('#btn_arrow').addClass('hidden');
+            $('#btn_title').text('{{langmod.LGLLABEL16}}');
+
+            var pass     = Base64.encode($('#password').val());
+            var userN    = $('#username').val().trim();
+            var sessioning = $('#sessioning').is(':checked') ? 1 : 0;
+
+            $.ajaxSetup({ headers: { csrftoken: '{{ tokenajax }}' } });
+
             $.ajax({
                 type: 'POST',
-                url: '{{url_ajax}}',
-                data: $(this).serialize(),
-                dataType: 'json',
-                success: function(data) {
-                    $('#btn_loader').addClass('hidden');
-                    $btn.prop('disabled', false);
-                    $('#btn_label').text('Sign In');
-                    if (data.status === 'ok') {
-                        window.location.href = data.url || '?';
-                    } else if (data.status === '2fa') {
-                        $('#div2fa').removeClass('hidden').addClass('animate-fade-in');
-                    } else {
-                        var msg = data.msg || 'Invalid credentials';
-                        $('#login-alert-msg').text(msg);
-                        $('#login-alert').removeClass('hidden');
-                        setTimeout(function(){ $('#login-alert').addClass('hidden'); }, 5000);
+                url:  '/login/index.php?acc=validate',
+                data: 'username=' + userN + '&password=' + pass + '&sessioning=' + sessioning + '&userlang=',
+                complete: function (datos) {
+                    var obj;
+                    try { obj = JSON.parse(datos.responseText); }
+                    catch (e) {
+                        // Reset button
+                        $('#btnsubmit').prop('disabled', false).removeClass('disabled');
+                        $('#btn_icon').addClass('hidden');
+                        $('#btn_arrow').removeClass('hidden');
+                        $('#btn_title').text('{{langmod.LGLLABEL6}}');
+                        noti_bubble('{{langmod.LGLLABEL17}}', '', 'error', false, false, '3000', true);
+                        return;
+                    }
+
+                    if (obj.error) {
+                        $('#btnsubmit').prop('disabled', false).removeClass('disabled');
+                        $('#btn_icon').addClass('hidden');
+                        $('#btn_arrow').removeClass('hidden');
+                        $('#btn_title').text('{{langmod.LGLLABEL6}}');
+
+                        if (obj.error === 'locked') {
+                            noti_bubble('{{langmod.LGLLABEL33}}', '', 'error', false, false, '3000', true);
+                        } else {
+                            noti_bubble(obj.error, '', 'error', false, false, '3000', true);
+                        }
+                        return false;
+
+                    } else if (obj.token) {
+                        // Success — redirect via form submit
+                        $('#login').fadeOut('fast', function () {
+                            $('#logged_message').removeClass('hidden').show();
+                        });
+                        $('#token').val(obj.token);
+                        $('#password').val('');
+                        $('#formloginon').attr('action', '/' + userN + '/');
+                        $('#formloginon').submit();
+                        return false;
+
+                    } else if (obj.twofa) {
+                        // Show 2FA panel
+                        $('#login-form-wrap form').hide();
+                        $('#twofa').show();
+                        $('#btn_icon').addClass('hidden');
+                        $('#btn_arrow').removeClass('hidden');
+                        $('#btn_title').text('{{langmod.LGLLABEL6}}');
+                        $('#btnsubmit').prop('disabled', false).removeClass('disabled');
+                        setTimeout(function () { $('#f2acode').focus(); }, 100);
+                        return false;
                     }
                 },
-                error: function() {
-                    $('#btn_loader').addClass('hidden');
-                    $btn.prop('disabled', false);
-                    $('#btn_label').text('Sign In');
-                    $('#login-alert-msg').text('Connection error. Please try again.');
-                    $('#login-alert').removeClass('hidden');
-                }
+            });
+
+            return false;
+        }
+
+        // ── 2FA submit ────────────────────────────────────────────
+        $('#btn-f2acode').click(function () {
+            var $btn   = $(this);
+            var btnHtml = $btn.html();
+
+            $.ajaxSetup({ headers: { csrftoken: '{{ tokenajax }}' } });
+            $btn.prop('disabled', true).addClass('disabled');
+            $btn.html('<i class="fas fa-spinner fa-spin me-2"></i> {{langmod.LGLABEl57}}');
+
+            $.ajax({
+                type: 'POST',
+                url:  '/login/index.php?acc=f2acode',
+                data: 'code=' + $('#f2acode').val() + '&username=' + $('#username').val(),
+                complete: function (datos) {
+                    var obj;
+                    try { obj = JSON.parse(datos.responseText); } catch (e) { obj = {}; }
+
+                    if (obj.error) {
+                        noti_bubble('{{langmod.LGLLABEL32}}', '', 'error', false, false, '3000', true);
+                        $btn.prop('disabled', false).removeClass('disabled');
+                        $btn.html(btnHtml);
+                    } else if (obj.token) {
+                        $('#login').fadeOut('fast', function () {
+                            $('#twofa').hide();
+                            $('#logged_message').removeClass('hidden').show();
+                        });
+                        $('#token').val(obj.token);
+                        $('#password').val('');
+                        $('#formloginon').attr('action', '/' + $('#username').val() + '/');
+                        $('#formloginon').submit();
+                    }
+                },
             });
         });
+
+        // ── Lost password ─────────────────────────────────────────
+        function lostpass(elem) {
+            $.ajaxSetup({ headers: { csrftoken: '{{ tokenajax }}' } });
+
+            let valid = true;
+            if ($('#lost-user').val() === '')              { $('#lost-user').css('border-color','#ef4444'); valid = false; }
+            if (!validateEmail($('#lost-email').val()))    { $('#lost-email').css('border-color','#ef4444'); valid = false; }
+
+            if (!valid) {
+                noti_bubble('Please complete all required fields.', '', 'error', false, false, '3000', true);
+                return false;
+            }
+
+            $('#btnsendcode').prop('disabled', true).addClass('disabled').text('Validating...');
+
+            $.ajax({
+                type: 'POST',
+                url:  '/login/index.php?acc=lostpass',
+                data: 'username=' + $('#lost-user').val() + '&email=' + $('#lost-email').val(),
+                complete: function (datos) {
+                    if (datos.responseText == 0) {
+                        noti_bubble('Invalid username & email combination..', '', 'error', false, false, '3000', true);
+                    } else if (datos.responseText == 1) {
+                        $('#lost-pass').fadeOut('fast', function () {
+                            $('#recover_pass').removeClass('hidden').show();
+                        });
+                        noti_bubble('A message with instructions has been sent.', '', 'success', false, false, '3000', true);
+                    } else {
+                        noti_bubble('Something went wrong, please try again.', '', 'error', false, false, '3000', true);
+                    }
+                    $('#btnsendcode').prop('disabled', false).removeClass('disabled').html('<i class="fas fa-paper-plane"></i> <span>{{langmod.LGLLABEL15}}</span>');
+                    return false;
+                },
+            });
+
+            return false;
+        }
+
+        // ── Cookie check (runs on load, required by CWP) ──────────
+        function cookie() {
+            $.ajaxSetup({ headers: { csrftoken: '{{ tokenajax }}' } });
+            $.ajax({
+                type: 'POST',
+                url:  '/login/index.php?acc=cookie',
+                complete: function (datos) {
+                    if (datos.responseText !== '') {
+                        // window.location = datos.responseText;
+                    }
+                },
+            });
+        }
+
+        // ── Enter key on 2FA input ────────────────────────────────
+        $('#f2acode').on('keypress', function (e) {
+            if (e.which === 13) $('#btn-f2acode').click();
+        });
+
+        // ── Enter key on login form ───────────────────────────────
+        $('#username, #password').on('keypress', function (e) {
+            if (e.which === 13) valite();
+        });
+
+        // ── Base64 (same as original) ─────────────────────────────
+        var Base64 = {
+            _keyStr: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=',
+            encode: function (input) {
+                var output = '', chr1, chr2, chr3, enc1, enc2, enc3, enc4, i = 0;
+                input = Base64._utf8_encode(input);
+                while (i < input.length) {
+                    chr1 = input.charCodeAt(i++); chr2 = input.charCodeAt(i++); chr3 = input.charCodeAt(i++);
+                    enc1 = chr1 >> 2;
+                    enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+                    enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+                    enc4 = chr3 & 63;
+                    if (isNaN(chr2)) { enc3 = enc4 = 64; } else if (isNaN(chr3)) { enc4 = 64; }
+                    output += this._keyStr.charAt(enc1) + this._keyStr.charAt(enc2) + this._keyStr.charAt(enc3) + this._keyStr.charAt(enc4);
+                }
+                return output;
+            },
+            decode: function (input) {
+                var output = '', chr1, chr2, chr3, enc1, enc2, enc3, enc4, i = 0;
+                input = input.replace(/[^A-Za-z0-9\+\/\=]/g, '');
+                while (i < input.length) {
+                    enc1 = this._keyStr.indexOf(input.charAt(i++)); enc2 = this._keyStr.indexOf(input.charAt(i++));
+                    enc3 = this._keyStr.indexOf(input.charAt(i++)); enc4 = this._keyStr.indexOf(input.charAt(i++));
+                    chr1 = (enc1 << 2) | (enc2 >> 4);
+                    chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+                    chr3 = ((enc3 & 3) << 6) | enc4;
+                    output += String.fromCharCode(chr1);
+                    if (enc3 !== 64) output += String.fromCharCode(chr2);
+                    if (enc4 !== 64) output += String.fromCharCode(chr3);
+                }
+                return Base64._utf8_decode(output);
+            },
+            _utf8_encode: function (string) {
+                string = string.replace(/\r\n/g, '\n');
+                var utftext = '';
+                for (var n = 0; n < string.length; n++) {
+                    var c = string.charCodeAt(n);
+                    if (c < 128) { utftext += String.fromCharCode(c); }
+                    else if (c > 127 && c < 2048) { utftext += String.fromCharCode((c >> 6) | 192); utftext += String.fromCharCode((c & 63) | 128); }
+                    else { utftext += String.fromCharCode((c >> 12) | 224); utftext += String.fromCharCode(((c >> 6) & 63) | 128); utftext += String.fromCharCode((c & 63) | 128); }
+                }
+                return utftext;
+            },
+            _utf8_decode: function (utftext) {
+                var string = '', i = 0, c = 0, c2 = 0, c3 = 0;
+                while (i < utftext.length) {
+                    c = utftext.charCodeAt(i);
+                    if (c < 128) { string += String.fromCharCode(c); i++; }
+                    else if (c > 191 && c < 224) { c2 = utftext.charCodeAt(i + 1); string += String.fromCharCode(((c & 31) << 6) | (c2 & 63)); i += 2; }
+                    else { c2 = utftext.charCodeAt(i + 1); c3 = utftext.charCodeAt(i + 2); string += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63)); i += 3; }
+                }
+                return string;
+            },
+        };
+
+        cookie();
     </script>
 </body>
 </html>
