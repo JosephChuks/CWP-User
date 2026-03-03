@@ -1,56 +1,37 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" class="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control Web Panel</title>
-    <link href="{{url}}/css/bootstrap.min.css" rel="stylesheet">
-    <link href="{{url}}/font-awesome/css/font-awesome.css" rel="stylesheet">
-    <link href="{{url}}/css/animate.css" rel="stylesheet">
-    <link href="{{url}}/css/style.css" rel="stylesheet">
-    <link rel="icon" href="{{url}}/img/ico/favicon.ico" type="image/png">
+    <title>Account Locked - Control Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: { colors: { surface: { 900:'#0f1117', 800:'#1a1d2e' } } } } }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <link href="{{url}}/css/plugins/toastr/toastr.min.css" rel="stylesheet"/>
+    <link rel="icon" href="{{url}}/img/icon.png" type="image/png">
+    <style>
+        .bg-grid { background-image: linear-gradient(rgba(59,130,246,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.04) 1px, transparent 1px); background-size: 40px 40px; }
+        .glass { background: rgba(255,255,255,0.04); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.07); }
+    </style>
 </head>
-<body class="gray-bg">
-<div class="lock-word animated fadeInDown"  style="margin-top: 30px">
-    <span class="first-word">LOCKED</span><span>SCREEN</span>
-</div>
-<div class="middle-box text-center  animated fadeInDown">
-    <div>
-        <div>
-            <img src="https://thekinsmen.net/wp-content/uploads/2024/08/cropped-icon-1024x1024-1-192x192.png">
-        </div>
-        <div class="lockscreen"  style="margin-top: 120px">
-            <h3>Your {{myip}} IP address has been blocked</h3>
-            <p>You reached the maximum of failed attempts, please try again in</p>
-            <p>10 Minutes</p>
+<body class="dark:bg-surface-900 bg-gray-50 min-h-screen flex items-center justify-center bg-grid">
+    <div class="text-center px-4">
+        <div class="glass rounded-3xl p-12 max-w-sm mx-auto">
+            <div class="w-20 h-20 rounded-2xl bg-amber-500/20 flex items-center justify-center mx-auto mb-6 border border-amber-500/20">
+                <i class="fas fa-lock text-3xl text-amber-400"></i>
+            </div>
+            <img src="{{url}}/img/logo.png" alt="Logo" class="h-8 object-contain mx-auto mb-4 opacity-60" onerror="this.style.display='none'" />
+            <h2 class="text-xl font-bold dark:text-white text-gray-800 mb-2">Account Locked</h2>
+            <p class="text-sm dark:text-gray-400 text-gray-500 mb-6">Your account has been temporarily locked. Please contact your administrator.</p>
+            <a href="?" class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all duration-200 text-sm">
+                <i class="fas fa-arrow-left"></i> Return to Login
+            </a>
         </div>
     </div>
-</div>
-
-<!-- Mainly scripts -->
-<script src="{{url}}/js/jquery-3.1.1.min.js"></script>
-<script src="{{url}}/js/popper.min.js"></script>
-<script src="{{url}}/js/bootstrap.js"></script>
-<script>
-    function loadThumb(){
-        $.ajax({
-            type: "POST",
-            url: "/login/index.php?acc=locked",
-            complete: function(datos2){
-                //console.log(datos2.responseText);
-                if(datos2.responseText<=0) {
-                    window.location = '/';
-                }else if(datos2.responseText=='END'){
-                    window.location = '/';
-                }else{
-                    setTimeout('loadThumb()', 3600);
-                }
-                return false;
-            }
-        });
-
-    }
-    loadThumb();
-</script>
+    <script src="{{url}}/js/jquery-3.1.1.min.js"></script>
+    <script src="{{url}}/js/plugins/toastr/toastr.min.js"></script>
+    <script>(function() { if (localStorage.getItem('cwp-theme') === 'light') document.documentElement.classList.remove('dark'); })();</script>
 </body>
 </html>

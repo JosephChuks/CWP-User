@@ -1,100 +1,92 @@
 {% if mod.visual_notifications_data.active == 1 %}
-<li class="dropdown">
-  {% if mod.visual_notifications_data.notifications|length > 0 %}
-    <ul class="dropdown-menu dropdown-alerts cwp-notifications">
-      {% for notify in mod.visual_notifications_data.notifications %}
+{% if mod.visual_notifications_data.notifications|length > 0 %}
+    {% for notify in mod.visual_notifications_data.notifications %}
         {% set unreadclass = '' %}
         {% if notify.st != 2 %}
-          {% set unreadclass = 'unread' %}
+            {% set unreadclass = 'font-semibold' %}
         {% endif %}
         {% if notify.type == 'websitechange' %}
-          {% set icon = 'fa-globe' %}
-          {% set title = notify.childs|length ~ ' ' ~ langene.NCLABELWEB %}
+            {% set icon = 'fa-globe' %}
+            {% set iconcolor = 'text-blue-400' %}
+            {% set title = notify.childs|length ~ ' ' ~ langene.NCLABELWEB %}
         {% elseif notify.type == 'unusual_login' %}
-          {% set icon = 'fa-user-secret' %}
-          {% set title = notify.childs|length ~ ' ' ~ langene.NCLABELUNTIT %}
+            {% set icon = 'fa-user-secret' %}
+            {% set iconcolor = 'text-red-400' %}
+            {% set title = notify.childs|length ~ ' ' ~ langene.NCLABELUNTIT %}
         {% elseif notify.type == 'emailquota' %}
-          {% set icon = 'fa-envelope-o' %}
-          {% set title = notify.childs|length ~ ' ' ~ langene.NCLABELEMQE %}
+            {% set icon = 'fa-envelope' %}
+            {% set iconcolor = 'text-amber-400' %}
+            {% set title = notify.childs|length ~ ' ' ~ langene.NCLABELEMQE %}
         {% elseif notify.type == 'diskusage' %}
-          {% set icon = 'fa-hdd-o' %}
-          {% set title = notify.childs|length ~ ' ' ~ langene.NCLABELDQA %}
+            {% set icon = 'fa-hdd' %}
+            {% set iconcolor = 'text-orange-400' %}
+            {% set title = notify.childs|length ~ ' ' ~ langene.NCLABELDQA %}
         {% elseif notify.type == 'bwquota' %}
-          {% set icon = 'fa-tachometer' %}
-          {% set title = notify.childs|length ~ ' ' ~ langene.NCLABELBWQA %}
+            {% set icon = 'fa-tachometer-alt' %}
+            {% set iconcolor = 'text-purple-400' %}
+            {% set title = notify.childs|length ~ ' ' ~ langene.NCLABELBWQA %}
         {% elseif notify.type == 'passchange' %}
-          {% set icon = 'fa-lock' %}
-          {% set title = langene.NCLABELPACCCH2 %}
+            {% set icon = 'fa-lock' %}
+            {% set iconcolor = 'text-emerald-400' %}
+            {% set title = langene.NCLABELPACCCH2 %}
         {% endif %}
-        <li>
-            <a href="#" class="dropdown-item with-subnotify">
-                <div>
-                    <i class="fa {{icon}}"></i> <span class="title-notify {{unreadclass}}">{{title}}</span>
-                    <span class="pull-right text-muted small date-info" data-date="{{notify.date}}"></span>
+        <div class="notif-item with-subnotify" data-id="{{notify.id}}">
+            <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <i class="fas {{icon}} text-sm {{iconcolor}}"></i>
                 </div>
-            </a>
-            <ul class="sub-notify">
-            {% for subnotify in notify.childs %}
-              <li>
-                  {% if notify.type == 'websitechange' %}
-                    <div class="sub-notify-item websitechange" data-st="{{subnotify.st}}" id="subnoti_{{subnotify.id}}" data-notiid="{{subnotify.id}}">
-                      <span>{{langene.NCLABELDOM}}: <b>{{subnotify.data.domain}}</b></span>
-                      <span>{{langene.NCLABELMOAT}}: <b>{{subnotify.data.updated_at}}</b></span>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm {{unreadclass}} dark:text-white text-gray-800 truncate title-notify">{{title}}</p>
+                    <p class="text-xs dark:text-gray-500 text-gray-400 mt-0.5 date-info" data-date="{{notify.date}}"></p>
+                </div>
+                {% if notify.st != 2 %}
+                <div class="w-2 h-2 rounded-full bg-primary-500 flex-shrink-0 mt-2"></div>
+                {% endif %}
+            </div>
+            <div class="sub-notify hidden mt-2 ml-11 space-y-1">
+                {% for subnotify in notify.childs %}
+                    <div class="text-xs dark:text-gray-400 text-gray-500 bg-white/3 dark:bg-white/3 rounded-lg px-3 py-2 sub-notify-item {{notify.type}}" data-st="{{subnotify.st}}" id="subnoti_{{subnotify.id}}" data-notiid="{{subnotify.id}}">
+                        {% if notify.type == 'websitechange' %}
+                            <span class="dark:text-gray-300 text-gray-600">{{langene.NCLABELDOM}}: <b>{{subnotify.data.domain}}</b></span><br>
+                            <span>{{langene.NCLABELMOAT}}: <b>{{subnotify.data.updated_at}}</b></span>
+                        {% elseif notify.type == 'emailquota' %}
+                            {% set usage = (subnotify.data.current / 1024 / 1024)|number_format(2, '.', ',') %}
+                            {% set quotalimit = (subnotify.data.quota / 1024 / 1024)|number_format(2, '.', ',') %}
+                            {% set percent = ((subnotify.data.current * 100) / subnotify.data.quota)|number_format(2, '.', ',') %}
+                            <span class="dark:text-gray-300 text-gray-600">{{langene.NCLABELACC}}: <b>{{subnotify.data.email_account}}</b></span><br>
+                            <span>{{langene.NCLABELUSA}}: <b class="text-amber-400">{{percent}}%</b> — {{usage}}MB / {{quotalimit}}MB</span>
+                        {% elseif notify.type == 'diskusage' %}
+                            {% set usage = subnotify.data.used|number_format(2, '.', ',') %}
+                            {% set quota = subnotify.data.quota|number_format(2, '.', ',') %}
+                            <span>{{langene.NCLABELUSA}}: <b class="text-orange-400">{{subnotify.data.percent}}%</b> — {{usage}}MB / {{quota}}MB</span>
+                        {% elseif notify.type == 'unusual_login' %}
+                            <span>IP: <b class="text-red-400">{{subnotify.data.ip}}</b></span>
+                        {% elseif notify.type == 'bwquota' %}
+                            {% set usage = subnotify.data.used|number_format(2, '.', ',') %}
+                            {% set quota = subnotify.data.quota|number_format(2, '.', ',') %}
+                            <span>{{langene.NCLABELUSA}}: <b class="text-purple-400">{{subnotify.data.percent}}%</b> — {{usage}}MB / {{quota}}MB</span>
+                        {% elseif notify.type == 'passchange' %}
+                            <span>{{langene.NCLABELPCIP}}: <b class="text-emerald-400">{{subnotify.data.ip}}</b></span>
+                        {% endif %}
                     </div>
-                  {% elseif notify.type == 'emailquota' %}
-                    {% set usage = (subnotify.data.current / 1024 / 1024)|number_format(2, '.', ',')  %}
-                    {% set quotalimit = (subnotify.data.quota / 1024 / 1024)|number_format(2, '.', ',')  %}
-                    {% set percent = ((subnotify.data.current * 100) / subnotify.data.quota)|number_format(2, '.', ',')  %}
-                    <div class="sub-notify-item emailquota" data-st="{{subnotify.st}}" id="subnoti_{{subnotify.id}}" data-notiid="{{subnotify.id}}">
-                      <span>{{langene.NCLABELACC}}: <b>{{subnotify.data.email_account}}</b></span>
-                      <span>{{langene.NCLABELUSA}}: <b>{{percent}}%</b> - <b>{{usage}}MB</b> {{langene.NCLABELOF}} <b>{{quotalimit}}MB</b></span>
-                    </div>
-                  {% elseif notify.type == 'diskusage' %}
-                    {% set usage = subnotify.data.used|number_format(2, '.', ',')  %}
-                    {% set quota = subnotify.data.quota|number_format(2, '.', ',')  %}
-                    <div class="sub-notify-item diskusage" data-st="{{subnotify.st}}" id="subnoti_{{subnotify.id}}" data-notiid="{{subnotify.id}}">
-                      <span>{{langene.NCLABELUSA}}: <b>{{subnotify.data.percent}}%</b> - <b>{{usage}}MB</b> {{langene.NCLABELOF}} <b>{{quota}}MB</b></span>
-                    </div>
-                  {% elseif notify.type == 'unusual_login' %}
-                    <div class="sub-notify-item diskusage" data-st="{{subnotify.st}}" id="subnoti_{{subnotify.id}}" data-notiid="{{subnotify.id}}">
-                      <span>IP: <b>{{subnotify.data.ip}}%</b></span>
-                    </div>
-                  {% elseif notify.type == 'bwquota' %}
-                    {% set usage = subnotify.data.used|number_format(2, '.', ',')  %}
-                    {% set quota = subnotify.data.quota|number_format(2, '.', ',')  %}
-                    <div class="sub-notify-item diskusage" data-st="{{subnotify.st}}" id="subnoti_{{subnotify.id}}" data-notiid="{{subnotify.id}}">
-                      <span>{{langene.NCLABELUSA}}: <b>{{subnotify.data.percent}}%</b> - <b>{{usage}}MB</b> {{langene.NCLABELOF}} <b>{{quota}}MB</b></span>
-                    </div>
-                  {% elseif notify.type == 'passchange' %}
-                    <div class="sub-notify-item diskusage" data-st="{{subnotify.st}}" id="subnoti_{{subnotify.id}}" data-notiid="{{subnotify.id}}">
-                      <span>{{langene.NCLABELPCIP}}: <b>{{subnotify.data.ip}}</b></span>
-                    </div>
-                  {% endif %}
-              </li>
-              <li class="dropdown-divider"></li>
-            {% endfor %}
-            </ul>
-        </li>
-        <li class="dropdown-divider"></li>
-      {% endfor %}
-      <li id="li_load_more_notis">
-          <div class="text-center link-block">
-              <a href="javascript:void(0)" id="get_next_noti_page" class="dropdown-item" data-page="{{mod.visual_notifications_data.page + 1}}">
-                  <strong>{{langene.NCLABELLOMN}}</strong>
-                  <i class="fa fa-angle-right"></i>
-              </a>
-              <div id="loader_noti_page">
-                <i class="fa fa-circle-o-notch fa-spin fa-2x fa-fw"></i>
-              </div>
-          </div>
-      </li>
-    </ul>
-  {% endif %}
-  <a class="dropdown-toggle count-info" data-toggle="dropdown" href="#">
-      <i class="fa fa-bell"></i>
-      {% if mod.visual_notifications_data.unreads > 0 %}
-        <span class="label label-primary" id="unread_amount">{{mod.visual_notifications_data.unreads}}</span>
-      {% endif %}
-  </a>
-</li>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+    <div class="px-4 py-3 border-t border-white/5" id="li_load_more_notis">
+        <a href="javascript:void(0)" id="get_next_noti_page" data-page="{{mod.visual_notifications_data.page + 1}}"
+            class="text-xs text-primary-400 hover:text-primary-300 flex items-center justify-center gap-1 transition-colors">
+            <span>{{langene.NCLABELLOMN}}</span>
+            <i class="fas fa-angle-right"></i>
+        </a>
+        <div id="loader_noti_page" class="hidden text-center py-2">
+            <i class="fas fa-circle-notch fa-spin text-gray-500"></i>
+        </div>
+    </div>
+{% else %}
+    <div class="px-4 py-8 text-center">
+        <i class="fas fa-bell-slash text-3xl text-gray-600 mb-3"></i>
+        <p class="text-sm text-gray-500">No notifications</p>
+    </div>
+{% endif %}
 {% endif %}

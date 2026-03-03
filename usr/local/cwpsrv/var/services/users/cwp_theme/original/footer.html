@@ -1,13 +1,5 @@
-
-    <div class="footer" style="margin-top:20px">
-        <div id="footer_content">
-            {% if mod.custom_footer != '' %} {{mod.custom_footer|raw}} {% else
-            %}
-            <strong>Copyright &copy; {{mod.ano}} </strong>
-            <a href="http://thekinsmen.net" target="_blank"
-                >The Kinsmen</a
-            >
-            {% endif%}
-        </div>
-    </div>
-
+<div class="mt-8 pt-4 border-t border-white/5 text-center">
+    <p class="text-xs text-gray-600 dark:text-gray-600">
+         &copy; {{mod.ano}} <a href="http://thekinsmen.net" target="_blank" class="hover:text-primary-400 transition-colors">The Kinsmen</a> &mdash; CWP Control Panel
+    </p>
+</div>

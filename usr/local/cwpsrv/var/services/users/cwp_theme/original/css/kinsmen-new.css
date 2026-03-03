@@ -4512,9 +4512,9 @@ video {
 .modal-body {
   padding: 20px 30px 30px 30px;
 }
-.inmodal .modal-body {
-  background: #f8fafb;
-}
+/*.inmodal .modal-body {*/
+/*  background: #f8fafb;*/
+/*}*/
 .inmodal .modal-header {
   padding: 30px 15px;
   text-align: center;
@@ -4697,7 +4697,7 @@ body.body-small .footer.fixed {
 }
 .table-bordered > thead > tr > th,
 .table-bordered > thead > tr > td {
-  background-color: #F5F5F6;
+  background-color: #13161f;
   border-bottom-width: 1px;
 }
 .table-bordered > thead > tr > th,
@@ -5029,7 +5029,7 @@ table.table-mail tr td {
   background-color: #f3f3f4;
 }
 .white-bg {
-  background-color: #ffffff;
+  background-color: #13161f;
 }
 .blue-bg,
 .bg-success {

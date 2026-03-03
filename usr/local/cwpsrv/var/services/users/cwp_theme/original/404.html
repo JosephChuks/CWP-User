@@ -1,41 +1,37 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" class="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control Web Panel </title>
-    <link href="{{url}}/css/bootstrap.min.css" rel="stylesheet">
-    <link href="{{url}}/font-awesome/css/font-awesome.css" rel="stylesheet">
-    <link href="{{url}}/css/animate.css" rel="stylesheet">
-    <link href="{{url}}/css/style.css" rel="stylesheet">
-    <link rel="icon" href="{{url}}/img/ico/favicon.ico" type="image/png">
-    <style media="screen">
-      .invalid-link-title{
-        font-size: 7rem;
-        margin-bottom: 20px;
-        font-weight: 600;
-        color: #999;
-      }
+    <title>Invalid Link - Control Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: { colors: { surface: { 900:'#0f1117', 800:'#1a1d2e' } } } } }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <link rel="icon" href="{{url}}/img/icon.png" type="image/png">
+    <style>
+        .bg-grid { background-image: linear-gradient(rgba(59,130,246,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.04) 1px, transparent 1px); background-size: 40px 40px; }
+        .glass { background: rgba(255,255,255,0.04); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.07); }
     </style>
 </head>
-<body class="gray-bg">
-<div class="middle-box text-center  animated fadeInDown">
-    <div>
-        <div>
-            <img src="/login/cwp_theme/original/img/new_logo_small.png">
-        </div>
-        <h2 class="text-center invalid-link-title">Invalid Link</h2>
-        <div class="lockscreen">
-            <h3>You have reached an invalid or expired link.</h3>
-            <p>If you think this is an error please contact server's admin</p>
+<body class="dark:bg-surface-900 bg-gray-50 min-h-screen flex items-center justify-center bg-grid">
+    <div class="text-center px-4">
+        <div class="glass rounded-3xl p-12 max-w-md mx-auto">
+            <div class="w-20 h-20 rounded-2xl bg-red-500/20 flex items-center justify-center mx-auto mb-6 border border-red-500/20">
+                <i class="fas fa-unlink text-3xl text-red-400"></i>
+            </div>
+            <img src="{{url}}/img/logo.png" alt="Logo" class="h-10 object-contain mx-auto mb-6 opacity-60" onerror="this.style.display='none'" />
+            <h1 class="text-6xl font-black text-gray-700 dark:text-gray-600 mb-3">404</h1>
+            <h2 class="text-xl font-bold dark:text-white text-gray-800 mb-2">Invalid Link</h2>
+            <p class="text-sm dark:text-gray-400 text-gray-500 mb-8">You have reached an invalid or expired link. If you think this is an error, please contact the server admin.</p>
+            <a href="?" class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all duration-200 text-sm shadow-lg shadow-blue-600/20">
+                <i class="fas fa-home"></i> Back to Control Panel
+            </a>
         </div>
     </div>
-</div>
-
-<!-- Mainly scripts -->
-<script src="{{url}}/js/jquery-3.1.1.min.js"></script>
-<script src="{{url}}/js/popper.min.js"></script>
-<script src="{{url}}/js/bootstrap.js"></script>
-
+    <script>
+        (function() { if (localStorage.getItem('cwp-theme') === 'light') { document.documentElement.classList.remove('dark'); } })();
+    </script>
 </body>
 </html>

@@ -143,6 +143,7 @@
             </div>
           </div>
           <div class="ibox-content" style="display: block;">
+              
             <div class="row">
               <div class="col-md-6">
                 <div class="panel panel-info">
@@ -156,7 +157,7 @@
                           <td><b>{{langmod.EUSERNA}}</b>: {{langmod.EYOURMAIL}}</td>
                         </tr>
                         <tr>
-                          <td><b>{{langmod.EINCONM}}</b>: {{mod.configEmail}}</td>
+                          <td><b>{{langmod.EINCONM}}</b>: <span class="hostname"></span></td>
                         </tr>
                         <tr>
                           <td><b>{{langmod.EIMAP}}</b>: 993</td>
@@ -165,15 +166,15 @@
                           <td><b>{{langmod.EPOP3}}</b>: 995</td>
                         </tr>
                         <tr>
-                          <td><b>{{langmod.EOUT}}</b>: {{mod.configEmail}}</td>
+                          <td><b>{{langmod.EOUT}}</b>: <span class="hostname"></span></td>
                         </tr>
                         <tr>
-                          <td><b>{{langmod.ESMTP}}</b>: 465</td>
+                          <td><b>{{langmod.ESMTP}}</b>: 587</td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
-
+                
                 </div>
               </div>
               <div class="col-md-6">
@@ -188,7 +189,7 @@
                           <td><b>{{langmod.EUSERNA}}</b>: {{langmod.EYOURMAIL}}</td>
                         </tr>
                         <tr>
-                          <td><b>{{langmod.EINCONM}}</b>: {{mod.configEmail}}</td>
+                          <td><b>{{langmod.EINCONM}}</b>: <span class="hostname"></span></td>
                         </tr>
                         <tr>
                           <td><b>{{langmod.EIMAP}}</b>: 143</td>
@@ -197,7 +198,7 @@
                           <td><b>{{langmod.EPOP3}}</b>: 110</td>
                         </tr>
                         <tr>
-                          <td><b>{{langmod.EOUT}}</b>: {{mod.configEmail}}</td>
+                          <td><b>{{langmod.EOUT}}</b>: <span class="hostname"></span></td>
                         </tr>
                         <tr>
                           <td><b>{{langmod.ESMTP}}</b>: 25</td>
@@ -214,7 +215,14 @@
         </div>
       </div>
     </div>
-
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+    const hostnames = document.querySelectorAll(".hostname");
+    hostnames.forEach((hostname) => {
+        hostname.textContent = window.location.hostname;
+    });
+});
+</script>
   </div>
   {% include 'sidebar.html' %}
 </div>

@@ -1,287 +1,148 @@
-<style media="screen">
-    .statistic-box {
-        margin-top: 0px !important;
-    }
+<div class="col-lg-3 mb-6">
+    <div class="space-y-4">
 
-    .graph-stats-wrapper {
-        padding-top: 0px;
-        padding-bottom: 15px !important;
-    }
-
-    .list-group-item {
-        display: flex;
-        justify-content: space-around;
-    }
-
-    .list-group-item .label.label-success {
-        width: 11rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-around;
-    }
-
-    .last-access-date {
-        font-size: 1.2rem;
-    }
-
-    .infinite-sign {
-        font-size: 2.2rem;
-        position: absolute;
-        margin-top: -6px;
-        font-weight: 500;
-    }
-
-    .list-group .list-group-item:last-child {
-        border-bottom: 1px solid #e7eaec;
-    }
-
-    .server-status small {
-        font-size: 80%;
-        padding-top: 8px;
-        display: block;
-    }
-</style>
-<div class="col-lg-3" style="margin-bottom: 30px">
-    <div class="row">
-        <div class="col-md-12">
-            <div class="ibox">
-                <div class="ibox-title">
-                    <h5>
-                        <i class="fa fa-info-circle" aria-hidden="true"></i>
-                        General Information
-                    </h5>
+        <!-- General Information Card -->
+        <div class="rounded-2xl border dark:border-gray-800 dark:bg-surface-800 bg-white border-gray-200 overflow-hidden">
+            <div class="flex items-center gap-2 px-4 py-3 border-b dark:border-gray-800 border-gray-100" style="border-top: 2px solid #3b82f6 !important;">
+                <i class="fas fa-info-circle text-primary-400 text-sm"></i>
+                <h5 class="text-sm font-semibold dark:text-white text-gray-800">General Information</h5>
+            </div>
+            <div class="p-4 space-y-3">
+                <div class="flex flex-col gap-0.5">
+                    <span class="text-xs text-gray-500 uppercase tracking-wider font-medium">Current User</span>
+                    <span class="text-sm dark:text-white text-gray-800 font-medium">{{users}}</span>
                 </div>
-                <div
-                    class="ibox-content"
-                    style="padding-bottom: 15px; padding-top: 5px"
-                >
-                    <div class="row" style="margin-top: 0px">
-                        <div class="col-md-12 server-status">
-                            <style>
-                                .sidemenu {
-                                    border-bottom: 1px solid #ddd;
-                                    padding-bottom: 2px;
-                                }
-
-                                .sidemenu small {
-                                    font-size: 12px;
-                                }
-                            </style>
-                            <div class="sidemenu">
-                                <h4>
-                                    Current User:
-                                    <small>{{users}}</small>
-                                </h4>
-                            </div>
-                            <div class="sidemenu">
-                                <h4>
-                                    Primary Domain:
-                                    <small id="primarydomain">
-                                        <a
-                                            href="http://{{mod.domain_username}}"
-                                            target="_blank"
-                                            style="
-                                                display: flex;
-                                                align-items: center;
-                                                font-weight: 500;
-                                                gap: 3px;
-                                            "
-                                            ><i
-                                                class="fas fa-unlock"
-                                                style="color: red"
-                                            ></i>
-                                            {{mod.domain_username}}
-                                            <i
-                                                class="fas fa-external-link-alt"
-                                                style="margin-left: 5px"
-                                            ></i
-                                        ></a>
-                                    </small>
-                                </h4>
-                            </div>
-                            <div class="sidemenu">
-                                <h4>
-                                    Home Directory:
-                                    <small>/home/{{users}}</small>
-                                </h4>
-                            </div>
-                            <div class="sidemenu">
-                                <h4>
-                                    Server IP Address:
-                                    <small>{{settings.ipserver}}</small>
-                                </h4>
-                            </div>
-                            <div class="sidemenu">
-                                <h4>
-                                    Server Time:
-                                    <small>{{settings.timerdate}}</small>
-                                </h4>
-                            </div>
-                            <div class="sidemenu">
-                                <h4>
-                                    Nameservers:
-                                    <small
-                                        ><b>ns1:</b> {{dnsname.ns1}}<br /><b
-                                            >ns2:</b
-                                        >
-                                        {{dnsname.ns2}}</small
-                                    >
-                                </h4>
-                            </div>
+                <div class="flex flex-col gap-0.5">
+                    <span class="text-xs text-gray-500 uppercase tracking-wider font-medium">Primary Domain</span>
+                    <span class="text-sm" id="primarydomain">
+                        <a href="http://{{mod.domain_username}}" target="_blank"
+                            class="flex items-center gap-1.5 text-primary-400 hover:text-primary-300 transition-colors font-medium">
+                            <i class="fas fa-unlock text-red-400 text-xs"></i>
+                            {{mod.domain_username}}
+                            <i class="fas fa-external-link-alt text-xs opacity-50"></i>
+                        </a>
+                    </span>
+                </div>
+                <div class="flex flex-col gap-0.5">
+                    <span class="text-xs text-gray-500 uppercase tracking-wider font-medium">Home Directory</span>
+                    <code class="text-xs dark:text-emerald-400 text-emerald-600">/home/{{users}}</code>
+                </div>
+                <div class="flex flex-col gap-0.5">
+                    <span class="text-xs text-gray-500 uppercase tracking-wider font-medium">Server IP</span>
+                    <code class="text-xs dark:text-blue-400 text-blue-600">{{settings.ipserver}}</code>
+                </div>
+                <div class="flex flex-col gap-0.5">
+                    <span class="text-xs text-gray-500 uppercase tracking-wider font-medium">Server Time</span>
+                    <span class="text-xs dark:text-gray-300 text-gray-600">{{settings.timerdate}}</span>
+                </div>
+                <div class="flex flex-col gap-0.5">
+                    <span class="text-xs text-gray-500 uppercase tracking-wider font-medium">Nameservers</span>
+                    <div class="text-xs space-y-0.5">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-5 text-gray-500 font-medium">ns1:</span>
+                            <code class="dark:text-gray-300 text-gray-600">{{dnsname.ns1}}</code>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-5 text-gray-500 font-medium">ns2:</span>
+                            <code class="dark:text-gray-300 text-gray-600">{{dnsname.ns2}}</code>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-12">
-            <div class="ibox">
-                <div class="ibox-title">
-                    <h5>
-                        <h5>
-                            <i class="fa fa-line-chart"></i>
-                            {{langmod.PLANSTATUS}}
-                        </h5>
-                    </h5>
-                </div>
-                <div class="ibox-content graph-stats-wrapper">
-                    <div class="statistic-box">
-                        <div class="row text-center" style="margin-top: 0px">
-                            <div class="col-lg-4">
-                                <canvas
-                                    id="doughnutChart2"
-                                    width="80"
-                                    height="80"
-                                    style="margin: 18px auto 0"
-                                ></canvas>
-                                {% set
-                                mysqlbar=(100/mod.mysqlpack.package)*mod.mysqlpack.used
-                                %}
-                                <h5>
-                                    {{langene.PGMYSQL}} {{mod.mysqlpack.used}} /
-                                    {% if mod.mysqlpack.package != '-1' %}
-                                    {{mod.mysqlpack.package}} {% else %}
-                                    <span class="infinite-sign">&infin;</span>
-                                    {% endif %}
-                                </h5>
-                            </div>
-                            <div class="col-lg-4">
-                                <canvas
-                                    id="doughnutChart"
-                                    width="80"
-                                    height="80"
-                                    style="margin: 18px auto 0"
-                                ></canvas>
-                                <h5>
-                                    {{langene.PGEMAIL}} {{mod.email_accounts}} /
-                                    {% if mod.email_pack != '-1' %}
-                                    {{mod.email_pack}} {% else %}
-                                    <span class="infinite-sign">&infin;</span>
-                                    {% endif %}
-                                </h5>
-                            </div>
-                            <div class="col-lg-4">
-                                <canvas
-                                    id="doughnutChart3"
-                                    width="80"
-                                    height="80"
-                                    style="margin: 18px auto 0"
-                                ></canvas>
-                                <h5>
-                                    Addon {{langene.PGDOMAINS}}
-                                    {{mod.domain_accounts}}/ {% if
-                                    mod.domain_pack != '-1' %}
-                                    {{mod.domain_pack}} {% else %}
-                                    <span class="infinite-sign">&infin;</span>
-                                    {% endif %}
-                                </h5>
-                            </div>
-                            <div class="col-lg-4">
-                                <canvas
-                                    id="doughnutChart5"
-                                    width="80"
-                                    height="80"
-                                    style="margin: 18px auto 0"
-                                ></canvas>
-                                <h5>
-                                    {{langene.PGSUBDOMAIN}}
-                                    {{mod.subdomain_accounts}} / {% if
-                                    mod.subdomain_pack != '-1' %}
-                                    {{mod.subdomain_pack}} {% else %}
-                                    <span class="infinite-sign">&infin;</span>
-                                    {% endif %}
-                                </h5>
-                            </div>
-                            <div class="col-lg-4">
-                                <canvas
-                                    id="doughnutChart4"
-                                    width="80"
-                                    height="80"
-                                    style="margin: 18px auto 0"
-                                ></canvas>
-                                <h5>
-                                    {{langene.PGFTP}} {{mod.ftp_accounts}} / {%
-                                    if mod.ftp_pack != '-1' %} {{mod.ftp_pack}}
-                                    {% else %}
-                                    <span class="infinite-sign">&infin;</span>
-                                    {% endif %}
-                                </h5>
-                            </div>
-                        </div>
+        <!-- Plan Status Card -->
+        <div class="rounded-2xl border dark:border-gray-800 dark:bg-surface-800 bg-white border-gray-200 overflow-hidden">
+            <div class="flex items-center gap-2 px-4 py-3 border-b dark:border-gray-800 border-gray-100" style="border-top: 2px solid #3b82f6 !important;">
+                <i class="fas fa-chart-pie text-primary-400 text-sm"></i>
+                <h5 class="text-sm font-semibold dark:text-white text-gray-800">{{langmod.PLANSTATUS}}</h5>
+            </div>
+            <div class="p-4">
+                <div class="grid grid-cols-3 gap-3 text-center">
+                    <!-- MySQL DBs -->
+                    <div class="flex flex-col items-center">
+                        <canvas id="doughnutChart2" width="60" height="60" class="mb-1.5"></canvas>
+                        <span class="text-xs dark:text-gray-400 text-gray-500">{{langene.PGMYSQL}}</span>
+                        <span class="text-xs font-semibold dark:text-white text-gray-800">
+                            {{mod.mysqlpack.used}} /
+                            {% if mod.mysqlpack.package != '-1' %}{{mod.mysqlpack.package}}{% else %}&infin;{% endif %}
+                        </span>
+                    </div>
+                    <!-- Email -->
+                    <div class="flex flex-col items-center">
+                        <canvas id="doughnutChart" width="60" height="60" class="mb-1.5"></canvas>
+                        <span class="text-xs dark:text-gray-400 text-gray-500">{{langene.PGEMAIL}}</span>
+                        <span class="text-xs font-semibold dark:text-white text-gray-800">
+                            {{mod.email_accounts}} /
+                            {% if mod.email_pack != '-1' %}{{mod.email_pack}}{% else %}&infin;{% endif %}
+                        </span>
+                    </div>
+                    <!-- Domains -->
+                    <div class="flex flex-col items-center">
+                        <canvas id="doughnutChart3" width="60" height="60" class="mb-1.5"></canvas>
+                        <span class="text-xs dark:text-gray-400 text-gray-500">{{langene.PGDOMAINS}}</span>
+                        <span class="text-xs font-semibold dark:text-white text-gray-800">
+                            {{mod.domain_accounts}} /
+                            {% if mod.domain_pack != '-1' %}{{mod.domain_pack}}{% else %}&infin;{% endif %}
+                        </span>
+                    </div>
+                    <!-- Subdomains -->
+                    <div class="flex flex-col items-center">
+                        <canvas id="doughnutChart5" width="60" height="60" class="mb-1.5"></canvas>
+                        <span class="text-xs dark:text-gray-400 text-gray-500">{{langene.PGSUBDOMAIN}}</span>
+                        <span class="text-xs font-semibold dark:text-white text-gray-800">
+                            {{mod.subdomain_accounts}} /
+                            {% if mod.subdomain_pack != '-1' %}{{mod.subdomain_pack}}{% else %}&infin;{% endif %}
+                        </span>
+                    </div>
+                    <!-- FTP -->
+                    <div class="flex flex-col items-center">
+                        <canvas id="doughnutChart4" width="60" height="60" class="mb-1.5"></canvas>
+                        <span class="text-xs dark:text-gray-400 text-gray-500">{{langene.PGFTP}}</span>
+                        <span class="text-xs font-semibold dark:text-white text-gray-800">
+                            {{mod.ftp_accounts}} /
+                            {% if mod.ftp_pack != '-1' %}{{mod.ftp_pack}}{% else %}&infin;{% endif %}
+                        </span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-12">
-            <div class="ibox">
-                <div class="ibox-title">
-                    <h5>
-                        <i class="fa fa-users" aria-hidden="true"></i>
-                        {{langene.GNLABLE7}}
-                    </h5>
+        <!-- Last Access Card -->
+        <div class="rounded-2xl border dark:border-gray-800 dark:bg-surface-800 bg-white border-gray-200 overflow-hidden">
+            <div class="flex items-center gap-2 px-4 py-3 border-b dark:border-gray-800 border-gray-100" style="border-top: 2px solid #3b82f6 !important;">
+                <i class="fas fa-history text-primary-400 text-sm"></i>
+                <h5 class="text-sm font-semibold dark:text-white text-gray-800">{{langene.GNLABLE7}}</h5>
+            </div>
+            <div class="divide-y dark:divide-white/5 divide-gray-100">
+                {% for var in mod.lastaccess %}
+                <div class="flex items-center gap-3 px-4 py-2.5">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs font-mono dark:text-blue-400 text-blue-600 font-medium">{{var.ip}}</span>
+                            {% if var.flag != '' %}
+                            <img src="{{url}}/img/flags/16/{{var.flag}}.png" alt="{{var.city}}/{{var.country}}" title="{{var.city}}/{{var.flag}}" class="w-4 rounded-sm" />
+                            {% endif %}
+                        </div>
+                        <div class="flex items-center gap-1.5 mt-0.5">
+                            <i class="fab fa-{{var.os}} text-xs text-gray-500"></i>
+                            <span class="text-xs dark:text-gray-500 text-gray-400">{{var.date|date("d/m/Y H:i")}}</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="ibox-content">
-                    <ul class="list-group clear-list m-t">
-                        {% for var in mod.lastaccess %}
-                        <li class="list-group-item">
-                            <div class="label label-success">
-                                <span>{{var.ip}}</span>
-                                {% if var.flag!='' %}
-                                <img
-                                    src="{{url}}/img/flags/16/{{var.flag}}.png"
-                                    class="pull-right"
-                                    alt="{{var.city}}/{{var.country}}"
-                                    title="{{var.city}}/{{var.flag}}"
-                                />
-                                {% endif %}
-                            </div>
-                            <span class="fab fa-{{var.os}}"></span>
-                            <span class="last-access-date"
-                                >{{var.date|date("d/m/Y H:i")}}</span
-                            >
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </div>
+                {% endfor %}
             </div>
         </div>
+
     </div>
 </div>
-<script>
-    var domain =
-        '<a href="https://{{mod.domain_username}}" target="_blank" style="display:flex;align-items:center;font-weight:500;gap:3px"><i class="fas fa-lock" style="color:green"></i> {{mod.domain_username}} <i class="fas fa-external-link-alt" style="margin-left:5px"></i></a>';
 
-    document.addEventListener("DOMContentLoaded", function () {
-        fetch("./{{users}}/index.php?module=validate_ssl")
-            .then((response) => response.json())
-            .then((data) => {
-                if (data.status) {
-                    document.getElementById("primarydomain").innerHTML = domain;
-                }
-            })
-            .catch((error) =>
-                console.error("Error fetching HTTPS check:", error)
-            );
+<script>
+    var domainSSL = '<a href="https://{{mod.domain_username}}" target="_blank" class="flex items-center gap-1.5 text-blue-400 hover:text-blue-300 transition-colors font-medium"><i class="fas fa-lock text-emerald-400 text-xs"></i>{{mod.domain_username}}<i class="fas fa-external-link-alt text-xs opacity-50"></i></a>';
+    document.addEventListener('DOMContentLoaded', function() {
+        fetch('./{{users}}/index.php?module=validate_ssl')
+            .then(r => r.json())
+            .then(data => { if (data.status) document.getElementById('primarydomain').innerHTML = domainSSL; })
+            .catch(() => {});
     });
 </script>

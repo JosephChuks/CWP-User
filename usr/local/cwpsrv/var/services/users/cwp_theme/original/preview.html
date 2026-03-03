@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CWP Modern Theme - Preview</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a' },
+                        surface: { 950:'#080b12',900:'#0f1117',850:'#13161f',800:'#1a1d2e',750:'#1e2235',700:'#242840',600:'#2e3352',500:'#3a3f5c' },
+                        accent: { 400:'#a78bfa',500:'#8b5cf6' }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <style>
+        :root { --sidebar-width: 240px; --topbar-height: 60px; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+        /* Sidebar */
+        #cwp-sidebar {
+            position: fixed; top: 0; left: 0; height: 100vh; width: var(--sidebar-width);
+            background: #13161f; border-right: 1px solid rgba(255,255,255,0.06);
+            display: flex; flex-direction: column; z-index: 100; overflow: hidden;
+            transition: width 0.25s ease;
+        }
+        .light #cwp-sidebar { background: #fff; border-right: 1px solid #e2e8f0; }
+        #cwp-sidebar.collapsed { width: 68px; }
+        #cwp-sidebar.collapsed .nav-label, #cwp-sidebar.collapsed .sidebar-section-title,
+        #cwp-sidebar.collapsed .logo-text, #cwp-sidebar.collapsed .fa-angle-down { display: none !important; }
+        #cwp-sidebar.collapsed .logo-wrap { justify-content: center; padding: 0 !important; }
+        #cwp-sidebar.collapsed .sidebar-link { justify-content: center; padding: 10px !important; }
+        #cwp-sidebar.collapsed .sidebar-link i { margin: 0 !important; }
+
+        /* Topbar */
+        #cwp-topbar {
+            position: fixed; top: 0; left: var(--sidebar-width); right: 0;
+            height: var(--topbar-height); background: #13161f;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex; align-items: center; padding: 0 1.25rem;
+            z-index: 99; transition: left 0.25s ease;
+        }
+        #cwp-topbar.collapsed { left: 68px; }
+        .light #cwp-topbar { background: #fff; border-bottom: 1px solid #e2e8f0; }
+
+        /* Content */
+        #cwp-content {
+            margin-left: var(--sidebar-width); margin-top: var(--topbar-height);
+            background: #0f1117; min-height: calc(100vh - var(--topbar-height));
+            padding: 1.5rem; transition: margin-left 0.25s ease;
+        }
+        #cwp-content.collapsed { margin-left: 68px; }
+        .light #cwp-content { background: #f1f5f9; }
+
+        /* Nav */
+        .sidebar-link {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 16px; border-radius: 8px; margin: 1px 8px;
+            color: #9ca3b0; text-decoration: none;
+            transition: background 0.15s, color 0.15s;
+            font-size: 0.875rem; font-weight: 500; white-space: nowrap; cursor: pointer;
+        }
+        .sidebar-link:hover { background: rgba(255,255,255,0.07); color: #fff; }
+        .sidebar-link.active { background: rgba(59,130,246,0.15); color: #60a5fa; }
+        .sidebar-link i { width: 18px; text-align: center; font-size: 0.9rem; flex-shrink: 0; }
+        .light .sidebar-link { color: #64748b; }
+        .light .sidebar-link:hover { background: #f1f5f9; color: #1e293b; }
+        .light .sidebar-link.active { background: #eff6ff; color: #2563eb; }
+
+        .sidebar-group > .sidebar-link .fa-angle-down { margin-left: auto; transition: transform 0.2s; font-size: 0.75rem; }
+        .sidebar-group.open > .sidebar-link .fa-angle-down { transform: rotate(-180deg); }
+        .sidebar-submenu { overflow: hidden; max-height: 0; transition: max-height 0.3s ease; }
+        .sidebar-group.open .sidebar-submenu { max-height: 300px; }
+        .sidebar-submenu .sidebar-link { padding: 7px 16px 7px 44px; font-size: 0.825rem; color: #6b7280; }
+        .sidebar-submenu .sidebar-link:hover { color: #d1d5db; }
+        .light .sidebar-submenu .sidebar-link { color: #94a3b8; }
+
+        .sidebar-section-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: #4b5563; padding: 12px 16px 4px; font-weight: 600; }
+        .light .sidebar-section-title { color: #94a3b8; }
+        #sidebar-nav { overflow-y: auto; flex: 1; padding: 8px 0; }
+
+        /* Topbar elements */
+        .topbar-btn {
+            display: flex; align-items: center; justify-content: center;
+            width: 36px; height: 36px; border-radius: 8px; color: #9ca3b0;
+            background: transparent; border: none; cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .topbar-btn:hover { background: rgba(255,255,255,0.07); color: #fff; }
+        .light .topbar-btn:hover { background: #f1f5f9; color: #1e293b; }
+        .topbar-search {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px; padding: 6px 12px 6px 36px;
+            color: #d1d5db; font-size: 0.875rem; outline: none; width: 220px;
+            transition: border-color 0.2s, width 0.3s;
+        }
+        .topbar-search:focus { border-color: #3b82f6; width: 280px; }
+        .topbar-search::placeholder { color: #6b7280; }
+        .light .topbar-search { background: #f8fafc; border-color: #e2e8f0; color: #1e293b; }
+
+        /* Cards */
+        .stat-card { background: #1a1d2e; border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 1.25rem; }
+        .light .stat-card { background: #fff; border-color: #e2e8f0; }
+        .module-card { background: #1a1d2e; border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; overflow: hidden; }
+        .light .module-card { background: #fff; border-color: #e2e8f0; }
+
+        /* Dropdown */
+        .cwp-dropdown { position: relative; }
+        .cwp-dropdown-menu {
+            position: absolute; right: 0; top: calc(100% + 8px);
+            background: #1a1d2e; border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px; min-width: 180px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+            overflow: hidden; display: none; z-index: 200;
+        }
+        .cwp-dropdown-menu.active { display: block; }
+        .light .cwp-dropdown-menu { background: #fff; border-color: #e2e8f0; }
+        .cwp-dropdown-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; color: #9ca3b0; font-size: 0.875rem; cursor: pointer; transition: background 0.1s; text-decoration: none; }
+        .cwp-dropdown-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+        .light .cwp-dropdown-item { color: #64748b; }
+        .light .cwp-dropdown-item:hover { background: #f8fafc; color: #1e293b; }
+
+        /* Notice */
+        #notice-bar { margin-bottom: 1.5rem; padding: 10px 16px; background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.2); border-radius: 10px; color: #fbbf24; font-size: 0.875rem; }
+        .light #notice-bar { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+        /* Tab active */
+        .view-tab.active { background: rgba(59,130,246,0.15); color: #60a5fa; border-color: rgba(59,130,246,0.3); }
+        .light .view-tab.active { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+    </style>
+</head>
+<body class="dark transition-colors duration-200">
+
+<!-- ═══ SIDEBAR ═════════════════════════════════════ -->
+<aside id="cwp-sidebar">
+    <div class="logo-wrap flex items-center gap-3 px-4 py-4 border-b border-white/5 flex-shrink-0">
+        <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">K</div>
+        <span class="logo-text font-bold text-white text-base">Control Panel</span>
+    </div>
+
+    <nav id="sidebar-nav">
+        <div class="px-0 py-1">
+            <a href="#" class="sidebar-link active" onclick="setPage('dashboard'); return false;">
+                <i class="fas fa-th-large"></i>
+                <span class="nav-label">Dashboard</span>
+            </a>
+        </div>
+
+        <span class="sidebar-section-title">Server Settings</span>
+        <div class="sidebar-group">
+            <a href="#" class="sidebar-link">
+                <i class="fas fa-server"></i>
+                <span class="nav-label">Server Settings</span>
+                <i class="fas fa-angle-down ml-auto"></i>
+            </a>
+            <div class="sidebar-submenu">
+                <a href="#" class="sidebar-link" onclick="setPage('cron'); return false;"><i class="fas fa-clock"></i><span class="nav-label">Cron Jobs</span></a>
+                <a href="#" class="sidebar-link"><i class="fas fa-bell"></i><span class="nav-label">Notifications</span></a>
+                <a href="#" class="sidebar-link"><i class="fas fa-shield-alt"></i><span class="nav-label">Mod Security</span></a>
+            </div>
+        </div>
+
+        <span class="sidebar-section-title">PHP & Runtime</span>
+        <div class="sidebar-group">
+            <a href="#" class="sidebar-link">
+                <i class="fab fa-php"></i>
+                <span class="nav-label">PHP Settings</span>
+                <i class="fas fa-angle-down ml-auto"></i>
+            </a>
+            <div class="sidebar-submenu">
+                <a href="#" class="sidebar-link"><i class="fas fa-code-branch"></i><span class="nav-label">PHP Version</span></a>
+                <a href="#" class="sidebar-link"><i class="fas fa-cog"></i><span class="nav-label">PHP INI Editor</span></a>
+            </div>
+        </div>
+
+        <span class="sidebar-section-title">Files</span>
+        <div class="sidebar-group">
+            <a href="#" class="sidebar-link">
+                <i class="fas fa-folder-open"></i>
+                <span class="nav-label">File Manager</span>
+                <i class="fas fa-angle-down ml-auto"></i>
+            </a>
+            <div class="sidebar-submenu">
+                <a href="#" class="sidebar-link"><i class="fas fa-folder"></i><span class="nav-label">File Manager</span></a>
+                <a href="#" class="sidebar-link"><i class="fas fa-exchange-alt"></i><span class="nav-label">FTP Accounts</span></a>
+                <a href="#" class="sidebar-link"><i class="fas fa-archive"></i><span class="nav-label">Backups</span></a>
+                <a href="#" class="sidebar-link"><i class="fas fa-virus-slash"></i><span class="nav-label">Virus Scanner</span></a>
+            </div>
+        </div>
+
+        <span class="sidebar-section-title">Email</span>
+        <div class="sidebar-group">
+            <a href="#" class="sidebar-link">
+                <i class="fas fa-envelope"></i>
+                <span class="nav-label">Email</span>
+                <i class="fas fa-angle-down ml-auto"></i>
+            </a>
+            <div class="sidebar-submenu">
+                <a href="#" class="sidebar-link" onclick="setPage('email'); return false;"><i class="fas fa-at"></i><span class="nav-label">Email Accounts</span></a>
+                <a href="#" class="sidebar-link"><i class="fas fa-forward"></i><span class="nav-label">Forwarders</span></a>
+                <a href="#" class="sidebar-link"><i class="fas fa-filter"></i><span class="nav-label">Email Filters</span></a>
+            </div>
+        </div>
+
+        <span class="sidebar-section-title">Domains & DNS</span>
+        <div class="sidebar-group">
+            <a href="#" class="sidebar-link">
+                <i class="fas fa-globe"></i>
+                <span class="nav-label">Domains</span>
+                <i class="fas fa-angle-down ml-auto"></i>
+            </a>
+            <div class="sidebar-submenu">
+                <a href="#" class="sidebar-link" onclick="setPage('domains'); return false;"><i class="fas fa-globe-americas"></i><span class="nav-label">Add Domain</span></a>
+                <a href="#" class="sidebar-link"><i class="fas fa-sitemap"></i><span class="nav-label">Subdomains</span></a>
+                <a href="#" class="sidebar-link"><i class="fas fa-network-wired"></i><span class="nav-label">DNS Zone Editor</span></a>
+            </div>
+        </div>
+
+        <span class="sidebar-section-title">Databases</span>
+        <div class="sidebar-group">
+            <a href="#" class="sidebar-link">
+                <i class="fas fa-database"></i>
+                <span class="nav-label">Databases</span>
+                <i class="fas fa-angle-down ml-auto"></i>
+            </a>
+            <div class="sidebar-submenu">
+                <a href="#" class="sidebar-link" onclick="setPage('mysql'); return false;"><i class="fas fa-table"></i><span class="nav-label">MySQL Manager</span></a>
+                <a href="#" class="sidebar-link"><i class="fas fa-database"></i><span class="nav-label">phpMyAdmin</span></a>
+            </div>
+        </div>
+
+        <span class="sidebar-section-title">Security</span>
+        <div class="sidebar-group">
+            <a href="#" class="sidebar-link">
+                <i class="fas fa-lock"></i>
+                <span class="nav-label">SSL & Security</span>
+                <i class="fas fa-angle-down ml-auto"></i>
+            </a>
+            <div class="sidebar-submenu">
+                <a href="#" class="sidebar-link"><i class="fas fa-certificate"></i><span class="nav-label">SSL Wizard</span></a>
+                <a href="#" class="sidebar-link"><i class="fas fa-shield-alt"></i><span class="nav-label">Let's Encrypt</span></a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Bottom user area -->
+    <div class="flex-shrink-0 border-t border-white/5 p-3">
+        <div class="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/5 cursor-pointer transition-colors">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">J</div>
+            <div class="logo-text min-w-0">
+                <p class="text-sm font-medium text-white truncate">joe</p>
+                <p class="text-xs text-gray-500">Account Owner</p>
+            </div>
+            <i class="fas fa-ellipsis-v logo-text text-gray-500 ml-auto text-xs"></i>
+        </div>
+    </div>
+</aside>
+
+<!-- ═══ TOPBAR ═════════════════════════════════════ -->
+<header id="cwp-topbar">
+    <button class="topbar-btn mr-3" id="sidebar-toggle" onclick="toggleSidebar()">
+        <i class="fas fa-bars text-sm"></i>
+    </button>
+
+    <div class="relative flex-1 max-w-xs">
+        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none"></i>
+        <input type="text" placeholder="Search modules..." class="topbar-search" id="top-search" />
+    </div>
+
+    <div class="flex items-center gap-1 ml-auto">
+        <!-- File lock -->
+        <button class="topbar-btn" title="File System Unlocked">
+            <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium bg-amber-500/20 text-amber-400 border-amber-500/30">
+                <i class="fas fa-lock-open text-xs"></i>
+                <span class="hidden sm:inline">Unlocked</span>
+            </span>
+        </button>
+
+        <!-- Notifications -->
+        <div class="cwp-dropdown">
+            <button class="topbar-btn relative" onclick="toggleDropdown('notif-panel')">
+                <i class="fas fa-bell text-sm"></i>
+                <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary-500 border-2 border-surface-850"></span>
+            </button>
+            <div id="notif-panel" class="cwp-dropdown-menu" style="min-width:300px; right:0">
+                <div class="flex items-center justify-between px-4 py-3 border-b border-white/5">
+                    <span class="text-sm font-semibold text-white">Notifications</span>
+                    <span class="px-2 py-0.5 rounded-full bg-primary-500/20 text-primary-400 text-xs font-medium">3 new</span>
+                </div>
+                <div class="divide-y divide-white/5">
+                    <div class="flex items-start gap-3 px-4 py-3">
+                        <div class="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0"><i class="fas fa-hdd text-sm text-amber-400"></i></div>
+                        <div><p class="text-sm font-semibold text-white">2 Disk Quota Alerts</p><p class="text-xs text-gray-500 mt-0.5">2 hours ago</p></div>
+                        <div class="w-2 h-2 rounded-full bg-primary-500 flex-shrink-0 mt-2"></div>
+                    </div>
+                    <div class="flex items-start gap-3 px-4 py-3">
+                        <div class="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center flex-shrink-0"><i class="fas fa-user-secret text-sm text-red-400"></i></div>
+                        <div><p class="text-sm font-semibold text-white">1 Unusual Login</p><p class="text-xs text-gray-500 mt-0.5">5 hours ago</p></div>
+                        <div class="w-2 h-2 rounded-full bg-primary-500 flex-shrink-0 mt-2"></div>
+                    </div>
+                    <div class="flex items-start gap-3 px-4 py-3">
+                        <div class="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0"><i class="fas fa-globe text-sm text-blue-400"></i></div>
+                        <div><p class="text-sm text-gray-400">3 Website Changes</p><p class="text-xs text-gray-500 mt-0.5">1 day ago</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Theme toggle -->
+        <button class="topbar-btn" onclick="toggleTheme()" title="Toggle theme">
+            <i id="theme-sun" class="fas fa-sun text-sm hidden"></i>
+            <i id="theme-moon" class="fas fa-moon text-sm"></i>
+        </button>
+
+        <!-- 2FA badge -->
+        <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-medium" title="2FA Active">
+            <i class="fas fa-shield-alt text-xs"></i>
+            <span class="hidden sm:inline">2FA</span>
+        </span>
+
+        <!-- User -->
+        <div class="cwp-dropdown">
+            <button class="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer" onclick="toggleDropdown('user-menu')">
+                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-xs font-semibold">J</div>
+                <span class="text-sm text-gray-300 hidden sm:block">joe</span>
+                <i class="fas fa-chevron-down text-xs text-gray-500"></i>
+            </button>
+            <div id="user-menu" class="cwp-dropdown-menu">
+                <div class="px-4 py-3 border-b border-white/5">
+                    <p class="text-sm font-medium text-white">joe</p>
+                    <p class="text-xs text-gray-500 mt-0.5">Account Owner</p>
+                </div>
+                <div class="p-1">
+                    <a href="#" class="cwp-dropdown-item rounded-lg"><i class="fas fa-key w-4 text-gray-500"></i> Change Password</a>
+                    <a href="#" class="cwp-dropdown-item rounded-lg"><i class="fas fa-bell w-4 text-gray-500"></i> Notifications Settings</a>
+                </div>
+                <div class="h-px bg-white/5 mx-0 my-1"></div>
+                <div class="p-1">
+                    <a href="#" class="cwp-dropdown-item rounded-lg text-red-400 hover:bg-red-500/10">
+                        <i class="fas fa-sign-out-alt w-4"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- ═══ MAIN CONTENT ════════════════════════════════ -->
+<main id="cwp-content">
+
+    <!-- Notice bar -->
+    <div id="notice-bar">
+        <i class="fas fa-info-circle mr-2"></i>
+        <strong>NOTICE:</strong> The default <code>mail()</code> function in PHP is disabled on this server. We recommend <strong>SMTP</strong> for better reliability.
+    </div>
+
+    <!-- ── VIEW TABS ── -->
+    <div class="flex gap-2 mb-6 flex-wrap">
+        <button onclick="setPage('dashboard')" class="view-tab px-4 py-2 rounded-xl text-sm border border-white/10 dark:text-gray-400 text-gray-500 hover:bg-white/5 transition-all active" id="tab-dashboard">Dashboard</button>
+        <button onclick="setPage('email')" class="view-tab px-4 py-2 rounded-xl text-sm border border-white/10 dark:text-gray-400 text-gray-500 hover:bg-white/5 transition-all" id="tab-email">Email Accounts</button>
+        <button onclick="setPage('domains')" class="view-tab px-4 py-2 rounded-xl text-sm border border-white/10 dark:text-gray-400 text-gray-500 hover:bg-white/5 transition-all" id="tab-domains">Domains</button>
+        <button onclick="setPage('mysql')" class="view-tab px-4 py-2 rounded-xl text-sm border border-white/10 dark:text-gray-400 text-gray-500 hover:bg-white/5 transition-all" id="tab-mysql">MySQL Manager</button>
+        <button onclick="setPage('login')" class="view-tab px-4 py-2 rounded-xl text-sm border border-white/10 dark:text-gray-400 text-gray-500 hover:bg-white/5 transition-all" id="tab-login">Login Page</button>
+    </div>
+
+    <!-- ── DASHBOARD VIEW ── -->
+    <div id="page-dashboard">
+        <!-- Stats row -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="stat-card">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-9 h-9 rounded-xl bg-blue-500/20 flex items-center justify-center"><i class="fas fa-envelope text-blue-400 text-sm"></i></div>
+                    <span class="text-xs px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-medium">+3 today</span>
+                </div>
+                <p class="text-2xl font-bold dark:text-white text-gray-800">12 / 50</p>
+                <p class="text-xs dark:text-gray-500 text-gray-400 mt-1">Email Accounts</p>
+                <div class="mt-3 h-1.5 rounded-full bg-white/5 overflow-hidden">
+                    <div class="h-full rounded-full bg-blue-500" style="width:24%"></div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-9 h-9 rounded-xl bg-violet-500/20 flex items-center justify-center"><i class="fas fa-globe text-violet-400 text-sm"></i></div>
+                    <span class="text-xs px-2 py-1 rounded-full bg-violet-500/20 text-violet-400 font-medium">∞ allowed</span>
+                </div>
+                <p class="text-2xl font-bold dark:text-white text-gray-800">5 / ∞</p>
+                <p class="text-xs dark:text-gray-500 text-gray-400 mt-1">Domains</p>
+                <div class="mt-3 h-1.5 rounded-full bg-white/5 overflow-hidden">
+                    <div class="h-full rounded-full bg-violet-500" style="width:15%"></div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-500/20 flex items-center justify-center"><i class="fas fa-database text-emerald-400 text-sm"></i></div>
+                    <span class="text-xs px-2 py-1 rounded-full bg-amber-500/20 text-amber-400 font-medium">8 used</span>
+                </div>
+                <p class="text-2xl font-bold dark:text-white text-gray-800">8 / 20</p>
+                <p class="text-xs dark:text-gray-500 text-gray-400 mt-1">MySQL Databases</p>
+                <div class="mt-3 h-1.5 rounded-full bg-white/5 overflow-hidden">
+                    <div class="h-full rounded-full bg-amber-500" style="width:40%"></div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-9 h-9 rounded-xl bg-orange-500/20 flex items-center justify-center"><i class="fas fa-hdd text-orange-400 text-sm"></i></div>
+                    <span class="text-xs px-2 py-1 rounded-full bg-orange-500/20 text-orange-400 font-medium">65% used</span>
+                </div>
+                <p class="text-2xl font-bold dark:text-white text-gray-800">6.5 / 10 GB</p>
+                <p class="text-xs dark:text-gray-500 text-gray-400 mt-1">Disk Usage</p>
+                <div class="mt-3 h-1.5 rounded-full bg-white/5 overflow-hidden">
+                    <div class="h-full rounded-full bg-orange-500" style="width:65%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            <!-- Quick Actions -->
+            <div class="module-card">
+                <div class="flex items-center gap-2 px-5 py-4 border-b dark:border-white/5 border-gray-100">
+                    <i class="fas fa-bolt text-primary-400 text-sm"></i>
+                    <h3 class="text-sm font-semibold dark:text-white text-gray-800">Quick Actions</h3>
+                </div>
+                <div class="p-4 grid grid-cols-2 gap-2">
+                    <a href="#" class="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-white/5 transition-colors group">
+                        <div class="w-10 h-10 rounded-xl bg-blue-500/20 group-hover:bg-blue-500/30 flex items-center justify-center transition-colors"><i class="fas fa-at text-blue-400"></i></div>
+                        <span class="text-xs dark:text-gray-400 text-gray-500 text-center">Email Accounts</span>
+                    </a>
+                    <a href="#" class="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-white/5 transition-colors group">
+                        <div class="w-10 h-10 rounded-xl bg-violet-500/20 group-hover:bg-violet-500/30 flex items-center justify-center transition-colors"><i class="fas fa-globe text-violet-400"></i></div>
+                        <span class="text-xs dark:text-gray-400 text-gray-500 text-center">Add Domain</span>
+                    </a>
+                    <a href="#" class="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-white/5 transition-colors group">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 group-hover:bg-emerald-500/30 flex items-center justify-center transition-colors"><i class="fas fa-database text-emerald-400"></i></div>
+                        <span class="text-xs dark:text-gray-400 text-gray-500 text-center">MySQL Manager</span>
+                    </a>
+                    <a href="#" class="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-white/5 transition-colors group">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/20 group-hover:bg-amber-500/30 flex items-center justify-center transition-colors"><i class="fas fa-archive text-amber-400"></i></div>
+                        <span class="text-xs dark:text-gray-400 text-gray-500 text-center">Backups</span>
+                    </a>
+                    <a href="#" class="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-white/5 transition-colors group">
+                        <div class="w-10 h-10 rounded-xl bg-red-500/20 group-hover:bg-red-500/30 flex items-center justify-center transition-colors"><i class="fas fa-certificate text-red-400"></i></div>
+                        <span class="text-xs dark:text-gray-400 text-gray-500 text-center">SSL Wizard</span>
+                    </a>
+                    <a href="#" class="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-white/5 transition-colors group">
+                        <div class="w-10 h-10 rounded-xl bg-cyan-500/20 group-hover:bg-cyan-500/30 flex items-center justify-center transition-colors"><i class="fas fa-folder text-cyan-400"></i></div>
+                        <span class="text-xs dark:text-gray-400 text-gray-500 text-center">File Manager</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Account Info -->
+            <div class="module-card">
+                <div class="flex items-center gap-2 px-5 py-4 border-b dark:border-white/5 border-gray-100">
+                    <i class="fas fa-info-circle text-primary-400 text-sm"></i>
+                    <h3 class="text-sm font-semibold dark:text-white text-gray-800">Account Information</h3>
+                </div>
+                <div class="p-4 space-y-3">
+                    <div class="flex items-center justify-between py-2 border-b dark:border-white/5 border-gray-50">
+                        <span class="text-xs text-gray-500">Username</span>
+                        <span class="text-sm dark:text-white text-gray-800 font-medium">joe</span>
+                    </div>
+                    <div class="flex items-center justify-between py-2 border-b dark:border-white/5 border-gray-50">
+                        <span class="text-xs text-gray-500">Primary Domain</span>
+                        <a href="#" class="text-sm text-blue-400 flex items-center gap-1"><i class="fas fa-lock text-emerald-400 text-xs"></i> example.com</a>
+                    </div>
+                    <div class="flex items-center justify-between py-2 border-b dark:border-white/5 border-gray-50">
+                        <span class="text-xs text-gray-500">Home Dir</span>
+                        <code class="text-xs dark:text-emerald-400 text-emerald-600">/home/joe</code>
+                    </div>
+                    <div class="flex items-center justify-between py-2 border-b dark:border-white/5 border-gray-50">
+                        <span class="text-xs text-gray-500">Server IP</span>
+                        <code class="text-xs dark:text-blue-400 text-blue-600">192.168.1.100</code>
+                    </div>
+                    <div class="flex items-center justify-between py-2">
+                        <span class="text-xs text-gray-500">Nameservers</span>
+                        <div class="text-right text-xs dark:text-gray-300 text-gray-600">
+                            <div>ns1.kinsmen.net</div>
+                            <div>ns2.kinsmen.net</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Last Access -->
+            <div class="module-card">
+                <div class="flex items-center gap-2 px-5 py-4 border-b dark:border-white/5 border-gray-100">
+                    <i class="fas fa-history text-primary-400 text-sm"></i>
+                    <h3 class="text-sm font-semibold dark:text-white text-gray-800">Last Access</h3>
+                </div>
+                <div class="divide-y dark:divide-white/5 divide-gray-100">
+                    <div class="flex items-center gap-3 px-4 py-3">
+                        <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center"><i class="fab fa-linux text-gray-400 text-sm"></i></div>
+                        <div class="flex-1">
+                            <code class="text-xs dark:text-blue-400 text-blue-600 font-medium">102.89.2.55</code>
+                            <p class="text-xs dark:text-gray-500 text-gray-400 mt-0.5">Today, 08:32</p>
+                        </div>
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">Current</span>
+                    </div>
+                    <div class="flex items-center gap-3 px-4 py-3">
+                        <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center"><i class="fab fa-windows text-gray-400 text-sm"></i></div>
+                        <div class="flex-1">
+                            <code class="text-xs dark:text-blue-400 text-blue-600 font-medium">102.89.2.55</code>
+                            <p class="text-xs dark:text-gray-500 text-gray-400 mt-0.5">Yesterday, 14:17</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 px-4 py-3">
+                        <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center"><i class="fab fa-apple text-gray-400 text-sm"></i></div>
+                        <div class="flex-1">
+                            <code class="text-xs dark:text-blue-400 text-blue-600 font-medium">102.89.2.55</code>
+                            <p class="text-xs dark:text-gray-500 text-gray-400 mt-0.5">2 days ago, 09:05</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── EMAIL VIEW ── -->
+    <div id="page-email" class="hidden">
+        <div class="module-card">
+            <div class="flex items-center justify-between px-5 py-4 border-b dark:border-white/5 border-gray-100 flex-wrap gap-3">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-envelope text-primary-400 text-sm"></i>
+                    <h3 class="text-sm font-semibold dark:text-white text-gray-800">Email Accounts</h3>
+                </div>
+                <button class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-colors">
+                    <i class="fas fa-plus text-xs"></i> Add Email Account
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="dark:bg-white/3 bg-gray-50">
+                            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email Address</th>
+                            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Quota</th>
+                            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Usage</th>
+                            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y dark:divide-white/5 divide-gray-100">
+                        <tr class="hover:bg-white/2 transition-colors">
+                            <td class="px-5 py-3.5 dark:text-white text-gray-800 font-medium">info@example.com</td>
+                            <td class="px-5 py-3.5 dark:text-gray-400 text-gray-500">500 MB</td>
+                            <td class="px-5 py-3.5">
+                                <div class="flex items-center gap-2">
+                                    <div class="flex-1 h-1.5 rounded-full bg-white/5 overflow-hidden max-w-24"><div class="h-full rounded-full bg-blue-500" style="width:23%"></div></div>
+                                    <span class="text-xs dark:text-gray-400 text-gray-500">115 MB</span>
+                                </div>
+                            </td>
+                            <td class="px-5 py-3.5">
+                                <div class="flex gap-2">
+                                    <button class="px-3 py-1.5 rounded-lg text-xs bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors font-medium">Edit</button>
+                                    <button class="px-3 py-1.5 rounded-lg text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors font-medium">Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-white/2 transition-colors">
+                            <td class="px-5 py-3.5 dark:text-white text-gray-800 font-medium">support@example.com</td>
+                            <td class="px-5 py-3.5 dark:text-gray-400 text-gray-500">1 GB</td>
+                            <td class="px-5 py-3.5">
+                                <div class="flex items-center gap-2">
+                                    <div class="flex-1 h-1.5 rounded-full bg-white/5 overflow-hidden max-w-24"><div class="h-full rounded-full bg-amber-500" style="width:67%"></div></div>
+                                    <span class="text-xs dark:text-gray-400 text-gray-500">670 MB</span>
+                                </div>
+                            </td>
+                            <td class="px-5 py-3.5">
+                                <div class="flex gap-2">
+                                    <button class="px-3 py-1.5 rounded-lg text-xs bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors font-medium">Edit</button>
+                                    <button class="px-3 py-1.5 rounded-lg text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors font-medium">Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-white/2 transition-colors">
+                            <td class="px-5 py-3.5 dark:text-white text-gray-800 font-medium">admin@example.com</td>
+                            <td class="px-5 py-3.5 dark:text-gray-400 text-gray-500">Unlimited</td>
+                            <td class="px-5 py-3.5">
+                                <div class="flex items-center gap-2">
+                                    <div class="flex-1 h-1.5 rounded-full bg-white/5 overflow-hidden max-w-24"><div class="h-full rounded-full bg-emerald-500" style="width:8%"></div></div>
+                                    <span class="text-xs dark:text-gray-400 text-gray-500">45 MB</span>
+                                </div>
+                            </td>
+                            <td class="px-5 py-3.5">
+                                <div class="flex gap-2">
+                                    <button class="px-3 py-1.5 rounded-lg text-xs bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors font-medium">Edit</button>
+                                    <button class="px-3 py-1.5 rounded-lg text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors font-medium">Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── DOMAINS VIEW ── -->
+    <div id="page-domains" class="hidden">
+        <div class="module-card">
+            <div class="flex items-center justify-between px-5 py-4 border-b dark:border-white/5 border-gray-100 flex-wrap gap-3">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-globe text-primary-400 text-sm"></i>
+                    <h3 class="text-sm font-semibold dark:text-white text-gray-800">Domain Manager</h3>
+                </div>
+                <button class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-colors">
+                    <i class="fas fa-plus text-xs"></i> Add Addon Domain
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="dark:bg-white/3 bg-gray-50">
+                            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Domain</th>
+                            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
+                            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">SSL</th>
+                            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y dark:divide-white/5 divide-gray-100">
+                        <tr class="hover:bg-white/2 transition-colors">
+                            <td class="px-5 py-3.5"><a href="#" class="dark:text-blue-400 text-blue-600 flex items-center gap-1.5 font-medium"><i class="fas fa-lock text-emerald-400 text-xs"></i> example.com</a></td>
+                            <td class="px-5 py-3.5"><span class="px-2 py-1 rounded-full bg-blue-500/20 text-blue-400 text-xs font-medium">Primary</span></td>
+                            <td class="px-5 py-3.5"><span class="px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-medium">Active</span></td>
+                            <td class="px-5 py-3.5"><div class="flex gap-2"><button class="px-3 py-1.5 rounded-lg text-xs bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors font-medium">Manage</button></div></td>
+                        </tr>
+                        <tr class="hover:bg-white/2 transition-colors">
+                            <td class="px-5 py-3.5"><a href="#" class="dark:text-blue-400 text-blue-600 flex items-center gap-1.5 font-medium"><i class="fas fa-lock text-emerald-400 text-xs"></i> shop.example.com</a></td>
+                            <td class="px-5 py-3.5"><span class="px-2 py-1 rounded-full bg-violet-500/20 text-violet-400 text-xs font-medium">Addon</span></td>
+                            <td class="px-5 py-3.5"><span class="px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-medium">Active</span></td>
+                            <td class="px-5 py-3.5"><div class="flex gap-2"><button class="px-3 py-1.5 rounded-lg text-xs bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors font-medium">Manage</button><button class="px-3 py-1.5 rounded-lg text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors font-medium">Delete</button></div></td>
+                        </tr>
+                        <tr class="hover:bg-white/2 transition-colors">
+                            <td class="px-5 py-3.5"><a href="#" class="dark:text-blue-400 text-blue-600 flex items-center gap-1.5 font-medium"><i class="fas fa-lock-open text-red-400 text-xs"></i> blog.example.com</a></td>
+                            <td class="px-5 py-3.5"><span class="px-2 py-1 rounded-full bg-violet-500/20 text-violet-400 text-xs font-medium">Addon</span></td>
+                            <td class="px-5 py-3.5"><span class="px-2 py-1 rounded-full bg-red-500/20 text-red-400 text-xs font-medium">None</span></td>
+                            <td class="px-5 py-3.5"><div class="flex gap-2"><button class="px-3 py-1.5 rounded-lg text-xs bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors font-medium">Add SSL</button><button class="px-3 py-1.5 rounded-lg text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors font-medium">Delete</button></div></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── MYSQL VIEW ── -->
+    <div id="page-mysql" class="hidden">
+        <div class="module-card">
+            <div class="flex items-center justify-between px-5 py-4 border-b dark:border-white/5 border-gray-100 flex-wrap gap-3">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-database text-primary-400 text-sm"></i>
+                    <h3 class="text-sm font-semibold dark:text-white text-gray-800">MySQL Manager</h3>
+                </div>
+                <button class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-colors">
+                    <i class="fas fa-plus text-xs"></i> Create Database
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="dark:bg-white/3 bg-gray-50">
+                            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Database Name</th>
+                            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Users</th>
+                            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Size</th>
+                            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y dark:divide-white/5 divide-gray-100">
+                        <tr class="hover:bg-white/2 transition-colors">
+                            <td class="px-5 py-3.5 dark:text-white text-gray-800 font-mono font-medium">joe_wordpress</td>
+                            <td class="px-5 py-3.5 dark:text-gray-400 text-gray-500">joe_wp</td>
+                            <td class="px-5 py-3.5 dark:text-gray-400 text-gray-500">128 MB</td>
+                            <td class="px-5 py-3.5"><div class="flex gap-2"><button class="px-3 py-1.5 rounded-lg text-xs bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors font-medium">Manage Users</button><button class="px-3 py-1.5 rounded-lg text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors font-medium">Delete</button></div></td>
+                        </tr>
+                        <tr class="hover:bg-white/2 transition-colors">
+                            <td class="px-5 py-3.5 dark:text-white text-gray-800 font-mono font-medium">joe_crm</td>
+                            <td class="px-5 py-3.5 dark:text-gray-400 text-gray-500">joe_crm</td>
+                            <td class="px-5 py-3.5 dark:text-gray-400 text-gray-500">54 MB</td>
+                            <td class="px-5 py-3.5"><div class="flex gap-2"><button class="px-3 py-1.5 rounded-lg text-xs bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors font-medium">Manage Users</button><button class="px-3 py-1.5 rounded-lg text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors font-medium">Delete</button></div></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── LOGIN PAGE PREVIEW ── -->
+    <div id="page-login" class="hidden">
+        <div class="max-w-md mx-auto">
+            <div class="rounded-2xl overflow-hidden" style="background: rgba(255,255,255,0.05); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 0 40px rgba(59,130,246,0.12), 0 20px 60px rgba(0,0,0,0.4);">
+                <div class="p-8">
+                    <div class="text-center mb-8">
+                        <div class="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center mx-auto mb-4 text-white text-2xl font-bold shadow-lg shadow-blue-600/30">K</div>
+                        <h1 class="text-xl font-semibold dark:text-white text-gray-800">Control Panel Login</h1>
+                        <p class="text-sm dark:text-gray-400 text-gray-500 mt-1">Sign in to manage your hosting account</p>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium dark:text-gray-300 text-gray-600 mb-1.5">Username</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center dark:text-gray-400 text-gray-400 pointer-events-none"><i class="fas fa-user text-sm"></i></span>
+                                <input type="text" value="joe" class="w-full pl-10 pr-4 py-3 rounded-xl text-sm dark:text-white text-gray-800" style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);" readonly />
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium dark:text-gray-300 text-gray-600 mb-1.5">Password</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center dark:text-gray-400 text-gray-400 pointer-events-none"><i class="fas fa-lock text-sm"></i></span>
+                                <input type="password" value="password" class="w-full pl-10 pr-4 py-3 rounded-xl text-sm dark:text-white text-gray-800" style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);" readonly />
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rounded" /><span class="text-sm dark:text-gray-400 text-gray-500">Remember me</span></label>
+                            <a href="#" class="text-sm text-blue-400 hover:text-blue-300 font-medium">Forgot password?</a>
+                        </div>
+                        <button class="w-full py-3 px-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl flex items-center justify-center gap-2 text-sm shadow-lg shadow-blue-600/20">
+                            <i class="fas fa-sign-in-alt"></i> Sign In
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<script>
+    // Theme
+    function toggleTheme() {
+        var html = document.documentElement, body = document.body;
+        var isDark = html.classList.contains('dark');
+        if (isDark) {
+            html.classList.remove('dark'); html.classList.add('light');
+            body.classList.remove('dark'); body.classList.add('light');
+            document.getElementById('theme-sun').classList.remove('hidden');
+            document.getElementById('theme-moon').classList.add('hidden');
+        } else {
+            html.classList.add('dark'); html.classList.remove('light');
+            body.classList.add('dark'); body.classList.remove('light');
+            document.getElementById('theme-sun').classList.add('hidden');
+            document.getElementById('theme-moon').classList.remove('hidden');
+        }
+        localStorage.setItem('cwp-theme', isDark ? 'light' : 'dark');
+    }
+    (function() {
+        var saved = localStorage.getItem('cwp-theme');
+        var html = document.documentElement, body = document.body;
+        if (saved === 'light') {
+            html.classList.remove('dark'); html.classList.add('light');
+            body.classList.remove('dark'); body.classList.add('light');
+            document.getElementById('theme-sun').classList.remove('hidden');
+            document.getElementById('theme-moon').classList.add('hidden');
+        }
+    })();
+
+    // Sidebar
+    var sidebarCollapsed = localStorage.getItem('cwp-sidebar') === 'collapsed';
+    function applySidebarState() {
+        var s = document.getElementById('cwp-sidebar'), t = document.getElementById('cwp-topbar'), c = document.getElementById('cwp-content');
+        if (sidebarCollapsed) { s.classList.add('collapsed'); t.classList.add('collapsed'); c.classList.add('collapsed'); }
+        else { s.classList.remove('collapsed'); t.classList.remove('collapsed'); c.classList.remove('collapsed'); }
+    }
+    function toggleSidebar() {
+        sidebarCollapsed = !sidebarCollapsed;
+        localStorage.setItem('cwp-sidebar', sidebarCollapsed ? 'collapsed' : 'open');
+        applySidebarState();
+    }
+    applySidebarState();
+
+    // Dropdowns
+    function toggleDropdown(id) {
+        document.querySelectorAll('.cwp-dropdown-menu.active').forEach(function(el) { if (el.id !== id) el.classList.remove('active'); });
+        var el = document.getElementById(id);
+        if (el) el.classList.toggle('active');
+    }
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.cwp-dropdown')) {
+            document.querySelectorAll('.cwp-dropdown-menu').forEach(function(el) { el.classList.remove('active'); });
+        }
+    });
+
+    // Sidebar groups
+    document.querySelectorAll('.sidebar-group > .sidebar-link').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            this.closest('.sidebar-group').classList.toggle('open');
+        });
+    });
+
+    // Page tabs
+    function setPage(name) {
+        document.querySelectorAll('[id^="page-"]').forEach(function(el) { el.classList.add('hidden'); });
+        document.querySelectorAll('.view-tab').forEach(function(el) { el.classList.remove('active'); });
+        document.getElementById('page-' + name).classList.remove('hidden');
+        document.getElementById('tab-' + name).classList.add('active');
+        // Update sidebar active state
+        document.querySelectorAll('.sidebar-link').forEach(function(el) { el.classList.remove('active'); });
+    }
+
+    // Search filter
+    document.getElementById('top-search').addEventListener('input', function() {
+        var q = this.value.toLowerCase();
+        if (!q) { document.querySelectorAll('.sidebar-group').forEach(function(g) { g.style.display = ''; }); return; }
+        document.querySelectorAll('.sidebar-group').forEach(function(group) {
+            var hasMatch = false;
+            group.querySelectorAll('.sidebar-submenu .sidebar-link').forEach(function(link) {
+                var match = link.textContent.toLowerCase().includes(q);
+                link.style.display = match ? '' : 'none';
+                if (match) hasMatch = true;
+            });
+            group.style.display = hasMatch ? '' : 'none';
+            if (hasMatch) group.classList.add('open');
+        });
+    });
+</script>
+</body>
+</html>
