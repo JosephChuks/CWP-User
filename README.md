@@ -2,6 +2,7 @@
 
 This repository contains a complete modification of the **CWP User Panel**, enhancing the look and functionality of the default `original` theme. The new design provides a **clean dashboard**, a **modernized user experience**, and an improved **file manager code editor**.
 
+![Screenshot](./screenshots/three.png)
 ![Screenshot](./screenshots/one.png)
 ![Screenshot](./screenshots/two.png)
 
