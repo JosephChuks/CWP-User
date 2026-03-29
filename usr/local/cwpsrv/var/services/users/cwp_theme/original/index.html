@@ -11,6 +11,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
+            
             darkMode: 'class',
             theme: {
                 extend: {
@@ -30,7 +31,7 @@
     <link rel="stylesheet" href="{{url}}/font-awesome/css/fontawesome-all.css">
 
     <!-- Original CWP Plugin CSS (kept for functionality) -->
-    <link id="ccsmain" href="{{url}}/css/kinsmen-new.css?v=1.1.2" rel="stylesheet">
+    <link id="ccsmain" href="{{url}}/css/kinsmen-new.css?v=1.1.3" rel="stylesheet">
     <link href="{{url}}/css/plugins/morris/morris-0.4.3.min.css" rel="stylesheet">
     <link href="{{url}}/css/plugins/toastr/toastr.min.css" rel="stylesheet">
     <link href="{{url}}/js/plugins/gritter/jquery.gritter.css" rel="stylesheet">
@@ -461,6 +462,18 @@
         /* ─── Password strength ───────────────────────────────── */
         .radio label::after { top: 5px; }
         .radio label::before { top: 2px; }
+        
+        .panel-body .form-group:nth-child(odd) {
+            background-color: transparent !important;
+        }
+        
+        .panel-collapse.collapse.in {
+            height: auto !important;
+        }
+        
+       .panel-collapse.collapse {
+            visibility: visible !important;
+        }
     </style>
 </head>
 
